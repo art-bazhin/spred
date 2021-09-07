@@ -1,0 +1,3 @@
+# Spred
+
+Reactive programming library.

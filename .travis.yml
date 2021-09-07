@@ -1,0 +1,18 @@
+language: node_js
+node_js:
+  - 'node'
+install: npm install
+script: npm run build
+jobs:
+  include:
+    - stage: test
+      script: npm run test
+    - stage: deploy
+      deploy:
+        provider: npm
+        email: $NPM_EMAIL
+        api_key: $NPM_TOKEN
+        skip_cleanup: true
+        on:
+          branch: master
+          tags: true
