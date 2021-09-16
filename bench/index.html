@@ -5,9 +5,51 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
+
+    <style>
+      * {
+        font-family: monospace;
+        font-size: 16px;
+      }
+
+      .m {
+        margin-bottom: 12px;
+      }
+
+      .l {
+        margin-bottom: 24px;
+      }
+
+      table {
+        text-align: left;
+        border-collapse: collapse;
+      }
+
+      tr {
+        background-color: #eeeeee;
+      }
+
+      tr:nth-child(2n) {
+        background-color: #fefefe;
+      }
+
+      td, th {
+        padding: 8px 16px;
+      }
+    </style>
   </head>
   <body>
-    Loading...
+    <div class="m">
+      Layers: <input id="layers" type="number" value="100"/>
+    </div>
+    <div class="m">
+      Iterations: <input id="iterations" type="number" value="100"/>
+    </div>
+    <div class="l">
+      <button id="run">Run Benchmark</button>
+    </div>
+
+    <div id="result"></div>
     <script src="../dist/spred.min.js"></script>
     <script src="libs/cellx.umd.js"></script>
     <script src="bench.js"></script>

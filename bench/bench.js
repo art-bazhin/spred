@@ -2,8 +2,16 @@ const Cell = cellx.Cell;
 const createSubject = spred.createSubject;
 const createComputed = spred.createComputed;
 
-function logReport(libName, report) {
-  console.log(`${libName}: ${report.recalculationTime}`);
+const resultDiv = document.getElementById('result');
+const runButton = document.getElementById('run');
+
+function getParameter(inputId) {
+  const input = document.getElementById(inputId);
+
+  const value = input.value || 1;
+  input.value = value;
+
+  return value;
 }
 
 function testCellx(layerCount) {
@@ -148,14 +156,84 @@ function testSpred(layerCount) {
   return report;
 }
 
-let totalTimeCellx = 0;
-let totalTimeSpred = 0;
-const iterations = 100;
+function testLib(name, testFn, layers, iterations) {
+  let totalTime = 0;
+  let min = Infinity;
+  let max = 0;
+  let result = null;
 
-for (let i = 0; i < iterations; i++) {
-  totalTimeCellx += testCellx(10).recalculationTime;
-  totalTimeSpred += testSpred(10).recalculationTime;
+  for (let i = 0; i < iterations; i++) {
+    const report = testFn(layers);
+    const time = report.recalculationTime;
+
+    if (time < min) min = time;
+    if (time > max) max = time;
+
+    totalTime += report.recalculationTime;
+    result = report.afterChange;
+  }
+
+  return {
+    name,
+    result,
+    min,
+    max,
+    med: totalTime / iterations
+  }
 }
 
-console.log('Cellx', totalTimeCellx / iterations);
-console.log('Spred', totalTimeSpred / iterations);
+function drawTable() {
+  resultDiv.innerHTML = `
+    <table id="table">
+      <tr>
+        <th>Lib</th>
+        <th>Med</th>
+        <th>Min</th>
+        <th>Max</th>
+        <th>Result</th>
+      </tr>
+    </table>
+  `;
+}
+
+function createTableRow(libReport) {
+  const row = document.createElement('tr');
+
+  row.innerHTML = `
+    <td>${libReport.name}</td>
+    <td>${formatTime(libReport.med)}</td>
+    <td>${formatTime(libReport.min)}</td>
+    <td>${formatTime(libReport.max)}</td>
+    <td>${libReport.result}</td>`;
+
+  return row;
+}
+
+function formatTime(time) {
+  const result = Math.round(time * 100) / 100;
+  return result.toFixed(2);
+}
+
+function runBenchmark() {
+  resultDiv.innerHTML = 'BENCHMARKING...';
+
+  const iterations = getParameter('iterations');
+  const layers = getParameter('layers');
+
+
+  setTimeout(() => {
+    const reports = [
+      testLib('cellx', testCellx, layers, iterations),
+      testLib('spred', testSpred, layers, iterations)
+    ].sort((a, b) => a.med - b.med);
+
+    drawTable();
+    const table = document.getElementById('table');
+
+    reports.forEach(report => table.appendChild(createTableRow(report)));
+  }, 0);
+}
+
+runButton.addEventListener('click', runBenchmark);
+
+
