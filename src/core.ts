@@ -7,7 +7,7 @@ export const STATE_KEY = '__spredState__';
 
 let currentComputed: State<any> | undefined;
 const currentComputedList: State<any>[] = [];
-const calcQueue = new Set<State<any>>();
+const calcQueue: State<any>[] = [];
 
 let isCalcActive = false;
 
@@ -23,6 +23,8 @@ export function createState<T>(value: T, computedFn?: () => T): State<T> {
     dependants: new Set<State<any>>(),
     dependencies: new Set<State<any>>(),
     dirtyCount: 0,
+    queueIndex: -1,
+    isProcessed: false
   };
 
   return state;
@@ -33,14 +35,15 @@ export function getValue<T>(key: Observable<T>): T {
 }
 
 export function setValues<T>(...pairs: [subject: Subject<T>, value: T][]) {
-  pairs.forEach(([subject, value]) => {
+  pairs.forEach(([subject, value], i) => {
     const state = getState(subject);
 
     if (!checkDirty(state.value, value)) return;
 
     state.value = value;
+    state.queueIndex = i;
 
-    calcQueue.add(state);
+    calcQueue.push(state);
   });
 
   runCalculation();
@@ -73,15 +76,27 @@ function runCalculation() {
   if (isCalcActive) return;
   isCalcActive = true;
 
-  calcQueue.forEach((state) => {
-    state.dependants.forEach((dependant) => {
-      calcQueue.delete(dependant);
-      calcQueue.add(dependant);
-      dependant.dirtyCount++;
-    });
-  });
+  for (let i = 0; i < calcQueue.length; i++) {
+    const state = calcQueue[i];
 
-  calcQueue.forEach((state) => {
+    if (state.isProcessed) continue;
+
+    state.dependants.forEach((dependant) => {
+      dependant.queueIndex = calcQueue.length;
+      dependant.dirtyCount++;
+
+      calcQueue.push(dependant);
+    });
+
+    state.isProcessed = true;
+  };
+  
+
+  for (let i = 0; i < calcQueue.length; i++) {
+    const state = calcQueue[i];
+
+    if (state.queueIndex !== i) continue;
+
     if (!state.computedFn) {
       runSubscribers(state);
     } else {
@@ -101,9 +116,11 @@ function runCalculation() {
     }
 
     state.dirtyCount = 0;
-  });
+    state.queueIndex = -1;
+    state.isProcessed = false;
+  };
 
-  calcQueue.clear();
+  calcQueue.length = 0;
   isCalcActive = false;
 }
 

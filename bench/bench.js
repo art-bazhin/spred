@@ -231,10 +231,10 @@ function runBenchmark() {
 
   setTimeout(() => {
     const reports = [
-      //testLib('', testSpred, layers, iterations),
+      // testLib('', testSpred, layers, iterations),
+      // testLib('', testCellx, layers, iterations),
       testLib('spred', testSpred, layers, iterations),
-      //testLib('', testCellx, layers, iterations),
-      //testLib('cellx', testCellx, layers, iterations),
+      testLib('cellx', testCellx, layers, iterations),
     ].sort((a, b) => a.med - b.med);
 
     drawTable();

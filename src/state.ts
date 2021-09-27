@@ -8,4 +8,6 @@ export interface State<T> {
   computedFn?: () => T;
   dependencies: Set<State<any>>;
   dirtyCount: number;
+  queueIndex: number;
+  isProcessed: boolean;
 }
