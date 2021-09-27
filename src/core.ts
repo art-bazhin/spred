@@ -5,11 +5,11 @@ import { Subscriber } from './subscriber';
 
 export const STATE_KEY = '__spredState__';
 
-const currentComputed: State<any>[] = [];
+let currentComputed: State<any> | undefined;
+const currentComputedList: State<any>[] = [];
 const calcQueue = new Set<State<any>>();
 
 let isCalcActive = false;
-let isCacheUsed = false;
 
 function getState<T>(key: Observable<T>): State<T> {
   return (key as any)[STATE_KEY];
@@ -19,11 +19,9 @@ export function createState<T>(value: T, computedFn?: () => T): State<T> {
   const state: State<T> = {
     value,
     computedFn,
-    totalSubscribers: 0,
     subscribers: new Set<Subscriber<T>>(),
     dependants: new Set<State<any>>(),
     dependencies: new Set<State<any>>(),
-    isDirty: !!computedFn,
     dirtyCount: 0,
   };
 
@@ -31,8 +29,7 @@ export function createState<T>(value: T, computedFn?: () => T): State<T> {
 }
 
 export function getValue<T>(key: Observable<T>): T {
-  const state = getState(key);
-  return getStateValue(state);
+  return getStateValue(getState(key));
 }
 
 export function setValues<T>(...pairs: [subject: Subject<T>, value: T][]) {
@@ -50,13 +47,13 @@ export function setValues<T>(...pairs: [subject: Subject<T>, value: T][]) {
 }
 
 export function subscribe<T>(
-  subject: Observable<T>,
+  observable: Observable<T>,
   subscriber: Subscriber<T>
 ) {
-  const state = getState(subject);
-  const value = getStateValue(state, true);
+  const state = getState(observable);
+  const value = getStateValue(state);
 
-  activateDependencies(state);
+  toggleDependencies(state, true);
 
   state.subscribers.add(subscriber);
   subscriber(value);
@@ -69,7 +66,7 @@ export function unsubscribe<T>(
   const state = getState(subject);
 
   state.subscribers.delete(subscriber);
-  deactivateDependencies(state);
+  toggleDependencies(state, false);
 }
 
 function runCalculation() {
@@ -118,49 +115,44 @@ function runSubscribers(state: State<any>) {
   state.subscribers.forEach((subscriber) => subscriber(state.value));
 }
 
-function getStateValue<T>(state: State<T>, activateCaching = false): T {
-  if (activateCaching) isCacheUsed = true;
-
-  if (currentComputed[0]) {
-    const comp = currentComputed[0];
-    const deps = comp.dependencies;
+function getStateValue<T>(state: State<T>): T {
+  if (currentComputed) {
+    const deps = currentComputed.dependencies;
 
     if (!deps.has(state)) {
       deps.add(state);
 
       if (
-        currentComputed[0].dependants.size ||
-        currentComputed[0].subscribers.size
+        currentComputed.dependants.size ||
+        currentComputed.subscribers.size
       ) {
-        state.dependants.add(comp);
+        state.dependants.add(currentComputed);
       }
     }
   }
 
   if (state.computedFn) {
     if (
-      (isCacheUsed && !state.isDirty) ||
       state.dependants.size ||
       state.subscribers.size
     )
       return state.value;
 
     state.value = calcComputed(state);
-    state.isDirty = false;
   }
-
-  if (activateCaching) isCacheUsed = false;
 
   return state.value;
 }
 
 function checkDirty(prevValue: any, nextValue: any) {
-  return prevValue !== nextValue;
+  return !Object.is(prevValue, nextValue);
 }
 
 function calcComputed(state: State<any>) {
   let value = state.value;
-  currentComputed.unshift(state);
+  
+  if (currentComputed) currentComputedList.push(state);
+  currentComputed = state;
 
   try {
     value = state.computedFn!();
@@ -168,29 +160,23 @@ function calcComputed(state: State<any>) {
     console.error(e);
   }
 
-  currentComputed.shift();
+  currentComputed = currentComputedList.pop();
+
   return value;
 }
 
-function activateDependencies(state: State<any>) {
-  const shouldActivate = !state.subscribers.size && !state.dependants.size;
+function toggleDependencies(state: State<any>, activate: boolean) {
+  const shouldToggle = !state.subscribers.size && !state.dependants.size;
 
-  if (shouldActivate) {
+  if (shouldToggle) {
     state.dependencies.forEach((dependency) => {
-      activateDependencies(dependency);
-      dependency.dependants.add(state);
-    });
-  }
-}
+      toggleDependencies(dependency, activate);
 
-function deactivateDependencies(state: State<any>) {
-  const shouldDeactivate = !state.subscribers.size && !state.dependants.size;
-
-  if (shouldDeactivate) {
-    state.dependencies.forEach((dependency) => {
-      dependency.dependants.delete(state);
-      dependency.isDirty = !!dependency.computedFn;
-      deactivateDependencies(dependency);
+      if (activate) {
+        dependency.dependants.add(state);
+      } else {
+        dependency.dependants.delete(state);
+      }
     });
   }
 }

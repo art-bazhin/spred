@@ -1,6 +1,7 @@
 const Cell = cellx.Cell;
 const createSubject = spred.createSubject;
 const createComputed = spred.createComputed;
+const setValues = spred.setValues;
 
 const resultDiv = document.getElementById('result');
 const runButton = document.getElementById('run');
@@ -144,10 +145,17 @@ function testSpred(layerCount) {
 
   const st = performance.now();
 
-  start.prop1(4);
-  start.prop2(3);
-  start.prop3(2);
-  start.prop4(1);
+  // start.prop1(4);
+  // start.prop2(3);
+  // start.prop3(2);
+  // start.prop4(1);
+
+  setValues(
+    [start.prop1, 4],
+    [start.prop2, 3],
+    [start.prop3, 2],
+    [start.prop4, 1],
+  );
 
   report.afterChange = [end.prop1(), end.prop2(), end.prop3(), end.prop4()];
 
@@ -223,14 +231,16 @@ function runBenchmark() {
 
   setTimeout(() => {
     const reports = [
-      testLib('cellx', testCellx, layers, iterations),
-      testLib('spred', testSpred, layers, iterations)
+      //testLib('', testSpred, layers, iterations),
+      testLib('spred', testSpred, layers, iterations),
+      //testLib('', testCellx, layers, iterations),
+      //testLib('cellx', testCellx, layers, iterations),
     ].sort((a, b) => a.med - b.med);
 
     drawTable();
     const table = document.getElementById('table');
 
-    reports.forEach(report => table.appendChild(createTableRow(report)));
+    reports.forEach(report => report.name && table.appendChild(createTableRow(report)));
   }, 0);
 }
 
