@@ -24,6 +24,7 @@ export function createSubject<T>(value: T) {
 
   (f as any)[STATE_KEY] = createState(value);
   (f as any).__proto__ = subjectProto;
+  (f as any).constructor = createSubject;
 
   return f;
 }
