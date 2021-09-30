@@ -1,12 +1,13 @@
 import { createSubject, Subject } from './subject';
 import { createComputed } from './computed';
 import { Observable } from './observable';
-import { setValues } from './core';
+import { commit } from './core';
+import { removeFromArray } from './utils';
 
 export {
-  createSubject,
   Subject,
-  createComputed,
   Observable,
-  setValues,
+  createSubject,
+  createComputed,
+  commit
 };

@@ -1,14 +1,14 @@
 import { Observable, observableProto } from './observable';
 import {
-  createState,
-  setValues,
+  commit,
   STATE_KEY
 } from './core';
+import { createState } from './state';
 
 const subjectProto = {
   ...observableProto,
   set(value: any) {
-    setValues([this as any,  value]);
+    commit([this as any,  value]);
   }
 }
 

@@ -2,6 +2,7 @@ import { Subject } from './subject';
 import { Observable } from './observable';
 import { State } from './state';
 import { Subscriber } from './subscriber';
+import { removeFromArray } from './utils';
 
 export const STATE_KEY = '__spredState__';
 
@@ -11,26 +12,17 @@ let calcQueue: State<any>[] = [];
 
 let isCalcActive = false;
 
+const promise = Promise.resolve();
+
+function nextTick(func: any) {
+  promise.then(func);
+}
+
 function getState<T>(key: Observable<T>): State<T> {
   return (key as any)[STATE_KEY];
 }
 
-export function createState<T>(value: T, computedFn?: () => T): State<T> {
-  const state: State<T> = {
-    value,
-    computedFn,
-    subscribers: new Set<Subscriber<T>>(),
-    dependants: new Set<State<any>>(),
-    dependencies: new Set<State<any>>(),
-    dirtyCount: 0,
-    queueIndex: -1,
-    isProcessed: false
-  };
-
-  return state;
-}
-
-export function setValues<T>(...pairs: [subject: Subject<T>, value: T][]) {
+export function commit<T>(...pairs: [subject: Subject<T>, value: T][]) {
   pairs.forEach(([subject, value], i) => {
     const state = getState(subject);
 
@@ -42,6 +34,7 @@ export function setValues<T>(...pairs: [subject: Subject<T>, value: T][]) {
     calcQueue.push(state);
   });
 
+  //nextTick(runCalculation);
   runCalculation();
 }
 
@@ -52,9 +45,11 @@ export function subscribe<T>(
   const state = getState(observable);
   const value = getStateValue(state);
 
+  if (state.subscribers.find(s => s === subscriber)) return;
+
   toggleDependencies(state, true);
 
-  state.subscribers.add(subscriber);
+  state.subscribers.push(subscriber);
   subscriber(value);
 }
 
@@ -64,8 +59,14 @@ export function unsubscribe<T>(
 ) {
   const state = getState(subject);
 
-  state.subscribers.delete(subscriber);
+  removeFromArray(state.subscribers, subscriber);
   toggleDependencies(state, false);
+}
+
+function resetStateQueueParams(state: State<any>) {
+  state.dirtyCount = 0;
+  state.queueIndex = -1;
+  state.isProcessed = false;
 }
 
 function runCalculation() {
@@ -86,18 +87,16 @@ function runCalculation() {
 
     state.isProcessed = true;
   };
-  
 
-  for (let i = 0; i < calcQueue.length; i++) {
-    const state = calcQueue[i];
-
-    if (state.queueIndex !== i) continue;
+  calcQueue.forEach((state, i) => {
+    if (state.queueIndex !== i) return;
 
     if (!state.computedFn) {
       runSubscribers(state);
     } else {
       if (!state.dirtyCount) {
         decreaseDirtyCount(state);
+        resetStateQueueParams(state);
         return;
       }
 
@@ -111,10 +110,8 @@ function runCalculation() {
       }
     }
 
-    state.dirtyCount = 0;
-    state.queueIndex = -1;
-    state.isProcessed = false;
-  };
+    resetStateQueueParams(state);
+  });
 
   calcQueue = [];
   isCalcActive = false;
@@ -132,22 +129,22 @@ export function getStateValue<T>(state: State<T>): T {
   if (currentComputed) {
     const deps = currentComputed.dependencies;
 
-    if (!deps.has(state)) {
-      deps.add(state);
+    if (!deps.find(el => el === state)) {
+      deps.push(state);
 
       if (
-        currentComputed.dependants.size ||
-        currentComputed.subscribers.size
+        currentComputed.dependants.length ||
+        currentComputed.subscribers.length
       ) {
-        state.dependants.add(currentComputed);
+        state.dependants.push(currentComputed);
       }
     }
   }
 
   if (state.computedFn) {
     if (
-      state.dependants.size ||
-      state.subscribers.size
+      state.dependants.length ||
+      state.subscribers.length
     )
       return state.value;
 
@@ -179,16 +176,16 @@ function calcComputed(state: State<any>) {
 }
 
 function toggleDependencies(state: State<any>, activate: boolean) {
-  const shouldToggle = !state.subscribers.size && !state.dependants.size;
+  const shouldToggle = !state.subscribers.length && !state.dependants.length;
 
   if (shouldToggle) {
     state.dependencies.forEach((dependency) => {
       toggleDependencies(dependency, activate);
 
       if (activate) {
-        dependency.dependants.add(state);
+        dependency.dependants.push(state);
       } else {
-        dependency.dependants.delete(state);
+        removeFromArray(state.dependants, state);
       }
     });
   }

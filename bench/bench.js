@@ -1,7 +1,7 @@
 const Cell = cellx.Cell;
 const createSubject = spred.createSubject;
 const createComputed = spred.createComputed;
-const setValues = spred.setValues;
+const commit = spred.commit;
 
 const resultDiv = document.getElementById('result');
 const runButton = document.getElementById('run');
@@ -150,7 +150,7 @@ function testSpred(layerCount) {
   // start.prop3(2);
   // start.prop4(1);
 
-  setValues(
+  commit(
     [start.prop1, 4],
     [start.prop2, 3],
     [start.prop3, 2],
@@ -283,7 +283,7 @@ function runBenchmark() {
     const warmup = false;
     const testSet = [
       testSpred,
-      testCellx
+      //testCellx
     ];
     
     if (warmup) {
@@ -334,3 +334,13 @@ runButton.addEventListener('click', runBenchmark);
 // console.log(a.__spredState__);
 
 
+// const a = new Cell(1);
+// const b = new Cell(2);
+// const c = new Cell(function() {
+//   return a.get() + b.get();
+// });
+
+// c.on('change', v => console.log(v.data.value));
+
+// a.set(2);
+// b.set(2);

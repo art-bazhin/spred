@@ -1,9 +1,9 @@
 import { Observable } from './observable';
 import {
-  createState,
   STATE_KEY
 } from './core';
 import { observableProto } from './observable';
+import { createState } from './state';
 
 export function createComputed<T>(computedFn: () => T) {
   const f = function () {
