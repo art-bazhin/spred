@@ -7,7 +7,7 @@ export const STATE_KEY = '__spredState__';
 
 let currentComputed: State<any> | undefined;
 const currentComputedList: State<any>[] = [];
-const calcQueue: State<any>[] = [];
+let calcQueue: State<any>[] = [];
 
 let isCalcActive = false;
 
@@ -28,10 +28,6 @@ export function createState<T>(value: T, computedFn?: () => T): State<T> {
   };
 
   return state;
-}
-
-export function getValue<T>(key: Observable<T>): T {
-  return getStateValue(getState(key));
 }
 
 export function setValues<T>(...pairs: [subject: Subject<T>, value: T][]) {
@@ -120,7 +116,7 @@ function runCalculation() {
     state.isProcessed = false;
   };
 
-  calcQueue.length = 0;
+  calcQueue = [];
   isCalcActive = false;
 }
 
@@ -132,7 +128,7 @@ function runSubscribers(state: State<any>) {
   state.subscribers.forEach((subscriber) => subscriber(state.value));
 }
 
-function getStateValue<T>(state: State<T>): T {
+export function getStateValue<T>(state: State<T>): T {
   if (currentComputed) {
     const deps = currentComputed.dependencies;
 
@@ -168,7 +164,7 @@ function checkDirty(prevValue: any, nextValue: any) {
 function calcComputed(state: State<any>) {
   let value = state.value;
   
-  if (currentComputed) currentComputedList.push(state);
+  if (currentComputed) currentComputedList.push(currentComputed);
   currentComputed = state;
 
   try {

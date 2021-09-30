@@ -1,28 +1,17 @@
+import { Observable } from './observable';
 import {
   createState,
-  getValue,
-  STATE_KEY,
-  unsubscribe,
-  subscribe,
+  STATE_KEY
 } from './core';
-import { Subscriber } from './subscriber';
-
-export interface Computed<T> {
-  (): T;
-  subscribe(subscriber: Subscriber<T>): () => void;
-}
+import { observableProto } from './observable';
 
 export function createComputed<T>(computedFn: () => T) {
   const f = function () {
-    return getValue(f);
-  } as Computed<T>;
-
-  f.subscribe = function (subscriber: Subscriber<T>) {
-    subscribe(f, subscriber);
-    return () => unsubscribe(f, subscriber);
-  };
+    return f.get();
+  } as Observable<T>;
 
   (f as any)[STATE_KEY] = createState(undefined, computedFn);
+  (f as any).__proto__ = observableProto;
 
   return f;
 }

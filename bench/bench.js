@@ -16,8 +16,8 @@ function getParameter(inputId) {
 }
 
 function testCellx(layerCount) {
-  const report = {};
-  const initTS = performance.now();
+  const report = { name: 'cellx' };
+  const initTimestamp = performance.now();
 
   const start = {
     prop1: new Cell(1),
@@ -45,10 +45,12 @@ function testCellx(layerCount) {
         }),
       };
 
-      s.prop1.on('change', function () {});
-      s.prop2.on('change', function () {});
-      s.prop3.on('change', function () {});
-      s.prop4.on('change', function () {});
+      // if (!i) {
+        s.prop1.on('change', function () {});
+        s.prop2.on('change', function () {});
+        s.prop3.on('change', function () {});
+        s.prop4.on('change', function () {});
+      // }
 
       s.prop1.get();
       s.prop2.get();
@@ -59,17 +61,15 @@ function testCellx(layerCount) {
     })(layer);
   }
 
-  const initEndTs = performance.now();
-
-  // console.log(`cellx init time: ${initEndTs - initTS}`);
+  report.initTime = performance.now() - initTimestamp;
 
   const end = layer;
 
   report.beforeChange = [
-    end.prop1.get(),
-    end.prop2.get(),
-    end.prop3.get(),
-    end.prop4.get(),
+    start.prop1.get(),
+    start.prop2.get(),
+    start.prop3.get(),
+    start.prop4.get(),
   ];
 
   const st = performance.now();
@@ -86,14 +86,14 @@ function testCellx(layerCount) {
     end.prop4.get(),
   ];
 
-  report.recalculationTime = performance.now() - st;
+  report.recalcTime = performance.now() - st;
 
   return report;
 }
 
 function testSpred(layerCount) {
-  const report = {};
-  const initTS = performance.now();
+  const report = { name: 'spred' };
+  const initTimestamp = performance.now();
 
   const start = {
     prop1: createSubject(1),
@@ -121,10 +121,12 @@ function testSpred(layerCount) {
         }),
       };
 
-      s.prop1.subscribe(function () {});
-      s.prop2.subscribe(function () {});
-      s.prop3.subscribe(function () {});
-      s.prop4.subscribe(function () {});
+      // if (!i) {
+        s.prop1.subscribe(function () {});
+        s.prop2.subscribe(function () {});
+        s.prop3.subscribe(function () {});
+        s.prop4.subscribe(function () {});
+      // }
 
       s.prop1();
       s.prop2();
@@ -135,13 +137,11 @@ function testSpred(layerCount) {
     })(layer);
   }
 
-  const initEndTs = performance.now();
-
-  // console.log(`cellx init time: ${initEndTs - initTS}`);
+  report.initTime = performance.now() - initTimestamp;
 
   const end = layer;
 
-  report.beforeChange = [end.prop1(), end.prop2(), end.prop3(), end.prop4()];
+  report.beforeChange = [start.prop1(), start.prop2(), start.prop3(), start.prop4()];
 
   const st = performance.now();
 
@@ -159,57 +159,108 @@ function testSpred(layerCount) {
 
   report.afterChange = [end.prop1(), end.prop2(), end.prop3(), end.prop4()];
 
-  report.recalculationTime = performance.now() - st;
+  report.recalcTime = performance.now() - st;
 
   return report;
 }
 
-function testLib(name, testFn, layers, iterations) {
-  let totalTime = 0;
-  let min = Infinity;
-  let max = 0;
-  let result = null;
+function testLib(testFn, layers, iterations) {
+  let totalTimeRecalc = 0;
+  let minRecalc = Infinity;
+  let maxRecalc = 0;
+  let resultRecalc = null;
+
+  let totalTimeInit = 0;
+  let minInit = Infinity;
+  let maxInit = 0;
+  let resultInit = null;
+  let name;
 
   for (let i = 0; i < iterations; i++) {
     const report = testFn(layers);
-    const time = report.recalculationTime;
+    const recalcTime = report.recalcTime;
+    const initTime = report.initTime;
 
-    if (time < min) min = time;
-    if (time > max) max = time;
+    if (recalcTime < minRecalc) minRecalc = recalcTime;
+    if (recalcTime > maxRecalc) maxRecalc = recalcTime;
 
-    totalTime += report.recalculationTime;
-    result = report.afterChange;
+    if (initTime < minInit) minInit = initTime;
+    if (initTime > maxInit) maxInit = initTime;
+
+    totalTimeRecalc += report.recalcTime;
+    resultRecalc = report.afterChange;
+
+    totalTimeInit += report.initTime;
+    resultInit = report.beforeChange;
+
+    name = report.name;
   }
 
   return {
-    name,
-    result,
-    min,
-    max,
-    med: totalTime / iterations
+    init: {   
+      name,   
+      result: resultInit,
+      min: minInit,
+      max: maxInit,
+      avg: totalTimeInit / iterations
+    },
+
+    recalc: {
+      name,
+      result: resultRecalc,
+      min: minRecalc,
+      max: maxRecalc,
+      avg: totalTimeRecalc / iterations
+    }
   }
 }
 
-function drawTable() {
+function drawTables() {
   resultDiv.innerHTML = `
-    <table id="table">
+    <div class="m">
+      <b>Initialization</b>
+    </div>
+    
+    <table id="initTable" class="l">
       <tr>
         <th>Lib</th>
-        <th>Med</th>
+        <th>Avg%</th>
+        <th>Avg</th>
         <th>Min</th>
         <th>Max</th>
-        <th>Result</th>
+        <th>Values</th>
+      </tr>
+    </table>
+
+    <div class="m">
+      <b>Recalculation</b>
+    </div>
+    
+    <table id="recalcTable">
+      <tr>
+        <th>Lib</th>
+        <th>Avg%</th>
+        <th>Avg</th>
+        <th>Min</th>
+        <th>Max</th>
+        <th>Values</th>
       </tr>
     </table>
   `;
 }
 
-function createTableRow(libReport) {
+function createTableRow(libReport, minAvg) {
   const row = document.createElement('tr');
+
+  const percent = (
+    libReport.avg === 0 ||
+    minAvg === 0
+  ) ? '-' : Math.round(100 * libReport.avg / minAvg) + '%';
 
   row.innerHTML = `
     <td>${libReport.name}</td>
-    <td>${formatTime(libReport.med)}</td>
+    <td>${percent}</td>
+    <td>${formatTime(libReport.avg)}</td>
     <td>${formatTime(libReport.min)}</td>
     <td>${formatTime(libReport.max)}</td>
     <td>${libReport.result}</td>`;
@@ -228,22 +279,58 @@ function runBenchmark() {
   const iterations = getParameter('iterations');
   const layers = getParameter('layers');
 
-
   setTimeout(() => {
-    const reports = [
-      // testLib('', testSpred, layers, iterations),
-      // testLib('', testCellx, layers, iterations),
-      testLib('spred', testSpred, layers, iterations),
-      testLib('cellx', testCellx, layers, iterations),
-    ].sort((a, b) => a.med - b.med);
+    const warmup = false;
+    const testSet = [
+      testSpred,
+      testCellx
+    ];
+    
+    if (warmup) {
+      testSet.forEach(test => testLib(test, layers, iterations));
+    }
+    
+    const reportsSortedByRecalc = testSet
+      .map(test => testLib(test, layers, iterations))
+      .sort((a, b) => a.recalc.avg - b.recalc.avg);
 
-    drawTable();
-    const table = document.getElementById('table');
+    const reportsSortedByInit = 
+      [...reportsSortedByRecalc]
+        .sort((a, b) => a.init.avg - b.init.avg);
 
-    reports.forEach(report => report.name && table.appendChild(createTableRow(report)));
+
+    drawTables();
+
+    const recalcTable = document.getElementById('recalcTable');
+    const minRecalcAvg = reportsSortedByRecalc.sort((a, b) => a.recalc.avg - b.recalc.avg)[0].recalc.avg;
+
+    const initTable = document.getElementById('initTable');
+    const minInitAvg = reportsSortedByInit.sort((a, b) => a.init.avg - b.init.avg)[0].init.avg;
+
+    reportsSortedByRecalc.forEach(
+      report => 
+        report.recalc.name && 
+        recalcTable.appendChild(createTableRow(report.recalc, minRecalcAvg))
+    );
+
+    reportsSortedByInit.forEach(
+      report => 
+        report.recalc.name && 
+        initTable.appendChild(createTableRow(report.init, minInitAvg))
+    );
   }, 0);
 }
 
 runButton.addEventListener('click', runBenchmark);
+
+// const d = createSubject('d');
+// const e = createSubject('e');
+// const b = createComputed(() => d());
+// const c = createComputed(() => e());
+// const a = createComputed(() => b() + c());
+
+// console.log(a());
+
+// console.log(a.__spredState__);
 
 
