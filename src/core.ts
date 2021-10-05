@@ -2,7 +2,8 @@ import { Subject } from './subject';
 import { Observable } from './observable';
 import { State } from './state';
 import { Subscriber } from './subscriber';
-import { removeFromArray } from './utils';
+import { nextTick, removeFromArray } from './utils';
+import { config } from './config';
 
 export const STATE_KEY = '__spredState__';
 
@@ -13,10 +14,6 @@ let calcQueue: State<any>[] = [];
 let isCalcActive = false;
 
 const promise = Promise.resolve();
-
-function nextTick(func: any) {
-  promise.then(func);
-}
 
 function getState<T>(key: Observable<T>): State<T> {
   return (key as any)[STATE_KEY];
@@ -29,13 +26,13 @@ export function commit<T>(...pairs: [subject: Subject<T>, value: T][]) {
     if (!checkDirty(state.value, value)) return;
 
     state.value = value;
-    state.queueIndex = i;
+    state.queueIndex = calcQueue.length;
 
     calcQueue.push(state);
   });
 
-  //nextTick(runCalculation);
-  runCalculation();
+  if (config.async) nextTick(runCalculation);
+  else runCalculation();
 }
 
 export function subscribe<T>(
@@ -70,7 +67,7 @@ function resetStateQueueParams(state: State<any>) {
 }
 
 function runCalculation() {
-  if (isCalcActive) return;
+  if (isCalcActive || !calcQueue.length) return;
   isCalcActive = true;
 
   for (let i = 0; i < calcQueue.length; i++) {
@@ -126,6 +123,9 @@ function runSubscribers(state: State<any>) {
 }
 
 export function getStateValue<T>(state: State<T>): T {
+  if (!isCalcActive && calcQueue.length)
+    runCalculation();
+
   if (currentComputed) {
     const deps = currentComputed.dependencies;
 

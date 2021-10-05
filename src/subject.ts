@@ -6,7 +6,7 @@ import {
 import { createState } from './state';
 
 const subjectProto = {
-  ...observableProto,
+  __proto__: observableProto,
   set(value: any) {
     commit([this as any,  value]);
   }
