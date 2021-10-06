@@ -9,11 +9,13 @@ export const STATE_KEY = '__spredState__';
 
 let currentComputed: State<any> | undefined;
 const currentComputedList: State<any>[] = [];
+
+let currentComputedCounters: number[] = [];
+let currentComputedIndex = -1;
+
 let calcQueue: State<any>[] = [];
 
 let isCalcActive = false;
-
-const promise = Promise.resolve();
 
 function getState<T>(key: Observable<T>): State<T> {
   return (key as any)[STATE_KEY];
@@ -126,29 +128,17 @@ export function getStateValue<T>(state: State<T>): T {
   if (!isCalcActive && calcQueue.length)
     runCalculation();
 
-  if (currentComputed) {
-    const deps = currentComputed.dependencies;
-
-    if (!deps.find(el => el === state)) {
-      deps.push(state);
-
-      if (
-        currentComputed.dependants.length ||
-        currentComputed.subscribers.length
-      ) {
-        state.dependants.push(currentComputed);
-      }
-    }
+  if (state.computedFn && !isActive(state)) {
+    state.value = calcComputed(state);
   }
 
-  if (state.computedFn) {
-    if (
-      state.dependants.length ||
-      state.subscribers.length
-    )
-      return state.value;
+  if (currentComputed) {
+    const deps = currentComputed.dependencies;
+    const i = ++currentComputedCounters[currentComputedIndex];
 
-    state.value = calcComputed(state);
+    removeFromArray(currentComputed.obsoleteDependencies, state);
+
+    deps[i] = state;
   }
 
   return state.value;
@@ -160,9 +150,19 @@ function checkDirty(prevValue: any, nextValue: any) {
 
 function calcComputed(state: State<any>) {
   let value = state.value;
+
+  // state.dependencies.forEach(dependency => {
+  //   removeFromArray(dependency.dependants, state);
+  //   toggleDependencies(dependency, false);
+  // });
+
+  //state.dependencies.length = 0;
   
   if (currentComputed) currentComputedList.push(currentComputed);
   currentComputed = state;
+  state.obsoleteDependencies = [...state.dependencies];
+  currentComputedIndex++;
+  currentComputedCounters[currentComputedIndex] = -1;
 
   try {
     value = state.computedFn!();
@@ -170,23 +170,50 @@ function calcComputed(state: State<any>) {
     console.error(e);
   }
 
+  state.dependencies.length = currentComputedCounters[currentComputedIndex] + 1;
+  actualize(state);
+
   currentComputed = currentComputedList.pop();
+  currentComputedIndex--;
+
+  if (currentComputedIndex < 0) {
+    currentComputedCounters = [];
+  }
 
   return value;
 }
 
 function toggleDependencies(state: State<any>, activate: boolean) {
-  const shouldToggle = !state.subscribers.length && !state.dependants.length;
+  if (isActive(state)) return;
 
-  if (shouldToggle) {
-    state.dependencies.forEach((dependency) => {
+  state.dependencies.forEach((dependency) => {
+    if (activate) {
       toggleDependencies(dependency, activate);
+      dependency.dependants.push(state);
+    } else {
+      removeFromArray(dependency.dependants, state);
+      toggleDependencies(dependency, activate);
+    }
+  });
+}
 
-      if (activate) {
-        dependency.dependants.push(state);
-      } else {
-        removeFromArray(state.dependants, state);
-      }
-    });
-  }
+function actualize(state: State<any>) {
+  if (!isActive(state)) return;
+
+  state.dependencies.forEach(dependency => {
+    const dependants = dependency.dependants;
+
+    if (dependants.includes(state)) return;
+    toggleDependencies(dependency, true);
+    dependants.push(state);
+  });
+
+  state.obsoleteDependencies.forEach(dependency => {
+    removeFromArray(dependency.dependants, state);
+    toggleDependencies(dependency, false);
+  });
+}
+
+function isActive(state: State<any>) {
+  return state.dependants.length || state.subscribers.length;
 }
