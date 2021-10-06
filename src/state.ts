@@ -14,7 +14,7 @@ export interface State<T> {
 }
 
 export function createState<T>(value: T, computedFn?: () => T): State<T> {
-  const state: State<T> = {
+  return {
     value,
     computedFn,
     subscribers: [],
@@ -25,6 +25,4 @@ export function createState<T>(value: T, computedFn?: () => T): State<T> {
     queueIndex: -1,
     isProcessed: false
   };
-
-  return state;
 }

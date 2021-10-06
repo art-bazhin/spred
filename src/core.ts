@@ -44,7 +44,7 @@ export function subscribe<T>(
   const state = getState(observable);
   const value = getStateValue(state);
 
-  if (state.subscribers.find(s => s === subscriber)) return;
+  if (state.subscribers.includes(subscriber)) return;
 
   toggleDependencies(state, true);
 
@@ -150,13 +150,6 @@ function checkDirty(prevValue: any, nextValue: any) {
 
 function calcComputed(state: State<any>) {
   let value = state.value;
-
-  // state.dependencies.forEach(dependency => {
-  //   removeFromArray(dependency.dependants, state);
-  //   toggleDependencies(dependency, false);
-  // });
-
-  //state.dependencies.length = 0;
   
   if (currentComputed) currentComputedList.push(currentComputed);
   currentComputed = state;
