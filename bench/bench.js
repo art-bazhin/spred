@@ -1,4 +1,9 @@
 const Cell = cellx.Cell;
+
+// spred.configure({
+//   async: false
+// });
+
 const createSubject = spred.createSubject;
 const createComputed = spred.createComputed;
 const commit = spred.commit;
@@ -15,7 +20,7 @@ function getParameter(inputId) {
   return value;
 }
 
-function testCellx(layerCount) {
+function testCellx(layerCount, newValues) {
   const report = { name: 'cellx' };
   const initTimestamp = performance.now();
 
@@ -52,10 +57,10 @@ function testCellx(layerCount) {
         s.prop4.on('change', function () {});
       // }
 
-      s.prop1.get();
-      s.prop2.get();
-      s.prop3.get();
-      s.prop4.get();
+      // s.prop1.get();
+      // s.prop2.get();
+      // s.prop3.get();
+      // s.prop4.get();
 
       return s;
     })(layer);
@@ -74,10 +79,10 @@ function testCellx(layerCount) {
 
   const st = performance.now();
 
-  start.prop1.set(4);
-  start.prop2.set(3);
-  start.prop3.set(2);
-  start.prop4.set(1);
+  start.prop1.set(newValues[0]);
+  start.prop2.set(newValues[1]);
+  start.prop3.set(newValues[2]);
+  start.prop4.set(newValues[3]);
 
   report.afterChange = [
     end.prop1.get(),
@@ -91,7 +96,7 @@ function testCellx(layerCount) {
   return report;
 }
 
-function testSpred(layerCount) {
+function testSpred(layerCount, newValues) {
   const report = { name: 'spred' };
   const initTimestamp = performance.now();
 
@@ -128,10 +133,10 @@ function testSpred(layerCount) {
         s.prop4.subscribe(function () {});
       // }
 
-      s.prop1();
-      s.prop2();
-      s.prop3();
-      s.prop4();
+      // s.prop1();
+      // s.prop2();
+      // s.prop3();
+      // s.prop4();
 
       return s;
     })(layer);
@@ -151,10 +156,10 @@ function testSpred(layerCount) {
   // start.prop4(1);
 
   commit(
-    [start.prop1, 4],
-    [start.prop2, 3],
-    [start.prop3, 2],
-    [start.prop4, 1],
+    [start.prop1, newValues[0]],
+    [start.prop2, newValues[1]],
+    [start.prop3, newValues[2]],
+    [start.prop4, newValues[3]],
   );
 
   report.afterChange = [end.prop1(), end.prop2(), end.prop3(), end.prop4()];
@@ -164,7 +169,7 @@ function testSpred(layerCount) {
   return report;
 }
 
-function testLib(testFn, layers, iterations) {
+function testLib(testFn, layers, iterations, newValues) {
   let totalTimeRecalc = 0;
   let minRecalc = Infinity;
   let maxRecalc = 0;
@@ -177,7 +182,7 @@ function testLib(testFn, layers, iterations) {
   let name;
 
   for (let i = 0; i < iterations; i++) {
-    const report = testFn(layers);
+    const report = testFn(layers, newValues);
     const recalcTime = report.recalcTime;
     const initTime = report.initTime;
 
@@ -278,20 +283,22 @@ function runBenchmark() {
 
   const iterations = getParameter('iterations');
   const layers = getParameter('layers');
+  
+  const newValues = [4, 3, 2, 1];
 
   setTimeout(() => {
     const warmup = false;
     const testSet = [
+      //testCellx,
       testSpred,
-      //testCellx
     ];
     
     if (warmup) {
-      testSet.forEach(test => testLib(test, layers, iterations));
+      testSet.forEach(test => testLib(test, layers, iterations, newValues));
     }
     
     const reportsSortedByRecalc = testSet
-      .map(test => testLib(test, layers, iterations))
+      .map(test => testLib(test, layers, iterations, newValues))
       .sort((a, b) => a.recalc.avg - b.recalc.avg);
 
     const reportsSortedByInit = 
@@ -323,24 +330,19 @@ function runBenchmark() {
 
 runButton.addEventListener('click', runBenchmark);
 
-// const d = createSubject('d');
-// const e = createSubject('e');
-// const b = createComputed(() => d());
-// const c = createComputed(() => e());
-// const a = createComputed(() => b() + c());
+const counter = createSubject(0);
+const x2Counter = createComputed(() => counter() * 2);
+const x4Counter = createComputed(() => x2Counter() * 2);
+const x8Counter = createComputed(() => x4Counter() * 2);
+const x16Counter = createComputed(() => x8Counter() * 2);
 
-// console.log(a());
+const tumbler = createSubject(false);
 
-// console.log(a.__spredState__);
+const message = createComputed(() => {
+  if (tumbler()) return `X16 counter is ${x16Counter()}`;
+  return 'TUMBLER IS OFF';
+});
 
+message.subscribe(console.log);
 
-// const a = new Cell(1);
-// const b = new Cell(2);
-// const c = new Cell(function() {
-//   return a.get() + b.get();
-// });
-
-// c.on('change', v => console.log(v.data.value));
-
-// a.set(2);
-// b.set(2);
+//console.log(message.__spredState__);

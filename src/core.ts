@@ -4,14 +4,11 @@ import { State } from './state';
 import { Subscriber } from './subscriber';
 import { nextTick, removeFromArray } from './utils';
 import { config } from './config';
+import { push, pop } from './stack';
 
 export const STATE_KEY = '__spredState__';
 
-let currentComputed: State<any> | undefined;
-const currentComputedList: State<any>[] = [];
-
-let currentComputedCounters: number[] = [];
-let currentComputedIndex = -1;
+let currentComputed = pop();
 
 let calcQueue: State<any>[] = [];
 
@@ -133,12 +130,8 @@ export function getStateValue<T>(state: State<T>): T {
   }
 
   if (currentComputed) {
-    const deps = currentComputed.dependencies;
-    const i = ++currentComputedCounters[currentComputedIndex];
-
     removeFromArray(currentComputed.obsoleteDependencies, state);
-
-    deps[i] = state;
+    currentComputed.dependencies.push(state);
   }
 
   return state.value;
@@ -150,12 +143,11 @@ function checkDirty(prevValue: any, nextValue: any) {
 
 function calcComputed(state: State<any>) {
   let value = state.value;
-  
-  if (currentComputed) currentComputedList.push(currentComputed);
-  currentComputed = state;
+
+  currentComputed = push(state);
+
   state.obsoleteDependencies = [...state.dependencies];
-  currentComputedIndex++;
-  currentComputedCounters[currentComputedIndex] = -1;
+  state.dependencies = [];
 
   try {
     value = state.computedFn!();
@@ -163,15 +155,9 @@ function calcComputed(state: State<any>) {
     console.error(e);
   }
 
-  state.dependencies.length = currentComputedCounters[currentComputedIndex] + 1;
   actualize(state);
 
-  currentComputed = currentComputedList.pop();
-  currentComputedIndex--;
-
-  if (currentComputedIndex < 0) {
-    currentComputedCounters = [];
-  }
+  currentComputed = pop();
 
   return value;
 }
