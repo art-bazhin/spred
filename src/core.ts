@@ -130,7 +130,7 @@ export function getStateValue<T>(state: State<T>): T {
   }
 
   if (currentComputed) {
-    removeFromArray(currentComputed.obsoleteDependencies, state);
+    removeFromArray(currentComputed.oldDependencies, state);
     currentComputed.dependencies.push(state);
   }
 
@@ -146,7 +146,7 @@ function calcComputed(state: State<any>) {
 
   currentComputed = push(state);
 
-  state.obsoleteDependencies = [...state.dependencies];
+  state.oldDependencies = state.dependencies;
   state.dependencies = [];
 
   try {
@@ -187,7 +187,7 @@ function actualize(state: State<any>) {
     dependants.push(state);
   });
 
-  state.obsoleteDependencies.forEach(dependency => {
+  state.oldDependencies.forEach(dependency => {
     removeFromArray(dependency.dependants, state);
     toggleDependencies(dependency, false);
   });
