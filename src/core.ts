@@ -43,7 +43,7 @@ export function subscribe<T>(
 
   if (state.subscribers.includes(subscriber)) return;
 
-  toggleDependencies(state, true);
+  activateDependencies(state);
 
   state.subscribers.push(subscriber);
   subscriber(value);
@@ -56,7 +56,7 @@ export function unsubscribe<T>(
   const state = getState(subject);
 
   removeFromArray(state.subscribers, subscriber);
-  toggleDependencies(state, false);
+  deactivateDependencies(state);
 }
 
 function resetStateQueueParams(state: State<any>) {
@@ -162,17 +162,21 @@ function calcComputed(state: State<any>) {
   return value;
 }
 
-function toggleDependencies(state: State<any>, activate: boolean) {
+function activateDependencies(state: State<any>) {
   if (isActive(state)) return;
 
   state.dependencies.forEach((dependency) => {
-    if (activate) {
-      toggleDependencies(dependency, activate);
-      dependency.dependants.push(state);
-    } else {
-      removeFromArray(dependency.dependants, state);
-      toggleDependencies(dependency, activate);
-    }
+    activateDependencies(dependency);
+    dependency.dependants.push(state);
+  });
+}
+
+function deactivateDependencies(state: State<any>) {
+  if (isActive(state)) return;
+
+  state.dependencies.forEach((dependency) => {
+    removeFromArray(dependency.dependants, state);
+    deactivateDependencies(dependency);
   });
 }
 
@@ -183,13 +187,13 @@ function actualize(state: State<any>) {
     const dependants = dependency.dependants;
 
     if (dependants.includes(state)) return;
-    toggleDependencies(dependency, true);
+    activateDependencies(dependency);
     dependants.push(state);
   });
 
   state.oldDependencies.forEach(dependency => {
     removeFromArray(dependency.dependants, state);
-    toggleDependencies(dependency, false);
+    deactivateDependencies(dependency);
   });
 }
 
