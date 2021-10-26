@@ -150,17 +150,17 @@ function testSpred(layerCount, newValues) {
 
   const st = performance.now();
 
-  // start.prop1(4);
-  // start.prop2(3);
-  // start.prop3(2);
-  // start.prop4(1);
+  start.prop1(4);
+  start.prop2(3);
+  start.prop3(2);
+  start.prop4(1);
 
-  commit(
-    [start.prop1, newValues[0]],
-    [start.prop2, newValues[1]],
-    [start.prop3, newValues[2]],
-    [start.prop4, newValues[3]],
-  );
+  // commit(
+  //   [start.prop1, newValues[0]],
+  //   [start.prop2, newValues[1]],
+  //   [start.prop3, newValues[2]],
+  //   [start.prop4, newValues[3]],
+  // );
 
   report.afterChange = [end.prop1(), end.prop2(), end.prop3(), end.prop4()];
 
@@ -289,8 +289,8 @@ function runBenchmark() {
   setTimeout(() => {
     const warmup = false;
     const testSet = [
-      //testCellx,
       testSpred,
+      //testCellx,
     ];
     
     if (warmup) {
