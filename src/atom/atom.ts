@@ -1,9 +1,8 @@
 import { Observable, observableProto } from '../observable/observable';
 import {
-  commit,
-  STATE_KEY
-} from '../core';
-import { createState } from '../state/state';
+  commit
+} from '../core/core';
+import { createState, STATE_KEY } from '../state/state';
 
 const atomProto = {
   __proto__: observableProto,

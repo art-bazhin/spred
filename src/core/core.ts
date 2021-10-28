@@ -1,13 +1,11 @@
-import { Atom } from './atom/atom';
-import { Observable } from './observable/observable';
-import { State } from './state/state';
-import { Subscriber } from './subscriber/subscriber';
-import { removeFromArray } from './utils/removeFromArray';
-import { config } from './config/config';
-import { push, pop } from './stack/stack';
-import { nextTick } from './utils/nextTick';
-
-export const STATE_KEY = '__spredState__';
+import { Atom } from '../atom/atom';
+import { Observable } from '../observable/observable';
+import { getState, State } from '../state/state';
+import { Subscriber } from '../subscriber/subscriber';
+import { removeFromArray } from '../utils/removeFromArray';
+import { config } from '../config/config';
+import { push, pop } from '../stack/stack';
+import { nextTick } from '../utils/nextTick';
 
 let currentComputed = pop();
 
@@ -15,10 +13,6 @@ const queue: State<any>[] = [];
 let queueLength = 0;
 
 let isCalcActive = false;
-
-function getState<T>(observable: Observable<T>): State<T> {
-  return (observable as any)[STATE_KEY];
-}
 
 export function commit<T>(...pairs: [atom: Atom<T>, value: T][]) {
   for (let [atom, value] of pairs) {
