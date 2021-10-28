@@ -22,7 +22,7 @@ export function commit<T>(...pairs: [atom: Atom<T>, value: T][]) {
   for (let [atom, value] of pairs) {
     const state = getState(atom);
 
-    if (!checkDirty(state.value, value)) return;
+    if (!checkDirty(state.value, value)) continue;
 
     state.value = value;
     state.queueIndex = calcQueue.length;
@@ -194,12 +194,14 @@ function actualize(state: State<any>) {
   for (let dependency of state.dependencies) {
     const dependants = dependency.dependants;
 
-    if (dependants.indexOf(state) > -1) return;
+    if (dependants.indexOf(state) > -1) continue;
     activateDependencies(dependency);
     dependants.push(state);
+    dependency.active++;
   };
 
   for (let dependency of state.oldDependencies) {
+    dependency.active--;
     removeFromArray(dependency.dependants, state);
     deactivateDependencies(dependency);
   };
