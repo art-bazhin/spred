@@ -11,6 +11,7 @@ export interface State<T> {
   active: number; // subscribers and dependants length
   computedFn?: () => T;
   dependencies: State<any>[];
+  dc: number[];
   oldDependencies: State<any>[];
   dirtyCount: number;
   queueIndex: number;
@@ -24,6 +25,7 @@ export function createState<T>(value: T, computedFn?: () => T): State<T> {
     subscribers: [],
     dependants: [],
     dependencies: [],
+    dc: [],
     oldDependencies: [],
     dirtyCount: 0,
     queueIndex: -1,
