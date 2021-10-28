@@ -13,13 +13,15 @@ const atomProto = {
 }
 
 export interface Atom<T> extends Observable<T> {
+  (value: T): T;
   set(value: T): void;
 }
 
 export function atom<T>(value: T) {
   const f = function (value?: T) {
-    if (value === undefined) return f.get();
-    f.set(value);
+    if (!arguments.length) return f.get();
+    f.set(value as T);
+    return value;
   } as Atom<T>;
 
   (f as any)[STATE_KEY] = createState(value);
