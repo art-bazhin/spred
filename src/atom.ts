@@ -25,8 +25,9 @@ export function atom<T>(value: T) {
   } as Atom<T>;
 
   (f as any)[STATE_KEY] = createState(value);
-  (f as any).__proto__ = atomProto;
   (f as any).constructor = atom;
+
+  Object.setPrototypeOf(f, atomProto);
 
   return f;
 }

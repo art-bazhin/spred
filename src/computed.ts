@@ -11,8 +11,9 @@ export function computed<T>(computedFn: () => T) {
   } as Observable<T>;
 
   (f as any)[STATE_KEY] = createState(undefined, computedFn);
-  (f as any).__proto__ = observableProto;
   (f as any).constructor = computed;
+
+  Object.setPrototypeOf(f, observableProto);
 
   return f;
 }

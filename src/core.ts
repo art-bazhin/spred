@@ -14,12 +14,12 @@ const calcQueue: State<any>[] = [];
 
 let isCalcActive = false;
 
-function getState<T>(key: Observable<T>): State<T> {
-  return (key as any)[STATE_KEY];
+function getState<T>(observable: Observable<T>): State<T> {
+  return (observable as any)[STATE_KEY];
 }
 
 export function commit<T>(...pairs: [atom: Atom<T>, value: T][]) {
-  pairs.forEach(([atom, value], i) => {
+  for (let [atom, value] of pairs) {
     const state = getState(atom);
 
     if (!checkDirty(state.value, value)) return;
@@ -28,7 +28,7 @@ export function commit<T>(...pairs: [atom: Atom<T>, value: T][]) {
     state.queueIndex = calcQueue.length;
 
     calcQueue.push(state);
-  });
+  };
 
   if (config.async) nextTick(runCalculation);
   else runCalculation();
@@ -46,6 +46,7 @@ export function subscribe<T>(
   activateDependencies(state);
 
   state.subscribers.push(subscriber);
+  state.active++;
   subscriber(value);
 }
 
@@ -55,6 +56,7 @@ export function unsubscribe<T>(
 ) {
   const state = getState(atom);
 
+  state.active--;
   removeFromArray(state.subscribers, subscriber);
   deactivateDependencies(state);
 }
@@ -74,12 +76,12 @@ function runCalculation() {
 
     if (state.isProcessed) continue;
 
-    state.dependants.forEach((dependant) => {
+    for (let dependant of state.dependants) {
       dependant.queueIndex = calcQueue.length;
       dependant.dirtyCount++;
 
       calcQueue.push(dependant);
-    });
+    };
 
     state.isProcessed = true;
   };
@@ -118,18 +120,18 @@ function runCalculation() {
 }
 
 function decreaseDirtyCount(state: State<any>) {
-  state.dependants.forEach((dependant) => dependant.dirtyCount--);
+  for (let dependant of state.dependants) dependant.dirtyCount--;
 }
 
 function runSubscribers(state: State<any>) {
-  state.subscribers.forEach((subscriber) => subscriber(state.value));
+  for (let subscriber of state.subscribers) subscriber(state.value);
 }
 
 export function getStateValue<T>(state: State<T>): T {
   if (!isCalcActive && calcQueue.length)
     runCalculation();
 
-  if (state.computedFn && !isActive(state)) {
+  if (state.computedFn && !state.active) {
     state.value = calcComputed(state);
   }
 
@@ -167,40 +169,38 @@ function calcComputed(state: State<any>) {
 }
 
 function activateDependencies(state: State<any>) {
-  if (isActive(state)) return;
+  if (state.active) return;
 
-  state.dependencies.forEach((dependency) => {
+  for (let dependency of state.dependencies) {
     activateDependencies(dependency);
     dependency.dependants.push(state);
-  });
+    dependency.active++;
+  };
 }
 
 function deactivateDependencies(state: State<any>) {
-  if (isActive(state)) return;
+  if (state.active) return;
 
-  state.dependencies.forEach((dependency) => {
+  for (let dependency of state.dependencies) {
+    dependency.active--;
     removeFromArray(dependency.dependants, state);
     deactivateDependencies(dependency);
-  });
+  };
 }
 
 function actualize(state: State<any>) {
-  if (!isActive(state)) return;
+  if (!state.active) return;
 
-  state.dependencies.forEach(dependency => {
+  for (let dependency of state.dependencies) {
     const dependants = dependency.dependants;
 
     if (dependants.indexOf(state) > -1) return;
     activateDependencies(dependency);
     dependants.push(state);
-  });
+  };
 
-  state.oldDependencies.forEach(dependency => {
+  for (let dependency of state.oldDependencies) {
     removeFromArray(dependency.dependants, state);
     deactivateDependencies(dependency);
-  });
-}
-
-function isActive(state: State<any>) {
-  return state.dependants.length || state.subscribers.length;
+  };
 }
