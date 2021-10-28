@@ -1,5 +1,5 @@
-import { getStateValue, STATE_KEY, subscribe, unsubscribe } from './core';
-import { Subscriber } from './subscriber';
+import { getStateValue, STATE_KEY, subscribe, unsubscribe } from '../core';
+import { Subscriber } from '../subscriber/subscriber';
 
 export interface Observable<T> {
   (): T;

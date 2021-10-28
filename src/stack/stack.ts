@@ -1,4 +1,4 @@
-import { State } from "./state";
+import { State } from "../state/state";
 
 let states: State<any>[] = [];
 let current: State<any> | undefined;

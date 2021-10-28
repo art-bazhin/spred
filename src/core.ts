@@ -1,16 +1,18 @@
-import { Atom } from './atom';
-import { Observable } from './observable';
-import { State } from './state';
-import { Subscriber } from './subscriber';
-import { nextTick, removeFromArray } from './utils';
-import { config } from './config';
-import { push, pop } from './stack';
+import { Atom } from './atom/atom';
+import { Observable } from './observable/observable';
+import { State } from './state/state';
+import { Subscriber } from './subscriber/subscriber';
+import { removeFromArray } from './utils/removeFromArray';
+import { config } from './config/config';
+import { push, pop } from './stack/stack';
+import { nextTick } from './utils/nextTick';
 
 export const STATE_KEY = '__spredState__';
 
 let currentComputed = pop();
 
-const calcQueue: State<any>[] = [];
+const queue: State<any>[] = [];
+let queueLength = 0;
 
 let isCalcActive = false;
 
@@ -25,9 +27,9 @@ export function commit<T>(...pairs: [atom: Atom<T>, value: T][]) {
     if (!checkDirty(state.value, value)) continue;
 
     state.value = value;
-    state.queueIndex = calcQueue.length;
+    state.queueIndex = queue.length;
 
-    calcQueue.push(state);
+    queueLength = queue.push(state);
   };
 
   if (config.async) nextTick(runCalculation);
@@ -68,28 +70,26 @@ function resetStateQueueParams(state: State<any>) {
 }
 
 function runCalculation() {
-  if (isCalcActive || !calcQueue.length) return;
+  if (isCalcActive || !queueLength) return;
   isCalcActive = true;
 
-  for (let i = 0; i < calcQueue.length; i++) {
-    const state = calcQueue[i];
+  for (let i = 0; i < queueLength; i++) {
+    const state = queue[i];
 
     if (state.isProcessed) continue;
 
     for (let dependant of state.dependants) {
-      dependant.queueIndex = calcQueue.length;
+      dependant.queueIndex = queueLength;
       dependant.dirtyCount++;
 
-      calcQueue.push(dependant);
+      queueLength = queue.push(dependant);
     };
 
     state.isProcessed = true;
   };
 
-  const l = calcQueue.length;
-
-  for (let i = 0; i < l; i++) {
-    const state = calcQueue[i];
+  for (let i = 0; i < queueLength; i++) {
+    const state = queue[i];
 
     if (state.queueIndex !== i) continue;
 
@@ -115,7 +115,8 @@ function runCalculation() {
     resetStateQueueParams(state);
   };
 
-  calcQueue.length = 0;
+  queue.length = 0;
+  queueLength = 0;
   isCalcActive = false;
 }
 
@@ -128,7 +129,7 @@ function runSubscribers(state: State<any>) {
 }
 
 export function getStateValue<T>(state: State<T>): T {
-  if (!isCalcActive && calcQueue.length)
+  if (!isCalcActive && queue.length)
     runCalculation();
 
   if (state.computedFn && !state.active) {

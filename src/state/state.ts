@@ -1,4 +1,4 @@
-import { Subscriber } from './subscriber';
+import { Subscriber } from '../subscriber/subscriber';
 
 export interface State<T> {
   value: T;
