@@ -196,14 +196,16 @@ function actualize(state: State<any>) {
     const opt = state.dc[i] || 0;
 
     switch (opt) {
+      case 1:
+        return;
       case 0:
         dependency.active--;
-        removeFromArray(dependency.dependants, dependency);
+        removeFromArray(dependency.dependants, state);
         deactivateDependencies(dependency);
         break;
       case 2:
         activateDependencies(dependency);
-        dependency.dependants.push(dependency);
+        dependency.dependants.push(state);
         dependency.active++;
         break;
     }
