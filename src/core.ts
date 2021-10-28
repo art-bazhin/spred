@@ -1,4 +1,4 @@
-import { Subject } from './subject';
+import { Atom } from './atom';
 import { Observable } from './observable';
 import { State } from './state';
 import { Subscriber } from './subscriber';
@@ -10,7 +10,7 @@ export const STATE_KEY = '__spredState__';
 
 let currentComputed = pop();
 
-let calcQueue: State<any>[] = [];
+const calcQueue: State<any>[] = [];
 
 let isCalcActive = false;
 
@@ -18,9 +18,9 @@ function getState<T>(key: Observable<T>): State<T> {
   return (key as any)[STATE_KEY];
 }
 
-export function commit<T>(...pairs: [subject: Subject<T>, value: T][]) {
-  pairs.forEach(([subject, value], i) => {
-    const state = getState(subject);
+export function commit<T>(...pairs: [atom: Atom<T>, value: T][]) {
+  pairs.forEach(([atom, value], i) => {
+    const state = getState(atom);
 
     if (!checkDirty(state.value, value)) return;
 
@@ -41,7 +41,7 @@ export function subscribe<T>(
   const state = getState(observable);
   const value = getStateValue(state);
 
-  if (state.subscribers.includes(subscriber)) return;
+  if (state.subscribers.indexOf(subscriber) > -1) return;
 
   activateDependencies(state);
 
@@ -50,10 +50,10 @@ export function subscribe<T>(
 }
 
 export function unsubscribe<T>(
-  subject: Observable<T>,
+  atom: Observable<T>,
   subscriber: Subscriber<T>
 ) {
-  const state = getState(subject);
+  const state = getState(atom);
 
   removeFromArray(state.subscribers, subscriber);
   deactivateDependencies(state);
@@ -84,8 +84,12 @@ function runCalculation() {
     state.isProcessed = true;
   };
 
-  calcQueue.forEach((state, i) => {
-    if (state.queueIndex !== i) return;
+  const l = calcQueue.length;
+
+  for (let i = 0; i < l; i++) {
+    const state = calcQueue[i];
+
+    if (state.queueIndex !== i) continue;
 
     if (!state.computedFn) {
       runSubscribers(state);
@@ -93,7 +97,7 @@ function runCalculation() {
       if (!state.dirtyCount) {
         decreaseDirtyCount(state);
         resetStateQueueParams(state);
-        return;
+        continue;
       }
 
       const newValue = calcComputed(state);
@@ -107,9 +111,9 @@ function runCalculation() {
     }
 
     resetStateQueueParams(state);
-  });
+  };
 
-  calcQueue = [];
+  calcQueue.length = 0;
   isCalcActive = false;
 }
 
@@ -129,7 +133,7 @@ export function getStateValue<T>(state: State<T>): T {
     state.value = calcComputed(state);
   }
 
-  if (currentComputed) {
+  if (currentComputed && currentComputed.dependencies.indexOf(state) < 0) {
     removeFromArray(currentComputed.oldDependencies, state);
     currentComputed.dependencies.push(state);
   }
@@ -186,7 +190,7 @@ function actualize(state: State<any>) {
   state.dependencies.forEach(dependency => {
     const dependants = dependency.dependants;
 
-    if (dependants.includes(state)) return;
+    if (dependants.indexOf(state) > -1) return;
     activateDependencies(dependency);
     dependants.push(state);
   });

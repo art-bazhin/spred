@@ -1,14 +1,14 @@
-import { createSubject, Subject } from './subject';
-import { createComputed } from './computed';
+import { atom, Atom } from './atom';
+import { computed } from './computed';
 import { Observable } from './observable';
 import { commit } from './core';
 import { configure } from './config';
 
 export {
-  Subject,
+  Atom,
   Observable,
-  createSubject,
-  createComputed,
+  atom,
+  computed,
   commit,
   configure
 };

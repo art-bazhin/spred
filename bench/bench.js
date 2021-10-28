@@ -4,8 +4,8 @@ const Cell = cellx.Cell;
 //   async: false
 // });
 
-const createSubject = spred.createSubject;
-const createComputed = spred.createComputed;
+const atom = spred.atom;
+const computed = spred.computed;
 const commit = spred.commit;
 
 const resultDiv = document.getElementById('result');
@@ -101,10 +101,10 @@ function testSpred(layerCount, newValues) {
   const initTimestamp = performance.now();
 
   const start = {
-    prop1: createSubject(1),
-    prop2: createSubject(2),
-    prop3: createSubject(3),
-    prop4: createSubject(4),
+    prop1: atom(1),
+    prop2: atom(2),
+    prop3: atom(3),
+    prop4: atom(4),
   };
 
   let layer = start;
@@ -112,16 +112,16 @@ function testSpred(layerCount, newValues) {
   for (let i = layerCount; i--; ) {
     layer = (function (m) {
       const s = {
-        prop1: createComputed(function () {
+        prop1: computed(function () {
           return m.prop2();
         }),
-        prop2: createComputed(function () {
+        prop2: computed(function () {
           return m.prop1() - m.prop3();
         }),
-        prop3: createComputed(function () {
+        prop3: computed(function () {
           return m.prop2() + m.prop4();
         }),
-        prop4: createComputed(function () {
+        prop4: computed(function () {
           return m.prop3();
         }),
       };
@@ -150,10 +150,10 @@ function testSpred(layerCount, newValues) {
 
   const st = performance.now();
 
-  start.prop1(4);
-  start.prop2(3);
-  start.prop3(2);
-  start.prop4(1);
+  start.prop1(newValues[0]);
+  start.prop2(newValues[1]);
+  start.prop3(newValues[2]);
+  start.prop4(newValues[3]);
 
   // commit(
   //   [start.prop1, newValues[0]],
@@ -330,15 +330,15 @@ function runBenchmark() {
 
 runButton.addEventListener('click', runBenchmark);
 
-const counter = createSubject(0);
-const x2Counter = createComputed(() => counter() * 2);
-const x4Counter = createComputed(() => x2Counter() * 2);
-const x8Counter = createComputed(() => x4Counter() * 2);
-const x16Counter = createComputed(() => x8Counter() * 2);
+const counter = atom(0);
+const x2Counter = computed(() => counter() * 2);
+const x4Counter = computed(() => x2Counter() * 2);
+const x8Counter = computed(() => x4Counter() * 2);
+const x16Counter = computed(() => x8Counter() * 2);
 
-const tumbler = createSubject(false);
+const tumbler = atom(false);
 
-const message = createComputed(() => {
+const message = computed(() => {
   if (tumbler()) return `X16 counter is ${x16Counter()}`;
   return 'TUMBLER IS OFF';
 });

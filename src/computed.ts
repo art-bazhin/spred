@@ -5,14 +5,14 @@ import {
 import { observableProto } from './observable';
 import { createState } from './state';
 
-export function createComputed<T>(computedFn: () => T) {
+export function computed<T>(computedFn: () => T) {
   const f = function () {
     return f.get();
   } as Observable<T>;
 
   (f as any)[STATE_KEY] = createState(undefined, computedFn);
   (f as any).__proto__ = observableProto;
-  (f as any).constructor = createComputed;
+  (f as any).constructor = computed;
 
   return f;
 }
