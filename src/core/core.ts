@@ -131,16 +131,16 @@ export function getStateValue<T>(state: State<T>): T {
   }
 
   if (currentComputed) {
-    const l = currentComputed.dependencies.length;
     let i = currentComputed.dependencies.indexOf(state);
-    let v = 1;
+    let status = 1;
 
     if (i < 0) {
       i = currentComputed.dependencies.push(state) - 1;
-      v = 2;
+      status = -1;
     }
 
-    currentComputed.dc[i] = v;
+    currentComputed.dependencyStatuses[i] = status;
+    currentComputed.dependencyStatusesSum += status;
   }
 
   return state.value;
@@ -154,7 +154,8 @@ function calcComputed(state: State<any>) {
   let value = state.value;
 
   currentComputed = push(state);
-  currentComputed.dc = [];
+  currentComputed.dependencyStatuses = [];
+  currentComputed.dependencyStatusesSum = 0;
 
   try {
     value = state.computedFn!();
@@ -162,7 +163,12 @@ function calcComputed(state: State<any>) {
     console.error(e);
   }
 
-  actualize(state);
+  if (
+    state.active && 
+    state.dependencyStatusesSum !== state.dependencies.length
+  ) {
+    actualizeDependencies(state);
+  }
 
   currentComputed = pop();
 
@@ -189,11 +195,9 @@ function deactivateDependencies(state: State<any>) {
   };
 }
 
-function actualize(state: State<any>) {
-  if (!state.active) return;
-
+function actualizeDependencies(state: State<any>) {
   state.dependencies.forEach((dependency, i) => {
-    const opt = state.dc[i] || 0;
+    const opt = state.dependencyStatuses[i] || 0;
 
     switch (opt) {
       case 1:
@@ -203,11 +207,13 @@ function actualize(state: State<any>) {
         removeFromArray(dependency.dependants, state);
         deactivateDependencies(dependency);
         break;
-      case 2:
+      case -1:
         activateDependencies(dependency);
         dependency.dependants.push(state);
         dependency.active++;
         break;
     }
   });
+
+  state.dependencies = state.dependencies.filter((_, i) => state.dependencyStatuses[i]);
 }
