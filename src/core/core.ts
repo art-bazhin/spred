@@ -32,7 +32,8 @@ export function commit<T>(...pairs: [atom: Atom<T>, value: T][]) {
 
 export function subscribe<T>(
   observable: Observable<T>,
-  subscriber: Subscriber<T>
+  subscriber: Subscriber<T>,
+  emitOnSubscribe: boolean
 ) {
   const state = getState(observable);
   const value = getStateValue(state);
@@ -43,7 +44,7 @@ export function subscribe<T>(
 
   state.subscribers.push(subscriber);
   state.active++;
-  subscriber(value);
+  if (emitOnSubscribe) subscriber(value);
 }
 
 export function unsubscribe<T>(

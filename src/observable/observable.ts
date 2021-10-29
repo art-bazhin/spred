@@ -5,7 +5,7 @@ import { Subscriber } from '../subscriber/subscriber';
 export interface Observable<T> {
   (): T;
   get(): T;
-  subscribe(subscriber: Subscriber<T>): () => void;
+  subscribe(subscriber: Subscriber<T>, emitOnSubscribe?: boolean): () => void;
 }
 
 export const observableProto = {
@@ -15,8 +15,8 @@ export const observableProto = {
     return getStateValue((this as any)[STATE_KEY]);
   },
 
-  subscribe(subscriber: any) {
-    subscribe(this as any, subscriber);
+  subscribe(subscriber: any, emitOnSubscribe = true) {
+    subscribe(this as any, subscriber, emitOnSubscribe);
     return () => unsubscribe(this as any, subscriber);
   }
 }
