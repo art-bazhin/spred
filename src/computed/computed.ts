@@ -9,8 +9,8 @@ export function computed<T>(computedFn: () => T) {
 
   (f as any)[STATE_KEY] = createState(undefined, computedFn);
   (f as any).constructor = computed;
-
-  Object.setPrototypeOf(f, observableProto);
+  (f as any).get = observableProto.get;
+  (f as any).subscribe = observableProto.subscribe;
 
   return f;
 }

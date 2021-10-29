@@ -9,8 +9,6 @@ export interface Observable<T> {
 }
 
 export const observableProto = {
-  __proto__: Function.prototype,
-
   get() {
     return getStateValue((this as any)[STATE_KEY]);
   },

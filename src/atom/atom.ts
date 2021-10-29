@@ -5,7 +5,7 @@ import {
 import { createState, STATE_KEY } from '../state/state';
 
 const atomProto = {
-  __proto__: observableProto,
+  ...observableProto,
   set(value: any) {
     commit([this as any,  value]);
     return value;
@@ -25,8 +25,9 @@ export function atom<T>(value: T) {
 
   (f as any)[STATE_KEY] = createState(value);
   (f as any).constructor = atom;
-
-  Object.setPrototypeOf(f, atomProto);
+  (f as any).set = atomProto.set;
+  (f as any).get = atomProto.get;
+  (f as any).subscribe = atomProto.subscribe;
 
   return f;
 }
