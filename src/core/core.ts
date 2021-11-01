@@ -9,22 +9,24 @@ import { nextTick } from '../utils/nextTick';
 
 let currentComputed = pop();
 
-const queue: State<any>[] = [];
+let queue: State<any>[] = [];
 let queueLength = 0;
 
 let isCalcActive = false;
 
 export function commit<T>(...pairs: [atom: Atom<T>, value: T][]) {
+  if (currentComputed) return;
+
   for (let [atom, value] of pairs) {
     const state = getState(atom);
 
     if (!checkDirty(state.value, value)) continue;
 
     state.value = value;
-    state.queueIndex = queue.length;
-
     queueLength = queue.push(state);
   };
+
+  if (isCalcActive) return;
 
   if (config.async) nextTick(runCalculation);
   else runCalculation();
@@ -65,7 +67,8 @@ function resetStateQueueParams(state: State<any>) {
 }
 
 function runCalculation() {
-  if (isCalcActive || !queueLength) return;
+  if (!queueLength) return;
+
   isCalcActive = true;
 
   for (let i = 0; i < queueLength; i++) {
@@ -83,35 +86,42 @@ function runCalculation() {
     state.isProcessed = true;
   };
 
-  for (let i = 0; i < queueLength; i++) {
-    const state = queue[i];
+  const fullQueueLength = queueLength;
 
-    if (state.queueIndex !== i) continue;
+  for (let i = 0; i < fullQueueLength; i++) {
+    const state = queue[i];
 
     if (!state.computedFn) {
       runSubscribers(state);
+      resetStateQueueParams(state);
+      continue;
+    }
+
+    if (state.queueIndex !== i) continue;
+
+    if (!state.dirtyCount) {
+      decreaseDirtyCount(state);
+      resetStateQueueParams(state);
+      continue;
+    }
+
+    const newValue = calcComputed(state);
+
+    if (checkDirty(state.value, newValue)) {
+      state.value = newValue;
+      runSubscribers(state);
     } else {
-      if (!state.dirtyCount) {
-        decreaseDirtyCount(state);
-        resetStateQueueParams(state);
-        continue;
-      }
-
-      const newValue = calcComputed(state);
-
-      if (checkDirty(state.value, newValue)) {
-        state.value = newValue;
-        runSubscribers(state);
-      } else {
-        decreaseDirtyCount(state);
-      }
+      decreaseDirtyCount(state);
     }
 
     resetStateQueueParams(state);
   };
 
-  queue.length = 0;
-  queueLength = 0;
+  queue = queue.slice(fullQueueLength);
+  queueLength = queue.length;
+
+  runCalculation();
+
   isCalcActive = false;
 }
 
