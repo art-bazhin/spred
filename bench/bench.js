@@ -12,6 +12,10 @@ const resultDiv = document.getElementById('result');
 const runButton = document.getElementById('run');
 
 function getParameter(inputId) {
+  if (inputId === 'lib') {
+    return document.querySelector('input:checked').value;
+  }
+
   const input = document.getElementById(inputId);
 
   const value = input.value || 1;
@@ -50,17 +54,10 @@ function testCellx(layerCount, newValues) {
         }),
       };
 
-      // if (!i) {
-        s.prop1.on('change', function () {});
-        s.prop2.on('change', function () {});
-        s.prop3.on('change', function () {});
-        s.prop4.on('change', function () {});
-      // }
-
-      // s.prop1.get();
-      // s.prop2.get();
-      // s.prop3.get();
-      // s.prop4.get();
+      s.prop1.on('change', function () {});
+      s.prop2.on('change', function () {});
+      s.prop3.on('change', function () {});
+      s.prop4.on('change', function () {});
 
       return s;
     })(layer);
@@ -71,10 +68,10 @@ function testCellx(layerCount, newValues) {
   const end = layer;
 
   report.beforeChange = [
-    start.prop1.get(),
-    start.prop2.get(),
-    start.prop3.get(),
-    start.prop4.get(),
+    end.prop1.get(),
+    end.prop2.get(),
+    end.prop3.get(),
+    end.prop4.get(),
   ];
 
   const st = performance.now();
@@ -126,17 +123,10 @@ function testSpred(layerCount, newValues) {
         }),
       };
 
-      // if (!i) {
-        s.prop1.subscribe(function () {});
-        s.prop2.subscribe(function () {});
-        s.prop3.subscribe(function () {});
-        s.prop4.subscribe(function () {});
-      // }
-
-      // s.prop1();
-      // s.prop2();
-      // s.prop3();
-      // s.prop4();
+      s.prop1.subscribe(function () {});
+      s.prop2.subscribe(function () {});
+      s.prop3.subscribe(function () {});
+      s.prop4.subscribe(function () {});
 
       return s;
     })(layer);
@@ -146,7 +136,7 @@ function testSpred(layerCount, newValues) {
 
   const end = layer;
 
-  report.beforeChange = [start.prop1(), start.prop2(), start.prop3(), start.prop4()];
+  report.beforeChange = [end.prop1(), end.prop2(), end.prop3(), end.prop4()];
 
   const st = performance.now();
 
@@ -154,13 +144,6 @@ function testSpred(layerCount, newValues) {
   start.prop2(newValues[1]);
   start.prop3(newValues[2]);
   start.prop4(newValues[3]);
-
-  // commit(
-  //   [start.prop1, newValues[0]],
-  //   [start.prop2, newValues[1]],
-  //   [start.prop3, newValues[2]],
-  //   [start.prop4, newValues[3]],
-  // );
 
   report.afterChange = [end.prop1(), end.prop2(), end.prop3(), end.prop4()];
 
@@ -229,7 +212,6 @@ function drawTables() {
     <table id="initTable" class="l">
       <tr>
         <th>Lib</th>
-        <th>Avg%</th>
         <th>Avg</th>
         <th>Min</th>
         <th>Max</th>
@@ -244,7 +226,6 @@ function drawTables() {
     <table id="recalcTable">
       <tr>
         <th>Lib</th>
-        <th>Avg%</th>
         <th>Avg</th>
         <th>Min</th>
         <th>Max</th>
@@ -254,17 +235,11 @@ function drawTables() {
   `;
 }
 
-function createTableRow(libReport, minAvg) {
+function createTableRow(libReport) {
   const row = document.createElement('tr');
-
-  const percent = (
-    libReport.avg === 0 ||
-    minAvg === 0
-  ) ? '-' : Math.round(100 * libReport.avg / minAvg) + '%';
 
   row.innerHTML = `
     <td>${libReport.name}</td>
-    <td>${percent}</td>
     <td>${formatTime(libReport.avg)}</td>
     <td>${formatTime(libReport.min)}</td>
     <td>${formatTime(libReport.max)}</td>
@@ -283,66 +258,26 @@ function runBenchmark() {
 
   const iterations = getParameter('iterations');
   const layers = getParameter('layers');
+  const lib = getParameter('lib');
   
   const newValues = [4, 3, 2, 1];
 
   setTimeout(() => {
-    const warmup = false;
-    const testSet = [
-      testSpred,
-      //testCellx,
-    ];
-    
-    if (warmup) {
-      testSet.forEach(test => testLib(test, layers, iterations, newValues));
-    }
-    
-    const reportsSortedByRecalc = testSet
-      .map(test => testLib(test, layers, iterations, newValues))
-      .sort((a, b) => a.recalc.avg - b.recalc.avg);
+    const testFn = {
+      spred: testSpred,
+      cellx: testCellx,
+    }[lib];
 
-    const reportsSortedByInit = 
-      [...reportsSortedByRecalc]
-        .sort((a, b) => a.init.avg - b.init.avg);
-
+    const report = testLib(testFn, layers, iterations, newValues);
 
     drawTables();
 
     const recalcTable = document.getElementById('recalcTable');
-    const minRecalcAvg = reportsSortedByRecalc.sort((a, b) => a.recalc.avg - b.recalc.avg)[0].recalc.avg;
-
     const initTable = document.getElementById('initTable');
-    const minInitAvg = reportsSortedByInit.sort((a, b) => a.init.avg - b.init.avg)[0].init.avg;
 
-    reportsSortedByRecalc.forEach(
-      report => 
-        report.recalc.name && 
-        recalcTable.appendChild(createTableRow(report.recalc, minRecalcAvg))
-    );
-
-    reportsSortedByInit.forEach(
-      report => 
-        report.recalc.name && 
-        initTable.appendChild(createTableRow(report.init, minInitAvg))
-    );
+    recalcTable.appendChild(createTableRow(report.recalc));
+    initTable.appendChild(createTableRow(report.init));
   }, 0);
 }
 
 runButton.addEventListener('click', runBenchmark);
-
-const counter = atom(0);
-const x2Counter = computed(() => counter() * 2);
-const x4Counter = computed(() => x2Counter() * 2);
-const x8Counter = computed(() => x4Counter() * 2);
-const x16Counter = computed(() => x8Counter() * 2);
-
-const tumbler = atom(false);
-
-const message = computed(() => {
-  if (tumbler()) return `X16 counter is ${x16Counter()}`;
-  return 'TUMBLER IS OFF';
-});
-
-message.subscribe(console.log);
-
-//console.log(message.__spredState__);
