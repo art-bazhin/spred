@@ -3,7 +3,6 @@ import { Observable } from '../observable/observable';
 import { getState, State } from '../state/state';
 import { Subscriber } from '../subscriber/subscriber';
 import { removeFromArray } from '../utils/removeFromArray';
-import { config } from '../config/config';
 import { push, pop } from '../stack/stack';
 import { nextTick } from '../utils/nextTick';
 
@@ -14,22 +13,19 @@ let queueLength = 0;
 
 let isCalcActive = false;
 
-export function commit<T>(...pairs: [atom: Atom<T>, value: T][]) {
+export function update<T>(atom: Atom<T>, value: T) {
   if (currentComputed) return;
 
-  for (let [atom, value] of pairs) {
-    const state = getState(atom);
+  const state = getState(atom);
 
-    if (!checkDirty(state.value, value)) continue;
+  if (!checkDirty(state.value, value)) return;
 
-    state.value = value;
-    queueLength = queue.push(state);
-  };
+  state.value = value;
+  queueLength = queue.push(state);
 
   if (isCalcActive) return;
 
-  if (config.async) nextTick(runCalculation);
-  else runCalculation();
+  nextTick(recalc);
 }
 
 export function subscribe<T>(
@@ -66,7 +62,7 @@ function resetStateQueueParams(state: State<any>) {
   state.isProcessed = false;
 }
 
-function runCalculation() {
+export function recalc() {
   if (!queueLength) return;
 
   isCalcActive = true;
@@ -120,7 +116,7 @@ function runCalculation() {
   queue = queue.slice(fullQueueLength);
   queueLength = queue.length;
 
-  runCalculation();
+  recalc();
 
   isCalcActive = false;
 }
@@ -135,7 +131,7 @@ function runSubscribers(state: State<any>) {
 
 export function getStateValue<T>(state: State<T>): T {
   if (!isCalcActive && queue.length)
-    runCalculation();
+    recalc();
 
   if (state.computedFn && !state.active) {
     state.value = calcComputed(state);

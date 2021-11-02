@@ -36,6 +36,17 @@
       td, th {
         padding: 8px 16px;
       }
+
+      label {
+        display: flex;
+        align-items: center;
+        margin-right: 12px;
+        cursor: pointer;
+      }
+
+      .radios {
+        display: flex;
+      }
     </style>
   </head>
   <body>
@@ -45,6 +56,19 @@
     <div class="m">
       Iterations: <input id="iterations" type="number" value="1"/>
     </div>
+
+    <div class="l radios">
+      <label>
+        <input type="radio" name="lib" value="spred" checked></input>
+        spred
+      </label>
+
+      <label>
+        <input type="radio" name="lib" value="cellx"></input>
+        cellx
+      </label>
+    </div>
+
     <div class="l">
       <button id="run">Run Benchmark</button>
     </div>

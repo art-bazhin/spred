@@ -2,10 +2,8 @@
 export const nextTick = function() {
   const w : any = window;
   
-  if (w.queueMicrotask) {
-    return function(func: () => any) {
-      queueMicrotask(func);
-    };
+  if (w?.queueMicrotask) {
+    return queueMicrotask;
   }
 
   const promise = Promise.resolve();
