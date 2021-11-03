@@ -6,6 +6,8 @@ export const STATE_KEY = '__spredState__';
 export interface State<T> {
   value: T;
   error?: Error;
+  incomingError?: Error;
+  errorChanged: boolean;
   subscribers: Subscriber<T>[];
   dependants: State<any>[];
   active: number; // subscribers and dependants length
@@ -23,6 +25,7 @@ export function createState<T>(value: T, computedFn?: () => T): State<T> {
   return {
     value,
     computedFn,
+    errorChanged: false,
     subscribers: [],
     dependants: [],
     dependencies: [],

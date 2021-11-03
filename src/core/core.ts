@@ -57,6 +57,7 @@ export function unsubscribe<T>(
 }
 
 function resetStateQueueParams(state: State<any>) {
+  state.errorChanged = false;
   state.dirtyCount = 0;
   state.queueIndex = -1;
   state.isProcessed = false;
@@ -95,6 +96,13 @@ export function recalc() {
 
     if (state.queueIndex !== i) continue;
 
+    if (state.errorChanged) spreadError(state);
+
+    if (state.incomingError) {
+      resetStateQueueParams(state);
+      continue;
+    }
+
     if (!state.dirtyCount) {
       decreaseDirtyCount(state);
       resetStateQueueParams(state);
@@ -121,6 +129,13 @@ export function recalc() {
   isCalcActive = false;
 }
 
+function spreadError(state: State<any>) {
+  for (let dependant of state.dependants) {
+    dependant.incomingError = state.error || state.incomingError;
+    dependant.errorChanged = true;
+  }
+}
+
 function decreaseDirtyCount(state: State<any>) {
   for (let dependant of state.dependants) dependant.dirtyCount--;
 }
@@ -133,7 +148,7 @@ export function getStateValue<T>(state: State<T>): T {
   if (!isCalcActive && queue.length)
     recalc();
 
-  if (state.computedFn && !state.active) {
+  if (state.computedFn && !state.active && !state.incomingError) {
     state.value = calcComputed(state);
   }
 
@@ -160,17 +175,26 @@ function checkDirty(prevValue: any, nextValue: any) {
 function calcComputed(state: State<any>) {
   let value = state.value;
 
+  const hadError = state.error;
+
   currentComputed = push(state);
   currentComputed.dependencyStatuses = [];
   currentComputed.dependencyStatusesSum = 0;
 
   try {
     value = state.computedFn!();
-  } catch (e) {
+    state.error = undefined;
+
+    if (hadError) spreadError(state);
+  } catch (e: any) {
     console.error(e);
+    state.error = e;
+
+    spreadError(state);
   }
 
   if (
+    !state.incomingError &&
     state.active && 
     state.dependencyStatusesSum !== state.dependencies.length
   ) {
