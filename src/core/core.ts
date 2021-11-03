@@ -10,6 +10,7 @@ let currentComputed = pop();
 
 let queue: State<any>[] = [];
 let queueLength = 0;
+let fullQueueLength = 0;
 
 let isCalcActive = false;
 
@@ -21,6 +22,7 @@ export function update<T>(atom: Atom<T>, value: T) {
   if (!checkDirty(state.value, value)) return;
 
   state.value = value;
+  state.queueIndex = queueLength - fullQueueLength;
   queueLength = queue.push(state);
 
   if (isCalcActive) return;
@@ -83,22 +85,17 @@ export function recalc() {
     state.isProcessed = true;
   };
 
-  const fullQueueLength = queueLength;
+  fullQueueLength = queueLength;
 
   for (let i = 0; i < fullQueueLength; i++) {
     const state = queue[i];
-
-    if (!state.computedFn) {
-      runSubscribers(state);
-      resetStateQueueParams(state);
-      continue;
-    }
 
     if (state.queueIndex !== i) continue;
 
     if (state.errorChanged) spreadError(state);
 
-    if (state.incomingError) {
+    if (!state.computedFn || state.incomingError) {
+      runSubscribers(state);
       resetStateQueueParams(state);
       continue;
     }
@@ -111,7 +108,7 @@ export function recalc() {
 
     const newValue = calcComputed(state);
 
-    if (checkDirty(state.value, newValue)) {
+    if (checkDirty(state.value, newValue) || state.error) {
       state.value = newValue;
       runSubscribers(state);
     } else {
@@ -123,6 +120,7 @@ export function recalc() {
 
   queue = queue.slice(fullQueueLength);
   queueLength = queue.length;
+  fullQueueLength = queueLength;
 
   recalc();
 
@@ -141,7 +139,9 @@ function decreaseDirtyCount(state: State<any>) {
 }
 
 function runSubscribers(state: State<any>) {
-  for (let subscriber of state.subscribers) subscriber(state.value);
+  for (let subscriber of state.subscribers) {
+    subscriber(state.value, state.error || state.incomingError);
+  }
 }
 
 export function getStateValue<T>(state: State<T>): T {
@@ -182,9 +182,11 @@ function calcComputed(state: State<any>) {
 
   try {
     value = state.computedFn!();
-    state.error = undefined;
 
-    if (hadError) spreadError(state);
+    if (hadError) {
+      state.error = undefined;
+      spreadError(state);
+    }
   } catch (e: any) {
     console.error(e);
     state.error = e;
