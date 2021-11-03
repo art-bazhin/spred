@@ -145,8 +145,7 @@ function runSubscribers(state: State<any>) {
 }
 
 export function getStateValue<T>(state: State<T>): T {
-  if (!isCalcActive && queue.length)
-    recalc();
+  if (!isCalcActive) recalc();
 
   if (state.computedFn && !state.active && !state.incomingError) {
     state.value = calcComputed(state);
@@ -194,7 +193,7 @@ function calcComputed(state: State<any>) {
   }
 
   if (
-    !state.incomingError &&
+    !state.error &&
     state.active && 
     state.dependencyStatusesSum !== state.dependencies.length
   ) {
