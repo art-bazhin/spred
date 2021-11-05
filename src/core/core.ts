@@ -140,7 +140,10 @@ function decreaseDirtyCount(state: State<any>) {
 
 function runSubscribers(state: State<any>) {
   for (let subscriber of state.subscribers) {
-    subscriber(state.value, state.error || state.incomingError);
+    const err = state.error || state.incomingError;
+
+    if (err) subscriber(state.value, err);
+    else subscriber(state.value);
   }
 }
 
@@ -203,6 +206,10 @@ function calcComputed(state: State<any>) {
   }
 
   currentComputed = pop();
+
+  if (!state.active && currentComputed) {
+    currentComputed.incomingError = state.error || state.incomingError;
+  }
 
   return value;
 }
