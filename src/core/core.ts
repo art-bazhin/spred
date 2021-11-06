@@ -4,7 +4,8 @@ import { getState, State } from '../state/state';
 import { Subscriber } from '../subscriber/subscriber';
 import { removeFromArray } from '../utils/removeFromArray';
 import { push, pop } from '../stack/stack';
-import { nextTick } from '../utils/nextTick';
+import { microtask } from '../utils/microtask';
+import { config } from '../config/config';
 
 let currentComputed = pop();
 
@@ -15,19 +16,18 @@ let fullQueueLength = 0;
 let isCalcActive = false;
 
 export function update<T>(atom: Atom<T>, value: T) {
-  if (currentComputed) return;
-
   const state = getState(atom);
 
-  if (!checkDirty(state.value, value)) return;
+  if (!config.checkDirty(value, state.value)) return;
 
+  state.prevValue = state.value;
   state.value = value;
   state.queueIndex = queueLength - fullQueueLength;
   queueLength = queue.push(state);
 
   if (isCalcActive) return;
 
-  nextTick(recalc);
+  microtask(recalc);
 }
 
 export function subscribe<T>(
@@ -47,10 +47,7 @@ export function subscribe<T>(
   if (emitOnSubscribe) subscriber(value);
 }
 
-export function unsubscribe<T>(
-  atom: Observable<T>,
-  subscriber: Subscriber<T>
-) {
+export function unsubscribe<T>(atom: Observable<T>, subscriber: Subscriber<T>) {
   const state = getState(atom);
 
   state.active--;
@@ -80,10 +77,10 @@ export function recalc() {
       dependant.dirtyCount++;
 
       queueLength = queue.push(dependant);
-    };
+    }
 
     state.isProcessed = true;
-  };
+  }
 
   fullQueueLength = queueLength;
 
@@ -108,15 +105,23 @@ export function recalc() {
 
     const newValue = calcComputed(state);
 
-    if (checkDirty(state.value, newValue) || state.error) {
-      state.value = newValue;
+    if (
+      config.checkDirty(newValue, state.value) ||
+      state.error ||
+      state.errorChanged
+    ) {
+      if (!state.error) {
+        state.prevValue = state.value;
+        state.value = newValue;
+      }
+
       runSubscribers(state);
     } else {
       decreaseDirtyCount(state);
     }
 
     resetStateQueueParams(state);
-  };
+  }
 
   queue = queue.slice(fullQueueLength);
   queueLength = queue.length;
@@ -151,6 +156,7 @@ export function getStateValue<T>(state: State<T>): T {
   if (!isCalcActive) recalc();
 
   if (state.computedFn && !state.active && !state.incomingError) {
+    state.prevValue = state.value;
     state.value = calcComputed(state);
   }
 
@@ -170,10 +176,6 @@ export function getStateValue<T>(state: State<T>): T {
   return state.value;
 }
 
-function checkDirty(prevValue: any, nextValue: any) {
-  return !Object.is(prevValue, nextValue);
-}
-
 function calcComputed(state: State<any>) {
   let value = state.value;
 
@@ -188,18 +190,21 @@ function calcComputed(state: State<any>) {
 
     if (hadError) {
       state.error = undefined;
+      state.errorChanged = true;
       spreadError(state);
     }
   } catch (e: any) {
-    console.error(e);
+    config.logError(e);
+
     state.error = e;
+    state.errorChanged = true;
 
     spreadError(state);
   }
 
   if (
     !state.error &&
-    state.active && 
+    state.active &&
     state.dependencyStatusesSum !== state.dependencies.length
   ) {
     actualizeDependencies(state);
@@ -221,7 +226,7 @@ function activateDependencies(state: State<any>) {
     activateDependencies(dependency);
     dependency.dependants.push(state);
     dependency.active++;
-  };
+  }
 }
 
 function deactivateDependencies(state: State<any>) {
@@ -231,7 +236,7 @@ function deactivateDependencies(state: State<any>) {
     dependency.active--;
     removeFromArray(dependency.dependants, state);
     deactivateDependencies(dependency);
-  };
+  }
 }
 
 function actualizeDependencies(state: State<any>) {
@@ -254,5 +259,7 @@ function actualizeDependencies(state: State<any>) {
     }
   });
 
-  state.dependencies = state.dependencies.filter((_, i) => state.dependencyStatuses[i]);
+  state.dependencies = state.dependencies.filter(
+    (_, i) => state.dependencyStatuses[i]
+  );
 }
