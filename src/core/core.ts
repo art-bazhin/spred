@@ -27,7 +27,8 @@ export function update<T>(atom: Atom<T>, value: T) {
 
   if (isCalcActive) return;
 
-  microtask(recalc);
+  if (config.async) microtask(recalc);
+  else recalc();
 }
 
 export function subscribe<T>(

@@ -183,4 +183,38 @@ describe('observable', () => {
 
     expect(x2Counter()).toBe(2);
   });
+
+  it('immediately runs subscribers on value change in sync mode', () => {
+    configure({
+      async: false,
+    });
+
+    const subscriber = jest.fn();
+    const counter = atom(0);
+
+    counter.subscribe(subscriber, false);
+
+    counter(1);
+    counter(2);
+    counter(3);
+
+    expect(subscriber).toHaveBeenCalledTimes(3);
+
+    configure();
+  });
+
+  it('batches updates and subscribers by default', () => {
+    const subscriber = jest.fn();
+    const counter = atom(0);
+
+    counter.subscribe(subscriber, false);
+
+    counter(1);
+    counter(2);
+    counter(3);
+
+    recalc();
+
+    expect(subscriber).toHaveBeenCalledTimes(1);
+  });
 });

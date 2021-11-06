@@ -12,6 +12,6 @@ const DEFAULT_CONFIG = {
 
 export const config = Object.assign({}, DEFAULT_CONFIG);
 
-export function configure(configUpdate: Config) {
-  Object.assign(config, configUpdate);
+export function configure(configUpdate?: Config) {
+  Object.assign(config, configUpdate || DEFAULT_CONFIG);
 }
