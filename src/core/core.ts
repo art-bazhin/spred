@@ -143,12 +143,12 @@ function decreaseDirtyCount(state: State<any>) {
   for (let dependant of state.dependants) dependant.dirtyCount--;
 }
 
-function runSubscribers(state: State<any>) {
+function runSubscribers<T>(state: State<T>) {
   for (let subscriber of state.subscribers) {
     const err = state.error || state.incomingError;
 
-    if (err) subscriber(state.value, err);
-    else subscriber(state.value);
+    if (err) subscriber(state.value, state.prevValue, err);
+    else subscriber(state.value, state.prevValue);
   }
 }
 
@@ -176,7 +176,7 @@ export function getStateValue<T>(state: State<T>): T {
   return state.value;
 }
 
-function calcComputed(state: State<any>) {
+function calcComputed<T>(state: State<T>) {
   let value = state.value;
 
   const hadError = state.error;
@@ -186,7 +186,7 @@ function calcComputed(state: State<any>) {
   currentComputed.dependencyStatusesSum = 0;
 
   try {
-    value = state.computedFn!();
+    value = state.computedFn!(value);
 
     if (hadError) {
       state.error = undefined;

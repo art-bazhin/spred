@@ -2,7 +2,7 @@ import { Observable } from '../observable/observable';
 import { observableProto } from '../observable/observable';
 import { createState, STATE_KEY } from '../state/state';
 
-export function computed<T>(computedFn: () => T) {
+export function computed<T>(computedFn: (currentValue?: T) => T) {
   const f = function () {
     return f.get();
   } as Observable<T>;

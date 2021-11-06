@@ -10,9 +10,13 @@ describe('observable', () => {
   const counter = atom(0);
   let unsub: () => any;
   let num: number;
+  let prevNum: number;
   let x2Num: number;
 
-  const subscriber = jest.fn((value: number) => (num = value));
+  const subscriber = jest.fn((value: number, prevValue) => {
+    prevNum = prevValue;
+    num = value;
+  });
   const altSubscriber = jest.fn((value: number) => (x2Num = value * 2));
 
   it('runs subscribers on subscribe', () => {
@@ -21,6 +25,7 @@ describe('observable', () => {
 
     expect(subscriber).toBeCalled();
     expect(num).toBe(0);
+    expect(prevNum).toBeUndefined();
     expect(x2Num).toBe(0);
   });
 
@@ -30,6 +35,7 @@ describe('observable', () => {
 
     expect(subscriber).toHaveBeenCalledTimes(1);
     expect(num).toBe(0);
+    expect(prevNum).toBeUndefined();
     expect(x2Num).toBe(0);
 
     counter(1);
@@ -37,6 +43,7 @@ describe('observable', () => {
 
     expect(subscriber).toHaveBeenCalledTimes(2);
     expect(num).toBe(1);
+    expect(prevNum).toBe(0);
     expect(x2Num).toBe(2);
   });
 
@@ -148,7 +155,7 @@ describe('observable', () => {
 
     let error: Error | undefined = undefined;
 
-    const subscriber = jest.fn((_, err) => (error = err));
+    const subscriber = jest.fn((_, __, err) => (error = err));
 
     sum.subscribe(subscriber);
 

@@ -4,7 +4,7 @@ function commonSubscriber() {}
 
 function createSubscriber(onError?: (err: Error) => any) {
   if (onError)
-    return function (value: any, error?: Error) {
+    return function (_: any, __: any, error?: Error) {
       if (error && onError) onError(error);
     };
 

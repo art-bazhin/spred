@@ -5,13 +5,14 @@ export const STATE_KEY = '__spredState__';
 
 export interface State<T> {
   value: T;
+  prevValue?: T;
   error?: Error;
   incomingError?: Error;
   errorChanged: boolean;
   subscribers: Subscriber<T>[];
   dependants: State<any>[];
   active: number; // subscribers and dependants length
-  computedFn?: () => T;
+  computedFn?: (currentValue?: T) => T;
   dependencies: State<any>[];
   dependencyStatuses: number[];
   dependencyStatusesSum: number;
@@ -35,7 +36,7 @@ export function createState<T>(value: T, computedFn?: () => T): State<T> {
     dirtyCount: 0,
     queueIndex: -1,
     active: 0,
-    isProcessed: false
+    isProcessed: false,
   };
 }
 
