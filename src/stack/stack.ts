@@ -1,4 +1,4 @@
-import { State } from "../state/state";
+import { State } from '../state/state';
 
 let states: State<any>[] = [];
 let current: State<any> | undefined;
@@ -8,7 +8,7 @@ export function push(state: State<any>) {
   current = state;
 
   return current;
-};
+}
 
 export function pop() {
   current = states.pop();
