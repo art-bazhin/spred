@@ -1,8 +1,12 @@
 import { computed } from '../computed/computed';
 import { atom, Atom } from '../atom/atom';
-import { recalc } from '../main';
+import { configure, recalc } from '../main';
 
 describe('observable', () => {
+  configure({
+    logError: () => {},
+  });
+
   const counter = atom(0);
   let unsub: () => any;
   let num: number;
