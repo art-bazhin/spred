@@ -1,15 +1,15 @@
-import { computed } from "../computed/computed";
-import { atom, Atom } from "../atom/atom";
-import { recalc } from "../main";
+import { computed } from '../computed/computed';
+import { atom, Atom } from '../atom/atom';
+import { recalc } from '../main';
 
 describe('observable', () => {
   const counter = atom(0);
-  let unsub: () => any; 
+  let unsub: () => any;
   let num: number;
   let x2Num: number;
 
-  const subscriber = jest.fn((value: number) => num = value);
-  const altSubscriber = jest.fn((value: number) => x2Num = value * 2);
+  const subscriber = jest.fn((value: number) => (num = value));
+  const altSubscriber = jest.fn((value: number) => (x2Num = value * 2));
 
   it('runs subscribers on subscribe', () => {
     unsub = counter.subscribe(subscriber);
@@ -21,6 +21,13 @@ describe('observable', () => {
   });
 
   it('runs subscribers on value change', () => {
+    counter(0);
+    recalc();
+
+    expect(subscriber).toHaveBeenCalledTimes(1);
+    expect(num).toBe(0);
+    expect(x2Num).toBe(0);
+
     counter(1);
     recalc();
 
@@ -29,7 +36,7 @@ describe('observable', () => {
     expect(x2Num).toBe(2);
   });
 
-  it('doesn\'t subscribe one subscriber more than 1 time', () => {
+  it("doesn't subscribe one subscriber more than 1 time", () => {
     counter.subscribe(subscriber);
 
     expect(subscriber).toHaveBeenCalledTimes(2);
@@ -45,7 +52,7 @@ describe('observable', () => {
     expect(num).toBe(1);
   });
 
-  it('doesn\'t trigger subscribers if value hasn\'t changed', () =>{
+  it("doesn't trigger subscribers if value hasn't changed", () => {
     const a = atom(1);
     const b = atom(2);
     const c = computed(() => a() + b());
@@ -66,21 +73,21 @@ describe('observable', () => {
 
   it('handles diamond problem', () => {
     /*
-    *            ┌─────┐
-    *            │  a  │
-    *            └──┬──┘
-    *     ┌─────────┴────────┐
-    *  ┌──▼──┐            ┌──▼──┐
-    *  │  b  │            │  c  │
-    *  └──┬──┘            └──┬──┘
-    *     │               ┌──▼──┐
-    *     │               │  d  │
-    *     │               └──┬──┘
-    *     └─────────┬────────┘
-    *            ┌──▼──┐
-    *            │  e  │
-    *            └─────┘
-    */
+     *            ┌─────┐
+     *            │  a  │
+     *            └──┬──┘
+     *     ┌─────────┴────────┐
+     *  ┌──▼──┐            ┌──▼──┐
+     *  │  b  │            │  c  │
+     *  └──┬──┘            └──┬──┘
+     *     │               ┌──▼──┐
+     *     │               │  d  │
+     *     │               └──┬──┘
+     *     └─────────┬────────┘
+     *            ┌──▼──┐
+     *            │  e  │
+     *            └─────┘
+     */
 
     const a = atom(0);
     const b = computed(() => a() * 2);
@@ -89,7 +96,7 @@ describe('observable', () => {
     const e = computed(() => b() + d());
 
     const subscriber = jest.fn();
-    
+
     e.subscribe(subscriber, false);
 
     a(1);
@@ -102,14 +109,14 @@ describe('observable', () => {
     const counter = atom(0);
     const tumbler = atom(false);
     const x2Counter = computed(() => counter() * 2);
-    const result = computed(() => tumbler() ? x2Counter() : 'FALSE');
+    const result = computed(() => (tumbler() ? x2Counter() : 'FALSE'));
 
     const subscriber = jest.fn();
-    
+
     result.subscribe(subscriber, false);
 
     expect(result()).toBe('FALSE');
-    
+
     counter(1);
     expect(result()).toBe('FALSE');
     expect(subscriber).toBeCalledTimes(0);
@@ -137,7 +144,7 @@ describe('observable', () => {
 
     let error: Error | undefined = undefined;
 
-    const subscriber = jest.fn((_, err) => error = err);
+    const subscriber = jest.fn((_, err) => (error = err));
 
     sum.subscribe(subscriber);
 
@@ -153,5 +160,16 @@ describe('observable', () => {
     expect(sum()).toBe(10);
     expect(error).toBeUndefined();
   });
-});
 
+  it('can update atoms in subscribers', () => {
+    const counter = atom(0);
+    const x2Counter = atom(0);
+
+    counter.subscribe((value) => x2Counter(value * 2));
+
+    counter(1);
+    recalc();
+
+    expect(x2Counter()).toBe(2);
+  });
+});

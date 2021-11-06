@@ -1,5 +1,5 @@
-import { computed } from "./computed";
-import { atom } from "../atom/atom";
+import { computed } from './computed';
+import { atom } from '../atom/atom';
 
 describe('computed', () => {
   const double = (value: number) => value * 2;
@@ -15,10 +15,10 @@ describe('computed', () => {
 
   it('updates value after dependency value change', () => {
     counter(1);
-    
+
     expect(x2Counter()).toBe(double(counter()));
     expect(x4Counter()).toBe(double(x2Counter()));
-  })
+  });
 
   it('has Observable methods', () => {
     expect(counter.get).toBeDefined;

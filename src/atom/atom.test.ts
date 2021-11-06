@@ -1,4 +1,4 @@
-import { atom } from "./atom";
+import { atom } from './atom';
 
 describe('atom', () => {
   const counter = atom(0);
@@ -10,12 +10,12 @@ describe('atom', () => {
   it('updates value', () => {
     counter(1);
     expect(counter()).toBe(1);
-  })
+  });
 
   it('updates value using set method', () => {
     counter.set(2);
     expect(counter()).toBe(2);
-  })
+  });
 
   it('has Observable methods', () => {
     expect(counter.get).toBeDefined;
