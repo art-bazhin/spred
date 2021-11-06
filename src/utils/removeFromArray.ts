@@ -1,13 +1,11 @@
 export function removeFromArray<T>(arr: T[], el: T) {
-  let cur = null;
   let i = 0;
+  let cur = arr[i];
 
-  while (arr[i] && el !== cur) cur = arr[i++];
-  if (el !== cur) return;
+  while (cur && el !== cur) cur = arr[++i];
+  if (!cur) return;
 
-  i--;
-
-  while(arr[i]) arr[i] = arr[++i];
+  while (arr[i]) arr[i] = arr[++i];
 
   arr.pop();
 }
