@@ -1,16 +1,14 @@
 import { Observable, observableProto } from '../observable/observable';
-import {
-  update
-} from '../core/core';
+import { update } from '../core/core';
 import { createState, STATE_KEY } from '../state/state';
 
 const atomProto = {
   ...observableProto,
   set(value: any) {
-    update(this as any,  value);
+    update(this as any, value);
     return value;
-  }
-}
+  },
+};
 
 export interface Atom<T> extends Observable<T> {
   (value: T): T;

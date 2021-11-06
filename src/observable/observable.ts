@@ -16,5 +16,5 @@ export const observableProto = {
   subscribe(subscriber: any, emitOnSubscribe = true) {
     subscribe(this as any, subscriber, emitOnSubscribe);
     return () => unsubscribe(this as any, subscriber);
-  }
-}
+  },
+};
