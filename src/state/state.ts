@@ -1,4 +1,4 @@
-import { Observable } from '../../dist/spred';
+import { Observable } from '../main';
 import { Subscriber } from '../subscriber/subscriber';
 
 export const STATE_KEY = '__spredState__';
@@ -6,27 +6,33 @@ export const STATE_KEY = '__spredState__';
 export interface State<T> {
   value: T;
   prevValue?: T;
-  error?: Error;
-  incomingError?: Error;
-  errorChanged: boolean;
+  hasException: boolean;
+  receivedException: boolean;
+  exception?: any;
   subscribers: Subscriber<T>[];
   dependants: State<any>[];
   active: number; // subscribers and dependants length
   computedFn?: (currentValue?: T) => T;
+  handleException?: (e: unknown, currentValue?: T) => T;
   dependencies: State<any>[];
   dependencyStatuses: number[];
   dependencyStatusesSum: number;
   oldDependencies: State<any>[];
   dirtyCount: number;
   queueIndex: number;
-  isProcessed: boolean;
 }
 
-export function createState<T>(value: T, computedFn?: () => T): State<T> {
+export function createState<T>(
+  value: T,
+  computedFn?: () => T,
+  handleException?: (e: unknown, currentValue?: T) => T
+): State<T> {
   return {
     value,
     computedFn,
-    errorChanged: false,
+    handleException,
+    hasException: false,
+    receivedException: false,
     subscribers: [],
     dependants: [],
     dependencies: [],
@@ -36,7 +42,6 @@ export function createState<T>(value: T, computedFn?: () => T): State<T> {
     dirtyCount: 0,
     queueIndex: -1,
     active: 0,
-    isProcessed: false,
   };
 }
 

@@ -6,7 +6,7 @@ interface Config {
 
 const DEFAULT_CONFIG = {
   async: true,
-  logError: /* istanbul ignore next */ (err: Error) => console.error(err),
+  logError: /* istanbul ignore next */ (err: unknown) => console.error(err),
   checkDirty: (value: any, prevValue: any) => !Object.is(value, prevValue),
 };
 

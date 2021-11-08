@@ -57,10 +57,9 @@ export function unsubscribe<T>(atom: Observable<T>, subscriber: Subscriber<T>) {
 }
 
 function resetStateQueueParams(state: State<any>) {
-  state.errorChanged = false;
   state.dirtyCount = 0;
   state.queueIndex = -1;
-  state.isProcessed = false;
+  state.receivedException = false;
 }
 
 export function recalc() {
@@ -71,7 +70,7 @@ export function recalc() {
   for (let i = 0; i < queueLength; i++) {
     const state = queue[i];
 
-    if (state.isProcessed) continue;
+    if (state.queueIndex !== i) continue;
 
     for (let dependant of state.dependants) {
       dependant.queueIndex = queueLength;
@@ -79,8 +78,6 @@ export function recalc() {
 
       queueLength = queue.push(dependant);
     }
-
-    state.isProcessed = true;
   }
 
   fullQueueLength = queueLength;
@@ -90,31 +87,46 @@ export function recalc() {
 
     if (state.queueIndex !== i) continue;
 
-    if (state.errorChanged) spreadError(state);
-
-    if (!state.computedFn || state.incomingError) {
+    if (!state.computedFn) {
       runSubscribers(state);
       resetStateQueueParams(state);
       continue;
     }
 
+    let isCalculated = false;
+    let value: any;
+
+    if (!state.dirtyCount && state.receivedException && state.handleException) {
+      try {
+        value = state.handleException(state.exception, state.value);
+
+        state.hasException = false;
+        state.receivedException = false;
+        state.exception = undefined;
+
+        state.dirtyCount = 1;
+        isCalculated = true;
+      } catch (e) {
+        state.exception = e;
+      }
+    }
+
     if (!state.dirtyCount) {
-      decreaseDirtyCount(state);
+      if (state.dependants.length) {
+        decreaseDirtyCount(state);
+      } else if (state.receivedException) {
+        config.logError(state.exception);
+      }
+
       resetStateQueueParams(state);
       continue;
     }
 
-    const newValue = calcComputed(state);
+    if (!isCalculated) value = calcComputed(state);
 
-    if (
-      config.checkDirty(newValue, state.value) ||
-      state.error ||
-      state.errorChanged
-    ) {
-      if (!state.error) {
-        state.prevValue = state.value;
-        state.value = newValue;
-      }
+    if (!state.hasException && config.checkDirty(value, state.value)) {
+      state.prevValue = state.value;
+      state.value = value;
 
       runSubscribers(state);
     } else {
@@ -133,35 +145,38 @@ export function recalc() {
   isCalcActive = false;
 }
 
-function spreadError(state: State<any>) {
-  for (let dependant of state.dependants) {
-    dependant.incomingError = state.error || state.incomingError;
-    dependant.errorChanged = true;
-  }
-}
-
 function decreaseDirtyCount(state: State<any>) {
-  for (let dependant of state.dependants) dependant.dirtyCount--;
+  for (let dependant of state.dependants) {
+    dependant.dirtyCount--;
+
+    if (state.hasException && !dependant.receivedException) {
+      dependant.hasException = true;
+      dependant.receivedException = true;
+      dependant.exception = state.exception;
+    }
+  }
 }
 
 function runSubscribers<T>(state: State<T>) {
   for (let subscriber of state.subscribers) {
-    const err = state.error || state.incomingError;
-
-    if (err) subscriber(state.value, state.prevValue, err);
-    else subscriber(state.value, state.prevValue);
+    subscriber(state.value, state.prevValue);
   }
 }
 
 export function getStateValue<T>(state: State<T>): T {
   if (!isCalcActive) recalc();
 
-  if (state.computedFn && !state.active && !state.incomingError) {
+  if (state.computedFn && !state.active) {
     state.prevValue = state.value;
     state.value = calcComputed(state);
   }
 
   if (currentComputed) {
+    if (state.hasException && !currentComputed.hasException) {
+      currentComputed.exception = state.exception;
+      currentComputed.hasException = true;
+    }
+
     let i = currentComputed.dependencies.indexOf(state);
     let status = 1;
 
@@ -178,9 +193,9 @@ export function getStateValue<T>(state: State<T>): T {
 }
 
 function calcComputed<T>(state: State<T>) {
-  let value = state.value;
+  state.hasException = false;
 
-  const hadError = state.error;
+  let value = state.value;
 
   currentComputed = push(state);
   currentComputed.dependencyStatuses = [];
@@ -188,23 +203,12 @@ function calcComputed<T>(state: State<T>) {
 
   try {
     value = state.computedFn!(value);
-
-    if (hadError) {
-      state.error = undefined;
-      state.errorChanged = true;
-      spreadError(state);
-    }
   } catch (e: any) {
-    config.logError(e);
-
-    state.error = e;
-    state.errorChanged = true;
-
-    spreadError(state);
+    state.exception = e;
+    state.hasException = true;
   }
 
   if (
-    !state.error &&
     state.active &&
     state.dependencyStatusesSum !== state.dependencies.length
   ) {
@@ -213,8 +217,22 @@ function calcComputed<T>(state: State<T>) {
 
   currentComputed = pop();
 
-  if (!state.active && currentComputed) {
-    currentComputed.incomingError = state.error || state.incomingError;
+  if (!state.hasException) return value;
+
+  if (state.handleException) {
+    try {
+      value = state.handleException(state.exception, state.value);
+
+      state.hasException = false;
+      state.exception = undefined;
+    } catch (e) {
+      state.exception = e;
+    }
+  } else if (
+    (!state.active && !currentComputed) ||
+    (state.active && !state.dependants.length)
+  ) {
+    config.logError(state.exception);
   }
 
   return value;

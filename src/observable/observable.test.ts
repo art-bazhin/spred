@@ -147,15 +147,24 @@ describe('observable', () => {
     expect(subscriber).toBeCalledTimes(2);
   });
 
-  it('catches error and pass it down to dependants', () => {
+  it('catches exception and pass it down to dependants', () => {
+    let error: Error | undefined = undefined;
+
     const obj: Atom<{ a: number } | null> = atom({ a: 1 });
     const num = atom(1);
     const objNum = computed(() => (obj() as any).a as number);
-    const sum = computed(() => num() + objNum());
+    const sum = computed(
+      () => {
+        error = undefined;
+        return num() + objNum();
+      },
+      (e) => {
+        error = e as any;
+        throw e;
+      }
+    );
 
-    let error: Error | undefined = undefined;
-
-    const subscriber = jest.fn((_, __, err) => (error = err));
+    const subscriber = jest.fn();
 
     sum.subscribe(subscriber);
 
@@ -170,6 +179,135 @@ describe('observable', () => {
     obj({ a: 5 });
     expect(sum()).toBe(10);
     expect(error).toBeUndefined();
+  });
+
+  it('can handle exceptions', () => {
+    const subscriber = jest.fn();
+    const counter = atom(0);
+
+    const isMoreThanFive = computed(() => counter() > 5);
+
+    const textWithError = computed(() => {
+      if (isMoreThanFive()) throw new Error();
+      return counter() + ' is less than five';
+    });
+
+    const text = computed(
+      () => textWithError(),
+      () => counter() + ' is more than five'
+    );
+
+    expect(text()).toBe('0 is less than five');
+
+    counter(6);
+    expect(text()).toBe('6 is more than five');
+
+    text.subscribe(subscriber, false);
+
+    counter(4);
+    expect(text()).toBe('4 is less than five');
+    expect(subscriber).toBeCalledTimes(1);
+
+    counter(10);
+    expect(text()).toBe('10 is more than five');
+    expect(subscriber).toBeCalledTimes(2);
+  });
+
+  it('continues to trigger dependants after error eliminated', () => {
+    let error: Error | undefined = undefined;
+    let str = '';
+
+    const tumbler = atom(false);
+    const counter = atom(0);
+
+    const x2Counter = computed(() => {
+      const res = counter() * 2;
+
+      if (res > 5) throw new Error();
+
+      return res;
+    });
+
+    const x4Counter = computed(() => x2Counter() * 2);
+
+    const text = computed(
+      () => {
+        let res = 'OFF';
+        if (tumbler()) res = `ON (${x4Counter()})`;
+
+        error = undefined;
+
+        return res;
+      },
+      (e) => {
+        error = e as any;
+        throw e;
+      }
+    );
+
+    text.subscribe((value) => {
+      str = value;
+    });
+
+    expect(str).toBe('OFF');
+    expect(error).toBeUndefined();
+
+    tumbler(true);
+    recalc();
+
+    expect(str).toBe('ON (0)');
+    expect(error).toBeUndefined();
+
+    counter(5);
+    recalc();
+
+    expect(str).toBe('ON (0)');
+    expect(error).toBeDefined();
+
+    tumbler(false);
+    recalc();
+
+    expect(str).toBe('OFF');
+    expect(error).toBeUndefined();
+  });
+
+  it('returns previous value if an exception occured', () => {
+    const counter = atom(0);
+
+    const x2Counter = computed(() => {
+      if (counter() > 5) throw new Error();
+      return counter() * 2;
+    });
+
+    const x4Counter = computed(() => x2Counter() * 2);
+
+    expect(x4Counter()).toBe(0);
+
+    counter(20);
+    expect(x4Counter()).toBe(0);
+  });
+
+  it('does not run sybscribers if an exception occured', () => {
+    const subscriber = jest.fn();
+
+    const counter = atom(0);
+
+    const x2Counter = computed(() => {
+      if (counter() > 5) throw new Error();
+      return counter() * 2;
+    });
+
+    const x4Counter = computed(() => x2Counter() * 2);
+
+    x4Counter.subscribe(subscriber, false);
+
+    counter(1);
+    expect(x4Counter()).toBe(4);
+    expect(subscriber).toBeCalledTimes(1);
+
+    counter(20);
+    expect(x4Counter()).toBe(4);
+    expect(subscriber).toBeCalledTimes(1);
   });
 
   it('can update atoms in subscribers', () => {
