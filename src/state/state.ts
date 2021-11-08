@@ -20,6 +20,8 @@ export interface State<T> {
   oldDependencies: State<any>[];
   dirtyCount: number;
   queueIndex: number;
+  isComputing: boolean;
+  hasCycle: boolean;
 }
 
 export function createState<T>(
@@ -42,6 +44,8 @@ export function createState<T>(
     dirtyCount: 0,
     queueIndex: -1,
     active: 0,
+    isComputing: false,
+    hasCycle: false,
   };
 }
 

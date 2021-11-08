@@ -287,7 +287,7 @@ describe('observable', () => {
     expect(x4Counter()).toBe(0);
   });
 
-  it('does not run sybscribers if an exception occured', () => {
+  it('does not run subscribers if an exception occured', () => {
     const subscriber = jest.fn();
 
     const counter = atom(0);
@@ -308,6 +308,41 @@ describe('observable', () => {
     counter(20);
     expect(x4Counter()).toBe(4);
     expect(subscriber).toBeCalledTimes(1);
+  });
+
+  it('prevents circular dependencies', () => {
+    let counter = 0;
+
+    const a = atom(0);
+
+    const b: any = computed(() => {
+      if (!a()) return 0;
+
+      const res = c();
+      counter++;
+
+      return res;
+    });
+
+    const c = computed(() => {
+      return b();
+    });
+
+    expect(c()).toBe(0);
+    expect(counter).toBe(0);
+
+    a(1);
+
+    expect(c()).toBe(0);
+    expect(counter).toBeLessThan(2);
+
+    counter = 0;
+    c.subscribe(() => {});
+
+    a(10);
+
+    expect(c()).toBe(0);
+    expect(counter).toBeLessThan(2);
   });
 
   it('can update atoms in subscribers', () => {

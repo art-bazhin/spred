@@ -6,6 +6,7 @@ import { removeFromArray } from '../utils/removeFromArray';
 import { push, pop } from '../stack/stack';
 import { microtask } from '../utils/microtask';
 import { config } from '../config/config';
+import { CircularDependencyError } from '../errors/errors';
 
 let currentComputed = pop();
 
@@ -164,6 +165,13 @@ function runSubscribers<T>(state: State<T>) {
 }
 
 export function getStateValue<T>(state: State<T>): T {
+  if (state.isComputing || state.hasCycle) {
+    state.hasCycle = true;
+    config.logError(new CircularDependencyError());
+
+    return state.value;
+  }
+
   if (!isCalcActive) recalc();
 
   if (state.computedFn && !state.active) {
