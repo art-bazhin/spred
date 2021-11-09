@@ -3,6 +3,8 @@ import { Subscriber } from '../subscriber/subscriber';
 
 export const STATE_KEY = '__spredState__';
 
+export const FALSE = () => false;
+
 export interface State<T> {
   value: T;
   prevValue?: T;
@@ -20,8 +22,8 @@ export interface State<T> {
   oldDependencies: State<any>[];
   dirtyCount: number;
   queueIndex: number;
-  isActive: boolean;
   isComputing: boolean;
+  isCached: () => boolean;
   hasCycle: boolean;
 }
 
@@ -45,9 +47,9 @@ export function createState<T>(
     dirtyCount: 0,
     queueIndex: -1,
     activeCount: 0,
-    isActive: false,
     isComputing: false,
     hasCycle: false,
+    isCached: FALSE,
   };
 }
 

@@ -3,7 +3,7 @@ import { Observable } from '../observable/observable';
 import { getState, State } from '../state/state';
 import { Subscriber } from '../subscriber/subscriber';
 import { removeFromArray } from '../utils/removeFromArray';
-import { push, pop, activateNested } from '../stack/stack';
+import { push, pop } from '../stack/stack';
 import { microtask } from '../utils/microtask';
 import { config } from '../config/config';
 import { CircularDependencyError } from '../errors/errors';
@@ -41,7 +41,7 @@ export function subscribe<T>(
 
   if (state.subscribers.indexOf(subscriber) > -1) return;
 
-  const value = getStateValue(state, true);
+  const value = getStateValue(state);
 
   activateDependencies(state);
 
@@ -165,7 +165,7 @@ function runSubscribers<T>(state: State<T>) {
   }
 }
 
-export function getStateValue<T>(state: State<T>, markAsActive?: boolean): T {
+export function getStateValue<T>(state: State<T>): T {
   if (state.isComputing || state.hasCycle) {
     state.hasCycle = true;
     config.logError(new CircularDependencyError());
@@ -175,13 +175,9 @@ export function getStateValue<T>(state: State<T>, markAsActive?: boolean): T {
 
   if (!isCalcActive) recalc();
 
-  if (state.computedFn && !state.isActive) {
-    if (markAsActive) activateNested(true);
-
+  if (state.computedFn && !state.activeCount && !state.isCached()) {
     state.prevValue = state.value;
     state.value = calcComputed(state);
-
-    if (markAsActive) activateNested(false);
   }
 
   if (currentComputed) {
@@ -263,8 +259,6 @@ function activateDependencies(state: State<any>) {
 
 function deactivateDependencies(state: State<any>) {
   if (state.activeCount) return;
-
-  state.isActive = false;
 
   for (let dependency of state.dependencies) {
     dependency.activeCount--;
