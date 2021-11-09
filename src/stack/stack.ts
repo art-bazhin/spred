@@ -29,13 +29,12 @@ let container = createContainer();
 let getter = createGetter(container);
 
 export function push(state: State<any>) {
-  if (!state.activeCount && length < 2) {
+  if (!length && !state.activeCount) {
     container = createContainer();
     getter = createGetter(container);
   }
 
-  length++;
-
+  if (!state.activeCount) length++;
   if (current) states.push(current);
 
   current = state;
@@ -51,7 +50,8 @@ export function pop() {
     current.isComputing = false;
     current.isCached = getter;
 
-    if (!--length) container.reset();
+    if (length) length--;
+    if (!length) container.reset();
   }
 
   current = states.pop();
