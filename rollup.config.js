@@ -3,13 +3,12 @@ import ts from 'rollup-plugin-ts';
 import pkg from './package.json';
 
 export default [
-  // browser-friendly iife build
   {
     input: 'src/main.ts',
     output: {
       name: 'spred',
       file: 'dist/spred.min.js',
-      format: 'iife',
+      format: 'umd',
     },
     plugins: [
       ts({

@@ -6,7 +6,6 @@ const Cell = cellx.Cell;
 
 const atom = spred.atom;
 const computed = spred.computed;
-const commit = spred.commit;
 
 const resultDiv = document.getElementById('result');
 const runButton = document.getElementById('run');
@@ -54,10 +53,12 @@ function testCellx(layerCount, newValues) {
         }),
       };
 
+      // if (!i) {
       s.prop1.on('change', function () {});
       s.prop2.on('change', function () {});
       s.prop3.on('change', function () {});
       s.prop4.on('change', function () {});
+      // }
 
       return s;
     })(layer);
@@ -123,10 +124,12 @@ function testSpred(layerCount, newValues) {
         }),
       };
 
-      s.prop1.subscribe(function () {});
-      s.prop2.subscribe(function () {});
-      s.prop3.subscribe(function () {});
-      s.prop4.subscribe(function () {});
+      //if (!i) {
+      s.prop1.subscribe(function () {}, false);
+      s.prop2.subscribe(function () {}, false);
+      s.prop3.subscribe(function () {}, false);
+      s.prop4.subscribe(function () {}, false);
+      //}
 
       return s;
     })(layer);
@@ -185,12 +188,12 @@ function testLib(testFn, layers, iterations, newValues) {
   }
 
   return {
-    init: {   
-      name,   
+    init: {
+      name,
       result: resultInit,
       min: minInit,
       max: maxInit,
-      avg: totalTimeInit / iterations
+      avg: totalTimeInit / iterations,
     },
 
     recalc: {
@@ -198,9 +201,9 @@ function testLib(testFn, layers, iterations, newValues) {
       result: resultRecalc,
       min: minRecalc,
       max: maxRecalc,
-      avg: totalTimeRecalc / iterations
-    }
-  }
+      avg: totalTimeRecalc / iterations,
+    },
+  };
 }
 
 function drawTables() {
@@ -259,7 +262,7 @@ function runBenchmark() {
   const iterations = getParameter('iterations');
   const layers = getParameter('layers');
   const lib = getParameter('lib');
-  
+
   const newValues = [4, 3, 2, 1];
 
   setTimeout(() => {
