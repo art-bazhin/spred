@@ -11,7 +11,7 @@ export interface State<T> {
   exception?: any;
   subscribers: Subscriber<T>[];
   dependants: State<any>[];
-  active: number; // subscribers and dependants length
+  activeCount: number; // subscribers and dependants length
   computedFn?: (currentValue?: T) => T;
   handleException?: (e: unknown, currentValue?: T) => T;
   dependencies: State<any>[];
@@ -20,6 +20,7 @@ export interface State<T> {
   oldDependencies: State<any>[];
   dirtyCount: number;
   queueIndex: number;
+  isActive: boolean;
   isComputing: boolean;
   hasCycle: boolean;
 }
@@ -43,7 +44,8 @@ export function createState<T>(
     oldDependencies: [],
     dirtyCount: 0,
     queueIndex: -1,
-    active: 0,
+    activeCount: 0,
+    isActive: false,
     isComputing: false,
     hasCycle: false,
   };

@@ -3,7 +3,7 @@ import { Observable } from '../observable/observable';
 import { getState, State } from '../state/state';
 import { Subscriber } from '../subscriber/subscriber';
 import { removeFromArray } from '../utils/removeFromArray';
-import { push, pop } from '../stack/stack';
+import { push, pop, activateNested } from '../stack/stack';
 import { microtask } from '../utils/microtask';
 import { config } from '../config/config';
 import { CircularDependencyError } from '../errors/errors';
@@ -38,21 +38,22 @@ export function subscribe<T>(
   emitOnSubscribe: boolean
 ) {
   const state = getState(observable);
-  const value = getStateValue(state);
 
   if (state.subscribers.indexOf(subscriber) > -1) return;
+
+  const value = getStateValue(state, true);
 
   activateDependencies(state);
 
   state.subscribers.push(subscriber);
-  state.active++;
+  state.activeCount++;
   if (emitOnSubscribe) subscriber(value);
 }
 
 export function unsubscribe<T>(atom: Observable<T>, subscriber: Subscriber<T>) {
   const state = getState(atom);
 
-  state.active--;
+  state.activeCount--;
   removeFromArray(state.subscribers, subscriber);
   deactivateDependencies(state);
 }
@@ -164,7 +165,7 @@ function runSubscribers<T>(state: State<T>) {
   }
 }
 
-export function getStateValue<T>(state: State<T>): T {
+export function getStateValue<T>(state: State<T>, markAsActive?: boolean): T {
   if (state.isComputing || state.hasCycle) {
     state.hasCycle = true;
     config.logError(new CircularDependencyError());
@@ -174,9 +175,13 @@ export function getStateValue<T>(state: State<T>): T {
 
   if (!isCalcActive) recalc();
 
-  if (state.computedFn && !state.active) {
+  if (state.computedFn && !state.isActive) {
+    if (markAsActive) activateNested(true);
+
     state.prevValue = state.value;
     state.value = calcComputed(state);
+
+    if (markAsActive) activateNested(false);
   }
 
   if (currentComputed) {
@@ -217,7 +222,7 @@ function calcComputed<T>(state: State<T>) {
   }
 
   if (
-    state.active &&
+    state.activeCount &&
     state.dependencyStatusesSum !== state.dependencies.length
   ) {
     actualizeDependencies(state);
@@ -237,8 +242,8 @@ function calcComputed<T>(state: State<T>) {
       state.exception = e;
     }
   } else if (
-    (!state.active && !currentComputed) ||
-    (state.active && !state.dependants.length)
+    (!state.activeCount && !currentComputed) ||
+    (state.activeCount && !state.dependants.length)
   ) {
     config.logError(state.exception);
   }
@@ -247,20 +252,22 @@ function calcComputed<T>(state: State<T>) {
 }
 
 function activateDependencies(state: State<any>) {
-  if (state.active) return;
+  if (state.activeCount) return;
 
   for (let dependency of state.dependencies) {
     activateDependencies(dependency);
     dependency.dependants.push(state);
-    dependency.active++;
+    dependency.activeCount++;
   }
 }
 
 function deactivateDependencies(state: State<any>) {
-  if (state.active) return;
+  if (state.activeCount) return;
+
+  state.isActive = false;
 
   for (let dependency of state.dependencies) {
-    dependency.active--;
+    dependency.activeCount--;
     removeFromArray(dependency.dependants, state);
     deactivateDependencies(dependency);
   }
@@ -274,14 +281,14 @@ function actualizeDependencies(state: State<any>) {
       case 1:
         return;
       case 0:
-        dependency.active--;
+        dependency.activeCount--;
         removeFromArray(dependency.dependants, state);
         deactivateDependencies(dependency);
         break;
       case -1:
         activateDependencies(dependency);
         dependency.dependants.push(state);
-        dependency.active++;
+        dependency.activeCount++;
         break;
     }
   });
