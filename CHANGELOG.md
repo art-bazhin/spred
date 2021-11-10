@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.1](https://github.com/art-bazhin/spred/compare/v0.1.0...v0.1.1) (2021-11-10)
+
+
+### Bug Fixes
+
+* fix global var name conflict ([8d07e3a](https://github.com/art-bazhin/spred/commit/8d07e3a9a1425b8acd80b4bffd0ba5894242142c))
+
+
+### CI
+
+* fix CI release trigger ([abb550b](https://github.com/art-bazhin/spred/commit/abb550b8555a7b1b69ee4e0c43893692d0139256))
+
 ## 0.1.0 (2021-11-09)
 
 
