@@ -1,6 +1,7 @@
 import { Observable, observableProto } from '../observable/observable';
 import { update } from '../core/core';
-import { createState, STATE_KEY } from '../state/state';
+import { createState } from '../state/state';
+import { makeSignal } from '../signal/signal';
 
 const atomProto = {
   ...observableProto,
@@ -16,16 +17,21 @@ export interface Atom<T> extends Observable<T> {
 }
 
 export function atom<T>(value: T) {
-  const f = function (value?: T) {
+  const f: any = function (value?: T) {
     if (!arguments.length) return f.get();
     return f.set(value as T);
-  } as Atom<T>;
+  };
 
-  (f as any)[STATE_KEY] = createState(value);
-  (f as any).constructor = atom;
-  (f as any).set = atomProto.set;
-  (f as any).get = atomProto.get;
-  (f as any).subscribe = atomProto.subscribe;
+  f._state = createState(f, value);
 
-  return f;
+  f.constructor = atom;
+  f.set = atomProto.set;
+  f.get = atomProto.get;
+  f.subscribe = atomProto.subscribe;
+
+  f.activated = makeSignal({}, 'ACTIVATED');
+  f.deactivated = makeSignal({}, 'DEACTIVATED');
+  f.exception = makeSignal({}, 'EXCEPTION');
+
+  return f as Atom<T>;
 }

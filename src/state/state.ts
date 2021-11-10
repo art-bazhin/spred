@@ -1,9 +1,6 @@
-import { Observable } from '../main';
+import { _Observable } from '../observable/observable';
 import { Subscriber } from '../subscriber/subscriber';
-
-export const STATE_KEY = '__spredState__';
-
-export const FALSE = () => false;
+import { FALSE } from '../utils/functions';
 
 export interface State<T> {
   value: T;
@@ -25,14 +22,17 @@ export interface State<T> {
   isComputing: boolean;
   isCached: () => boolean;
   hasCycle: boolean;
+  owner: _Observable<T>;
 }
 
 export function createState<T>(
+  owner: _Observable<T>,
   value: T,
   computedFn?: () => T,
   handleException?: (e: unknown, currentValue?: T) => T
 ): State<T> {
   return {
+    owner,
     value,
     computedFn,
     handleException,
@@ -51,8 +51,4 @@ export function createState<T>(
     hasCycle: false,
     isCached: FALSE,
   };
-}
-
-export function getState<T>(observable: Observable<T>): State<T> {
-  return (observable as any)[STATE_KEY];
 }

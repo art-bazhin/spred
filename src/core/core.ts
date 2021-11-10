@@ -1,12 +1,12 @@
-import { Atom } from '../atom/atom';
-import { Observable } from '../observable/observable';
-import { getState, State } from '../state/state';
+import { _Observable } from '../observable/observable';
+import { State } from '../state/state';
 import { Subscriber } from '../subscriber/subscriber';
 import { removeFromArray } from '../utils/removeFromArray';
 import { push, pop } from '../stack/stack';
 import { microtask } from '../utils/microtask';
 import { config } from '../config/config';
 import { CircularDependencyError } from '../errors/errors';
+import { _Signal } from '../signal/signal';
 
 let currentComputed = pop();
 
@@ -16,8 +16,8 @@ let fullQueueLength = 0;
 
 let isCalcActive = false;
 
-export function update<T>(atom: Atom<T>, value: T) {
-  const state = getState(atom);
+export function update<T>(atom: _Observable<T>, value: T) {
+  const state = atom._state;
 
   if (!config.checkDirty(value, state.value)) return;
 
@@ -32,12 +32,12 @@ export function update<T>(atom: Atom<T>, value: T) {
   else recalc();
 }
 
-export function subscribe<T>(
-  observable: Observable<T>,
+export function addSubscriber<T>(
+  observable: _Observable<T>,
   subscriber: Subscriber<T>,
   emitOnSubscribe: boolean
 ) {
-  const state = getState(observable);
+  const state = observable._state;
 
   if (state.subscribers.indexOf(subscriber) > -1) return;
 
@@ -50,8 +50,11 @@ export function subscribe<T>(
   if (emitOnSubscribe) subscriber(value);
 }
 
-export function unsubscribe<T>(atom: Observable<T>, subscriber: Subscriber<T>) {
-  const state = getState(atom);
+export function removeSubscriber<T>(
+  observable: _Observable<T>,
+  subscriber: Subscriber<T>
+) {
+  const state = observable._state;
 
   state.activeCount--;
   removeFromArray(state.subscribers, subscriber);
@@ -114,6 +117,10 @@ export function recalc() {
     }
 
     if (!state.dirtyCount) {
+      if (state.receivedException) {
+        (state.owner.exception as _Signal<any>)._emit(state.exception);
+      }
+
       if (state.dependants.length) {
         decreaseDirtyCount(state);
       } else if (state.receivedException) {
@@ -237,11 +244,17 @@ function calcComputed<T>(state: State<T>) {
     } catch (e) {
       state.exception = e;
     }
-  } else if (
-    (!state.activeCount && !currentComputed) ||
-    (state.activeCount && !state.dependants.length)
-  ) {
-    config.logError(state.exception);
+  }
+
+  if (state.hasException) {
+    (state.owner.exception as _Signal<any>)._emit(state.exception);
+
+    if (
+      (!state.activeCount && !currentComputed) ||
+      (state.activeCount && !state.dependants.length)
+    ) {
+      config.logError(state.exception);
+    }
   }
 
   return value;
@@ -249,6 +262,8 @@ function calcComputed<T>(state: State<T>) {
 
 function activateDependencies(state: State<any>) {
   if (state.activeCount) return;
+
+  (state.owner.activated as _Signal<any>)._emit();
 
   for (let dependency of state.dependencies) {
     activateDependencies(dependency);
@@ -259,6 +274,8 @@ function activateDependencies(state: State<any>) {
 
 function deactivateDependencies(state: State<any>) {
   if (state.activeCount) return;
+
+  (state.owner.deactivated as _Signal<any>)._emit();
 
   for (let dependency of state.dependencies) {
     dependency.activeCount--;

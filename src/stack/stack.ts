@@ -1,4 +1,5 @@
-import { FALSE, State } from '../state/state';
+import { State } from '../state/state';
+import { FALSE } from '../utils/functions';
 
 let states: State<any>[] = [];
 let current: State<any> | undefined;

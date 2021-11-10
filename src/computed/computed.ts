@@ -1,23 +1,25 @@
 import { Observable } from '../observable/observable';
 import { observableProto } from '../observable/observable';
-import { createState, STATE_KEY } from '../state/state';
+import { makeSignal } from '../signal/signal';
+import { createState } from '../state/state';
 
 export function computed<T>(
   computedFn: (currentValue?: T) => T,
   handleException?: (e: unknown, currentValue?: T) => T
 ) {
-  const f = function () {
+  const f: any = function () {
     return f.get();
-  } as Observable<T>;
+  };
 
-  (f as any)[STATE_KEY] = createState(
-    undefined as any,
-    computedFn,
-    handleException
-  );
-  (f as any).constructor = computed;
-  (f as any).get = observableProto.get;
-  (f as any).subscribe = observableProto.subscribe;
+  f._state = createState(f, undefined as any, computedFn, handleException);
 
-  return f;
+  f.constructor = computed;
+  f.get = observableProto.get;
+  f.subscribe = observableProto.subscribe;
+
+  f.activated = makeSignal({}, 'ACTIVATED');
+  f.deactivated = makeSignal({}, 'DEACTIVATED');
+  f.exception = makeSignal({}, 'EXCEPTION');
+
+  return f as Observable<T>;
 }
