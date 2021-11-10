@@ -1,9 +1,9 @@
-const global = new Function(
+const globalScope = new Function(
   'try{if(this===window)return window}catch(e){return global}'
 )();
 
 export const microtask = (function () {
-  if (global.queueMicrotask) {
+  if (globalScope.queueMicrotask) {
     return queueMicrotask;
   }
 
