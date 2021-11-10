@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.2](https://github.com/art-bazhin/spred/compare/v0.1.1...v0.1.2) (2021-11-10)
+
+
+### Features
+
+* add signals ([3a9037f](https://github.com/art-bazhin/spred/commit/3a9037f6fc0b486bd0fc86bb89ab7b9af35a3680))
+
+
+### Others
+
+* **release:** 0.1.2 ([ca15050](https://github.com/art-bazhin/spred/commit/ca1505032ef7843f78951ce25d3c49375f637668))
+
 ### [0.1.1](https://github.com/art-bazhin/spred/compare/v0.1.0...v0.1.1) (2021-11-10)
 
 ### Bug Fixes
