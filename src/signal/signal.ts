@@ -66,10 +66,10 @@ export function on<T>(signal: Signal<T>, listener: (payload: T) => any) {
   return () => removeFromArray(listeners, listener);
 }
 
-export function setSignalStart<T>(signal: Signal<T>, fn?: (payload: T) => any) {
+export function onSignalStart<T>(signal: Signal<T>, fn?: (payload: T) => any) {
   (signal as _Signal<T>)._start = fn;
 }
 
-export function setSignalEnd<T>(signal: Signal<T>, fn?: (payload: T) => any) {
+export function oSignalEnd<T>(signal: Signal<T>, fn?: (payload: T) => any) {
   (signal as _Signal<T>)._end = fn;
 }

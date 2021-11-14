@@ -1,6 +1,6 @@
-import { on, signal } from './signal';
+import { noncallable, on, oSignalEnd, onSignalStart, signal } from './signal';
 
-describe('signal', () => {
+describe('Signal', () => {
   const foo = signal<number>();
   let unsub: any;
 
@@ -10,12 +10,12 @@ describe('signal', () => {
     payload = value;
   });
 
-  it('is created by signal function', () => {
+  it('is created by the signal function', () => {
     expect(foo).toBeDefined();
     expect(foo).toBeInstanceOf(Function);
   });
 
-  it('triggers listeners and pass the payload as argument', () => {
+  it('triggers listeners and passes the payload as an argument', () => {
     unsub = on(foo, listener);
     foo(10);
 
@@ -23,7 +23,7 @@ describe('signal', () => {
     expect(payload).toBe(10);
   });
 
-  it('does not subscribe same listener more than one time', () => {
+  it('does not subscribe to the same listener more than once', () => {
     on(foo, () => {});
     on(foo, listener);
 
@@ -33,12 +33,60 @@ describe('signal', () => {
     expect(payload).toBe(20);
   });
 
-  it('stops to trigger listener after unsubscribe', () => {
+  it('stops firing the listener after unsubscribing', () => {
     unsub();
 
     foo(30);
 
     expect(listener).toBeCalledTimes(2);
     expect(payload).toBe(20);
+  });
+});
+
+describe('onSignalStart function', () => {
+  it('sets a function to run before triggering signal listeners', () => {
+    const foo = signal();
+    const result: any = {};
+
+    let order = 0;
+
+    on(foo, () => (result.listener = ++order));
+    onSignalStart(foo, () => (result.berforeListener = ++order));
+
+    foo();
+
+    expect(result.berforeListener).toBe(1);
+    expect(result.listener).toBe(2);
+  });
+});
+
+describe('onSignalEnd function', () => {
+  it('sets a function to run after triggering signal listeners', () => {
+    const foo = signal();
+    const result: any = {};
+
+    let order = 0;
+
+    on(foo, () => (result.listener = ++order));
+    oSignalEnd(foo, () => (result.afterListener = ++order));
+
+    foo();
+
+    expect(result.listener).toBe(1);
+    expect(result.afterListener).toBe(2);
+  });
+});
+
+describe('noncallable function', () => {
+  it('creates a noncallable copy of the callable signal', () => {
+    const foo = signal();
+    const noncallableFoo = noncallable(foo);
+    const listener = jest.fn();
+
+    on(noncallableFoo, listener);
+    foo();
+
+    expect(listener).toBeCalled();
+    expect(noncallableFoo).not.toBeInstanceOf(Function);
   });
 });

@@ -4,8 +4,8 @@ import {
   signal,
   on,
   noncallable,
-  setSignalStart,
-  setSignalEnd,
+  onSignalStart,
+  oSignalEnd,
 } from './signal/signal';
 import {
   onActivate,
@@ -14,7 +14,7 @@ import {
   onNotifyEnd,
   onChange,
   onException,
-} from './events/events';
+} from './lifecycle/lifecycle';
 import { computed } from './computed/computed';
 import { readonly } from './readonly/readonly';
 import { configure } from './config/config';
@@ -33,6 +33,7 @@ export {
   recalc,
   configure,
   signal,
+  noncallable,
   on,
   onActivate,
   onDeactivate,
@@ -40,7 +41,6 @@ export {
   onNotifyEnd,
   onChange,
   onException,
-  noncallable,
-  setSignalStart,
-  setSignalEnd,
+  onSignalStart,
+  oSignalEnd,
 };
