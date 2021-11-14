@@ -19,7 +19,7 @@ let isCalcActive = false;
 export function update<T>(atom: _Atom<T>, value: T) {
   const state = atom._state;
 
-  if (!config.checkValueChange(value, state.value)) return;
+  if (!state.checkValueChange(value, state.value)) return;
 
   if (state.signals.change) {
     state.signals.change._emit({
@@ -138,7 +138,7 @@ export function recalc() {
 
     if (!isCalculated) value = calcComputed(state);
 
-    if (!state.hasException && config.checkValueChange(value, state.value)) {
+    if (!state.hasException && state.checkValueChange(value, state.value)) {
       if (state.signals.change) {
         state.signals.change._emit({
           value: value,

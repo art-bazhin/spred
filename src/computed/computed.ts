@@ -10,11 +10,7 @@ export function computed<T>(
     return f.get();
   };
 
-  f._state = createState(
-    undefined as any,
-    computedFn,
-    atomConfig && atomConfig.handleException
-  );
+  f._state = createState(undefined as any, computedFn, atomConfig);
 
   f.constructor = computed;
   f.get = atomProto.get;

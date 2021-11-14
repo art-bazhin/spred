@@ -1,3 +1,5 @@
+import { AtomConfig } from '../atom/atom';
+import { config } from '../config/config';
 import { _Signal } from '../signal/signal';
 import { Subscriber } from '../subscriber/subscriber';
 import { FALSE } from '../utils/functions';
@@ -13,6 +15,7 @@ export interface State<T> {
   activeCount: number; // subscribers and dependants length
   computedFn?: (currentValue?: T) => T;
   handleException?: (e: unknown, currentValue?: T) => T;
+  checkValueChange: (value: T, prevValue?: T) => boolean;
   dependencies: State<any>[];
   dependencyStatuses: number[];
   dependencyStatusesSum: number;
@@ -32,15 +35,18 @@ export interface State<T> {
   };
 }
 
+const DEFAULT_ATOM_CONFIG = {};
+
 export function createState<T>(
   value: T,
   computedFn?: () => T,
-  handleException?: (e: unknown, currentValue?: T) => T
+  atomConfig: AtomConfig<T> = DEFAULT_ATOM_CONFIG
 ): State<T> {
   return {
     value,
     computedFn,
-    handleException,
+    handleException: atomConfig.handleException,
+    checkValueChange: atomConfig.checkValueChange || config.checkValueChange,
     hasException: false,
     receivedException: false,
     subscribers: [],

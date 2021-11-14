@@ -11,6 +11,7 @@ export interface Atom<T> {
 
 export interface AtomConfig<T> {
   handleException?: (e: unknown, currentValue?: T) => T;
+  checkValueChange?: (value: T, prevValue?: T) => boolean;
 }
 
 export interface _Atom<T> extends Atom<T> {
