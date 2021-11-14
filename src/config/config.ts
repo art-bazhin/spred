@@ -4,9 +4,9 @@ interface Config {
   checkValueChange?: (value: any, prevValue: any) => boolean;
 }
 
-const DEFAULT_CONFIG: Config = {
+const DEFAULT_CONFIG = {
   batchUpdates: true,
-  logException: /* istanbul ignore next */ (err: unknown) => console.error(err),
+  logException: /* istanbul ignore next */ (e: unknown) => console.error(e),
   checkValueChange: (value: any, prevValue: any) =>
     !Object.is(value, prevValue),
 };
