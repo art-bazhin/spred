@@ -1,4 +1,4 @@
-import { _Observable } from '../observable/observable';
+import { _Signal } from '../signal/signal';
 import { Subscriber } from '../subscriber/subscriber';
 import { FALSE } from '../utils/functions';
 
@@ -7,7 +7,7 @@ export interface State<T> {
   prevValue?: T;
   hasException: boolean;
   receivedException: boolean;
-  exception?: any;
+  exception?: unknown;
   subscribers: Subscriber<T>[];
   dependants: State<any>[];
   activeCount: number; // subscribers and dependants length
@@ -22,17 +22,22 @@ export interface State<T> {
   isComputing: boolean;
   isCached: () => boolean;
   hasCycle: boolean;
-  owner: _Observable<T>;
+  signals: {
+    activate?: _Signal<T>;
+    deactivate?: _Signal<T>;
+    change?: _Signal<{ value: T; prevValue: T }>;
+    notifyStart?: _Signal<T>;
+    notifyEnd?: _Signal<T>;
+    exception?: _Signal<unknown>;
+  };
 }
 
 export function createState<T>(
-  owner: _Observable<T>,
   value: T,
   computedFn?: () => T,
   handleException?: (e: unknown, currentValue?: T) => T
 ): State<T> {
   return {
-    owner,
     value,
     computedFn,
     handleException,
@@ -50,5 +55,6 @@ export function createState<T>(
     isComputing: false,
     hasCycle: false,
     isCached: FALSE,
+    signals: {},
   };
 }

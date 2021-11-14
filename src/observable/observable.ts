@@ -1,5 +1,5 @@
 import { getStateValue, addSubscriber, removeSubscriber } from '../core/core';
-import { Signal } from '../signal/signal';
+import { makeSignal, Signal } from '../signal/signal';
 import { State } from '../state/state';
 import { Subscriber } from '../subscriber/subscriber';
 
@@ -7,10 +7,6 @@ export interface Observable<T> {
   (): T;
   get(): T;
   subscribe(subscriber: Subscriber<T>, emitOnSubscribe?: boolean): () => void;
-
-  readonly activated: Signal<void>;
-  readonly deactivated: Signal<void>;
-  readonly exception: Signal<unknown>;
 }
 
 export interface _Observable<T> extends Observable<T> {
@@ -27,3 +23,30 @@ export const observableProto = {
     return () => removeSubscriber(this as any, subscriber);
   },
 };
+
+export function getObservableSignal<T>(
+  observable: Observable<T>,
+  signalName: string
+) {
+  const signals = (observable as any)._state.signals;
+  if (!signals[signalName]) signals[signalName] = makeSignal({}, signalName);
+  return signals[signalName];
+}
+
+export function getObservableSignals<T>(observable: Observable<T>) {
+  getObservableSignal(observable, 'activate');
+  getObservableSignal(observable, 'deactivate');
+  getObservableSignal(observable, 'change');
+  getObservableSignal(observable, 'exception');
+  getObservableSignal(observable, 'notifyStart');
+  getObservableSignal(observable, 'notifyEnd');
+
+  return Object.assign({}, (observable as any)._state.signals) as {
+    activate: Signal<T>;
+    deactivate: Signal<T>;
+    change: Signal<{ value: T; prevValue: T | undefined }>;
+    exception: Signal<unknown>;
+    notifyStart: Signal<T>;
+    notifyEnd: Signal<T>;
+  };
+}

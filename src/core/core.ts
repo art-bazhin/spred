@@ -21,8 +21,16 @@ export function update<T>(atom: _Observable<T>, value: T) {
 
   if (!config.checkDirty(value, state.value)) return;
 
+  if (state.signals.change) {
+    state.signals.change._emit({
+      value: value,
+      prevValue: state.value,
+    });
+  }
+
   state.prevValue = state.value;
   state.value = value;
+
   state.queueIndex = queueLength - fullQueueLength;
   queueLength = queue.push(state);
 
@@ -117,8 +125,8 @@ export function recalc() {
     }
 
     if (!state.dirtyCount) {
-      if (state.receivedException) {
-        (state.owner.exception as _Signal<any>)._emit(state.exception);
+      if (state.receivedException && state.signals.exception) {
+        state.signals.exception._emit(state.exception);
       }
 
       if (state.dependants.length) {
@@ -134,6 +142,13 @@ export function recalc() {
     if (!isCalculated) value = calcComputed(state);
 
     if (!state.hasException && config.checkDirty(value, state.value)) {
+      if (state.signals.change) {
+        state.signals.change._emit({
+          value: value,
+          prevValue: state.value,
+        });
+      }
+
       state.prevValue = state.value;
       state.value = value;
 
@@ -167,8 +182,18 @@ function decreaseDirtyCount(state: State<any>) {
 }
 
 function runSubscribers<T>(state: State<T>) {
+  if (!state.subscribers.length) return;
+
+  if (state.signals.notifyStart) {
+    state.signals.notifyStart._emit(state.value);
+  }
+
   for (let subscriber of state.subscribers) {
     subscriber(state.value, state.prevValue);
+  }
+
+  if (state.signals.notifyEnd) {
+    state.signals.notifyEnd._emit(state.value);
   }
 }
 
@@ -247,7 +272,9 @@ function calcComputed<T>(state: State<T>) {
   }
 
   if (state.hasException) {
-    (state.owner.exception as _Signal<any>)._emit(state.exception);
+    if (state.signals.exception) {
+      state.signals.exception._emit(state.exception);
+    }
 
     if (
       (!state.activeCount && !currentComputed) ||
@@ -260,10 +287,12 @@ function calcComputed<T>(state: State<T>) {
   return value;
 }
 
-function activateDependencies(state: State<any>) {
+function activateDependencies<T>(state: State<T>) {
   if (state.activeCount) return;
 
-  (state.owner.activated as _Signal<any>)._emit();
+  if (state.signals.activate) {
+    state.signals.activate._emit(state.value);
+  }
 
   for (let dependency of state.dependencies) {
     activateDependencies(dependency);
@@ -272,10 +301,12 @@ function activateDependencies(state: State<any>) {
   }
 }
 
-function deactivateDependencies(state: State<any>) {
+function deactivateDependencies<T>(state: State<T>) {
   if (state.activeCount) return;
 
-  (state.owner.deactivated as _Signal<any>)._emit();
+  if (state.signals.deactivate) {
+    state.signals.deactivate._emit(state.value);
+  }
 
   for (let dependency of state.dependencies) {
     dependency.activeCount--;
