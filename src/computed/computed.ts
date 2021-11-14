@@ -1,5 +1,5 @@
-import { Observable } from '../observable/observable';
-import { observableProto } from '../observable/observable';
+import { Atom } from '../atom/atom';
+import { atomProto } from '../atom/atom';
 import { createState } from '../state/state';
 
 export function computed<T>(
@@ -13,8 +13,8 @@ export function computed<T>(
   f._state = createState(undefined as any, computedFn, handleException);
 
   f.constructor = computed;
-  f.get = observableProto.get;
-  f.subscribe = observableProto.subscribe;
+  f.get = atomProto.get;
+  f.subscribe = atomProto.subscribe;
 
-  return f as Observable<T>;
+  return f as Atom<T>;
 }

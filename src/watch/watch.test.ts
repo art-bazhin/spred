@@ -1,4 +1,4 @@
-import { atom, computed, configure, recalc } from '../main';
+import { writable, computed, configure, recalc } from '../main';
 import { watch } from './watch';
 
 describe('watch', () => {
@@ -6,7 +6,7 @@ describe('watch', () => {
     logError: () => {},
   });
 
-  const counter = atom(0);
+  const counter = writable(0);
   const x2Counter = computed(() => {
     const res = counter() * 2;
 

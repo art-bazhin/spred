@@ -1,48 +1,29 @@
 import { on } from '../signal/signal';
-import {
-  getObservableSignal,
-  Observable,
-  _Observable,
-} from '../observable/observable';
+import { getAtomSignal, Atom, _Atom } from '../atom/atom';
 
-export function onActivate<T>(
-  observable: Observable<T>,
-  listener: (value: T) => any
-) {
-  return on(getObservableSignal(observable, 'activate'), listener);
+export function onActivate<T>(atom: Atom<T>, listener: (value: T) => any) {
+  return on(getAtomSignal(atom, 'activate'), listener);
 }
 
-export function onDeactivate<T>(
-  observable: Observable<T>,
-  listener: (value: T) => any
-) {
-  return on(getObservableSignal(observable, 'deactivate'), listener);
+export function onDeactivate<T>(atom: Atom<T>, listener: (value: T) => any) {
+  return on(getAtomSignal(atom, 'deactivate'), listener);
 }
 
 export function onChange<T>(
-  observable: Observable<T>,
+  atom: Atom<T>,
   listener: (change: { value: T; prevValue: T | undefined }) => any
 ) {
-  return on(getObservableSignal(observable, 'change'), listener);
+  return on(getAtomSignal(atom, 'change'), listener);
 }
 
-export function onException<T>(
-  observable: Observable<T>,
-  listener: (e: unknown) => any
-) {
-  return on(getObservableSignal(observable, 'exception'), listener);
+export function onException<T>(atom: Atom<T>, listener: (e: unknown) => any) {
+  return on(getAtomSignal(atom, 'exception'), listener);
 }
 
-export function onNotifyStart<T>(
-  observable: Observable<T>,
-  listener: (value: T) => any
-) {
-  return on(getObservableSignal(observable, 'notifyStart'), listener);
+export function onNotifyStart<T>(atom: Atom<T>, listener: (value: T) => any) {
+  return on(getAtomSignal(atom, 'notifyStart'), listener);
 }
 
-export function onNotifyEnd<T>(
-  observable: Observable<T>,
-  listener: (value: T) => any
-) {
-  return on(getObservableSignal(observable, 'notifyEnd'), listener);
+export function onNotifyEnd<T>(atom: Atom<T>, listener: (value: T) => any) {
+  return on(getAtomSignal(atom, 'notifyEnd'), listener);
 }

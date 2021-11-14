@@ -4,7 +4,7 @@ const Cell = cellx.Cell;
 //   async: false
 // });
 
-const atom = spred.atom;
+const writable = spred.writable;
 const computed = spred.computed;
 
 const resultDiv = document.getElementById('result');
@@ -99,10 +99,10 @@ function testSpred(layerCount, newValues) {
   const initTimestamp = performance.now();
 
   const start = {
-    prop1: atom(1),
-    prop2: atom(2),
-    prop3: atom(3),
-    prop4: atom(4),
+    prop1: writable(1),
+    prop2: writable(2),
+    prop3: writable(3),
+    prop4: writable(4),
   };
 
   let layer = start;

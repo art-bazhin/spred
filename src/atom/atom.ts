@@ -1,32 +1,49 @@
-import { Observable, observableProto } from '../observable/observable';
-import { update } from '../core/core';
-import { createState } from '../state/state';
+import { getStateValue, addSubscriber, removeSubscriber } from '../core/core';
+import { makeSignal, Signal } from '../signal/signal';
+import { State } from '../state/state';
+import { Subscriber } from '../subscriber/subscriber';
 
-const atomProto = {
-  ...observableProto,
-  set(value: any) {
-    update(this as any, value);
-    return value;
+export interface Atom<T> {
+  (): T;
+  get(): T;
+  subscribe(subscriber: Subscriber<T>, emitOnSubscribe?: boolean): () => void;
+}
+
+export interface _Atom<T> extends Atom<T> {
+  _state: State<T>;
+}
+
+export const atomProto = {
+  get() {
+    return getStateValue((this as any)._state);
+  },
+
+  subscribe(subscriber: any, emitOnSubscribe = true) {
+    addSubscriber(this as any, subscriber, emitOnSubscribe);
+    return () => removeSubscriber(this as any, subscriber);
   },
 };
 
-export interface Atom<T> extends Observable<T> {
-  (value: T): T;
-  set(value: T): T;
+export function getAtomSignal<T>(atom: Atom<T>, signalName: string) {
+  const signals = (atom as any)._state.signals;
+  if (!signals[signalName]) signals[signalName] = makeSignal({}, signalName);
+  return signals[signalName];
 }
 
-export function atom<T>(value: T) {
-  const f: any = function (value?: T) {
-    if (!arguments.length) return f.get();
-    return f.set(value as T);
+export function getAtomSignals<T>(atom: Atom<T>) {
+  getAtomSignal(atom, 'activate');
+  getAtomSignal(atom, 'deactivate');
+  getAtomSignal(atom, 'change');
+  getAtomSignal(atom, 'exception');
+  getAtomSignal(atom, 'notifyStart');
+  getAtomSignal(atom, 'notifyEnd');
+
+  return Object.assign({}, (atom as any)._state.signals) as {
+    activate: Signal<T>;
+    deactivate: Signal<T>;
+    change: Signal<{ value: T; prevValue: T | undefined }>;
+    exception: Signal<unknown>;
+    notifyStart: Signal<T>;
+    notifyEnd: Signal<T>;
   };
-
-  f._state = createState(value);
-
-  f.constructor = atom;
-  f.set = atomProto.set;
-  f.get = atomProto.get;
-  f.subscribe = atomProto.subscribe;
-
-  return f as Atom<T>;
 }

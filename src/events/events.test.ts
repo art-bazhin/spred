@@ -1,12 +1,12 @@
-import { atom, recalc } from '../main';
+import { writable, recalc } from '../main';
 import { onActivate, onChange, onDeactivate } from './events';
 
 describe('onActivate function', () => {
-  it('subscribe listener to observable activation signal', () => {
+  it('subscribe listener to atom activation signal', () => {
     let value: any;
     let unsub: any;
 
-    const counter = atom(0);
+    const counter = writable(0);
     const listener = jest.fn((v) => (value = v));
 
     onActivate(counter, listener);
@@ -29,11 +29,11 @@ describe('onActivate function', () => {
 });
 
 describe('onDeactivate function', () => {
-  it('subscribe listener to observable deactivation signal', () => {
+  it('subscribe listener to atom deactivation signal', () => {
     let value: any;
     let unsub: any;
 
-    const counter = atom(0);
+    const counter = writable(0);
     const listener = jest.fn((v) => (value = v));
 
     onDeactivate(counter, listener);
@@ -56,11 +56,11 @@ describe('onDeactivate function', () => {
 });
 
 describe('onChange function', () => {
-  it('subscribe listener to observable change signal', () => {
+  it('subscribe listener to atom change signal', () => {
     let value: any = {};
     let unsub: any;
 
-    const counter = atom(0);
+    const counter = writable(0);
     const listener = jest.fn((v) => (value = v));
 
     onChange(counter, listener);

@@ -1,4 +1,4 @@
-import { atom, Atom } from './atom/atom';
+import { writable, WritableAtom } from './writable/writable';
 import {
   Signal,
   signal,
@@ -17,15 +17,15 @@ import {
 } from './events/events';
 import { computed } from './computed/computed';
 import { configure } from './config/config';
-import { Observable } from './observable/observable';
+import { Atom } from './atom/atom';
 import { watch } from './watch/watch';
 import { recalc } from './core/core';
 
 export {
   Atom,
-  Observable,
+  WritableAtom,
   Signal,
-  atom,
+  writable,
   computed,
   watch,
   recalc,

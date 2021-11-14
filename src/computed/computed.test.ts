@@ -1,11 +1,11 @@
 import { computed } from './computed';
-import { atom } from '../atom/atom';
+import { writable } from '../writable/writable';
 
 describe('computed', () => {
-  const a = atom(1);
-  const b = atom(2);
-  const c = atom(3);
-  const d = atom(4);
+  const a = writable(1);
+  const b = writable(2);
+  const c = writable(3);
+  const d = writable(4);
 
   const a1 = computed(() => b());
   const b1 = computed(() => a() - c());
@@ -36,7 +36,7 @@ describe('computed', () => {
     expect(d2()).toBe(4);
   });
 
-  it('has Observable methods', () => {
+  it('has Atom methods', () => {
     expect(a.get).toBeDefined;
     expect(a.subscribe).toBeDefined;
   });

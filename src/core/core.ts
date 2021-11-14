@@ -1,4 +1,4 @@
-import { _Observable } from '../observable/observable';
+import { _Atom } from '../atom/atom';
 import { State } from '../state/state';
 import { Subscriber } from '../subscriber/subscriber';
 import { removeFromArray } from '../utils/removeFromArray';
@@ -16,7 +16,7 @@ let fullQueueLength = 0;
 
 let isCalcActive = false;
 
-export function update<T>(atom: _Observable<T>, value: T) {
+export function update<T>(atom: _Atom<T>, value: T) {
   const state = atom._state;
 
   if (!config.checkDirty(value, state.value)) return;
@@ -41,11 +41,11 @@ export function update<T>(atom: _Observable<T>, value: T) {
 }
 
 export function addSubscriber<T>(
-  observable: _Observable<T>,
+  atom: _Atom<T>,
   subscriber: Subscriber<T>,
   emitOnSubscribe: boolean
 ) {
-  const state = observable._state;
+  const state = atom._state;
 
   if (state.subscribers.indexOf(subscriber) > -1) return;
 
@@ -58,11 +58,8 @@ export function addSubscriber<T>(
   if (emitOnSubscribe) subscriber(value);
 }
 
-export function removeSubscriber<T>(
-  observable: _Observable<T>,
-  subscriber: Subscriber<T>
-) {
-  const state = observable._state;
+export function removeSubscriber<T>(atom: _Atom<T>, subscriber: Subscriber<T>) {
+  const state = atom._state;
 
   state.activeCount--;
   removeFromArray(state.subscribers, subscriber);
