@@ -1,5 +1,12 @@
 import { atom, Atom } from './atom/atom';
-import { Signal, signal, on } from './signal/signal';
+import {
+  Signal,
+  signal,
+  on,
+  noncallable,
+  setSignalStart,
+  setSignalEnd,
+} from './signal/signal';
 import { computed } from './computed/computed';
 import { configure } from './config/config';
 import { Observable } from './observable/observable';
@@ -17,4 +24,7 @@ export {
   configure,
   signal,
   on,
+  noncallable,
+  setSignalStart,
+  setSignalEnd,
 };
