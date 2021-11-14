@@ -3,7 +3,7 @@ import { watch } from './watch';
 
 describe('watch', () => {
   configure({
-    logError: () => {},
+    logException: () => {},
   });
 
   const counter = writable(0);
