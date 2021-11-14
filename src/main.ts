@@ -16,6 +16,7 @@ import {
   onException,
 } from './events/events';
 import { computed } from './computed/computed';
+import { readonly } from './readonly/readonly';
 import { configure } from './config/config';
 import { Atom } from './atom/atom';
 import { watch } from './watch/watch';
@@ -27,6 +28,7 @@ export {
   Signal,
   writable,
   computed,
+  readonly,
   watch,
   recalc,
   configure,
