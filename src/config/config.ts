@@ -1,10 +1,10 @@
 interface Config {
-  async?: boolean;
-  logError?: (err: Error) => any;
-  checkDirty?: (value: any, prevValue: any) => boolean;
+  batchUpdates?: boolean;
+  logException?: (err: Error) => any;
+  checkValueChange?: (value: any, prevValue: any) => boolean;
 }
 
-const DEFAULT_CONFIG = {
+const DEFAULT_CONFIG: Config = {
   batchUpdates: true,
   logException: /* istanbul ignore next */ (err: unknown) => console.error(err),
   checkValueChange: (value: any, prevValue: any) =>

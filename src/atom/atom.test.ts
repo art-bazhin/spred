@@ -4,7 +4,7 @@ import { configure, recalc } from '../main';
 
 describe('atom', () => {
   configure({
-    logError: () => {},
+    logException: () => {},
   });
 
   const counter = writable(0);
@@ -362,7 +362,7 @@ describe('atom', () => {
 
   it('immediately runs subscribers on value change in sync mode', () => {
     configure({
-      async: false,
+      batchUpdates: false,
     });
 
     const subscriber = jest.fn();
