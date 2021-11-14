@@ -5,9 +5,10 @@ interface Config {
 }
 
 const DEFAULT_CONFIG = {
-  async: true,
-  logError: /* istanbul ignore next */ (err: unknown) => console.error(err),
-  checkDirty: (value: any, prevValue: any) => !Object.is(value, prevValue),
+  batchUpdates: true,
+  logException: /* istanbul ignore next */ (err: unknown) => console.error(err),
+  checkValueChange: (value: any, prevValue: any) =>
+    !Object.is(value, prevValue),
 };
 
 export const config = Object.assign({}, DEFAULT_CONFIG);

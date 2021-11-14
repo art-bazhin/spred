@@ -19,7 +19,7 @@ let isCalcActive = false;
 export function update<T>(atom: _Atom<T>, value: T) {
   const state = atom._state;
 
-  if (!config.checkDirty(value, state.value)) return;
+  if (!config.checkValueChange(value, state.value)) return;
 
   if (state.signals.change) {
     state.signals.change._emit({
@@ -36,7 +36,7 @@ export function update<T>(atom: _Atom<T>, value: T) {
 
   if (isCalcActive) return;
 
-  if (config.async) microtask(recalc);
+  if (config.batchUpdates) microtask(recalc);
   else recalc();
 }
 
@@ -129,7 +129,7 @@ export function recalc() {
       if (state.dependants.length) {
         decreaseDirtyCount(state);
       } else if (state.receivedException) {
-        config.logError(state.exception);
+        config.logException(state.exception);
       }
 
       resetStateQueueParams(state);
@@ -138,7 +138,7 @@ export function recalc() {
 
     if (!isCalculated) value = calcComputed(state);
 
-    if (!state.hasException && config.checkDirty(value, state.value)) {
+    if (!state.hasException && config.checkValueChange(value, state.value)) {
       if (state.signals.change) {
         state.signals.change._emit({
           value: value,
@@ -197,7 +197,7 @@ function runSubscribers<T>(state: State<T>) {
 export function getStateValue<T>(state: State<T>): T {
   if (state.isComputing || state.hasCycle) {
     state.hasCycle = true;
-    config.logError(new CircularDependencyError());
+    config.logException(new CircularDependencyError());
 
     return state.value;
   }
@@ -277,7 +277,7 @@ function calcComputed<T>(state: State<T>) {
       (!state.activeCount && !currentComputed) ||
       (state.activeCount && !state.dependants.length)
     ) {
-      config.logError(state.exception);
+      config.logException(state.exception);
     }
   }
 
