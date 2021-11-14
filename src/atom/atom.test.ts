@@ -158,9 +158,11 @@ describe('atom', () => {
         error = undefined;
         return num() + objNum();
       },
-      (e) => {
-        error = e as any;
-        throw e;
+      {
+        handleException: (e) => {
+          error = e as any;
+          throw e;
+        },
       }
     );
 
@@ -192,10 +194,9 @@ describe('atom', () => {
       return counter() + ' is less than five';
     });
 
-    const text = computed(
-      () => textWithError(),
-      () => counter() + ' is more than five'
-    );
+    const text = computed(() => textWithError(), {
+      handleException: () => counter() + ' is more than five',
+    });
 
     expect(text()).toBe('0 is less than five');
 
@@ -239,9 +240,11 @@ describe('atom', () => {
 
         return res;
       },
-      (e) => {
-        error = e as any;
-        throw e;
+      {
+        handleException: (e) => {
+          error = e as any;
+          throw e;
+        },
       }
     );
 

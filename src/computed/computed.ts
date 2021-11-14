@@ -1,16 +1,20 @@
-import { Atom } from '../atom/atom';
+import { Atom, AtomConfig } from '../atom/atom';
 import { atomProto } from '../atom/atom';
 import { createState } from '../state/state';
 
 export function computed<T>(
   computedFn: (currentValue?: T) => T,
-  handleException?: (e: unknown, currentValue?: T) => T
+  atomConfig?: AtomConfig<T>
 ) {
   const f: any = function () {
     return f.get();
   };
 
-  f._state = createState(undefined as any, computedFn, handleException);
+  f._state = createState(
+    undefined as any,
+    computedFn,
+    atomConfig && atomConfig.handleException
+  );
 
   f.constructor = computed;
   f.get = atomProto.get;

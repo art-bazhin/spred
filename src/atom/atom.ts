@@ -9,6 +9,10 @@ export interface Atom<T> {
   subscribe(subscriber: Subscriber<T>, emitOnSubscribe?: boolean): () => void;
 }
 
+export interface AtomConfig<T> {
+  handleException?: (e: unknown, currentValue?: T) => T;
+}
+
 export interface _Atom<T> extends Atom<T> {
   _state: State<T>;
 }
