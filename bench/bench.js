@@ -1,3 +1,28 @@
+import {
+  atom,
+  computed as computedNano,
+} from 'https://unpkg.com/nanostores@0.5.6/index.js';
+
+import {
+  createStore,
+  createEvent,
+  combine,
+} from 'https://unpkg.com/effector@22.1.2/effector.mjs';
+
+import {
+  createSignal,
+  createMemo,
+  createComputed,
+} from 'https://unpkg.com/solid-js@1.2.3/dist/solid.js';
+
+window.process = {
+  env: {
+    NODE_ENV: 'production',
+  },
+};
+
+const subscriber = function () {};
+
 const Cell = cellx.Cell;
 
 // spred.configure({
@@ -54,10 +79,10 @@ function testCellx(layerCount, newValues) {
       };
 
       // if (!i) {
-      s.prop1.on('change', function () {});
-      s.prop2.on('change', function () {});
-      s.prop3.on('change', function () {});
-      s.prop4.on('change', function () {});
+      s.prop1.on('change', subscriber);
+      s.prop2.on('change', subscriber);
+      s.prop3.on('change', subscriber);
+      s.prop4.on('change', subscriber);
       // }
 
       return s;
@@ -125,10 +150,10 @@ function testSpred(layerCount, newValues) {
       };
 
       //if (!i) {
-      s.prop1.subscribe(function () {}, false);
-      s.prop2.subscribe(function () {}, false);
-      s.prop3.subscribe(function () {}, false);
-      s.prop4.subscribe(function () {}, false);
+      s.prop1.subscribe(subscriber);
+      s.prop2.subscribe(subscriber);
+      s.prop3.subscribe(subscriber);
+      s.prop4.subscribe(subscriber);
       //}
 
       return s;
@@ -147,6 +172,221 @@ function testSpred(layerCount, newValues) {
   start.prop2(newValues[1]);
   start.prop3(newValues[2]);
   start.prop4(newValues[3]);
+
+  report.afterChange = [end.prop1(), end.prop2(), end.prop3(), end.prop4()];
+
+  report.recalcTime = performance.now() - st;
+
+  return report;
+}
+
+function testEffector(layerCount, newValues) {
+  const report = { name: 'spred' };
+  const initTimestamp = performance.now();
+
+  const set1 = createEvent();
+  const set2 = createEvent();
+  const set3 = createEvent();
+  const set4 = createEvent();
+
+  const start = {
+    prop1: createStore(1).on(set1, (_, v) => v),
+    prop2: createStore(2).on(set2, (_, v) => v),
+    prop3: createStore(3).on(set3, (_, v) => v),
+    prop4: createStore(4).on(set4, (_, v) => v),
+  };
+
+  let layer = start;
+
+  for (let i = layerCount; i--; ) {
+    layer = (function (m) {
+      const s = {
+        prop1: combine([m.prop2], function ([prop2]) {
+          return prop2;
+        }),
+        prop2: combine([m.prop1, m.prop3], function ([prop1, prop3]) {
+          return prop1 - prop3;
+        }),
+        prop3: combine([m.prop2, m.prop4], function ([prop2, prop4]) {
+          return prop2 + prop4;
+        }),
+        prop4: combine([m.prop3], function ([prop3]) {
+          return prop3;
+        }),
+      };
+
+      //if (!i) {
+      s.prop1.watch(subscriber);
+      s.prop2.watch(subscriber);
+      s.prop3.watch(subscriber);
+      s.prop4.watch(subscriber);
+      //}
+
+      return s;
+    })(layer);
+  }
+
+  report.initTime = performance.now() - initTimestamp;
+
+  const end = layer;
+
+  report.beforeChange = [
+    end.prop1.getState(),
+    end.prop2.getState(),
+    end.prop3.getState(),
+    end.prop4.getState(),
+  ];
+
+  const st = performance.now();
+
+  set1(newValues[0]);
+  set2(newValues[1]);
+  set3(newValues[2]);
+  set4(newValues[3]);
+
+  report.afterChange = [
+    end.prop1.getState(),
+    end.prop2.getState(),
+    end.prop3.getState(),
+    end.prop4.getState(),
+  ];
+
+  report.recalcTime = performance.now() - st;
+
+  return report;
+}
+
+function testNanostores(layerCount, newValues) {
+  const report = { name: 'nanostores' };
+  const initTimestamp = performance.now();
+
+  const start = {
+    prop1: atom(1),
+    prop2: atom(2),
+    prop3: atom(3),
+    prop4: atom(4),
+  };
+
+  let layer = start;
+
+  for (let i = layerCount; i--; ) {
+    layer = (function (m) {
+      const s = {
+        prop1: computedNano([m.prop2], function (prop2) {
+          return prop2;
+        }),
+        prop2: computedNano([m.prop1, m.prop3], function (prop1, prop3) {
+          return prop1 - prop3;
+        }),
+        prop3: computedNano([m.prop2, m.prop4], function (prop2, prop4) {
+          return prop2 + prop4;
+        }),
+        prop4: computedNano([m.prop3], function (prop3) {
+          return prop3;
+        }),
+      };
+
+      //if (!i) {
+      s.prop1.subscribe(subscriber);
+      s.prop2.subscribe(subscriber);
+      s.prop3.subscribe(subscriber);
+      s.prop4.subscribe(subscriber);
+      //}
+
+      return s;
+    })(layer);
+  }
+
+  report.initTime = performance.now() - initTimestamp;
+
+  const end = layer;
+
+  report.beforeChange = [
+    end.prop1.get(),
+    end.prop2.get(),
+    end.prop3.get(),
+    end.prop4.get(),
+  ];
+
+  const st = performance.now();
+
+  start.prop1.set(newValues[0]);
+  start.prop2.set(newValues[1]);
+  start.prop3.set(newValues[2]);
+  start.prop4.set(newValues[3]);
+
+  report.afterChange = [
+    end.prop1.get(),
+    end.prop2.get(),
+    end.prop3.get(),
+    end.prop4.get(),
+  ];
+
+  report.recalcTime = performance.now() - st;
+
+  return report;
+}
+
+function testSolid(layerCount, newValues) {
+  const report = { name: 'solid' };
+  const initTimestamp = performance.now();
+
+  const signals = {
+    prop1: createSignal(1),
+    prop2: createSignal(2),
+    prop3: createSignal(3),
+    prop4: createSignal(4),
+  };
+
+  const start = {
+    prop1: signals.prop1[0],
+    prop2: signals.prop2[0],
+    prop3: signals.prop3[0],
+    prop4: signals.prop4[0],
+  };
+
+  let layer = start;
+
+  for (let i = layerCount; i--; ) {
+    layer = (function (m) {
+      const s = {
+        prop1: createMemo(function () {
+          return m.prop2();
+        }),
+        prop2: createMemo(function () {
+          return m.prop1() - m.prop3();
+        }),
+        prop3: createMemo(function () {
+          return m.prop2() + m.prop4();
+        }),
+        prop4: createMemo(function () {
+          return m.prop3();
+        }),
+      };
+
+      //if (!i) {
+      createComputed(s.prop1);
+      createComputed(s.prop2);
+      createComputed(s.prop3);
+      createComputed(s.prop4);
+      //}
+
+      return s;
+    })(layer);
+  }
+
+  report.initTime = performance.now() - initTimestamp;
+
+  const end = layer;
+
+  report.beforeChange = [end.prop1(), end.prop2(), end.prop3(), end.prop4()];
+
+  const st = performance.now();
+
+  signals.prop1[1](newValues[0]);
+  signals.prop2[1](newValues[1]);
+  signals.prop3[1](newValues[2]);
+  signals.prop4[1](newValues[3]);
 
   report.afterChange = [end.prop1(), end.prop2(), end.prop3(), end.prop4()];
 
@@ -269,6 +509,9 @@ function runBenchmark() {
     const testFn = {
       spred: testSpred,
       cellx: testCellx,
+      solid: testSolid,
+      nanostores: testNanostores,
+      effector: testEffector,
     }[lib];
 
     const report = testLib(testFn, layers, iterations, newValues);

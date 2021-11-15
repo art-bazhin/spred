@@ -31,7 +31,8 @@
     "test:dev": "jest --watchAll",
     "commit": "git-cz",
     "size": "size-limit",
-    "release": "standard-version"
+    "release": "standard-version",
+    "bench": "npx http-server"
   },
   "files": [
     "dist"
