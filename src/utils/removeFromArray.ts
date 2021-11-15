@@ -8,4 +8,6 @@ export function removeFromArray<T>(arr: T[], el: T) {
   while (arr[i]) arr[i] = arr[++i];
 
   arr.pop();
+
+  return 1;
 }

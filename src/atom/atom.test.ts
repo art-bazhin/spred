@@ -64,6 +64,19 @@ describe('atom', () => {
     expect(num).toBe(1);
   });
 
+  it('correctly handles multiple unsubscribing', () => {
+    const x2Counter = computed(() => 2 * counter());
+    const x2Unsub = x2Counter.subscribe(() => {});
+
+    expect(x2Counter()).toBe(4);
+
+    x2Unsub();
+    x2Unsub();
+
+    counter(3);
+    expect(x2Counter()).toBe(6);
+  });
+
   it("doesn't trigger subscribers if value hasn't changed", () => {
     const a = writable(1);
     const b = writable(2);

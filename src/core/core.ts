@@ -61,8 +61,10 @@ export function addSubscriber<T>(
 export function removeSubscriber<T>(atom: _Atom<T>, subscriber: Subscriber<T>) {
   const state = atom._state;
 
-  state.activeCount--;
-  removeFromArray(state.subscribers, subscriber);
+  if (removeFromArray(state.subscribers, subscriber)) {
+    state.activeCount--;
+  }
+
   deactivateDependencies(state);
 }
 
