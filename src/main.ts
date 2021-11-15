@@ -12,7 +12,7 @@ import {
   onDeactivate,
   onNotifyStart,
   onNotifyEnd,
-  onChange,
+  onUpdate,
   onException,
 } from './lifecycle/lifecycle';
 import { computed } from './computed/computed';
@@ -39,7 +39,7 @@ export {
   onDeactivate,
   onNotifyStart,
   onNotifyEnd,
-  onChange,
+  onUpdate,
   onException,
   onSignalStart,
   oSignalEnd,

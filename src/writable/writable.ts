@@ -1,4 +1,4 @@
-import { Atom, AtomConfig, atomProto } from '../atom/atom';
+import { Atom, AtomOptions, atomProto } from '../atom/atom';
 import { update } from '../core/core';
 import { createState } from '../state/state';
 
@@ -15,13 +15,13 @@ export interface WritableAtom<T> extends Atom<T> {
   set(value: T): T;
 }
 
-export function writable<T>(value: T, atomConfig?: AtomConfig<T>) {
+export function writable<T>(value: T, options?: AtomOptions<T>) {
   const f: any = function (value?: T) {
     if (!arguments.length) return f.get();
     return f.set(value as T);
   };
 
-  f._state = createState(value, undefined, atomConfig);
+  f._state = createState(value, undefined, options);
 
   f.constructor = writable;
   f.set = writableAtomProto.set;

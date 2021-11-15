@@ -1,7 +1,7 @@
 import { writable, recalc, computed, configure } from '../main';
 import {
   onActivate,
-  onChange,
+  onUpdate,
   onDeactivate,
   onException,
   onNotifyEnd,
@@ -62,15 +62,15 @@ describe('onDeactivate function', () => {
   });
 });
 
-describe('onChange function', () => {
-  it('subscribes the listener to the writable atom change signal', () => {
+describe('onUpdate function', () => {
+  it('subscribes the listener to the writable atom update signal', () => {
     let value: any = {};
     let unsub: any;
 
     const counter = writable(0);
     const listener = jest.fn((v) => (value = v));
 
-    onChange(counter, listener);
+    onUpdate(counter, listener);
     expect(value.value).toBeUndefined();
     expect(value.prevValue).toBeUndefined();
     expect(listener).toBeCalledTimes(0);
@@ -100,7 +100,7 @@ describe('onChange function', () => {
     const computedCounter = computed(() => counter());
     const listener = jest.fn((v) => (value = v));
 
-    onChange(computedCounter, listener);
+    onUpdate(computedCounter, listener);
     expect(value.value).toBeUndefined();
     expect(value.prevValue).toBeUndefined();
     expect(listener).toBeCalledTimes(0);

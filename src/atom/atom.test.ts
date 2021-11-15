@@ -406,7 +406,7 @@ describe('atom', () => {
 
     on(signals.activate, () => (result.activate = ++order));
     on(signals.deactivate, () => (result.deactivate = ++order));
-    on(signals.change, () => (result.change = ++order));
+    on(signals.update, () => (result.update = ++order));
     on(signals.notifyStart, () => (result.notifyStart = ++order));
     on(signals.notifyEnd, () => (result.notifyEnd = ++order));
 
@@ -417,7 +417,7 @@ describe('atom', () => {
     unsub();
 
     expect(result.activate).toBe(1);
-    expect(result.change).toBe(2);
+    expect(result.update).toBe(2);
     expect(result.notifyStart).toBe(3);
     expect(result.notifyEnd).toBe(4);
     expect(result.deactivate).toBe(5);

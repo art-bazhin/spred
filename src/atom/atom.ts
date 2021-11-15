@@ -9,9 +9,9 @@ export interface Atom<T> {
   subscribe(subscriber: Subscriber<T>, emitOnSubscribe?: boolean): () => void;
 }
 
-export interface AtomConfig<T> {
+export interface AtomOptions<T> {
   handleException?: (e: unknown, currentValue?: T) => T;
-  checkValueChange?: (value: T, prevValue?: T) => boolean;
+  shouldUpdate?: (value: T, prevValue?: T) => boolean;
 }
 
 export interface _Atom<T> extends Atom<T> {
@@ -38,7 +38,7 @@ export function getAtomSignal<T>(atom: Atom<T>, signalName: string) {
 export function getAtomSignals<T>(atom: Atom<T>) {
   getAtomSignal(atom, 'activate');
   getAtomSignal(atom, 'deactivate');
-  getAtomSignal(atom, 'change');
+  getAtomSignal(atom, 'update');
   getAtomSignal(atom, 'exception');
   getAtomSignal(atom, 'notifyStart');
   getAtomSignal(atom, 'notifyEnd');
@@ -46,7 +46,7 @@ export function getAtomSignals<T>(atom: Atom<T>) {
   return Object.assign({}, (atom as any)._state.signals) as {
     activate: Signal<T>;
     deactivate: Signal<T>;
-    change: Signal<{ value: T; prevValue: T | undefined }>;
+    update: Signal<{ value: T; prevValue: T | undefined }>;
     exception: Signal<unknown>;
     notifyStart: Signal<T>;
     notifyEnd: Signal<T>;

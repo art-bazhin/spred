@@ -9,11 +9,11 @@ export function onDeactivate<T>(atom: Atom<T>, listener: (value: T) => any) {
   return on(getAtomSignal(atom, 'deactivate'), listener);
 }
 
-export function onChange<T>(
+export function onUpdate<T>(
   atom: Atom<T>,
   listener: (change: { value: T; prevValue: T | undefined }) => any
 ) {
-  return on(getAtomSignal(atom, 'change'), listener);
+  return on(getAtomSignal(atom, 'update'), listener);
 }
 
 export function onException<T>(atom: Atom<T>, listener: (e: unknown) => any) {
