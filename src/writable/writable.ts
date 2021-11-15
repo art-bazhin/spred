@@ -1,18 +1,24 @@
-import { Atom, AtomOptions, atomProto } from '../atom/atom';
+import { Atom, AtomOptions, atomProto, _Atom } from '../atom/atom';
 import { update } from '../core/core';
 import { createState } from '../state/state';
 
 const writableAtomProto = {
   ...atomProto,
+
   set(value: any) {
     update(this as any, value);
     return value;
+  },
+
+  notify(this: _Atom<any>) {
+    update(this as any, this._state.value, true);
   },
 };
 
 export interface WritableAtom<T> extends Atom<T> {
   (value: T): T;
   set(value: T): T;
+  notify(): void;
 }
 
 export function writable<T>(value: T, options?: AtomOptions<T>) {
@@ -26,6 +32,7 @@ export function writable<T>(value: T, options?: AtomOptions<T>) {
   f.constructor = writable;
   f.set = writableAtomProto.set;
   f.get = writableAtomProto.get;
+  f.notify = writableAtomProto.notify;
   f.subscribe = writableAtomProto.subscribe;
 
   return f as WritableAtom<T>;

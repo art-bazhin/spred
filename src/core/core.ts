@@ -16,10 +16,10 @@ let fullQueueLength = 0;
 
 let isCalcActive = false;
 
-export function update<T>(atom: _Atom<T>, value: T) {
+export function update<T>(atom: _Atom<T>, value: T, force?: boolean) {
   const state = atom._state;
 
-  if (!state.shouldUpdate(value, state.value)) return;
+  if (!force && !state.shouldUpdate(value, state.value)) return;
 
   if (state.signals.update) {
     state.signals.update._emit({

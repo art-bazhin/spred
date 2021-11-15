@@ -149,12 +149,10 @@ function testSpred(layerCount, newValues) {
         }),
       };
 
-      //if (!i) {
       s.prop1.subscribe(subscriber);
       s.prop2.subscribe(subscriber);
       s.prop3.subscribe(subscriber);
       s.prop4.subscribe(subscriber);
-      //}
 
       return s;
     })(layer);
@@ -181,7 +179,7 @@ function testSpred(layerCount, newValues) {
 }
 
 function testEffector(layerCount, newValues) {
-  const report = { name: 'spred' };
+  const report = { name: 'effector' };
   const initTimestamp = performance.now();
 
   const set1 = createEvent();
@@ -215,12 +213,10 @@ function testEffector(layerCount, newValues) {
         }),
       };
 
-      //if (!i) {
       s.prop1.watch(subscriber);
       s.prop2.watch(subscriber);
       s.prop3.watch(subscriber);
       s.prop4.watch(subscriber);
-      //}
 
       return s;
     })(layer);
@@ -286,12 +282,10 @@ function testNanostores(layerCount, newValues) {
         }),
       };
 
-      //if (!i) {
       s.prop1.subscribe(subscriber);
       s.prop2.subscribe(subscriber);
       s.prop3.subscribe(subscriber);
       s.prop4.subscribe(subscriber);
-      //}
 
       return s;
     })(layer);
@@ -364,12 +358,10 @@ function testSolid(layerCount, newValues) {
         }),
       };
 
-      //if (!i) {
       createComputed(s.prop1);
       createComputed(s.prop2);
       createComputed(s.prop3);
       createComputed(s.prop4);
-      //}
 
       return s;
     })(layer);

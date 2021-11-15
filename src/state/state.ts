@@ -35,18 +35,18 @@ export interface State<T> {
   };
 }
 
-const DEFAULT_ATOM_CONFIG = {};
+const DEFAULT_ATOM_OPTIONS = {};
 
 export function createState<T>(
   value: T,
   computedFn?: () => T,
-  atomConfig: AtomOptions<T> = DEFAULT_ATOM_CONFIG
+  options: AtomOptions<T> = DEFAULT_ATOM_OPTIONS
 ): State<T> {
   return {
     value,
     computedFn,
-    handleException: atomConfig.handleException,
-    shouldUpdate: atomConfig.shouldUpdate || config.shouldUpdate,
+    handleException: options.handleException,
+    shouldUpdate: options.shouldUpdate || config.shouldUpdate,
     hasException: false,
     receivedException: false,
     subscribers: [],

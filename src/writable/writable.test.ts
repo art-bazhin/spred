@@ -1,3 +1,5 @@
+import { recalc } from '../core/core';
+import { computed } from '../computed/computed';
 import { writable } from './writable';
 
 describe('writable', () => {
@@ -20,5 +22,15 @@ describe('writable', () => {
   it('has Atom methods', () => {
     expect(counter.get).toBeDefined;
     expect(counter.subscribe).toBeDefined;
+  });
+
+  it('force emits subscribers using notify method', () => {
+    const subscriber = jest.fn();
+
+    counter.subscribe(subscriber);
+    counter.notify();
+    recalc();
+
+    expect(subscriber).toBeCalledTimes(2);
   });
 });
