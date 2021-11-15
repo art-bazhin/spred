@@ -4,7 +4,7 @@
   "homepage": "https://github.com/art-bazhin/spred",
   "repository": "git@github.com/art-bazhin/spred.git",
   "bugs": "https://github.com/art-bazhin/spred/issues",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "main": "dist/spred.js",
   "types": "dist/spred.d.ts",
   "license": "MIT",

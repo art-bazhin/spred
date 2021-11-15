@@ -2,6 +2,65 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.2.0](https://github.com/art-bazhin/spred/compare/v0.1.3...v0.2.0) (2021-11-15)
+
+
+### ⚠ BREAKING CHANGES
+
+* checkValueChange => shouldUpdate, onChange => onUpdate
+* async => batchUpdates, logError => logException, checkDirty => checkValueChange
+* second argument of computed changed to atom configuration
+* atom => writable, Atom => WritableAtom, Observable => Atom
+
+### Features
+
+* add atom configuration ([7fec629](https://github.com/art-bazhin/spred/commit/7fec629ac194351eaf353376bd563d2e9dd729a5))
+* add noncallable signals and siganl start/end listeners ([e19b81e](https://github.com/art-bazhin/spred/commit/e19b81e76350af9255b24f66372c39d8276e5140))
+* add notify method ([f589aa2](https://github.com/art-bazhin/spred/commit/f589aa2baa6bf0997316d507bf4706e94a05c55d))
+* add observable lifecycle signals ([40f42ce](https://github.com/art-bazhin/spred/commit/40f42ce08199ca06682565267afc043c417e716f))
+* add readonly ([20a59ae](https://github.com/art-bazhin/spred/commit/20a59ae11018d030d6f750824006c6ccf02a7c10))
+* specify changes check function in atom config ([acb931c](https://github.com/art-bazhin/spred/commit/acb931ca8b45ddcb5958905b2b902c9e63efa134))
+
+
+### Bug Fixes
+
+* fix configs after config properties update ([f1be878](https://github.com/art-bazhin/spred/commit/f1be8785a20ceeb513d069c148fbff112134eb76))
+* fix default config type ([b94c96a](https://github.com/art-bazhin/spred/commit/b94c96a2e9bd4700e7d08e45bc257defd575358e))
+* fix unsubscribing bug ([21f9e97](https://github.com/art-bazhin/spred/commit/21f9e97a08ee3b51465a40aff93e770c94edc9b3))
+
+
+### Tests
+
+* add missing tests ([3016f2b](https://github.com/art-bazhin/spred/commit/3016f2b2efc0f874ac70b191a7f89450ca0fa58f))
+* fix lib config in watch function test ([48354a0](https://github.com/art-bazhin/spred/commit/48354a00445a94a3bbb1810d616abd7e7b052722))
+
+
+### Others
+
+* update benchmark ([3fa6871](https://github.com/art-bazhin/spred/commit/3fa6871e290ca393c252e4994f72d5fb4b779faa))
+
+
+### Code Refactoring
+
+* change API namings ([a1415d5](https://github.com/art-bazhin/spred/commit/a1415d514ada7b790ba9f978349d60d0f3bf837d))
+* change config properties ([5ce833b](https://github.com/art-bazhin/spred/commit/5ce833bd640c0bc9d14bad4edec94f55502dba69))
+* update naming ([07585c8](https://github.com/art-bazhin/spred/commit/07585c8dff80f01ec181d69c59f69125d5307a81))
+
+
+### CI
+
+* add coverage step ([e441042](https://github.com/art-bazhin/spred/commit/e44104284320347b23d49b49759a7e824d685da6))
+
+
+### Docs
+
+* add badges ([4190b03](https://github.com/art-bazhin/spred/commit/4190b03af6582af0fdbd09d00c015b05d5744729))
+
+
+### Build System
+
+* update lockfile ([f3c3542](https://github.com/art-bazhin/spred/commit/f3c354225e1c3d24447857ca5d3cd1e8d1262391))
+
 ### [0.1.3](https://github.com/art-bazhin/spred/compare/v0.1.2...v0.1.3) (2021-11-11)
 
 ### [0.1.2](https://github.com/art-bazhin/spred/compare/v0.1.1...v0.1.2) (2021-11-10)
