@@ -5,13 +5,13 @@ import { createState } from '../state/state';
 const writableAtomProto = {
   ...atomProto,
 
-  set(value: any) {
-    update(this as any, value);
+  set(this: _Atom<any>, value: any) {
+    update(this, value);
     return value;
   },
 
   notify(this: _Atom<any>) {
-    update(this as any, this._state.value, true);
+    update(this);
   },
 };
 

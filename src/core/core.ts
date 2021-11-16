@@ -16,20 +16,25 @@ let fullQueueLength = 0;
 
 let isCalcActive = false;
 
-export function update<T>(atom: _Atom<T>, value: T, force?: boolean) {
+export function update<T>(atom: _Atom<T>, value?: T) {
   const state = atom._state;
+  const force = arguments.length === 1;
 
-  if (!force && !state.shouldUpdate(value, state.value)) return;
+  if (!force) {
+    if (!state.shouldUpdate(value!, state.value)) return;
 
-  if (state.signals.update) {
-    state.signals.update._emit({
-      value: value,
-      prevValue: state.value,
-    });
+    if (state.signals.update) {
+      state.signals.update._emit({
+        value: value!,
+        prevValue: state.value,
+      });
+    }
+
+    state.prevValue = state.value;
+    state.value = value!;
   }
 
-  state.prevValue = state.value;
-  state.value = value;
+  if (state.computedFn) state.dirtyCount++;
 
   state.queueIndex = queueLength - fullQueueLength;
   queueLength = queue.push(state);
