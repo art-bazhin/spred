@@ -91,4 +91,18 @@ describe('store', () => {
     expect(persons.get('4')()).toBeUndefined();
     expect(persons.get('5')()).toBeUndefined();
   });
+
+  it('it updates previously created items after clearing', () => {
+    persons.set(
+      {
+        id: '4',
+        name: '4',
+        surname: '4',
+      },
+      { id: '2', name: '2' }
+    );
+
+    expect(paul()?.name).toBe('2');
+    expect(ringoSurname).toBe('4');
+  });
 });
