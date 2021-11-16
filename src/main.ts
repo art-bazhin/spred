@@ -16,6 +16,7 @@ import {
   onException,
 } from './lifecycle/lifecycle';
 import { computed } from './computed/computed';
+import { store } from './store/store';
 import { readonly } from './readonly/readonly';
 import { configure } from './config/config';
 import { Atom } from './atom/atom';
@@ -28,6 +29,7 @@ export {
   Signal,
   writable,
   computed,
+  store,
   readonly,
   watch,
   recalc,
