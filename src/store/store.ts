@@ -8,8 +8,9 @@ interface StoreData<T> {
 
 interface Store<T> {
   get(id: string): Atom<T | undefined>;
-  set(item: T): void;
+  set(...items: T[]): void;
   delete(id: string): void;
+  clear(): void;
 }
 
 interface _Store<T> extends Store<T> {
@@ -41,16 +42,24 @@ function get<T>(this: _Store<T>, id: string) {
   return this._atoms[id];
 }
 
-function set<T>(this: _Store<T>, item: T) {
-  const id = this._idFn(item);
+function set<T>(this: _Store<T>, ...items: T[]) {
+  for (let item of items) {
+    const id = this._idFn(item);
+    this._data()[id] = item;
+  }
 
-  this._data()[id] = item;
   this._data.notify();
 }
 
 function remove<T>(this: _Store<T>, id: string) {
-  this._data()[id] = undefined;
+  delete this._data()[id];
+  delete this._atoms[id];
   this._data.notify();
+}
+
+function clear<T>(this: _Store<T>) {
+  this._atoms = {};
+  this._data({});
 }
 
 export function store<T extends { id: string }>(items?: T[]): Store<T>;
@@ -64,6 +73,7 @@ export function store<T>(items?: any, idFunction?: any) {
     _data: writable(createData(items, idFunction)),
     get,
     set,
+    clear,
     delete: remove,
   };
 
