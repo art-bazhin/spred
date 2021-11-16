@@ -63,10 +63,12 @@ describe('store', () => {
     });
 
     persons.set(
+      { id: '5', name: 'Pete' },
       { ...ringo()!, surname: 'Starr' },
       { ...paul()!, surname: 'McCartney' }
     );
 
+    expect(persons.get('5')()?.name).toBe('Pete');
     expect(paul()?.surname).toBe('McCartney');
     expect(ringo()?.surname).toBe('Starr');
     expect(ringoSurname).toBe('Starr');
@@ -74,6 +76,7 @@ describe('store', () => {
 
   it('allows to delete items', () => {
     persons.delete('4');
+    persons.delete('1234');
 
     expect(ringo()).toBeUndefined();
     expect(ringoSurname).toBeUndefined();
@@ -85,5 +88,7 @@ describe('store', () => {
     expect(persons.get('1')()).toBeUndefined();
     expect(persons.get('2')()).toBeUndefined();
     expect(persons.get('3')()).toBeUndefined();
+    expect(persons.get('4')()).toBeUndefined();
+    expect(persons.get('5')()).toBeUndefined();
   });
 });

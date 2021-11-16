@@ -1,6 +1,7 @@
 import { writable, WritableAtom } from '../writable/writable';
-import { Atom } from '../atom/atom';
+import { Atom, _Atom } from '../atom/atom';
 import { computed } from '../computed/computed';
+import { update } from '../core/core';
 
 interface StoreOptions<T> {
   getItemId?: (item: T) => string;
@@ -27,7 +28,7 @@ interface _Store<T> extends Store<T> {
   _idFn: (item: T) => string;
   _data: WritableAtom<StoreData<T>>;
   _atoms: {
-    [id: string]: Atom<T | undefined>;
+    [id: string]: Atom<T | undefined> | undefined;
   };
 }
 
@@ -54,22 +55,26 @@ function get<T>(this: _Store<T>, id: string) {
     });
   }
 
-  return this._atoms[id];
+  return this._atoms[id]!;
 }
 
 function set<T>(this: _Store<T>, ...items: T[]) {
   for (let item of items) {
     const id = this._idFn(item);
     this._data()[id] = item;
-  }
 
-  this._data.notify();
+    const atom = this._atoms[id];
+    if (atom) update(atom as _Atom<T>);
+  }
 }
 
 function remove<T>(this: _Store<T>, id: string) {
+  const atom = this._atoms[id];
+
   delete this._data()[id];
   delete this._atoms[id];
-  this._data.notify();
+
+  if (atom) update(atom as _Atom<T>);
 }
 
 function clear<T>(this: _Store<T>) {
