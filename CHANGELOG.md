@@ -2,6 +2,40 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.2](https://github.com/art-bazhin/spred/compare/v0.2.1...v0.2.2) (2021-11-17)
+
+
+### Features
+
+* add clear store method ([4d4a559](https://github.com/art-bazhin/spred/commit/4d4a5594477b3f1805c70f13bb3f7b3bd317e845))
+* add store ([9c258d1](https://github.com/art-bazhin/spred/commit/9c258d1d8c11448e7a6b215a6e89aad0d6077bbc))
+* add store options ([2424dd1](https://github.com/art-bazhin/spred/commit/2424dd1f0ed498e6aa8e6e2900a20154fc2011d6))
+
+
+### Bug Fixes
+
+* fix store items update bug ([f67d452](https://github.com/art-bazhin/spred/commit/f67d452b8997d9081bd239bd8cd246bc4d504d41))
+
+
+### Performance Improvements
+
+* improve store update perf ([58f4f54](https://github.com/art-bazhin/spred/commit/58f4f54a771e8dbc39a992adef263f17437f57ae))
+
+
+### Tests
+
+* add store tests ([2a8613a](https://github.com/art-bazhin/spred/commit/2a8613a53a9eb20d55e40223e536a141641e02c8))
+
+
+### Code Refactoring
+
+* refactor inner update function ([b0f8d1e](https://github.com/art-bazhin/spred/commit/b0f8d1e774f4add8920bb43b278d6fbeb643b9fc))
+
+
+### Docs
+
+* update readme ([6c057cd](https://github.com/art-bazhin/spred/commit/6c057cd4bdfc574c1575a8d9f39baf3b41c8a4ca))
+
 ### [0.2.1](https://github.com/art-bazhin/spred/compare/v0.2.0...v0.2.1) (2021-11-15)
 
 ## [0.2.0](https://github.com/art-bazhin/spred/compare/v0.1.3...v0.2.0) (2021-11-15)
