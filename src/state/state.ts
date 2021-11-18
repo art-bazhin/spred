@@ -14,8 +14,8 @@ export interface State<T> {
   dependants: State<any>[];
   activeCount: number; // subscribers and dependants length
   computedFn?: (currentValue?: T) => T;
-  handleException?: (e: unknown, currentValue?: T) => T;
-  shouldUpdate: (value: T, prevValue?: T) => boolean;
+  catch?: (e: unknown, currentValue?: T) => T;
+  filter: (value: T, prevValue?: T) => boolean;
   dependencies: State<any>[];
   dependencyStatuses: number[];
   dependencyStatusesSum: number;
@@ -45,8 +45,8 @@ export function createState<T>(
   return {
     value,
     computedFn,
-    handleException: options.handleException,
-    shouldUpdate: options.shouldUpdate || config.shouldUpdate,
+    catch: options.catch,
+    filter: options.filter || config.filter,
     hasException: false,
     receivedException: false,
     subscribers: [],

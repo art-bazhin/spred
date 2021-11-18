@@ -9,8 +9,8 @@ export interface Atom<T> {
 }
 
 export interface AtomOptions<T> {
-  handleException?: (e: unknown, currentValue?: T) => T;
-  shouldUpdate?: (value: T, prevValue?: T) => boolean;
+  catch?: (e: unknown, currentValue?: T) => T;
+  filter?: (value: T, prevValue?: T) => boolean;
 }
 
 export interface _Atom<T> extends Atom<T> {

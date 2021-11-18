@@ -20,7 +20,7 @@ export function update<T>(atom: _Atom<T>, value?: T) {
   const force = arguments.length === 1;
 
   if (!force) {
-    if (!state.shouldUpdate(value!, state.value)) return;
+    if (!state.filter(value!, state.value)) return;
 
     if (state.signals.update) {
       state.signals.update[1]({
@@ -112,9 +112,9 @@ export function recalc() {
     let isCalculated = false;
     let value: any;
 
-    if (!state.dirtyCount && state.receivedException && state.handleException) {
+    if (!state.dirtyCount && state.receivedException && state.catch) {
       try {
-        value = state.handleException(state.exception, state.value);
+        value = state.catch(state.exception, state.value);
 
         state.hasException = false;
         state.receivedException = false;
@@ -144,7 +144,7 @@ export function recalc() {
 
     if (!isCalculated) value = calcComputed(state);
 
-    if (!state.hasException && state.shouldUpdate(value, state.value)) {
+    if (!state.hasException && state.filter(value, state.value)) {
       if (state.signals.update) {
         state.signals.update[1]({
           value: value,
@@ -263,9 +263,9 @@ function calcComputed<T>(state: State<T>) {
 
   if (!state.hasException) return value;
 
-  if (state.handleException) {
+  if (state.catch) {
     try {
-      value = state.handleException(state.exception, state.value);
+      value = state.catch(state.exception, state.value);
 
       state.hasException = false;
       state.exception = undefined;

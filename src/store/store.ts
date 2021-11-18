@@ -5,7 +5,7 @@ import { update } from '../core/core';
 
 interface StoreOptions<T> {
   getItemId?: (item: T) => string;
-  shouldUpdate?: (value: T | undefined, prevValue: T | undefined) => boolean;
+  filter?: (value: T | undefined, prevValue: T | undefined) => boolean;
 }
 
 interface StoreOptionsWithId<T> extends StoreOptions<T> {
@@ -54,7 +54,7 @@ function get<T>(this: _Store<T>, id: string) {
     this._atoms[id] = computed<T | undefined>(
       () => this._data()[id] || this._force(),
       {
-        shouldUpdate: this._options.shouldUpdate,
+        filter: this._options.filter,
       }
     );
   }

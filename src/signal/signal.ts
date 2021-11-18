@@ -13,7 +13,7 @@ export function signal<T>(initialValue: T): SignalResult<T>;
 
 export function signal(initialValue?: any): any {
   const s = writable(initialValue, {
-    shouldUpdate: TRUE,
+    filter: TRUE,
   });
 
   return [
