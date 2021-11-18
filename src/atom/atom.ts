@@ -1,5 +1,4 @@
 import { getStateValue, addSubscriber, removeSubscriber } from '../core/core';
-import { makeSignal, Signal } from '../signal/signal';
 import { State } from '../state/state';
 import { Subscriber } from '../subscriber/subscriber';
 
@@ -28,27 +27,3 @@ export const atomProto = {
     return () => removeSubscriber(this as any, subscriber);
   },
 };
-
-export function getAtomSignal<T>(atom: Atom<T>, signalName: string) {
-  const signals = (atom as any)._state.signals;
-  if (!signals[signalName]) signals[signalName] = makeSignal({}, signalName);
-  return signals[signalName];
-}
-
-export function getAtomSignals<T>(atom: Atom<T>) {
-  getAtomSignal(atom, 'activate');
-  getAtomSignal(atom, 'deactivate');
-  getAtomSignal(atom, 'update');
-  getAtomSignal(atom, 'exception');
-  getAtomSignal(atom, 'notifyStart');
-  getAtomSignal(atom, 'notifyEnd');
-
-  return Object.assign({}, (atom as any)._state.signals) as {
-    activate: Signal<T>;
-    deactivate: Signal<T>;
-    update: Signal<{ value: T; prevValue: T | undefined }>;
-    exception: Signal<unknown>;
-    notifyStart: Signal<T>;
-    notifyEnd: Signal<T>;
-  };
-}

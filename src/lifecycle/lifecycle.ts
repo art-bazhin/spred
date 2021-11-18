@@ -1,5 +1,12 @@
-import { on } from '../signal/signal';
-import { getAtomSignal, Atom, _Atom } from '../atom/atom';
+import { on } from '../on/on';
+import { Atom, _Atom } from '../atom/atom';
+import { signal } from '../signal/signal';
+
+function getAtomSignal<T>(atom: Atom<any>, signalName: string) {
+  const signals = (atom as any)._state.signals;
+  if (!signals[signalName]) signals[signalName] = signal();
+  return signals[signalName][0] as Atom<T>;
+}
 
 export function onActivate<T>(atom: Atom<T>, listener: (value: T) => any) {
   return on(getAtomSignal(atom, 'activate'), listener);

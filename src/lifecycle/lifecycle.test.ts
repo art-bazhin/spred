@@ -1,4 +1,5 @@
 import { writable, recalc, computed, configure } from '../main';
+import { on } from '../on/on';
 import {
   onActivate,
   onUpdate,
@@ -7,6 +8,35 @@ import {
   onNotifyEnd,
   onNotifyStart,
 } from './lifecycle';
+
+describe('lifecycle signals', () => {
+  it('emits in right order', () => {
+    const counter = writable(0);
+
+    const result: any = {};
+    let order = 0;
+
+    onActivate(counter, () => {});
+    onActivate(counter, () => (result.activate = ++order));
+    onDeactivate(counter, () => (result.deactivate = ++order));
+    onUpdate(counter, () => (result.update = ++order));
+    onNotifyStart(counter, () => (result.notifyStart = ++order));
+    onNotifyEnd(counter, () => (result.notifyEnd = ++order));
+
+    const unsub = counter.subscribe(() => {});
+    recalc();
+    counter(1);
+    recalc();
+    unsub();
+    recalc();
+
+    expect(result.activate).toBe(1);
+    expect(result.update).toBe(2);
+    expect(result.notifyStart).toBe(3);
+    expect(result.notifyEnd).toBe(4);
+    expect(result.deactivate).toBe(5);
+  });
+});
 
 describe('onActivate function', () => {
   it('subscribes the listener to the atom activate signal', () => {
@@ -21,6 +51,7 @@ describe('onActivate function', () => {
     expect(listener).toBeCalledTimes(0);
 
     unsub = counter.subscribe(() => {});
+    recalc();
     expect(value).toBe(0);
     expect(listener).toBeCalledTimes(1);
 
@@ -30,6 +61,7 @@ describe('onActivate function', () => {
     expect(listener).toBeCalledTimes(1);
 
     unsub();
+    recalc();
     expect(value).toBe(0);
     expect(listener).toBeCalledTimes(1);
   });
@@ -44,6 +76,7 @@ describe('onDeactivate function', () => {
     const listener = jest.fn((v) => (value = v));
 
     onDeactivate(counter, listener);
+    recalc();
     expect(value).toBeUndefined();
     expect(listener).toBeCalledTimes(0);
 
@@ -57,6 +90,7 @@ describe('onDeactivate function', () => {
     expect(listener).toBeCalledTimes(0);
 
     unsub();
+    recalc();
     expect(value).toBe(1);
     expect(listener).toBeCalledTimes(1);
   });

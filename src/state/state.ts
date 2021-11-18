@@ -1,6 +1,6 @@
 import { AtomOptions } from '../atom/atom';
 import { config } from '../config/config';
-import { _Signal } from '../signal/signal';
+import { SignalResult } from '../signal/signal';
 import { Subscriber } from '../subscriber/subscriber';
 import { FALSE } from '../utils/functions';
 
@@ -26,12 +26,12 @@ export interface State<T> {
   isCached: () => boolean;
   hasCycle: boolean;
   signals: {
-    activate?: _Signal<T>;
-    deactivate?: _Signal<T>;
-    update?: _Signal<{ value: T; prevValue: T }>;
-    notifyStart?: _Signal<T>;
-    notifyEnd?: _Signal<T>;
-    exception?: _Signal<unknown>;
+    activate?: SignalResult<T>;
+    deactivate?: SignalResult<T>;
+    update?: SignalResult<{ value: T; prevValue: T | undefined }>;
+    notifyStart?: SignalResult<T>;
+    notifyEnd?: SignalResult<T>;
+    exception?: SignalResult<unknown>;
   };
 }
 

@@ -6,7 +6,6 @@ import { push, pop } from '../stack/stack';
 import { microtask } from '../utils/microtask';
 import { config } from '../config/config';
 import { CircularDependencyError } from '../errors/errors';
-import { _Signal } from '../signal/signal';
 
 let currentComputed = pop();
 
@@ -24,7 +23,7 @@ export function update<T>(atom: _Atom<T>, value?: T) {
     if (!state.shouldUpdate(value!, state.value)) return;
 
     if (state.signals.update) {
-      state.signals.update._emit({
+      state.signals.update[1]({
         value: value!,
         prevValue: state.value,
       });
@@ -130,7 +129,7 @@ export function recalc() {
 
     if (!state.dirtyCount) {
       if (state.receivedException && state.signals.exception) {
-        state.signals.exception._emit(state.exception);
+        state.signals.exception[1](state.exception);
       }
 
       if (state.dependants.length) {
@@ -147,7 +146,7 @@ export function recalc() {
 
     if (!state.hasException && state.shouldUpdate(value, state.value)) {
       if (state.signals.update) {
-        state.signals.update._emit({
+        state.signals.update[1]({
           value: value,
           prevValue: state.value,
         });
@@ -189,7 +188,7 @@ function runSubscribers<T>(state: State<T>) {
   if (!state.subscribers.length) return;
 
   if (state.signals.notifyStart) {
-    state.signals.notifyStart._emit(state.value);
+    state.signals.notifyStart[1](state.value);
   }
 
   for (let subscriber of state.subscribers) {
@@ -197,7 +196,7 @@ function runSubscribers<T>(state: State<T>) {
   }
 
   if (state.signals.notifyEnd) {
-    state.signals.notifyEnd._emit(state.value);
+    state.signals.notifyEnd[1](state.value);
   }
 }
 
@@ -277,7 +276,7 @@ function calcComputed<T>(state: State<T>) {
 
   if (state.hasException) {
     if (state.signals.exception) {
-      state.signals.exception._emit(state.exception);
+      state.signals.exception[1](state.exception);
     }
 
     if (
@@ -295,7 +294,7 @@ function activateDependencies<T>(state: State<T>) {
   if (state.activeCount) return;
 
   if (state.signals.activate) {
-    state.signals.activate._emit(state.value);
+    state.signals.activate[1](state.value);
   }
 
   for (let dependency of state.dependencies) {
@@ -309,7 +308,7 @@ function deactivateDependencies<T>(state: State<T>) {
   if (state.activeCount) return;
 
   if (state.signals.deactivate) {
-    state.signals.deactivate._emit(state.value);
+    state.signals.deactivate[1](state.value);
   }
 
   for (let dependency of state.dependencies) {
