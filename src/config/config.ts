@@ -1,17 +1,20 @@
+import { Filter } from '../filter/filter';
+
 interface Config {
-  batchUpdates?: boolean;
-  logException?: (err: Error) => any;
-  filter?: (value: any, prevValue: any) => boolean;
+  batchUpdates: boolean;
+  logException: (e: unknown) => any;
+  filter: undefined | null | false | Filter<any>;
 }
 
-const DEFAULT_CONFIG = {
+const DEFAULT_CONFIG: Config = {
   batchUpdates: true,
   logException: /* istanbul ignore next */ (e: unknown) => console.error(e),
-  filter: (value: any, prevValue: any) => !Object.is(value, prevValue),
+  filter: (value: any, prevValue?: any | undefined) =>
+    !Object.is(value, prevValue),
 };
 
 export const config = Object.assign({}, DEFAULT_CONFIG);
 
-export function configure(configUpdate?: Config) {
+export function configure(configUpdate?: Partial<Config>) {
   Object.assign(config, configUpdate || DEFAULT_CONFIG);
 }

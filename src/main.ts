@@ -1,12 +1,5 @@
 import { writable, WritableAtom } from './writable/writable';
-import {
-  Signal,
-  signal,
-  on,
-  noncallable,
-  onSignalStart,
-  oSignalEnd,
-} from './signal/signal';
+import { signal } from './signal/signal';
 import {
   onActivate,
   onDeactivate,
@@ -22,11 +15,12 @@ import { configure } from './config/config';
 import { Atom } from './atom/atom';
 import { watch } from './watch/watch';
 import { recalc } from './core/core';
+import { on } from './on/on';
+import { effect } from './effect/effect';
 
 export {
   Atom,
   WritableAtom,
-  Signal,
   writable,
   computed,
   store,
@@ -35,7 +29,6 @@ export {
   recalc,
   configure,
   signal,
-  noncallable,
   on,
   onActivate,
   onDeactivate,
@@ -43,6 +36,5 @@ export {
   onNotifyEnd,
   onUpdate,
   onException,
-  onSignalStart,
-  oSignalEnd,
+  effect,
 };

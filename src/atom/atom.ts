@@ -1,16 +1,14 @@
 import { getStateValue, addSubscriber, removeSubscriber } from '../core/core';
 import { State } from '../state/state';
 import { Subscriber } from '../subscriber/subscriber';
+import { NOOP } from '../utils/functions';
 
 export interface Atom<T> {
   (): T;
   get(): T;
+  value(): T;
   subscribe(subscriber: Subscriber<T>, emitOnSubscribe?: boolean): () => void;
-}
-
-export interface AtomOptions<T> {
-  catch?: (e: unknown, currentValue?: T) => T;
-  filter?: (value: T, prevValue?: T) => boolean;
+  activate(): () => void;
 }
 
 export interface _Atom<T> extends Atom<T> {
@@ -25,5 +23,13 @@ export const atomProto = {
   subscribe(subscriber: any, emitOnSubscribe = true) {
     addSubscriber(this as any, subscriber, emitOnSubscribe);
     return () => removeSubscriber(this as any, subscriber);
+  },
+
+  activate() {
+    return this.subscribe(NOOP);
+  },
+
+  value(this: _Atom<any>) {
+    return this._state.value;
   },
 };

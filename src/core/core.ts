@@ -211,8 +211,12 @@ export function getStateValue<T>(state: State<T>): T {
   if (!isCalcActive) recalc();
 
   if (state.computedFn && !state.activeCount && !state.isCached()) {
-    state.prevValue = state.value;
-    state.value = calcComputed(state);
+    const value = calcComputed(state);
+
+    if (state.filter(value, state.value)) {
+      state.prevValue = state.value;
+      state.value = value;
+    }
   }
 
   if (currentComputed) {

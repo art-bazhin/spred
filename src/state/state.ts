@@ -1,21 +1,21 @@
-import { AtomOptions } from '../atom/atom';
-import { config } from '../config/config';
+import { Filter } from '../filter/filter';
 import { SignalResult } from '../signal/signal';
 import { Subscriber } from '../subscriber/subscriber';
-import { FALSE } from '../utils/functions';
+import { FALSE, TRUE } from '../utils/functions';
 
 export interface State<T> {
   value: T;
   prevValue?: T;
+  cachedValue?: T;
   hasException: boolean;
   receivedException: boolean;
   exception?: unknown;
   subscribers: Subscriber<T>[];
   dependants: State<any>[];
-  activeCount: number; // subscribers and dependants length
+  activeCount: number;
   computedFn?: (currentValue?: T) => T;
-  catch?: (e: unknown, currentValue?: T) => T;
-  filter: (value: T, prevValue?: T) => boolean;
+  catch?: null | ((e: unknown, currentValue?: T) => T);
+  filter: Filter<T>;
   dependencies: State<any>[];
   dependencyStatuses: number[];
   dependencyStatusesSum: number;
@@ -35,18 +35,17 @@ export interface State<T> {
   };
 }
 
-const DEFAULT_ATOM_OPTIONS = {};
-
 export function createState<T>(
   value: T,
   computedFn?: () => T,
-  options: AtomOptions<T> = DEFAULT_ATOM_OPTIONS
+  catchException?: ((e: unknown) => T) | null,
+  filter?: undefined | null | false | Filter<T>
 ): State<T> {
   return {
     value,
     computedFn,
-    catch: options.catch,
-    filter: options.filter || config.filter,
+    catch: catchException,
+    filter: filter || TRUE,
     hasException: false,
     receivedException: false,
     subscribers: [],

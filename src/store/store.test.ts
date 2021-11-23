@@ -1,3 +1,4 @@
+import { recalc } from '../core/core';
 import { Atom } from '../atom/atom';
 import { store, Store } from './store';
 
@@ -104,5 +105,27 @@ describe('store', () => {
 
     expect(paul()?.name).toBe('2');
     expect(ringoSurname).toBe('4');
+  });
+
+  it('uses filter option to filter values', () => {
+    const testStore = store<{ id: string }>([], {
+      filter: false,
+    });
+
+    const value = { id: '1' };
+    const atom = testStore.get('1');
+    const subscriber = jest.fn();
+
+    atom.subscribe(subscriber, false);
+
+    testStore.set(value);
+    testStore.set(value);
+    testStore.set(value);
+    testStore.set(value);
+    testStore.set(value);
+
+    recalc();
+
+    expect(subscriber).toBeCalledTimes(5);
   });
 });

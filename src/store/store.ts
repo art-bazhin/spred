@@ -2,10 +2,14 @@ import { writable, WritableAtom } from '../writable/writable';
 import { Atom, _Atom } from '../atom/atom';
 import { computed } from '../computed/computed';
 import { update } from '../core/core';
+import { config } from '../config/config';
 
 interface StoreOptions<T> {
   getItemId?: (item: T) => string;
-  filter?: (value: T | undefined, prevValue: T | undefined) => boolean;
+  filter?:
+    | null
+    | false
+    | ((value: T | undefined, prevValue: T | undefined) => boolean);
 }
 
 interface StoreOptionsWithId<T> extends StoreOptions<T> {
@@ -50,13 +54,15 @@ function createData<T>(items: T[], getItemId: (item: T) => string) {
 }
 
 function get<T>(this: _Store<T>, id: string) {
+  const filter: any =
+    this._options.filter === undefined ? config.filter : this._options.filter;
+
   if (!this._atoms[id]) {
     this._atoms[id] = computed<T | undefined>(
       () => this._data()[id] || this._force(),
-      {
-        filter: this._options.filter,
-      }
-    );
+      null,
+      filter
+    ) as any;
   }
 
   return this._atoms[id]!;
