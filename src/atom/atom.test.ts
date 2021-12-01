@@ -403,124 +403,143 @@ describe('atom', () => {
 
     expect(subscriber).toHaveBeenCalledTimes(1);
   });
-});
 
-describe('atom value method', () => {
-  it('returns current atom value without calculation', () => {
-    const counter = writable(5);
-    const x2Counter = computed(() => counter() * 2);
+  describe('value method', () => {
+    it('returns current atom value without calculation', () => {
+      const counter = writable(5);
+      const x2Counter = computed(() => counter() * 2);
 
-    expect(x2Counter.value()).toBeUndefined();
+      expect(x2Counter.value()).toBeUndefined();
 
-    x2Counter();
-    expect(x2Counter.value()).toBe(10);
+      x2Counter();
+      expect(x2Counter.value()).toBe(10);
+    });
   });
-});
 
-describe('atom filter', () => {
-  it('allows to filter atom values', () => {
-    const nonFiltered = writable(0, null);
-    let subscriber = jest.fn();
+  describe('activate method', () => {
+    it('forces an atom to recalculate its value on dependency changes', () => {
+      const counter = writable(5);
+      const x2Counter = computed(() => counter() * 2);
 
-    nonFiltered.subscribe(subscriber, false);
+      expect(x2Counter.value()).toBeUndefined();
 
-    nonFiltered(0);
-    recalc();
+      counter(10);
+      expect(x2Counter.value()).toBeUndefined();
 
-    expect(subscriber).toBeCalledTimes(1);
+      x2Counter.activate();
+      expect(x2Counter.value()).toBe(20);
 
-    const customFiltered = writable(0, (v) => v === 0);
-    subscriber = jest.fn();
+      counter(15);
+      recalc();
+      expect(x2Counter.value()).toBe(30);
+    });
+  });
 
-    customFiltered.subscribe(subscriber, false);
+  describe('filter', () => {
+    it('allows to filter atom values', () => {
+      const nonFiltered = writable(0, null);
+      let subscriber = jest.fn();
 
-    customFiltered(1);
-    recalc();
+      nonFiltered.subscribe(subscriber, false);
 
-    expect(subscriber).toBeCalledTimes(0);
+      nonFiltered(0);
+      recalc();
 
-    customFiltered(0);
-    recalc();
+      expect(subscriber).toBeCalledTimes(1);
 
-    expect(subscriber).toBeCalledTimes(1);
+      const customFiltered = writable(0, (v) => v === 0);
+      subscriber = jest.fn();
 
-    const counter = writable(0, (value) => value > 10);
-    let test: any;
-    let unsub: any;
+      customFiltered.subscribe(subscriber, false);
 
-    expect(counter()).toBeUndefined();
+      customFiltered(1);
+      recalc();
 
-    counter(15);
-    expect(counter()).toBe(15);
+      expect(subscriber).toBeCalledTimes(0);
 
-    counter(9);
-    expect(counter()).toBe(15);
+      customFiltered(0);
+      recalc();
 
-    counter(4);
-    unsub = counter.subscribe((v) => (test = v));
-    expect(test).toBe(15);
-    expect(counter()).toBe(15);
+      expect(subscriber).toBeCalledTimes(1);
 
-    counter(12);
-    expect(counter()).toBe(12);
-    expect(test).toBe(12);
+      const counter = writable(0, (value) => value > 10);
+      let test: any;
+      let unsub: any;
 
-    counter(1);
-    expect(counter()).toBe(12);
-    expect(test).toBe(12);
+      expect(counter()).toBeUndefined();
 
-    unsub();
-    expect(counter()).toBe(12);
-    expect(test).toBe(12);
+      counter(15);
+      expect(counter()).toBe(15);
 
-    const x2Counter = computed(
-      () => {
-        const v = counter();
-        return v && v * 2;
-      },
-      null,
-      (value) => !!value && value > 25
-    );
+      counter(9);
+      expect(counter()).toBe(15);
 
-    expect(x2Counter()).toBeUndefined();
+      counter(4);
+      unsub = counter.subscribe((v) => (test = v));
+      expect(test).toBe(15);
+      expect(counter()).toBe(15);
 
-    counter(11);
-    expect(x2Counter()).toBeUndefined();
+      counter(12);
+      expect(counter()).toBe(12);
+      expect(test).toBe(12);
 
-    counter(15);
-    expect(x2Counter()).toBe(30);
+      counter(1);
+      expect(counter()).toBe(12);
+      expect(test).toBe(12);
 
-    counter(12);
-    expect(x2Counter()).toBe(30);
+      unsub();
+      expect(counter()).toBe(12);
+      expect(test).toBe(12);
 
-    counter(11);
-    unsub = x2Counter.subscribe((v) => (test = v));
-    expect(test).toBe(30);
-    expect(x2Counter()).toBe(30);
+      const x2Counter = computed(
+        () => {
+          const v = counter();
+          return v && v * 2;
+        },
+        null,
+        (value) => !!value && value > 25
+      );
 
-    counter(20);
-    counter(11);
-    expect(x2Counter()).toBe(30);
-    expect(test).toBe(30);
+      expect(x2Counter()).toBeUndefined();
 
-    counter(1);
-    expect(x2Counter()).toBe(30);
-    expect(test).toBe(30);
+      counter(11);
+      expect(x2Counter()).toBeUndefined();
 
-    counter(16);
-    expect(x2Counter()).toBe(32);
-    expect(test).toBe(32);
+      counter(15);
+      expect(x2Counter()).toBe(30);
 
-    counter(15);
-    expect(x2Counter()).toBe(30);
-    expect(test).toBe(30);
+      counter(12);
+      expect(x2Counter()).toBe(30);
 
-    unsub();
-    expect(x2Counter()).toBe(30);
-    expect(test).toBe(30);
+      counter(11);
+      unsub = x2Counter.subscribe((v) => (test = v));
+      expect(test).toBe(30);
+      expect(x2Counter()).toBe(30);
 
-    counter(20);
-    counter(11);
-    expect(x2Counter()).toBe(30);
+      counter(20);
+      counter(11);
+      expect(x2Counter()).toBe(30);
+      expect(test).toBe(30);
+
+      counter(1);
+      expect(x2Counter()).toBe(30);
+      expect(test).toBe(30);
+
+      counter(16);
+      expect(x2Counter()).toBe(32);
+      expect(test).toBe(32);
+
+      counter(15);
+      expect(x2Counter()).toBe(30);
+      expect(test).toBe(30);
+
+      unsub();
+      expect(x2Counter()).toBe(30);
+      expect(test).toBe(30);
+
+      counter(20);
+      counter(11);
+      expect(x2Counter()).toBe(30);
+    });
   });
 });
