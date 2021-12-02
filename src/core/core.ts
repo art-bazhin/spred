@@ -181,8 +181,12 @@ export function recalc() {
   queueLength = queue.length;
   fullQueueLength = queueLength;
 
-  for (let state of notificationQueue) {
-    runSubscribers(state);
+  const wrapper = (config as any)._notificationWrapper;
+
+  if (wrapper) {
+    wrapper(() => notificationQueue.forEach(runSubscribers));
+  } else {
+    notificationQueue.forEach(runSubscribers);
   }
 
   recalc();
