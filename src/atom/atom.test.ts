@@ -370,6 +370,20 @@ describe('atom', () => {
     expect(x2Counter()).toBe(2);
   });
 
+  it('can use actual atom state in subscribers', () => {
+    const counter = writable(0);
+    const x2Counter = computed(() => counter() * 2);
+
+    x2Counter.activate();
+
+    counter.subscribe((value) => {
+      expect(value * 2).toBe(x2Counter());
+    });
+
+    counter(1);
+    recalc();
+  });
+
   it('immediately runs subscribers on value change in sync mode', () => {
     configure({
       batchUpdates: false,
