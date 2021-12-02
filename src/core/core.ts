@@ -1,4 +1,4 @@
-import { _Atom } from '../atom/atom';
+import { _Atom, Atom } from '../atom/atom';
 import { State } from '../state/state';
 import { Subscriber } from '../subscriber/subscriber';
 import { removeFromArray } from '../utils/removeFromArray';
@@ -15,28 +15,41 @@ let fullQueueLength = 0;
 
 let isCalcActive = false;
 
-export function update<T>(atom: _Atom<T>, value?: T) {
-  const state = atom._state;
-  const force = arguments.length === 1;
-
-  if (!force) {
-    if (!state.filter(value!, state.value)) return;
-
-    if (state.signals.update) {
-      state.signals.update[1]({
-        value: value!,
-        prevValue: state.value,
-      });
-    }
-
-    state.prevValue = state.value;
-    state.value = value!;
+export function update<T>(atom: Atom<T>, value?: T) {
+  if (arguments.length === 1) {
+    commit([atom]);
+    return;
   }
 
-  if (state.computedFn) state.dirtyCount++;
+  commit([atom, value]);
+}
 
-  state.queueIndex = queueLength - fullQueueLength;
-  queueLength = queue.push(state);
+export function commit(...pairs: [atom: Atom<any>, value?: any][]) {
+  for (let pair of pairs) {
+    const [atom, value] = pair;
+
+    const state = (atom as _Atom<any>)._state;
+    const force = pair.length === 1;
+
+    if (!force) {
+      if (!state.filter(value!, state.value)) return;
+
+      if (state.signals.update) {
+        state.signals.update[1]({
+          value: value!,
+          prevValue: state.value,
+        });
+      }
+
+      state.prevValue = state.value;
+      state.value = value!;
+    }
+
+    if (state.computedFn) state.dirtyCount++;
+
+    state.queueIndex = queueLength - fullQueueLength;
+    queueLength = queue.push(state);
+  }
 
   if (isCalcActive) return;
 
@@ -82,6 +95,7 @@ export function recalc() {
   if (!queueLength) return;
 
   isCalcActive = true;
+  const notificationQueue: State<any>[] = [];
 
   for (let i = 0; i < queueLength; i++) {
     const state = queue[i];
@@ -104,7 +118,7 @@ export function recalc() {
     if (state.queueIndex !== i) continue;
 
     if (!state.computedFn) {
-      runSubscribers(state);
+      notificationQueue.push(state);
       resetStateQueueParams(state);
       continue;
     }
@@ -155,7 +169,7 @@ export function recalc() {
       state.prevValue = state.value;
       state.value = value;
 
-      runSubscribers(state);
+      notificationQueue.push(state);
     } else {
       decreaseDirtyCount(state);
     }
@@ -166,6 +180,10 @@ export function recalc() {
   queue = queue.slice(fullQueueLength);
   queueLength = queue.length;
   fullQueueLength = queueLength;
+
+  for (let state of notificationQueue) {
+    runSubscribers(state);
+  }
 
   recalc();
 
