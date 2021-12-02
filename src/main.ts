@@ -16,11 +16,12 @@ import { Atom } from './atom/atom';
 import { watch } from './watch/watch';
 import { recalc } from './core/core';
 import { on } from './on/on';
-import { effect } from './effect/effect';
+import { EffectStatus, effect } from './effect/effect';
 
 export {
   Atom,
   WritableAtom,
+  EffectStatus,
   writable,
   computed,
   store,

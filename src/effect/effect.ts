@@ -3,7 +3,7 @@ import { computed } from '../computed/computed';
 import { readonly } from '../readonly/readonly';
 import { commit } from '../core/core';
 
-type EffectStatus = 'pristine' | 'pending' | 'fulfilled' | 'rejected';
+export type EffectStatus = 'pristine' | 'pending' | 'fulfilled' | 'rejected';
 
 export function effect<T, A extends unknown[]>(
   asyncFn: (...args: A) => Promise<T>
