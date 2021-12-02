@@ -1,6 +1,7 @@
 import { writable } from '../writable/writable';
 import { computed } from '../computed/computed';
 import { readonly } from '../readonly/readonly';
+import { commit } from '../core/core';
 
 type EffectStatus = 'pristine' | 'pending' | 'fulfilled' | 'rejected';
 
@@ -14,7 +15,6 @@ export function effect<T, A extends unknown[]>(
   const _exception = writable<unknown>(undefined);
   const _data = writable<T | undefined>(undefined);
 
-  const status = readonly(_status);
   const lastStatus = computed(
     () => _status(),
     null,
@@ -23,29 +23,55 @@ export function effect<T, A extends unknown[]>(
 
   lastStatus.activate();
 
-  const pristine = computed(() => _status() === 'pristine');
-  const pending = computed(() => _status() === 'pending');
-  const fulfilled = computed(() => _status() === 'fulfilled');
-  const rejected = computed(() => _status() === 'rejected');
-  const settled = computed(() => fulfilled() || rejected());
+  const status = computed(
+    () => {
+      const value = _status();
+
+      return {
+        value,
+        pristine: value === 'pristine',
+        pending: value === 'pending',
+        fulfilled: value === 'fulfilled',
+        rejected: value === 'rejected',
+        settled: value === 'fulfilled' || value === 'rejected',
+      };
+    },
+    null,
+    ((status: any, prevStatus: any) => {
+      return status.value !== (prevStatus && prevStatus!.value);
+    }) as any as null
+  );
 
   const exception = readonly(_exception);
 
+  const done = computed((last) => {
+    switch (_status()) {
+      case 'pristine':
+      case 'fulfilled':
+        return _data();
+
+      case 'rejected':
+        return _exception();
+
+      default:
+        return last;
+    }
+  });
+
   const data = computed(() => {
-    if (rejected()) throw _exception();
+    if (status().rejected) throw _exception();
     return _data();
   });
 
   const abort = () => {
-    if (!pending()) return;
+    if (!status().pending) return;
     _status(lastStatus()!);
     counter++;
   };
 
   const reset = () => {
-    _status('pristine');
-    _data(undefined);
-    _exception(undefined);
+    commit([_data, undefined], [_exception, undefined], [_status, 'pristine']);
+
     counter++;
   };
 
@@ -65,12 +91,8 @@ export function effect<T, A extends unknown[]>(
     {
       data,
       exception,
+      done,
       status,
-      pristine,
-      pending,
-      fulfilled,
-      rejected,
-      settled,
       abort,
       reset,
     },
@@ -80,18 +102,12 @@ export function effect<T, A extends unknown[]>(
       return run(++counter, ...args)
         .then((v) => {
           if (current !== counter) return v;
-
-          _data(v);
-          _status('fulfilled');
-
+          commit([_data, v], [_status, 'fulfilled']);
           return v;
         })
         .catch((e) => {
           if (current !== counter) throw e;
-
-          _exception(e);
-          _status('rejected');
-
+          commit([_exception, e], [_status, 'rejected']);
           throw e;
         });
     },
