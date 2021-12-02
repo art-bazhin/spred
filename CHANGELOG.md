@@ -2,6 +2,46 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.3.0](https://github.com/art-bazhin/spred/compare/v0.2.2...v0.3.0) (2021-12-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* pass atom options as separate arguments
+* shouldUpdate => filter, handleException => catch
+
+### Features
+
+* add effect ([a54a51a](https://github.com/art-bazhin/spred/commit/a54a51a70f632ddbf823aa6d9b1cd8076bb3b1cc))
+* add effect done atom and refactor effect status ([eb3b1ef](https://github.com/art-bazhin/spred/commit/eb3b1efd2a2a7775144394156d1c4ea48d58049e))
+* add settled flag to effect ([6e32fbf](https://github.com/art-bazhin/spred/commit/6e32fbf9815c8f75c65d251af96e31a2b9af5ebc))
+
+
+### Bug Fixes
+
+* add missing export ([f0a917a](https://github.com/art-bazhin/spred/commit/f0a917a7fcb71c3733b5c2aaead1dfddf3e919c9))
+* notificate subscribers after recalculation done ([10aefc5](https://github.com/art-bazhin/spred/commit/10aefc5ba17ad288ac6681fd9b58ae7a5d9998b3))
+
+
+### Code Refactoring
+
+* refactor atom options ([ca1a4ae](https://github.com/art-bazhin/spred/commit/ca1a4ae22b623185787c459485a93bbda892cee1))
+* refactor signal ([ce72a47](https://github.com/art-bazhin/spred/commit/ce72a477839755237f701e3e45495e24287ba8d1))
+* refactor signal and lifecycle methods ([a37d55a](https://github.com/art-bazhin/spred/commit/a37d55ac1a262f930a92248bc2abba4932af2a32))
+* update atom options ([82d7eea](https://github.com/art-bazhin/spred/commit/82d7eea86c3140093a71f1022d3570c15771d0e2))
+
+
+### Tests
+
+* add effect tests ([9fcc2a7](https://github.com/art-bazhin/spred/commit/9fcc2a7f4fe059db0ea4b8b8d922f1bf4cf38f6b))
+* add missing tests ([2057512](https://github.com/art-bazhin/spred/commit/205751265cf78acc303e36df03e6310ac42f4d3d))
+* add missing tests ([a74ece3](https://github.com/art-bazhin/spred/commit/a74ece3ea0ce6b06e50b4f9f10aa4e60c88a4fc6))
+
+
+### Docs
+
+* update readme ([c92a79a](https://github.com/art-bazhin/spred/commit/c92a79a76612aae7ddea5f358c665a3f1b207def))
+
 ### [0.2.2](https://github.com/art-bazhin/spred/compare/v0.2.1...v0.2.2) (2021-11-17)
 
 
