@@ -12,7 +12,7 @@ export function effect<T, A extends unknown[]>(
 
   const _status = writable<EffectStatus>('pristine');
   const _exception = writable<unknown>(undefined);
-  const _value = writable<T | undefined>(undefined);
+  const _data = writable<T | undefined>(undefined);
 
   const status = readonly(_status);
   const lastStatus = computed(
@@ -27,26 +27,25 @@ export function effect<T, A extends unknown[]>(
   const pending = computed(() => _status() === 'pending');
   const fulfilled = computed(() => _status() === 'fulfilled');
   const rejected = computed(() => _status() === 'rejected');
+  const settled = computed(() => fulfilled() || rejected());
 
-  const exception = computed(() => {
-    if (rejected()) return _exception();
-    return undefined;
-  });
+  const exception = readonly(_exception);
 
   const data = computed(() => {
     if (rejected()) throw _exception();
-    return _value();
+    return _data();
   });
 
   const abort = () => {
     if (!pending()) return;
-    _status(lastStatus() || 'pristine');
+    _status(lastStatus()!);
     counter++;
   };
 
   const reset = () => {
     _status('pristine');
-    _value(undefined);
+    _data(undefined);
+    _exception(undefined);
     counter++;
   };
 
@@ -71,6 +70,7 @@ export function effect<T, A extends unknown[]>(
       pending,
       fulfilled,
       rejected,
+      settled,
       abort,
       reset,
     },
@@ -81,7 +81,7 @@ export function effect<T, A extends unknown[]>(
         .then((v) => {
           if (current !== counter) return v;
 
-          _value(v);
+          _data(v);
           _status('fulfilled');
 
           return v;
