@@ -6,7 +6,7 @@
 
 Simple and fast JavaScript reactive programming library.
 
-- **Small.** 2.35 KB minified and gziped. No dependencies
+- **Small.** Less than 3 KB minified and gziped. No dependencies
 - **Fast.** No unnecessary calculations and excellent performance
 - **Simple.** Small API and autotracking of dependencies
 - **Well typed.** Written in TypeScript
