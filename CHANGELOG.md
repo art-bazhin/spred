@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.5.0](https://github.com/art-bazhin/spred/compare/v0.4.0...v0.5.0) (2021-12-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* computeds have special NULL constant value by default instead of undefined
+
+### Bug Fixes
+
+* use special NULL constant as default value ([d2c4a9e](https://github.com/art-bazhin/spred/commit/d2c4a9efb7b1cb6037ce2d14ab68f144ae1e9f20))
+
 ## [0.4.0](https://github.com/art-bazhin/spred/compare/v0.3.1...v0.4.0) (2021-12-03)
 
 
