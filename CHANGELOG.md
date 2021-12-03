@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.4.0](https://github.com/art-bazhin/spred/compare/v0.3.1...v0.4.0) (2021-12-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* effect returns the object instead of tuple
+
+### Build System
+
+* add babel preset env and fix imports ([74fdff9](https://github.com/art-bazhin/spred/commit/74fdff9f8492202f820a501d298e45fde5233535))
+* update build config and dependencies ([9256f5c](https://github.com/art-bazhin/spred/commit/9256f5c4f653e7bc10a056e3de20a9fa965853a1))
+
+
+### Code Refactoring
+
+* change effect return type ([ec5058b](https://github.com/art-bazhin/spred/commit/ec5058b090763f0789813f7044dcf0ad9dd4a714))
+
 ### [0.3.1](https://github.com/art-bazhin/spred/compare/v0.3.0...v0.3.1) (2021-12-02)
 
 
