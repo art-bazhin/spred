@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.5.1](https://github.com/art-bazhin/spred/compare/v0.5.0...v0.5.1) (2021-12-03)
+
+
+### Code Refactoring
+
+* update NULL type ([ade8f0b](https://github.com/art-bazhin/spred/commit/ade8f0be265adff3214955abdd945b17c831cccb))
+
 ## [0.5.0](https://github.com/art-bazhin/spred/compare/v0.4.0...v0.5.0) (2021-12-03)
 
 
