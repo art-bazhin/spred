@@ -1,4 +1,4 @@
-import { writable, recalc, computed, configure } from '../main';
+import { writable, recalc, computed, configure } from '../index';
 import { on } from '../on/on';
 import {
   onActivate,

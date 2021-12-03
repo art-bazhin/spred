@@ -1,6 +1,6 @@
 import { computed } from '../computed/computed';
 import { writable, WritableAtom } from '../writable/writable';
-import { configure, recalc } from '../main';
+import { configure, recalc } from '../index';
 
 describe('atom', () => {
   configure({

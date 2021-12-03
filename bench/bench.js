@@ -519,3 +519,90 @@ function runBenchmark() {
 }
 
 runButton.addEventListener('click', runBenchmark);
+
+// ------------------------------------------------
+
+// const signal = spred.signal;
+// const effect = spred.effect;
+// const watch = spred.watch;
+// const readonly = spred.readonly;
+// const onActivate = spred.onActivate;
+// const onDeactivate = spred.onDeactivate;
+
+// function debounce(ms) {
+//   return function (source) {
+//     let isActive;
+//     let lastValue;
+//     let timeout;
+
+//     const target = writable(source());
+
+//     const subscriber = (value) => {
+//       lastValue = value;
+
+//       if (timeout) {
+//         clearTimeout(timeout);
+//         timeout = null;
+//       }
+
+//       timeout = setTimeout(() => {
+//         if (isActive) target(lastValue);
+//       }, ms);
+//     };
+
+//     let unsub;
+
+//     onActivate(target, () => {
+//       isActive = true;
+//       unsub = source.subscribe(subscriber);
+//     });
+
+//     onDeactivate(target, () => {
+//       isActive = false;
+//       unsub();
+//     });
+
+//     return readonly(target);
+//   };
+// }
+
+// function fetchRandomJoke() {
+//   return fetch('https://api.chucknorris.io/jokes/random').then((res) =>
+//     res.json()
+//   );
+// }
+
+// const appDiv = document.createElement('div');
+
+// document.body.innerHTML = '';
+// document.body.appendChild(appDiv);
+
+// const [{ data, status }, fetchJoke] = effect(fetchRandomJoke);
+
+// const debouncedStatus = debounce(150)(status);
+
+// const createdAt = computed(() => {
+//   const date = new Date(data().created_at);
+//   return date.toLocaleString();
+// });
+
+// const text = computed(() => data().value);
+
+// const html = computed(() => {
+//   const { pristine, pending, rejected } = debouncedStatus();
+
+//   if (pristine) return '<h3>No joke fetched</h3>';
+//   if (pending) return '<h3>Loading...</h3>';
+//   if (rejected) return '<h3>CONNECTION ERROR</h3>';
+
+//   return `
+//     <h3>${createdAt()}</h3>
+//     <p>${text()}</p>
+//   `;
+// });
+
+// watch(() => {
+//   document.body.innerHTML = html();
+// });
+
+// document.addEventListener('click', fetchJoke);

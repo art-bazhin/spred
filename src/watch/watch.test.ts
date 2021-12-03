@@ -1,4 +1,4 @@
-import { writable, computed, configure, recalc } from '../main';
+import { writable, computed, configure, recalc } from '../index';
 import { watch } from './watch';
 
 describe('watch', () => {
