@@ -18,7 +18,7 @@ export function effect<T, A extends unknown[]>(
   const lastStatus = computed(
     () => _status(),
     null,
-    (value) => value !== 'pending'
+    ((value: any) => value !== 'pending') as any as null
   );
 
   lastStatus.activate();
@@ -65,7 +65,7 @@ export function effect<T, A extends unknown[]>(
 
   const abort = () => {
     if (!status().pending) return;
-    _status(lastStatus()!);
+    _status(lastStatus());
     counter++;
   };
 

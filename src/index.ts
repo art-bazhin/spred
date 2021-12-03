@@ -17,6 +17,7 @@ import { watch } from './watch/watch';
 import { recalc } from './core/core';
 import { on } from './on/on';
 import { EffectStatus, effect } from './effect/effect';
+import { NULL } from './utils/constants';
 
 export {
   Atom,
@@ -38,4 +39,5 @@ export {
   onUpdate,
   onException,
   effect,
+  NULL,
 };

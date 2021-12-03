@@ -1,3 +1,4 @@
+import { NULL } from '../utils/constants';
 import { signal } from './signal';
 
 describe('signal', () => {
@@ -5,7 +6,7 @@ describe('signal', () => {
 
   it('creates the pair of atom and trigger function', () => {
     expect(atom.subscribe).toBeDefined();
-    expect(atom()).toBeUndefined();
+    expect(atom()).toBe(NULL);
     expect(trigger).toBeInstanceOf(Function);
   });
 

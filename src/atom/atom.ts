@@ -1,13 +1,19 @@
 import { getStateValue, addSubscriber, removeSubscriber } from '../core/core';
 import { State } from '../state/state';
 import { Subscriber } from '../subscriber/subscriber';
+import { NULL } from '../utils/constants';
 import { NOOP } from '../utils/functions';
 
 export interface Atom<T> {
   (): T;
   get(): T;
-  value(): T;
-  subscribe(subscriber: Subscriber<T>, emitOnSubscribe?: boolean): () => void;
+  value(): T | typeof NULL;
+  subscribe(
+    subscriber: Subscriber<Exclude<T, typeof NULL>>,
+    emitOnSubscribe: false
+  ): () => void;
+  subscribe(subscriber: Subscriber<T>, emitOnSubscribe: true): () => void;
+  subscribe(subscriber: Subscriber<T>): () => void;
   activate(): () => void;
 }
 

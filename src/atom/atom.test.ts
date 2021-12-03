@@ -1,6 +1,7 @@
 import { computed } from '../computed/computed';
 import { writable, WritableAtom } from '../writable/writable';
 import { configure, recalc } from '../index';
+import { NULL } from '../utils/constants';
 
 describe('atom', () => {
   configure({
@@ -423,7 +424,7 @@ describe('atom', () => {
       const counter = writable(5);
       const x2Counter = computed(() => counter() * 2);
 
-      expect(x2Counter.value()).toBeUndefined();
+      expect(x2Counter.value()).toBe(NULL);
 
       x2Counter();
       expect(x2Counter.value()).toBe(10);
@@ -435,10 +436,10 @@ describe('atom', () => {
       const counter = writable(5);
       const x2Counter = computed(() => counter() * 2);
 
-      expect(x2Counter.value()).toBeUndefined();
+      expect(x2Counter.value()).toBe(NULL);
 
       counter(10);
-      expect(x2Counter.value()).toBeUndefined();
+      expect(x2Counter.value()).toBe(NULL);
 
       x2Counter.activate();
       expect(x2Counter.value()).toBe(20);
@@ -480,7 +481,7 @@ describe('atom', () => {
       let test: any;
       let unsub: any;
 
-      expect(counter()).toBeUndefined();
+      expect(counter()).toBe(NULL);
 
       counter(15);
       expect(counter()).toBe(15);
@@ -508,16 +509,18 @@ describe('atom', () => {
       const x2Counter = computed(
         () => {
           const v = counter();
-          return v && v * 2;
+
+          if (v === NULL) return 0;
+          return v * 2;
         },
         null,
-        (value) => !!value && value > 25
+        (value) => value > 25
       );
 
-      expect(x2Counter()).toBeUndefined();
+      expect(x2Counter()).toBe(NULL);
 
       counter(11);
-      expect(x2Counter()).toBeUndefined();
+      expect(x2Counter()).toBe(NULL);
 
       counter(15);
       expect(x2Counter()).toBe(30);

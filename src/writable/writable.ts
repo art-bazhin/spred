@@ -3,13 +3,13 @@ import { config } from '../config/config';
 import { update } from '../core/core';
 import { Filter } from '../filter/filter';
 import { createState } from '../state/state';
+import { NULL } from '../utils/constants';
 
 const writableAtomProto = {
   ...atomProto,
 
   set(this: _Atom<any>, value: any) {
     update(this, value);
-    return value;
   },
 
   notify(this: _Atom<any>) {
@@ -18,8 +18,9 @@ const writableAtomProto = {
 };
 
 export interface WritableAtom<T> extends Atom<T> {
-  (value: T): T;
-  set(value: T): T;
+  (value: T): void;
+  set(value: T): void;
+  value(): T;
   notify(): void;
 }
 
@@ -31,7 +32,7 @@ export function writable<T>(
 export function writable<T>(
   value: T,
   filter: Filter<T>
-): WritableAtom<T | undefined>;
+): WritableAtom<T | typeof NULL>;
 
 export function writable<T>(value: T, filter = config.filter) {
   const f: any = function (value?: T) {
@@ -40,7 +41,7 @@ export function writable<T>(value: T, filter = config.filter) {
   };
 
   const hasFilter = filter && filter !== config.filter;
-  const initialValue = hasFilter ? (filter(value) ? value : undefined) : value;
+  const initialValue = hasFilter ? (filter(value) ? value : NULL) : value;
 
   f._state = createState(initialValue, undefined, undefined, filter);
 

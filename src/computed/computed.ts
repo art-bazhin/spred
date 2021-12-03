@@ -3,6 +3,7 @@ import { atomProto } from '../atom/atom';
 import { config } from '../config/config';
 import { Filter } from '../filter/filter';
 import { createState } from '../state/state';
+import { NULL } from '../utils/constants';
 
 export function computed<T, E = T>(
   computedFn: (currentValue?: T) => T,
@@ -19,7 +20,7 @@ export function computed<T, E = T>(
   computedFn: (currentValue?: T) => T,
   catchException?: null | false | ((e: unknown) => E),
   filter?: Filter<T>
-): Atom<T | E | undefined>;
+): Atom<T | E | typeof NULL>;
 
 export function computed(
   computedFn: any,
@@ -30,7 +31,7 @@ export function computed(
     return f.get();
   };
 
-  f._state = createState(undefined as any, computedFn, catchException, filter);
+  f._state = createState(NULL as any, computedFn, catchException, filter);
 
   f.constructor = computed;
   f.get = atomProto.get;
