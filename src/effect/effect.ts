@@ -71,11 +71,10 @@ export function effect<T, A extends unknown[]>(
 
   const reset = () => {
     commit([_data, undefined], [_exception, undefined], [_status, 'pristine']);
-
     counter++;
   };
 
-  const run = (id: number, ...args: A) => {
+  const exec = (id: number, ...args: A) => {
     return asyncFn(...args)
       .then((res) => {
         current = id;
@@ -87,29 +86,29 @@ export function effect<T, A extends unknown[]>(
       });
   };
 
-  return [
-    {
-      data,
-      exception,
-      done,
-      status,
-      abort,
-      reset,
-    },
-    (...args: A) => {
-      _status('pending');
+  const call = (...args: A) => {
+    _status('pending');
 
-      return run(++counter, ...args)
-        .then((v) => {
-          if (current !== counter) return v;
-          commit([_data, v], [_status, 'fulfilled']);
-          return v;
-        })
-        .catch((e) => {
-          if (current !== counter) throw e;
-          commit([_exception, e], [_status, 'rejected']);
-          throw e;
-        });
-    },
-  ] as const;
+    return exec(++counter, ...args)
+      .then((v) => {
+        if (current !== counter) return v;
+        commit([_data, v], [_status, 'fulfilled']);
+        return v;
+      })
+      .catch((e) => {
+        if (current !== counter) throw e;
+        commit([_exception, e], [_status, 'rejected']);
+        throw e;
+      });
+  };
+
+  return {
+    data,
+    exception,
+    done,
+    status,
+    call,
+    abort,
+    reset,
+  } as const;
 }
