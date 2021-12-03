@@ -8,7 +8,7 @@ export type SignalResult<T, P = T> = unknown extends T
   : [Atom<T>, (payload: P) => void];
 
 export function signal<T>() {
-  const source = writable<T | typeof NULL>(NULL, null);
+  const source = writable<T | NULL>(NULL, null);
 
   return [
     readonly(source),

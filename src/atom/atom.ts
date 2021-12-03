@@ -7,9 +7,9 @@ import { NOOP } from '../utils/functions';
 export interface Atom<T> {
   (): T;
   get(): T;
-  value(): T | typeof NULL;
+  value(): T | NULL;
   subscribe(
-    subscriber: Subscriber<Exclude<T, typeof NULL>>,
+    subscriber: Subscriber<Exclude<T, NULL>>,
     emitOnSubscribe: false
   ): () => void;
   subscribe(subscriber: Subscriber<T>, emitOnSubscribe: true): () => void;

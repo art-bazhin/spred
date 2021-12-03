@@ -23,6 +23,7 @@ export {
   Atom,
   WritableAtom,
   EffectStatus,
+  NULL,
   writable,
   computed,
   store,
@@ -39,5 +40,4 @@ export {
   onUpdate,
   onException,
   effect,
-  NULL,
 };

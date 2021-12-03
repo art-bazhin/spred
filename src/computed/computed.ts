@@ -20,7 +20,7 @@ export function computed<T, E = T>(
   computedFn: (currentValue?: T) => T,
   catchException?: null | false | ((e: unknown) => E),
   filter?: Filter<T>
-): Atom<T | E | typeof NULL>;
+): Atom<T | E | NULL>;
 
 export function computed(
   computedFn: any,

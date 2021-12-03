@@ -32,7 +32,7 @@ export function writable<T>(
 export function writable<T>(
   value: T,
   filter: Filter<T>
-): WritableAtom<T | typeof NULL>;
+): WritableAtom<T | NULL>;
 
 export function writable<T>(value: T, filter = config.filter) {
   const f: any = function (value?: T) {
