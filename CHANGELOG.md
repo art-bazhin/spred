@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.6.0](https://github.com/art-bazhin/spred/compare/v0.5.1...v0.6.0) (2021-12-04)
+
+
+### ⚠ BREAKING CHANGES
+
+* signal function returns Signal instead of Atom
+
+### Bug Fixes
+
+* separate Signal entity ([d5407e3](https://github.com/art-bazhin/spred/commit/d5407e37a1a0a1637fd5a07d2cfc3eee17c631c3))
+
 ### [0.5.1](https://github.com/art-bazhin/spred/compare/v0.5.0...v0.5.1) (2021-12-03)
 
 
