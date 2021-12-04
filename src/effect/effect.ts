@@ -2,8 +2,28 @@ import { writable } from '../writable/writable';
 import { computed } from '../computed/computed';
 import { readonly } from '../readonly/readonly';
 import { commit } from '../core/core';
+import { Atom } from '../atom/atom';
 
 export type EffectStatus = 'pristine' | 'pending' | 'fulfilled' | 'rejected';
+
+interface EffectStatusObject {
+  value: EffectStatus;
+  pristine: boolean;
+  pending: boolean;
+  fulfilled: boolean;
+  rejected: boolean;
+  settled: boolean;
+}
+
+export interface Effect<T, A extends unknown[]> {
+  readonly data: Atom<T | undefined>;
+  readonly exception: Atom<unknown>;
+  readonly done: Atom<unknown>;
+  readonly status: Atom<EffectStatusObject>;
+  readonly call: (...args: A) => Promise<T>;
+  readonly abort: () => void;
+  readonly reset: () => void;
+}
 
 export function effect<T, A extends unknown[]>(
   asyncFn: (...args: A) => Promise<T>
@@ -12,8 +32,8 @@ export function effect<T, A extends unknown[]>(
   let current = -1;
 
   const _status = writable<EffectStatus>('pristine');
-  const _exception = writable<unknown>(undefined);
-  const _data = writable<T | undefined>(undefined);
+  const _exception = writable<unknown>(undefined, null);
+  const _data = writable<T | undefined>(undefined, null);
 
   const lastStatus = computed(
     () => _status(),
@@ -58,10 +78,14 @@ export function effect<T, A extends unknown[]>(
     }
   });
 
-  const data = computed(() => {
-    if (status().rejected) throw _exception();
-    return _data();
-  });
+  const data = computed(
+    () => {
+      if (status().rejected) throw _exception();
+      return _data();
+    },
+    null,
+    null
+  );
 
   const abort = () => {
     if (!status().pending) return;
@@ -110,5 +134,5 @@ export function effect<T, A extends unknown[]>(
     call,
     abort,
     reset,
-  } as const;
+  } as Effect<T, A>;
 }

@@ -1,20 +1,21 @@
-import { NULL } from '../utils/constants';
+import { on } from '../on/on';
 import { signal } from './signal';
 
 describe('signal', () => {
-  const [atom, trigger] = signal<number>();
+  const [event, emitEvent] = signal<string>();
+  let str = '';
 
-  it('creates the pair of atom and trigger function', () => {
-    expect(atom.subscribe).toBeDefined();
-    expect(atom()).toBe(NULL);
-    expect(trigger).toBeInstanceOf(Function);
+  it('creates emit function', () => {
+    expect(emitEvent).toBeInstanceOf(Function);
   });
 
-  it('passes values from the trigger function to the atom', () => {
-    trigger(5);
-    expect(atom()).toBe(5);
+  it('synchroniously exec listeners on every emit function call', () => {
+    on(event, (v) => (str += v));
 
-    trigger(10);
-    expect(atom()).toBe(10);
+    emitEvent('1');
+    emitEvent('2');
+    emitEvent('3');
+
+    expect(str).toBe('123');
   });
 });

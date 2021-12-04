@@ -1,19 +1,36 @@
-import { NULL } from '../utils/constants';
-import { Atom } from '../atom/atom';
-import { readonly } from '../readonly/readonly';
-import { writable } from '../writable/writable';
+import { Subscriber } from '../subscriber/subscriber';
+import { Listener } from '../listener/listener';
+import { removeFromArray } from '../utils/removeFromArray';
 
-export type SignalResult<T, P = T> = unknown extends T
-  ? [Atom<unknown>, (payload?: unknown) => void]
-  : [Atom<T>, (payload: P) => void];
+export interface Signal<T> {
+  ['']: T;
+}
+
+export interface _Signal<T> extends Signal<T> {
+  _listeners: Subscriber<T>[];
+}
+
+export type SignalResult<T> = unknown extends T
+  ? [Signal<T>, (payload?: T) => void]
+  : [Signal<T>, (payload: T) => void];
 
 export function signal<T>() {
-  const source = writable<T | NULL>(NULL, null);
+  const s = {
+    _listeners: [],
+  } as any;
 
   return [
-    readonly(source),
-    (payload: T) => {
-      source(payload);
-    },
-  ] as const;
+    s,
+    (payload: T) =>
+      s._listeners.forEach((listener: Subscriber<T>) => listener(payload)),
+  ] as SignalResult<T>;
+}
+
+export function addListener<T>(signal: _Signal<T>, listener: Listener<T>) {
+  const listeners = signal._listeners;
+
+  if (listeners.indexOf(listener) > -1) return;
+  listeners.push(listener);
+
+  return () => removeFromArray(listeners, listener);
 }

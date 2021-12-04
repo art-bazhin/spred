@@ -1,5 +1,5 @@
 import { writable, WritableAtom } from './writable/writable';
-import { signal } from './signal/signal';
+import { signal, Signal } from './signal/signal';
 import {
   onActivate,
   onDeactivate,
@@ -16,13 +16,15 @@ import { Atom } from './atom/atom';
 import { watch } from './watch/watch';
 import { recalc } from './core/core';
 import { on } from './on/on';
-import { EffectStatus, effect } from './effect/effect';
+import { effect, Effect, EffectStatus } from './effect/effect';
 import { NULL } from './utils/constants';
 
 export {
   Atom,
   WritableAtom,
+  Effect,
   EffectStatus,
+  Signal,
   NULL,
   writable,
   computed,
