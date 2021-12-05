@@ -3,6 +3,8 @@ import { computed } from '../computed/computed';
 import { readonly } from '../readonly/readonly';
 import { commit } from '../core/core';
 import { Atom } from '../atom/atom';
+import { TRUE } from '../utils/functions';
+import { VOID } from '../void/void';
 
 export type EffectStatus = 'pristine' | 'pending' | 'fulfilled' | 'rejected';
 
@@ -32,14 +34,13 @@ export function effect<T, A extends unknown[]>(
   let current = -1;
 
   const _status = writable<EffectStatus>('pristine');
-  const _exception = writable<unknown>(undefined, null);
-  const _data = writable<T | undefined>(undefined, null);
+  const _exception = writable<unknown>(undefined, TRUE);
+  const _data = writable<T | undefined>(undefined, TRUE);
 
-  const lastStatus = computed(
-    () => _status(),
-    null,
-    ((value: any) => value !== 'pending') as any as null
-  );
+  const lastStatus = computed(() => {
+    const status = _status();
+    return status === 'pending' ? VOID : status;
+  }, null);
 
   lastStatus.activate();
 
@@ -57,9 +58,9 @@ export function effect<T, A extends unknown[]>(
       };
     },
     null,
-    ((status: any, prevStatus: any) => {
+    (status, prevStatus) => {
       return status.value !== (prevStatus && prevStatus!.value);
-    }) as any as null
+    }
   );
 
   const exception = readonly(_exception);
@@ -84,12 +85,12 @@ export function effect<T, A extends unknown[]>(
       return _data();
     },
     null,
-    null
+    TRUE
   );
 
   const abort = () => {
     if (!status().pending) return;
-    _status(lastStatus());
+    _status(lastStatus() as any);
     counter++;
   };
 

@@ -1,37 +1,19 @@
 import { Atom } from '../atom/atom';
 import { atomProto } from '../atom/atom';
-import { config } from '../config/config';
 import { Filter } from '../filter/filter';
 import { createState } from '../state/state';
-import { NULL } from '../utils/constants';
+import { VOID } from '../void/void';
 
-export function computed<T, E = T>(
+export function computed<T>(
   computedFn: (currentValue?: T) => T,
-  catchException?: null | ((e: unknown) => E)
-): Atom<T | E>;
-
-export function computed<T, E = T>(
-  computedFn: (currentValue?: T) => T,
-  catchException?: null | false | ((e: unknown) => E),
-  filter?: null | false | undefined
-): Atom<T | E>;
-
-export function computed<T, E = T>(
-  computedFn: (currentValue?: T) => T,
-  catchException?: null | false | ((e: unknown) => E),
-  filter?: Filter<T>
-): Atom<T | E | NULL>;
-
-export function computed(
-  computedFn: any,
-  catchException?: any,
-  filter = config.filter
+  catchException?: ((e: unknown, cuurentValue?: T) => T) | null,
+  shouldUpdate?: Filter<T>
 ) {
   const f: any = function () {
     return f.get();
   };
 
-  f._state = createState(NULL as any, computedFn, catchException, filter);
+  f._state = createState(VOID as any, computedFn, catchException, shouldUpdate);
 
   f.constructor = computed;
   f.get = atomProto.get;
@@ -39,5 +21,5 @@ export function computed(
   f.activate = atomProto.activate;
   f.value = atomProto.value;
 
-  return f;
+  return f as Atom<T>;
 }

@@ -1,7 +1,8 @@
+import { config } from '../config/config';
 import { Filter } from '../filter/filter';
 import { SignalResult } from '../signal/signal';
 import { Subscriber } from '../subscriber/subscriber';
-import { FALSE, TRUE } from '../utils/functions';
+import { FALSE } from '../utils/functions';
 
 export interface State<T> {
   value: T;
@@ -37,15 +38,15 @@ export interface State<T> {
 
 export function createState<T>(
   value: T,
-  computedFn?: () => T,
-  catchException?: ((e: unknown) => T) | null,
+  computedFn?: (cuurentValue?: T) => T,
+  catchException?: ((e: unknown, cuurentValue?: T) => T) | null,
   filter?: undefined | null | false | Filter<T>
 ): State<T> {
   return {
     value,
     computedFn,
     catch: catchException,
-    filter: filter || TRUE,
+    filter: filter || config.shouldUpdate,
     hasException: false,
     receivedException: false,
     subscribers: [],

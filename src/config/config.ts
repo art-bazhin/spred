@@ -3,14 +3,13 @@ import { Filter } from '../filter/filter';
 interface Config {
   batchUpdates: boolean;
   logException: (e: unknown) => any;
-  filter: undefined | null | false | Filter<any>;
+  shouldUpdate: Filter<any>;
 }
 
 const DEFAULT_CONFIG: Config = {
   batchUpdates: true,
   logException: /* istanbul ignore next */ (e: unknown) => console.error(e),
-  filter: (value: any, prevValue?: any | undefined) =>
-    !Object.is(value, prevValue),
+  shouldUpdate: (value: any, prevValue?: any) => !Object.is(value, prevValue),
 };
 
 export const config = Object.assign({}, DEFAULT_CONFIG);

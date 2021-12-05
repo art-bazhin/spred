@@ -17,7 +17,7 @@ import { watch } from './watch/watch';
 import { recalc } from './core/core';
 import { on } from './on/on';
 import { effect, Effect, EffectStatus } from './effect/effect';
-import { NULL } from './utils/constants';
+import { VOID } from './void/void';
 
 export {
   Atom,
@@ -25,7 +25,7 @@ export {
   Effect,
   EffectStatus,
   Signal,
-  NULL,
+  VOID,
   writable,
   computed,
   store,

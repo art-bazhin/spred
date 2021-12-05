@@ -1,5 +1,6 @@
 import { computed } from './computed';
 import { writable } from '../writable/writable';
+import { VOID } from '../index';
 
 describe('computed', () => {
   const a = writable(1);
@@ -39,5 +40,58 @@ describe('computed', () => {
   it('has Atom methods', () => {
     expect(a.get).toBeDefined;
     expect(a.subscribe).toBeDefined;
+  });
+
+  it('filters VOID values', () => {
+    const counter = writable(0);
+    let test: any;
+    let unsub: any;
+
+    const x2Counter = computed(() => {
+      const c = counter() * 2;
+      if (c > 25) return c;
+      return VOID;
+    }, null);
+
+    expect(x2Counter()).toBe(VOID);
+
+    counter(11);
+    expect(x2Counter()).toBe(VOID);
+
+    counter(15);
+    expect(x2Counter()).toBe(30);
+
+    counter(12);
+    expect(x2Counter()).toBe(30);
+
+    counter(11);
+    unsub = x2Counter.subscribe((v) => (test = v));
+    expect(test).toBe(30);
+    expect(x2Counter()).toBe(30);
+
+    counter(20);
+    counter(11);
+    expect(x2Counter()).toBe(30);
+    expect(test).toBe(30);
+
+    counter(1);
+    expect(x2Counter()).toBe(30);
+    expect(test).toBe(30);
+
+    counter(16);
+    expect(x2Counter()).toBe(32);
+    expect(test).toBe(32);
+
+    counter(15);
+    expect(x2Counter()).toBe(30);
+    expect(test).toBe(30);
+
+    unsub();
+    expect(x2Counter()).toBe(30);
+    expect(test).toBe(30);
+
+    counter(20);
+    counter(11);
+    expect(x2Counter()).toBe(30);
   });
 });

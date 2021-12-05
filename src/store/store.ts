@@ -4,12 +4,11 @@ import { computed } from '../computed/computed';
 import { update } from '../core/core';
 import { config } from '../config/config';
 
+type Undef<T> = T | undefined;
+
 interface StoreOptions<T> {
   getItemId?: (item: T) => string;
-  filter?:
-    | null
-    | false
-    | ((value: T | undefined, prevValue: T | undefined) => boolean);
+  shouldUpdate?: (value: Undef<T>, prevValue?: Undef<T>) => boolean;
 }
 
 interface StoreOptionsWithId<T> extends StoreOptions<T> {
@@ -21,7 +20,7 @@ interface StoreData<T> {
 }
 
 export interface Store<T> {
-  get(id: string): Atom<T | undefined>;
+  get(id: string): Atom<Undef<T>>;
   set(...items: T[]): void;
   delete(id: string): void;
   clear(): void;
@@ -33,7 +32,7 @@ interface _Store<T> extends Store<T> {
   _data: WritableAtom<StoreData<T>>;
   _force: WritableAtom<undefined>;
   _atoms: {
-    [id: string]: Atom<T | undefined> | undefined;
+    [id: string]: Atom<Undef<T>> | undefined;
   };
 }
 
@@ -54,14 +53,15 @@ function createData<T>(items: T[], getItemId: (item: T) => string) {
 }
 
 function get<T>(this: _Store<T>, id: string) {
-  const filter: any =
-    this._options.filter === undefined ? config.filter : this._options.filter;
+  const shouldUpdate = !this._options.shouldUpdate
+    ? config.shouldUpdate
+    : this._options.shouldUpdate;
 
   if (!this._atoms[id]) {
-    this._atoms[id] = computed<T | undefined>(
+    this._atoms[id] = computed<Undef<T>>(
       () => this._data()[id] || this._force(),
       null,
-      filter
+      shouldUpdate
     ) as any;
   }
 

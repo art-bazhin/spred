@@ -3,7 +3,7 @@ import { Atom } from '../atom/atom';
 import { store, Store } from './store';
 import { writable } from '../writable/writable';
 import { computed } from '../computed/computed';
-import { NULL } from '../index';
+import { VOID } from '../index';
 
 interface Person {
   id: string;
@@ -110,21 +110,28 @@ describe('store', () => {
     expect(ringoSurname).toBe('4');
   });
 
-  it('uses filter option to filter values', () => {
+  it('uses shouldUpdate option to check if the value needs to be updated', () => {
     const testStore = store<{ id: string; num: number }>([], {
-      filter: (el) => !el || el.num <= 5,
+      shouldUpdate: (value, prevValue) =>
+        (value && value.num) !== (prevValue && prevValue.num),
     });
 
     const atom = testStore.get('1');
+    const subscriber = jest.fn();
+
+    atom.subscribe(subscriber, false);
 
     testStore.set({ id: '1', num: 6 });
-    expect(atom()).toBe(NULL);
+    recalc();
+    expect(subscriber).toBeCalledTimes(1);
 
-    testStore.set({ id: '1', num: 4 });
-    expect(atom()!.num).toBe(4);
+    testStore.set({ id: '1', num: 6 });
+    recalc();
+    expect(subscriber).toBeCalledTimes(1);
 
     testStore.set({ id: '1', num: 8 });
-    expect(atom()!.num).toBe(4);
+    recalc();
+    expect(subscriber).toBeCalledTimes(2);
   });
 
   it('does not cause redundant calculations', () => {

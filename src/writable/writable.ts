@@ -1,9 +1,7 @@
 import { Atom, atomProto, _Atom } from '../atom/atom';
-import { config } from '../config/config';
 import { update } from '../core/core';
 import { Filter } from '../filter/filter';
 import { createState } from '../state/state';
-import { NULL } from '../utils/constants';
 
 const writableAtomProto = {
   ...atomProto,
@@ -24,26 +22,13 @@ export interface WritableAtom<T> extends Atom<T> {
   notify(): void;
 }
 
-export function writable<T>(
-  value: T,
-  filter?: null | false | undefined
-): WritableAtom<T>;
-
-export function writable<T>(
-  value: T,
-  filter: Filter<T>
-): WritableAtom<T | NULL>;
-
-export function writable<T>(value: T, filter = config.filter) {
+export function writable<T>(value: T, shouldUpdate?: Filter<T>) {
   const f: any = function (value?: T) {
     if (!arguments.length) return f.get();
     return f.set(value as T);
   };
 
-  const hasFilter = filter && filter !== config.filter;
-  const initialValue = hasFilter ? (filter(value) ? value : NULL) : value;
-
-  f._state = createState(initialValue, undefined, undefined, filter);
+  f._state = createState(value, undefined, undefined, shouldUpdate);
 
   f.constructor = writable;
   f.set = writableAtomProto.set;
@@ -53,5 +38,5 @@ export function writable<T>(value: T, filter = config.filter) {
   f.activate = writableAtomProto.activate;
   f.value = writableAtomProto.value;
 
-  return f;
+  return f as WritableAtom<T>;
 }

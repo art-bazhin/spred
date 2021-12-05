@@ -6,7 +6,7 @@ import { push, pop } from '../stack/stack';
 import { microtask } from '../utils/microtask';
 import { config } from '../config/config';
 import { CircularDependencyError } from '../errors/errors';
-import { NULL } from '../utils/constants';
+import { VOID } from '../void/void';
 
 let currentComputed = pop();
 
@@ -33,7 +33,7 @@ export function commit(...pairs: [atom: Atom<any>, value?: any][]) {
     const force = pair.length === 1;
 
     if (!force) {
-      if (!state.filter(value!, state.value) || value === NULL) continue;
+      if (!state.filter(value!, state.value) || value === VOID) continue;
 
       if (state.signals.update) {
         state.signals.update[1]({
@@ -162,7 +162,7 @@ export function recalc() {
     if (
       !state.hasException &&
       state.filter(value, state.value) &&
-      value !== NULL
+      value !== VOID
     ) {
       if (state.signals.update) {
         state.signals.update[1]({
@@ -240,7 +240,7 @@ export function getStateValue<T>(state: State<T>): T {
   if (state.computedFn && !state.activeCount && !state.isCached()) {
     const value = calcComputed(state);
 
-    if (state.filter(value, state.value) && value !== (NULL as any)) {
+    if (state.filter(value, state.value) && value !== (VOID as any)) {
       state.prevValue = state.value;
       state.value = value;
     }
