@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.7.0](https://github.com/art-bazhin/spred/compare/v0.6.0...v0.7.0) (2021-12-05)
+
+
+### ⚠ BREAKING CHANGES
+
+* filter => shouldUpdate, NULL => VOID
+
+### Bug Fixes
+
+* fix redundant calculations on store set ([32c155c](https://github.com/art-bazhin/spred/commit/32c155ca62a041fb4f8fe351bfa70885a6897481))
+
+
+### Code Refactoring
+
+* update types and naming ([dc48109](https://github.com/art-bazhin/spred/commit/dc481090a53ad49206ae1b02860e6c2dd06d86be))
+
 ## [0.6.0](https://github.com/art-bazhin/spred/compare/v0.5.1...v0.6.0) (2021-12-04)
 
 
