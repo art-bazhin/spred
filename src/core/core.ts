@@ -235,7 +235,7 @@ export function getStateValue<T>(state: State<T>): T {
     return state.value;
   }
 
-  if (!isCalcActive) recalc();
+  if (state.computedFn && !isCalcActive) recalc();
 
   if (state.computedFn && !state.activeCount && !state.isCached()) {
     const value = calcComputed(state);

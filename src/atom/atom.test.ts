@@ -484,21 +484,26 @@ describe('atom', () => {
       expect(counter()).toBe(NULL);
 
       counter(15);
+      recalc();
       expect(counter()).toBe(15);
 
       counter(9);
+      recalc();
       expect(counter()).toBe(15);
 
       counter(4);
+      recalc();
       unsub = counter.subscribe((v) => (test = v));
       expect(test).toBe(15);
       expect(counter()).toBe(15);
 
       counter(12);
+      recalc();
       expect(counter()).toBe(12);
       expect(test).toBe(12);
 
       counter(1);
+      recalc();
       expect(counter()).toBe(12);
       expect(test).toBe(12);
 

@@ -1,6 +1,9 @@
 import { recalc } from '../core/core';
 import { Atom } from '../atom/atom';
 import { store, Store } from './store';
+import { writable } from '../writable/writable';
+import { computed } from '../computed/computed';
+import { NULL } from '../index';
 
 interface Person {
   id: string;
@@ -108,24 +111,74 @@ describe('store', () => {
   });
 
   it('uses filter option to filter values', () => {
-    const testStore = store<{ id: string }>([], {
-      filter: false,
+    const testStore = store<{ id: string; num: number }>([], {
+      filter: (el) => !el || el.num <= 5,
     });
 
-    const value = { id: '1' };
     const atom = testStore.get('1');
+
+    testStore.set({ id: '1', num: 6 });
+    expect(atom()).toBe(NULL);
+
+    testStore.set({ id: '1', num: 4 });
+    expect(atom()!.num).toBe(4);
+
+    testStore.set({ id: '1', num: 8 });
+    expect(atom()!.num).toBe(4);
+  });
+
+  it('does not cause redundant calculations', () => {
     const subscriber = jest.fn();
 
-    atom.subscribe(subscriber, false);
+    const items = [
+      {
+        id: '1',
+        text: 'one',
+      },
+      {
+        id: '2',
+        text: 'two',
+      },
+      {
+        id: '3',
+        text: 'three',
+      },
+      {
+        id: '4',
+        text: 'four',
+      },
+      {
+        id: '5',
+        text: 'five',
+      },
+    ];
 
-    testStore.set(value);
-    testStore.set(value);
-    testStore.set(value);
-    testStore.set(value);
-    testStore.set(value);
+    const itemStore = store(items);
+
+    const ids = items.map((item) => item.id);
+
+    const $ids = writable(ids);
+    const $itemList = computed(() => $ids().map((id) => itemStore.get(id)()));
+
+    $itemList.subscribe(subscriber, false);
+
+    itemStore.set({
+      id: '1',
+      text: 'foo',
+    });
+
+    itemStore.set({
+      id: '2',
+      text: 'bar',
+    });
+
+    itemStore.set({
+      id: '3',
+      text: 'hello',
+    });
 
     recalc();
 
-    expect(subscriber).toBeCalledTimes(5);
+    expect(subscriber).toBeCalledTimes(1);
   });
 });
