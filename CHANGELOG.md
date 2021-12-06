@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.7.1](https://github.com/art-bazhin/spred/compare/v0.7.0...v0.7.1) (2021-12-06)
+
+
+### Features
+
+* add store data field ([84ec28e](https://github.com/art-bazhin/spred/commit/84ec28ed56cd141d278af87914f7e65dd1e531b8))
+
 ## [0.7.0](https://github.com/art-bazhin/spred/compare/v0.6.0...v0.7.0) (2021-12-05)
 
 
