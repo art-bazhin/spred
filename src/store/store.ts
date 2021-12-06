@@ -1,14 +1,13 @@
 import { writable, WritableAtom } from '../writable/writable';
 import { Atom, _Atom } from '../atom/atom';
 import { computed } from '../computed/computed';
-import { update } from '../core/core';
+import { commit } from '../core/core';
 import { config } from '../config/config';
-
-type Undef<T> = T | undefined;
+import { readonly } from '../readonly/readonly';
 
 interface StoreOptions<T> {
   getItemId?: (item: T) => string;
-  shouldUpdate?: (value: Undef<T>, prevValue?: Undef<T>) => boolean;
+  shouldUpdate?: (value: T | undefined, prevValue?: T | undefined) => boolean;
 }
 
 interface StoreOptionsWithId<T> extends StoreOptions<T> {
@@ -20,10 +19,13 @@ interface StoreData<T> {
 }
 
 export interface Store<T> {
-  get(id: string): Atom<Undef<T>>;
-  set(...items: T[]): void;
+  get(id: string): Atom<T | undefined>;
+  set(item: T): void;
+  set(items: T[]): void;
   delete(id: string): void;
+  delete(ids: string[]): void;
   clear(): void;
+  data: Atom<StoreData<T>>;
 }
 
 interface _Store<T> extends Store<T> {
@@ -32,7 +34,7 @@ interface _Store<T> extends Store<T> {
   _data: WritableAtom<StoreData<T>>;
   _force: WritableAtom<undefined>;
   _atoms: {
-    [id: string]: Atom<Undef<T>> | undefined;
+    [id: string]: Atom<T | undefined> | undefined;
   };
 }
 
@@ -58,7 +60,7 @@ function get<T>(this: _Store<T>, id: string) {
     : this._options.shouldUpdate;
 
   if (!this._atoms[id]) {
-    this._atoms[id] = computed<Undef<T>>(
+    this._atoms[id] = computed<T | undefined>(
       () => this._data()[id] || this._force(),
       null,
       shouldUpdate
@@ -68,31 +70,48 @@ function get<T>(this: _Store<T>, id: string) {
   return this._atoms[id]!;
 }
 
-function set<T>(this: _Store<T>, ...items: T[]) {
+function set<T>(this: _Store<T>, item: T): void;
+function set<T>(this: _Store<T>, items: T[]): void;
+function set<T>(this: _Store<T>, items: any) {
+  const itemArr = Array.isArray(items) ? items : [items];
   const data = this._data();
 
-  for (let item of items) {
+  const atomsToUpdate: [Atom<any>][] = [];
+
+  for (let item of itemArr) {
     const id = this._idFn(item);
     data[id] = item;
 
     const atom = this._atoms[id];
-    if (atom) update(atom as _Atom<T>);
+    if (atom) atomsToUpdate.push([atom]);
   }
 
-  update(this._force as any);
+  atomsToUpdate.push([this._force]);
+  atomsToUpdate.push([this.data]);
+
+  commit(atomsToUpdate);
 }
 
-function remove<T>(this: _Store<T>, ...ids: string[]) {
+function remove<T>(this: _Store<T>, id: string): void;
+function remove<T>(this: _Store<T>, ids: string[]): void;
+function remove<T>(this: _Store<T>, ids: any) {
+  const idArr = Array.isArray(ids) ? ids : [ids];
   const data = this._data();
 
-  for (let id of ids) {
+  const atomsToUpdate: [Atom<any>][] = [];
+
+  for (let id of idArr) {
     const atom = this._atoms[id];
 
     delete this._atoms[id];
     delete data[id];
 
-    if (atom) update(atom as _Atom<T>);
+    if (atom) atomsToUpdate.push([atom]);
   }
+
+  atomsToUpdate.push([this.data]);
+
+  commit(atomsToUpdate);
 }
 
 function clear<T>(this: _Store<T>) {
@@ -105,17 +124,28 @@ export function store<T extends { id: string }>(
   options?: StoreOptions<T>
 ): Store<T>;
 
+export function store<T>(
+  items: StoreData<T>,
+  options: StoreOptionsWithId<T>
+): Store<T>;
+
 export function store<T>(items: T[], options: StoreOptionsWithId<T>): Store<T>;
 
 export function store<T>(items?: any, options?: any) {
   const opts = Object.assign({}, DEFAULT_STORE_OPTIONS, options || {});
+  const storeMap = Array.isArray(items)
+    ? createData(items, opts.getItemId)
+    : items;
+  const _data = writable(storeMap);
+  const data = readonly(_data);
 
   const res: _Store<T> = {
     _options: opts,
     _idFn: opts.getItemId,
     _atoms: {},
-    _data: writable(createData(items, opts.getItemId)),
     _force: writable(undefined),
+    _data,
+    data,
     get,
     set,
     clear,

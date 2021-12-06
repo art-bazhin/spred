@@ -3,7 +3,6 @@ import { Atom } from '../atom/atom';
 import { store, Store } from './store';
 import { writable } from '../writable/writable';
 import { computed } from '../computed/computed';
-import { VOID } from '../index';
 
 interface Person {
   id: string;
@@ -66,11 +65,11 @@ describe('store', () => {
       ringoSurname = person && person.surname;
     });
 
-    persons.set(
+    persons.set([
       { id: '5', name: 'Pete' },
       { ...ringo()!, surname: 'Starr' },
-      { ...paul()!, surname: 'McCartney' }
-    );
+      { ...paul()!, surname: 'McCartney' },
+    ]);
 
     expect(persons.get('5')()?.name).toBe('Pete');
     expect(paul()?.surname).toBe('McCartney');
@@ -97,14 +96,14 @@ describe('store', () => {
   });
 
   it('it updates previously created items after clearing', () => {
-    persons.set(
+    persons.set([
       {
         id: '4',
         name: '4',
         surname: '4',
       },
-      { id: '2', name: '2' }
-    );
+      { id: '2', name: '2' },
+    ]);
 
     expect(paul()?.name).toBe('2');
     expect(ringoSurname).toBe('4');

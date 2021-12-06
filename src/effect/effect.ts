@@ -95,7 +95,11 @@ export function effect<T, A extends unknown[]>(
   };
 
   const reset = () => {
-    commit([_data, undefined], [_exception, undefined], [_status, 'pristine']);
+    commit([
+      [_data, undefined],
+      [_exception, undefined],
+      [_status, 'pristine'],
+    ]);
     counter++;
   };
 
@@ -117,12 +121,18 @@ export function effect<T, A extends unknown[]>(
     return exec(++counter, ...args)
       .then((v) => {
         if (current !== counter) return v;
-        commit([_data, v], [_status, 'fulfilled']);
+        commit([
+          [_data, v],
+          [_status, 'fulfilled'],
+        ]);
         return v;
       })
       .catch((e) => {
         if (current !== counter) throw e;
-        commit([_exception, e], [_status, 'rejected']);
+        commit([
+          [_exception, e],
+          [_status, 'rejected'],
+        ]);
         throw e;
       });
   };

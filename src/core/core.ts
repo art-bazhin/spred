@@ -18,14 +18,14 @@ let isCalcActive = false;
 
 export function update<T>(atom: Atom<T>, value?: T) {
   if (arguments.length === 1) {
-    commit([atom]);
+    commit([[atom]]);
     return;
   }
 
-  commit([atom, value]);
+  commit([[atom, value]]);
 }
 
-export function commit(...pairs: [atom: Atom<any>, value?: any][]) {
+export function commit(pairs: [atom: Atom<any>, value?: any][]) {
   for (let pair of pairs) {
     const [atom, value] = pair;
 
