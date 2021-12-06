@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.7.2](https://github.com/art-bazhin/spred/compare/v0.7.1...v0.7.2) (2021-12-06)
+
+
+### Bug Fixes
+
+* fix store argument type ([444de64](https://github.com/art-bazhin/spred/commit/444de648513276a52a15d956b9a1647ab92aff94))
+
+
+### Docs
+
+* update readme ([18b89a3](https://github.com/art-bazhin/spred/commit/18b89a3fb7056e1d7502af0c9f4c70ebab0b9891))
+
 ### [0.7.1](https://github.com/art-bazhin/spred/compare/v0.7.0...v0.7.1) (2021-12-06)
 
 
