@@ -120,6 +120,11 @@ function clear<T>(this: _Store<T>) {
 }
 
 export function store<T extends { id: string }>(
+  items?: StoreData<T>,
+  options?: StoreOptions<T>
+): Store<T>;
+
+export function store<T extends { id: string }>(
   items?: T[],
   options?: StoreOptions<T>
 ): Store<T>;
