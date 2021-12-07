@@ -43,11 +43,11 @@ describe('store', () => {
   });
 
   it('allows to get the item atom by id', () => {
-    const nobody = persons.get('123');
-    const sameNobody = persons.get('123');
+    const nobody = persons.getAtom('123');
+    const sameNobody = persons.getAtom('123');
 
-    paul = persons.get('2');
-    ringo = persons.get('4');
+    paul = persons.getAtom('2');
+    ringo = persons.getAtom('4');
 
     expect(nobody).toBeDefined();
     expect(nobody).toBe(sameNobody);
@@ -71,7 +71,7 @@ describe('store', () => {
       { ...paul()!, surname: 'McCartney' },
     ]);
 
-    expect(persons.get('5')()?.name).toBe('Pete');
+    expect(persons.get('5')?.name).toBe('Pete');
     expect(paul()?.surname).toBe('McCartney');
     expect(ringo()?.surname).toBe('Starr');
     expect(ringoSurname).toBe('Starr');
@@ -88,11 +88,11 @@ describe('store', () => {
   it('allows to clear store', () => {
     persons.clear();
 
-    expect(persons.get('1')()).toBeUndefined();
-    expect(persons.get('2')()).toBeUndefined();
-    expect(persons.get('3')()).toBeUndefined();
-    expect(persons.get('4')()).toBeUndefined();
-    expect(persons.get('5')()).toBeUndefined();
+    expect(persons.get('1')).toBeUndefined();
+    expect(persons.get('2')).toBeUndefined();
+    expect(persons.get('3')).toBeUndefined();
+    expect(persons.get('4')).toBeUndefined();
+    expect(persons.get('5')).toBeUndefined();
   });
 
   it('it updates previously created items after clearing', () => {
@@ -115,7 +115,7 @@ describe('store', () => {
         (value && value.num) !== (prevValue && prevValue.num),
     });
 
-    const atom = testStore.get('1');
+    const atom = testStore.getAtom('1');
     const subscriber = jest.fn();
 
     atom.subscribe(subscriber, false);
@@ -164,7 +164,7 @@ describe('store', () => {
     const ids = items.map((item) => item.id);
 
     const $ids = writable(ids);
-    const $itemList = computed(() => $ids().map((id) => itemStore.get(id)()));
+    const $itemList = computed(() => $ids().map((id) => itemStore.get(id)));
 
     $itemList.subscribe(subscriber, false);
 

@@ -19,7 +19,8 @@ interface StoreData<T> {
 }
 
 export interface Store<T> {
-  get(id: string): Atom<T | undefined>;
+  getAtom(id: string): Atom<T | undefined>;
+  get(id: string): T | undefined;
   set(item: T): void;
   set(items: T[]): void;
   delete(id: string): void;
@@ -54,7 +55,7 @@ function createData<T>(items: T[], getItemId: (item: T) => string) {
   return data;
 }
 
-function get<T>(this: _Store<T>, id: string) {
+function getAtom<T>(this: _Store<T>, id: string) {
   const shouldUpdate = !this._options.shouldUpdate
     ? config.shouldUpdate
     : this._options.shouldUpdate;
@@ -68,6 +69,10 @@ function get<T>(this: _Store<T>, id: string) {
   }
 
   return this._atoms[id]!;
+}
+
+function get<T>(this: _Store<T>, id: string) {
+  return this.getAtom(id)();
 }
 
 function set<T>(this: _Store<T>, item: T): void;
@@ -151,6 +156,7 @@ export function store<T>(items?: any, options?: any) {
     _force: writable(undefined),
     _data,
     data,
+    getAtom,
     get,
     set,
     clear,
