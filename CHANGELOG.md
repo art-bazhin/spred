@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.8.0](https://github.com/art-bazhin/spred/compare/v0.7.2...v0.8.0) (2021-12-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* store.get => store.getAtom
+
+### Code Refactoring
+
+* store.get returns item instead of atom ([1ef28cb](https://github.com/art-bazhin/spred/commit/1ef28cb5611000046a58570386cd97a1b0979168))
+
 ### [0.7.2](https://github.com/art-bazhin/spred/compare/v0.7.1...v0.7.2) (2021-12-06)
 
 
