@@ -27,7 +27,7 @@ describe('atom', () => {
 
     expect(subscriber).toBeCalled();
     expect(num).toBe(0);
-    expect(prevNum).toBeUndefined();
+    expect(prevNum).toBe(VOID);
     expect(x2Num).toBe(0);
   });
 
@@ -37,7 +37,7 @@ describe('atom', () => {
 
     expect(subscriber).toHaveBeenCalledTimes(1);
     expect(num).toBe(0);
-    expect(prevNum).toBeUndefined();
+    expect(prevNum).toBe(VOID);
     expect(x2Num).toBe(0);
 
     counter(1);

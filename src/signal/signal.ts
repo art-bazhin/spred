@@ -1,4 +1,3 @@
-import { Subscriber } from '../subscriber/subscriber';
 import { Listener } from '../listener/listener';
 import { removeFromArray } from '../utils/removeFromArray';
 
@@ -7,7 +6,7 @@ export interface Signal<T> {
 }
 
 export interface _Signal<T> extends Signal<T> {
-  _listeners: Subscriber<T>[];
+  _listeners: Listener<T>[];
 }
 
 export type SignalResult<T> = unknown extends T
@@ -22,7 +21,7 @@ export function signal<T>() {
   return [
     s,
     (payload: T) =>
-      s._listeners.forEach((listener: Subscriber<T>) => listener(payload)),
+      s._listeners.forEach((listener: Listener<T>) => listener(payload)),
   ] as SignalResult<T>;
 }
 

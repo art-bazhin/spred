@@ -1,12 +1,13 @@
 import { config } from '../config/config';
 import { Filter } from '../filter/filter';
+import { VOID } from '../void/void';
 import { SignalResult } from '../signal/signal';
 import { Subscriber } from '../subscriber/subscriber';
 import { FALSE } from '../utils/functions';
 
 export interface State<T> {
   value: T;
-  prevValue?: T;
+  prevValue: T | VOID;
   nextValue?: T;
   isNotifying?: boolean;
   cachedValue?: T;
@@ -46,6 +47,7 @@ export function createState<T>(
 ): State<T> {
   return {
     value,
+    prevValue: VOID,
     computedFn,
     catch: catchException,
     filter: filter || config.shouldUpdate,

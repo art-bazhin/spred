@@ -62,7 +62,7 @@ export function addSubscriber<T>(
 
   state.subscribers.push(subscriber);
   state.activeCount++;
-  if (emitOnSubscribe) subscriber(value);
+  if (emitOnSubscribe) subscriber(value, state.prevValue);
 }
 
 export function removeSubscriber<T>(atom: _Atom<T>, subscriber: Subscriber<T>) {
