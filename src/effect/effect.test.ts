@@ -1,4 +1,5 @@
-import { configure } from '../index';
+import { configure } from '../config/config';
+import { VOID } from '../void/void';
 import { effect } from './effect';
 
 describe('effect', () => {
@@ -16,8 +17,8 @@ describe('effect', () => {
   const { data, exception, status, reset, abort, call } = effect(fn);
 
   it('is initialized with default state', () => {
-    expect(data()).toBeUndefined();
-    expect(exception()).toBeUndefined();
+    expect(data()).toBe(VOID);
+    expect(exception()).toBe(VOID);
     expect(status().value).toBe('pristine');
     expect(status().pristine).toBe(true);
     expect(status().pending).toBe(false);
@@ -31,8 +32,8 @@ describe('effect', () => {
   it('has pending status after run', async () => {
     const res = call(5);
 
-    expect(data()).toBeUndefined();
-    expect(exception()).toBeUndefined();
+    expect(data()).toBe(VOID);
+    expect(exception()).toBe(VOID);
     expect(status().value).toBe('pending');
     expect(status().pristine).toBe(false);
     expect(status().pending).toBe(true);
@@ -45,7 +46,7 @@ describe('effect', () => {
 
   it('has fulfilled status after success', () => {
     expect(data()).toBe(5);
-    expect(exception()).toBeUndefined();
+    expect(exception()).toBe(VOID);
     expect(status().value).toBe('fulfilled');
     expect(status().pristine).toBe(false);
     expect(status().pending).toBe(false);
@@ -103,11 +104,9 @@ describe('effect', () => {
     expect(status().settled).toBe(true);
   });
 
-  it('returns to the initial state after reset', () => {
+  it('returns to the pristine status after reset', () => {
     reset();
 
-    expect(data()).toBeUndefined();
-    expect(exception()).toBeUndefined();
     expect(status().value).toBe('pristine');
     expect(status().pristine).toBe(true);
     expect(status().pending).toBe(false);

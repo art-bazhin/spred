@@ -18,7 +18,7 @@ interface EffectStatusObject {
 }
 
 export interface Effect<T, A extends unknown[]> {
-  readonly data: Atom<T | undefined>;
+  readonly data: Atom<T | VOID>;
   readonly exception: Atom<unknown>;
   readonly done: Atom<unknown>;
   readonly status: Atom<EffectStatusObject>;
@@ -34,8 +34,8 @@ export function effect<T, A extends unknown[]>(
   let current = -1;
 
   const _status = writable<EffectStatus>('pristine');
-  const _exception = writable<unknown>(undefined, TRUE);
-  const _data = writable<T | undefined>(undefined, TRUE);
+  const _exception = writable<unknown>(VOID, TRUE);
+  const _data = writable<T | VOID>(VOID, TRUE);
 
   const lastStatus = computed(() => {
     const status = _status();
@@ -59,7 +59,7 @@ export function effect<T, A extends unknown[]>(
     },
     null,
     (status, prevStatus) => {
-      return status.value !== (prevStatus && prevStatus!.value);
+      return status.value !== prevStatus.value;
     }
   );
 
@@ -95,11 +95,7 @@ export function effect<T, A extends unknown[]>(
   };
 
   const reset = () => {
-    commit([
-      [_data, undefined],
-      [_exception, undefined],
-      [_status, 'pristine'],
-    ]);
+    _status('pristine');
     counter++;
   };
 
