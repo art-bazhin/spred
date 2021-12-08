@@ -89,7 +89,9 @@ function emitUpdateSignal(state: State<any>, value: any) {
     prevValue: state.value,
   });
 }
-
+/**
+ * Immediately calculates the updated values of the atoms and calls their subscribers.
+ */
 export function recalc() {
   if (!queueLength) return;
 
