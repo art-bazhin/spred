@@ -17,7 +17,7 @@ export interface State<T> {
   subscribers: Subscriber<T>[];
   dependants: State<any>[];
   activeCount: number;
-  computedFn?: (currentValue?: T) => T;
+  computedFn?: (currentValue: T | VOID) => T;
   catch?: null | ((e: unknown, currentValue?: T) => T);
   filter: Filter<T>;
   dependencies: State<any>[];
@@ -41,7 +41,7 @@ export interface State<T> {
 
 export function createState<T>(
   value: T,
-  computedFn?: (cuurentValue?: T) => T,
+  computedFn?: (curentValue: T | VOID) => T,
   catchException?: ((e: unknown, cuurentValue?: T) => T) | null,
   filter?: undefined | null | false | Filter<T>
 ): State<T> {
