@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.9.0](https://github.com/art-bazhin/spred/compare/v0.8.0...v0.9.0) (2021-12-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* **effect:** default effect data value changed to VOID from undefined
+
+### Bug Fixes
+
+* **effect:** fix default effect data value ([e6d4f56](https://github.com/art-bazhin/spred/commit/e6d4f56f1f2f05610fca14304feb0ceac8e91135))
+* fix default atom value ([1cddf66](https://github.com/art-bazhin/spred/commit/1cddf66f17738b19f62615d9781144cb2dcd9e01))
+* fix redundant writable notifications ([95523d3](https://github.com/art-bazhin/spred/commit/95523d3f65fa98f2ecb59120af3f93fddce7984b))
+
 ## [0.8.0](https://github.com/art-bazhin/spred/compare/v0.7.2...v0.8.0) (2021-12-07)
 
 
