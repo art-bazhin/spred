@@ -90,7 +90,7 @@ function emitUpdateSignal(state: State<any>, value: any) {
   });
 }
 /**
- * Immediately calculates the updated values of the atoms and calls their subscribers.
+ * Immediately calculates the updated values of the atoms and notifies their subscribers.
  */
 export function recalc() {
   if (!queueLength) return;
