@@ -32,19 +32,8 @@ export function commit(pairs: [atom: Atom<any>, value?: any][]) {
     const state = (atom as _Atom<any>)._state;
     const force = pair.length === 1;
 
-    if (!force) {
-      if (!state.filter(value!, state.value) || value === VOID) continue;
-
-      if (state.signals.update) {
-        state.signals.update[1]({
-          value: value!,
-          prevValue: state.value,
-        });
-      }
-
-      state.prevValue = state.value;
-      state.value = value!;
-    }
+    if (force) state.isNotifying = true;
+    else state.nextValue = value;
 
     if (state.computedFn) state.dirtyCount++;
 
@@ -92,6 +81,15 @@ function resetStateQueueParams(state: State<any>) {
   state.receivedException = false;
 }
 
+function emitUpdateSignal(state: State<any>, value: any) {
+  if (!state.signals.update) return;
+
+  state.signals.update[1]({
+    value: value,
+    prevValue: state.value,
+  });
+}
+
 export function recalc() {
   if (!queueLength) return;
 
@@ -119,6 +117,16 @@ export function recalc() {
     if (state.queueIndex !== i) continue;
 
     if (!state.computedFn) {
+      const value = state.nextValue;
+      const shouldUpdate = state.filter(value, state.value);
+
+      if (!state.isNotifying && (!shouldUpdate || value === VOID)) continue;
+      if (shouldUpdate) emitUpdateSignal(state, value);
+
+      state.prevValue = state.value;
+      state.value = value;
+      state.isNotifying = false;
+
       notificationQueue.push(state);
       resetStateQueueParams(state);
       continue;
@@ -164,12 +172,7 @@ export function recalc() {
       state.filter(value, state.value) &&
       value !== VOID
     ) {
-      if (state.signals.update) {
-        state.signals.update[1]({
-          value: value,
-          prevValue: state.value,
-        });
-      }
+      emitUpdateSignal(state, value);
 
       state.prevValue = state.value;
       state.value = value;
@@ -235,7 +238,7 @@ export function getStateValue<T>(state: State<T>): T {
     return state.value;
   }
 
-  if (state.computedFn && !isCalcActive) recalc();
+  if (!isCalcActive) recalc();
 
   if (state.computedFn && !state.activeCount && !state.isCached()) {
     const value = calcComputed(state);

@@ -7,6 +7,8 @@ import { FALSE } from '../utils/functions';
 export interface State<T> {
   value: T;
   prevValue?: T;
+  nextValue?: T;
+  isNotifying?: boolean;
   cachedValue?: T;
   hasException: boolean;
   receivedException: boolean;

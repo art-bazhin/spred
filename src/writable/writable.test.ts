@@ -1,5 +1,4 @@
 import { recalc } from '../core/core';
-import { computed } from '../computed/computed';
 import { writable } from './writable';
 
 describe('writable', () => {
@@ -32,5 +31,32 @@ describe('writable', () => {
     recalc();
 
     expect(subscriber).toBeCalledTimes(2);
+  });
+
+  it('does not make redundant notifications', () => {
+    const atom = writable(0);
+    const subscriber = jest.fn();
+
+    atom.subscribe(subscriber, false);
+
+    atom(0);
+    recalc();
+
+    expect(subscriber).toBeCalledTimes(0);
+
+    atom(1);
+    atom(2);
+    atom(0);
+    recalc();
+
+    expect(subscriber).toBeCalledTimes(0);
+
+    atom.notify();
+    atom(1);
+    atom(2);
+    atom(0);
+    recalc();
+
+    expect(subscriber).toBeCalledTimes(1);
   });
 });

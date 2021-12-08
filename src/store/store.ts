@@ -79,7 +79,7 @@ function set<T>(this: _Store<T>, item: T): void;
 function set<T>(this: _Store<T>, items: T[]): void;
 function set<T>(this: _Store<T>, items: any) {
   const itemArr = Array.isArray(items) ? items : [items];
-  const data = this._data();
+  const data = this._data.value();
 
   const atomsToUpdate: [Atom<any>][] = [];
 
@@ -101,7 +101,7 @@ function remove<T>(this: _Store<T>, id: string): void;
 function remove<T>(this: _Store<T>, ids: string[]): void;
 function remove<T>(this: _Store<T>, ids: any) {
   const idArr = Array.isArray(ids) ? ids : [ids];
-  const data = this._data();
+  const data = this._data.value();
 
   const atomsToUpdate: [Atom<any>][] = [];
 
