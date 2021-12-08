@@ -50,7 +50,7 @@ export function commit(pairs: [atom: Atom<any>, value?: any][]) {
 export function addSubscriber<T>(
   atom: _Atom<T>,
   subscriber: Subscriber<T>,
-  emitOnSubscribe: boolean
+  exec: boolean
 ) {
   const state = atom._state;
 
@@ -62,7 +62,7 @@ export function addSubscriber<T>(
 
   state.subscribers.push(subscriber);
   state.activeCount++;
-  if (emitOnSubscribe) subscriber(value, state.prevValue);
+  if (exec) subscriber(value, state.prevValue);
 }
 
 export function removeSubscriber<T>(atom: _Atom<T>, subscriber: Subscriber<T>) {

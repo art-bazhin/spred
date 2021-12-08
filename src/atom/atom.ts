@@ -4,16 +4,47 @@ import { Subscriber } from '../subscriber/subscriber';
 import { VOID } from '../void/void';
 import { NOOP } from '../utils/functions';
 
+/**
+ * A basic reactive primitive.
+ */
 export interface Atom<T> {
+  /**
+   * Calculates and returns the current value of the atom.
+   */
   (): T;
+
+  /**
+   * Calculates and returns the current value of the atom.
+   */
   get(): T;
+
+  /**
+   * Returns the current value of the atom without calculation.
+   */
   value(): T | VOID;
-  subscribe(
-    subscriber: Subscriber<Exclude<T, VOID>>,
-    emitOnSubscribe: false
+
+  /**
+   * Subscribes the function to updates of the atom value.
+   * @param subscriber A function that subscribes to updates.
+   * @param exec Determines whether the function should be called immediately after subscription.
+   * @returns Unsubscribe function.
+   */
+  subscribe<E extends boolean>(
+    subscriber: true extends E ? Subscriber<T> : Subscriber<Exclude<T, VOID>>,
+    exec: E
   ): () => void;
-  subscribe(subscriber: Subscriber<T>, emitOnSubscribe: true): () => void;
+
+  /**
+   * Subscribes the function to updates of the atom value and calls it immediately.
+   * @param subscriber A function that subscribes to updates.
+   * @returns Unsubscribe function.
+   */
   subscribe(subscriber: Subscriber<T>): () => void;
+
+  /**
+   * Subscribes an empty function to the atom to put the atom in the active state.
+   * @returns Unsubscribe function.
+   */
   activate(): () => void;
 }
 
@@ -26,8 +57,8 @@ export const atomProto = {
     return getStateValue((this as any)._state);
   },
 
-  subscribe(subscriber: any, emitOnSubscribe = true) {
-    addSubscriber(this as any, subscriber, emitOnSubscribe);
+  subscribe(subscriber: any, exec = true) {
+    addSubscriber(this as any, subscriber, exec);
     return () => removeSubscriber(this as any, subscriber);
   },
 

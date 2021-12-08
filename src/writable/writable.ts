@@ -15,13 +15,35 @@ const writableAtomProto = {
   },
 };
 
+/**
+ * An atom whose value can be set.
+ */
 export interface WritableAtom<T> extends Atom<T> {
+  /**
+   * Sets the value of the atom
+   * @param value New value of the atom.
+   */
   (value: T): void;
+
+  /**
+   * Sets the value of the atom
+   * @param value New value of the atom.
+   */
   set(value: T): void;
-  value(): T;
+
+  /**
+   * Notify subscribers without setting a new value.
+   */
   notify(): void;
+
+  value(): T;
 }
 
+/**
+ * Сreates a writable atom and returns it.
+ * @param value Initial value of the atom.
+ * @param shouldUpdate A function that takes the new and current atom value, and returns true if the atom value needs to be updated.
+ */
 export function writable<T>(value: T, shouldUpdate?: Filter<T>) {
   const f: any = function (value?: T) {
     if (!arguments.length) return f.get();
