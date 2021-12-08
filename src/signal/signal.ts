@@ -1,6 +1,9 @@
 import { Listener } from '../listener/listener';
 import { removeFromArray } from '../utils/removeFromArray';
 
+/**
+ * Event which can be listened using the {@link on} function
+ */
 export interface Signal<T> {
   ['']: T;
 }

@@ -8,14 +8,32 @@ function getAtomSignal<T>(atom: Atom<any>, signalName: string) {
   return signals[signalName][0] as Atom<T>;
 }
 
+/**
+ * Subscribes the function to the atom activation signal. The signal emits when TODO
+ * @param signal A signal.
+ * @param listener A function that listens to the signal.
+ * @returns Stop listening function.
+ */
 export function onActivate<T>(atom: Atom<T>, listener: (value: T) => any) {
   return on(getAtomSignal(atom, 'activate'), listener);
 }
 
+/**
+ * Subscribes the function to the atom deactivation signal. TODO
+ * @param signal A signal.
+ * @param listener A function that listens to the signal.
+ * @returns Stop listening function.
+ */
 export function onDeactivate<T>(atom: Atom<T>, listener: (value: T) => any) {
   return on(getAtomSignal(atom, 'deactivate'), listener);
 }
 
+/**
+ * Subscribes the function to the atom update signal. TODO
+ * @param signal A signal.
+ * @param listener A function that listens to the signal.
+ * @returns Stop listening function.
+ */
 export function onUpdate<T>(
   atom: Atom<T>,
   listener: (change: { value: T; prevValue: T | undefined }) => any
