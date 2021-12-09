@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.9.1](https://github.com/art-bazhin/spred/compare/v0.9.0...v0.9.1) (2021-12-09)
+
+
+### Bug Fixes
+
+* fix computedFn argument type ([6cc1c64](https://github.com/art-bazhin/spred/commit/6cc1c64ff0c4fd748fdef4cda59f11ad569c75ea))
+
+
+### Docs
+
+* add atom methods docs ([9b870a3](https://github.com/art-bazhin/spred/commit/9b870a3b7afa0149a1bb1d1027d46f1adb83084a))
+* **computed:** add computed function docs ([91f8de7](https://github.com/art-bazhin/spred/commit/91f8de7c755cc69c7959ce523d0d6b7cfdebf273))
+* **core:** add recalc function docs ([be40613](https://github.com/art-bazhin/spred/commit/be406135e7c5d5b81b09140d855c20be2feb6391))
+* **lifecycle:** add lifecycle methods docs ([4b3cd76](https://github.com/art-bazhin/spred/commit/4b3cd76a4ef30afd54c46390db70fc59ce45a4af))
+* **readonly:** add readonly function docs ([611ab4b](https://github.com/art-bazhin/spred/commit/611ab4bcbc9e2da5e01f839c9602d10c0cd817b7))
+* update docs ([2c6db8a](https://github.com/art-bazhin/spred/commit/2c6db8a4ddbb6eba13003b2ef039f766b91ec5ec))
+* update docs ([d8c5e5f](https://github.com/art-bazhin/spred/commit/d8c5e5f479423ec56800a35dd1470b7faa7ba80b))
+* update docs ([8c192cc](https://github.com/art-bazhin/spred/commit/8c192cc963d6a3eb544ac940f800c36fec9a26e9))
+* update docs ([ad4f234](https://github.com/art-bazhin/spred/commit/ad4f23433c0ddec4cdc93826c4977797a9397ba7))
+* **watch:** add watch function docs ([5733dad](https://github.com/art-bazhin/spred/commit/5733dad96bfa2fc246ea2d99357b804155734e37))
+
 ## [0.9.0](https://github.com/art-bazhin/spred/compare/v0.8.0...v0.9.0) (2021-12-08)
 
 
