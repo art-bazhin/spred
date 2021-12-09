@@ -7,7 +7,7 @@ import { VOID } from '../void/void';
 /**
  * Subscribes the function to updates of the atom value.
  * @param atom An atom.
- * @param subscriber A function that subscribes to the atom updates.
+ * @param subscriber Function that subscribes to the atom updates.
  * @returns Unsubscribe function.
  */
 export function on<T>(
@@ -17,9 +17,9 @@ export function on<T>(
 
 /**
  * Subscribes the function to the signal.
- * @param signal A signal.
- * @param listener A function that listens to the signal.
- * @returns Stop listening function.
+ * @param signal Signal.
+ * @param listener Function that listens to the signal.
+ * @returns Unsubscribe function.
  */
 export function on<T>(signal: Signal<T>, listener: Listener<T>): () => void;
 

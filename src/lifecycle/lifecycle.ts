@@ -9,30 +9,30 @@ function getAtomSignal<T>(atom: Atom<any>, signalName: string) {
 }
 
 /**
- * Subscribes the function to the atom activation signal. The signal emits when TODO
- * @param signal A signal.
- * @param listener A function that listens to the signal.
- * @returns Stop listening function.
+ * Subscribes the function to the atom activation signal. The signal is triggered at the first subscription or at the first activation of a dependent atom.
+ * @param atom Atom.
+ * @param listener Function that listens to the atom activation signal.
+ * @returns Unsubscribe function.
  */
 export function onActivate<T>(atom: Atom<T>, listener: (value: T) => any) {
   return on(getAtomSignal(atom, 'activate'), listener);
 }
 
 /**
- * Subscribes the function to the atom deactivation signal. TODO
- * @param signal A signal.
- * @param listener A function that listens to the signal.
- * @returns Stop listening function.
+ * Subscribes the function to the atom deactivation signal. The signal is triggered when there are no subscribers or active dependent atoms left.
+ * @param atom Atom.
+ * @param listener Function that listens to the atom deactivation signal.
+ * @returns Unsubscribe function.
  */
 export function onDeactivate<T>(atom: Atom<T>, listener: (value: T) => any) {
   return on(getAtomSignal(atom, 'deactivate'), listener);
 }
 
 /**
- * Subscribes the function to the atom update signal. TODO
- * @param signal A signal.
- * @param listener A function that listens to the signal.
- * @returns Stop listening function.
+ * Subscribes the function to the atom update signal. The signal is triggered every time the atom value is updated.
+ * @param atom Atom.
+ * @param listener Function that listens to the atom update signal.
+ * @returns Unsubscribe function.
  */
 export function onUpdate<T>(
   atom: Atom<T>,
@@ -41,14 +41,32 @@ export function onUpdate<T>(
   return on(getAtomSignal(atom, 'update'), listener);
 }
 
+/**
+ * Subscribes the function to the atom exception signal. The signal is triggered for every unhandled exception in the calculation of the atom value.
+ * @param atom Atom.
+ * @param listener Function that listens to the atom exception signal.
+ * @returns Unsubscribe function.
+ */
 export function onException<T>(atom: Atom<T>, listener: (e: unknown) => any) {
   return on(getAtomSignal(atom, 'exception'), listener);
 }
 
+/**
+ * Subscribes the function to the atom notification start signal. The signal is triggered before atom subscribers are notified.
+ * @param atom Atom.
+ * @param listener Function that listens to the atom notification start signal.
+ * @returns Unsubscribe function.
+ */
 export function onNotifyStart<T>(atom: Atom<T>, listener: (value: T) => any) {
   return on(getAtomSignal(atom, 'notifyStart'), listener);
 }
 
+/**
+ * Subscribes the function to the atom notification end signal. The signal is triggered after atom subscribers are notified.
+ * @param atom Atom.
+ * @param listener Function that listens to the atom notification start signal.
+ * @returns Unsubscribe function.
+ */
 export function onNotifyEnd<T>(atom: Atom<T>, listener: (value: T) => any) {
   return on(getAtomSignal(atom, 'notifyEnd'), listener);
 }
