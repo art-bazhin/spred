@@ -6,8 +6,8 @@ import { VOID } from '../void/void';
 
 /**
  * Subscribes the function to updates of the atom value.
- * @param atom An atom.
- * @param subscriber Function that subscribes to the atom updates.
+ * @param atom Atom.
+ * @param subscriber Function that listens to the atom updates.
  * @returns Unsubscribe function.
  */
 export function on<T>(

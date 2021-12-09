@@ -5,7 +5,7 @@ import { VOID } from '../void/void';
 import { NOOP } from '../utils/functions';
 
 /**
- * A basic reactive primitive.
+ * Basic reactive primitive.
  */
 export interface Atom<T> {
   /**
@@ -25,7 +25,7 @@ export interface Atom<T> {
 
   /**
    * Subscribes the function to updates of the atom value.
-   * @param subscriber A function that subscribes to updates.
+   * @param subscriber A function that listens to updates.
    * @param exec Determines whether the function should be called immediately after subscription.
    * @returns Unsubscribe function.
    */
@@ -36,7 +36,7 @@ export interface Atom<T> {
 
   /**
    * Subscribes the function to updates of the atom value and calls it immediately.
-   * @param subscriber A function that subscribes to updates.
+   * @param subscriber A function that listens to updates.
    * @returns Unsubscribe function.
    */
   subscribe(subscriber: Subscriber<T>): () => void;

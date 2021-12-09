@@ -16,6 +16,9 @@ export type SignalResult<T> = unknown extends T
   ? [Signal<T>, (payload?: T) => void]
   : [Signal<T>, (payload: T) => void];
 
+/**
+ * Creates a tuple of signal and signal trigger function.
+ */
 export function signal<T>() {
   const s = {
     _listeners: [],

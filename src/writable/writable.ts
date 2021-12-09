@@ -40,7 +40,7 @@ export interface WritableAtom<T> extends Atom<T> {
 }
 
 /**
- * Сreates a writable atom and returns it.
+ * Сreates a writable atom.
  * @param value Initial value of the atom.
  * @param shouldUpdate A function that takes the new and current atom value, and returns true if the atom value needs to be updated.
  */

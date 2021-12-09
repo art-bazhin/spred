@@ -9,21 +9,51 @@ import { VOID } from '../void/void';
 export type EffectStatus = 'pristine' | 'pending' | 'fulfilled' | 'rejected';
 
 interface EffectStatusObject {
-  value: EffectStatus;
-  pristine: boolean;
-  pending: boolean;
-  fulfilled: boolean;
-  rejected: boolean;
-  settled: boolean;
+  readonly value: EffectStatus;
+  readonly pristine: boolean;
+  readonly pending: boolean;
+  readonly fulfilled: boolean;
+  readonly rejected: boolean;
+  readonly settled: boolean;
 }
 
+/**
+ * Wrapper for asynchronous function.
+ */
 export interface Effect<T, A extends unknown[]> {
+  /**
+   * Atom that receives the result of the fulfilled effect.
+   */
   readonly data: Atom<T | VOID>;
+
+  /**
+   * Atom that receives the result of the rejected effect.
+   */
   readonly exception: Atom<unknown>;
+
+  /**
+   * Atom that receives any result of the effect, both fulfilled and rejected.
+   */
   readonly done: Atom<unknown>;
+
+  /**
+   * Atom that receives status object of the effect.
+   */
   readonly status: Atom<EffectStatusObject>;
+
+  /**
+   * Calls the effect.
+   */
   readonly call: (...args: A) => Promise<T>;
+
+  /**
+   * Aborts the effect and returns it to its last state.
+   */
   readonly abort: () => void;
+
+  /**
+   * Aborts the effect and sets it to pristine status.
+   */
   readonly reset: () => void;
 }
 
