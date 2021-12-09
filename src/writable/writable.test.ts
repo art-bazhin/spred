@@ -24,13 +24,32 @@ describe('writable', () => {
   });
 
   it('force emits subscribers using notify method', () => {
-    const subscriber = jest.fn();
+    const atom = writable({} as any);
 
-    counter.subscribe(subscriber);
-    counter.notify();
+    let value: any;
+    const subscriber = jest.fn((v: any) => (value = v.a));
+
+    atom.subscribe(subscriber);
+
+    atom.notify();
     recalc();
 
     expect(subscriber).toBeCalledTimes(2);
+    expect(value).toBe(undefined);
+
+    atom().a = 1;
+    atom.notify();
+    recalc();
+
+    expect(subscriber).toBeCalledTimes(3);
+    expect(value).toBe(1);
+
+    atom().a = 2;
+    atom.notify();
+    recalc();
+
+    expect(subscriber).toBeCalledTimes(4);
+    expect(value).toBe(2);
   });
 
   it('does not make redundant notifications', () => {

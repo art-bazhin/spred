@@ -32,8 +32,12 @@ export function commit(pairs: [atom: Atom<any>, value?: any][]) {
     const state = (atom as _Atom<any>)._state;
     const force = pair.length === 1;
 
-    if (force) state.isNotifying = true;
-    else state.nextValue = value;
+    if (force) {
+      state.isNotifying = true;
+      state.nextValue = state.value;
+    } else {
+      state.nextValue = value;
+    }
 
     if (state.computedFn) state.dirtyCount++;
 
@@ -123,14 +127,17 @@ export function recalc() {
       const shouldUpdate = state.filter(value, state.value);
 
       if (!state.isNotifying && (!shouldUpdate || value === VOID)) continue;
-      if (shouldUpdate) emitUpdateSignal(state, value);
 
-      state.prevValue = state.value;
-      state.value = value;
-      state.isNotifying = false;
+      if (shouldUpdate) {
+        emitUpdateSignal(state, value);
+        state.prevValue = state.value;
+        state.value = value;
+      }
 
       notificationQueue.push(state);
       resetStateQueueParams(state);
+      state.isNotifying = false;
+
       continue;
     }
 
