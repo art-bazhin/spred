@@ -18,6 +18,7 @@ export type SignalResult<T> = unknown extends T
 
 /**
  * Creates a tuple of signal and signal trigger function.
+ * @returns Tuple of signal and signal trigger function.
  */
 export function signal<T>() {
   const s = {

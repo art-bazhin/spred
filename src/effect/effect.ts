@@ -57,6 +57,11 @@ export interface Effect<T, A extends unknown[]> {
   readonly reset: () => void;
 }
 
+/**
+ * Creates an effect from asynchronous function.
+ * @param asyncFn Asynchronous function
+ * @returns Effect.
+ */
 export function effect<T, A extends unknown[]>(
   asyncFn: (...args: A) => Promise<T>
 ) {

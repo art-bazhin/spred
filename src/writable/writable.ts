@@ -43,6 +43,7 @@ export interface WritableAtom<T> extends Atom<T> {
  * Сreates a writable atom.
  * @param value Initial value of the atom.
  * @param shouldUpdate A function that takes the new and current atom value, and returns true if the atom value needs to be updated.
+ * @returns Writable atom.
  */
 export function writable<T>(value: T, shouldUpdate?: Filter<T>) {
   const f: any = function (value?: T) {
