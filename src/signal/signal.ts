@@ -1,3 +1,5 @@
+import { VOID } from '../void/void';
+import { endEmitingSignal, startEmitingSignal } from '../core/core';
 import { Listener } from '../listener/listener';
 import { removeFromArray } from '../utils/removeFromArray';
 
@@ -25,11 +27,7 @@ export function signal<T>() {
     _listeners: [],
   } as any;
 
-  return [
-    s,
-    (payload: T) =>
-      s._listeners.forEach((listener: Listener<T>) => listener(payload)),
-  ] as SignalResult<T>;
+  return [s, (payload: T) => emitSignal(s, payload)] as SignalResult<T>;
 }
 
 export function addListener<T>(signal: _Signal<T>, listener: Listener<T>) {
@@ -39,4 +37,14 @@ export function addListener<T>(signal: _Signal<T>, listener: Listener<T>) {
   listeners.push(listener);
 
   return () => removeFromArray(listeners, listener);
+}
+
+function emitSignal<T>(signal: _Signal<T>, payload: T) {
+  if (payload === (VOID as any)) return;
+
+  startEmitingSignal();
+
+  signal._listeners.forEach((listener) => listener(payload));
+
+  endEmitingSignal();
 }

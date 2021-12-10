@@ -1,8 +1,11 @@
 import { computed } from '../computed/computed';
 import { writable, WritableAtom } from '../writable/writable';
-import { configure, recalc } from '../index';
+import { recalc } from '../core/core';
+import { configure } from '../config/config';
+import { signal } from '../signal/signal';
 import { VOID } from '../void/void';
 import { TRUE } from '../utils/functions';
+import { on } from '../on/on';
 
 describe('atom', () => {
   configure({
@@ -418,6 +421,65 @@ describe('atom', () => {
     recalc();
 
     expect(subscriber).toHaveBeenCalledTimes(1);
+  });
+
+  describe('get method', () => {
+    it('does not trigger recalculations when notificating atom listeners', () => {
+      const spy = jest.fn();
+
+      const atom1 = writable(0);
+      const atom2 = writable(0);
+      const atom3 = writable(0);
+      const atom4 = computed(() => {
+        spy();
+        return atom2();
+      });
+
+      atom4.activate();
+
+      on(atom1, (v) => {
+        atom2(v + 1);
+      });
+
+      on(atom1, () => {
+        atom3(atom2() + 1);
+      });
+
+      atom1(1);
+      expect(spy).toBeCalledTimes(1);
+
+      recalc();
+      expect(spy).toBeCalledTimes(2);
+    });
+
+    it('does not trigger recalculations when notificating signal listeners', () => {
+      const spy = jest.fn();
+
+      const [setCountSignal, setCount] = signal<number>();
+
+      const atom2 = writable(0);
+      const atom3 = writable(0);
+      const atom4 = computed(() => {
+        spy();
+        return atom2();
+      });
+
+      atom4.activate();
+
+      on(setCountSignal, (v) => {
+        atom2(v + 1);
+      });
+
+      on(setCountSignal, () => {
+        atom3(atom2() + 1);
+      });
+
+      setCount(1);
+      expect(spy).toBeCalledTimes(1);
+
+      recalc();
+      expect(spy).toBeCalledTimes(2);
+    });
   });
 
   describe('value method', () => {

@@ -15,6 +15,15 @@ let queueLength = 0;
 let fullQueueLength = 0;
 
 let isCalcActive = false;
+let emitingSignalsCount = 0;
+
+export function startEmitingSignal() {
+  emitingSignalsCount++;
+}
+
+export function endEmitingSignal() {
+  emitingSignalsCount--;
+}
 
 export function update<T>(atom: Atom<T>, value?: T) {
   if (arguments.length === 1) {
@@ -247,7 +256,7 @@ export function getStateValue<T>(state: State<T>): T {
     return state.value;
   }
 
-  if (!isCalcActive) recalc();
+  if (!isCalcActive && !emitingSignalsCount) recalc();
 
   if (state.computedFn && !state.activeCount && !state.isCached()) {
     const value = calcComputed(state);
