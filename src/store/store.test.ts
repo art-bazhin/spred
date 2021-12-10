@@ -186,5 +186,13 @@ describe('store', () => {
     recalc();
 
     expect(subscriber).toBeCalledTimes(1);
+
+    itemStore.delete('1');
+    itemStore.delete('2');
+    itemStore.delete('3');
+
+    recalc();
+
+    expect(subscriber).toBeCalledTimes(2);
   });
 });
