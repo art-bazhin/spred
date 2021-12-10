@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.9.3](https://github.com/art-bazhin/spred/compare/v0.9.2...v0.9.3) (2021-12-10)
+
+
+### Bug Fixes
+
+* fix triggering recalculation inside signal listeners ([b951c39](https://github.com/art-bazhin/spred/commit/b951c39a1084f54781fb0c44fe3f0f5d6c78d998))
+
+
+### Tests
+
+* add missing tests ([351e03b](https://github.com/art-bazhin/spred/commit/351e03b040e8ddabe5e6f3f5b90b81e8e9a17c35))
+
 ### [0.9.2](https://github.com/art-bazhin/spred/compare/v0.9.1...v0.9.2) (2021-12-09)
 
 
