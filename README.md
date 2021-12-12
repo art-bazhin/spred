@@ -1,7 +1,7 @@
 # Spred
 
 [![npm](https://img.shields.io/npm/v/spred.svg)](http://npm.im/spred)
-[![Coverage Status](https://coveralls.io/repos/github/art-bazhin/spred/badge.svg?branch=master)](https://coveralls.io/github/art-bazhin/spred?branch=master)
+[![codecov](https://codecov.io/gh/art-bazhin/spred/branch/master/graph/badge.svg?token=G3AF7HLH7W)](https://codecov.io/gh/art-bazhin/spred)
 [![gzip size](http://img.badgesize.io/https://unpkg.com/spred/dist/spred.min.js?compression=gzip&label=gzip)](https://unpkg.com/spred/dist/spred.min.js)
 
 Simple and fast JavaScript reactive programming library.
