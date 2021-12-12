@@ -43,3 +43,15 @@ export {
   onException,
   effect,
 };
+
+const test = writable(1);
+
+test.value();
+
+const x2Test = computed(() => test(), null);
+
+test();
+test.value();
+x2Test.activate();
+
+x2Test.subscribe((f) => {});

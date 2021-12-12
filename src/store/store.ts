@@ -167,7 +167,7 @@ function clear<T>(this: _Store<T>) {
 /**
  * Creates a store.
  * @param data Oject storing items by their id.
- * @param {StoreOptions} options Store options.
+ * @param options Store options.
  * @returns Store.
  */
 export function store<T extends { id: string }>(
@@ -178,7 +178,7 @@ export function store<T extends { id: string }>(
 /**
  * Creates a store.
  * @param items Array of items.
- * @param {StoreOptions} options Store options.
+ * @param options Store options.
  */
 export function store<T extends { id: string }>(
   items?: T[],
@@ -188,7 +188,7 @@ export function store<T extends { id: string }>(
 /**
  * Creates a store.
  * @param data Oject storing items by their id.
- * @param {StoreOptions} options Store options.
+ * @param options Store options.
  * @returns Store.
  */
 export function store<T>(
@@ -199,7 +199,7 @@ export function store<T>(
 /**
  * Creates a store.
  * @param items Array of items.
- * @param {StoreOptions} options Store options.
+ * @param options Store options.
  */
 export function store<T>(items: T[], options: StoreOptionsWithId<T>): Store<T>;
 

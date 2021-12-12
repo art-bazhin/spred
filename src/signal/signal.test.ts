@@ -1,7 +1,7 @@
 import { on } from '../on/on';
 import { signal } from './signal';
 
-describe('signal', () => {
+describe('signal function', () => {
   const [event, emitEvent] = signal<string>();
   let str = '';
 
@@ -19,3 +19,11 @@ describe('signal', () => {
     expect(str).toBe('123');
   });
 });
+
+// describe('signal', () => {
+//   describe('map method', () => {
+//     const [setCountSignal, setCount] = signal();
+
+//     it('exists', () => {});
+//   });
+// });
