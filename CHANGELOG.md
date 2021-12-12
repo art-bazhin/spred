@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.9.4](https://github.com/art-bazhin/spred/compare/v0.9.3...v0.9.4) (2021-12-12)
+
+
+### CI
+
+* change coveralls to codecov ([1ab3feb](https://github.com/art-bazhin/spred/commit/1ab3febac0946da4852535d46cd5ee6e3a9b94c2))
+
+
+### Docs
+
+* add typedoc ([c7b663a](https://github.com/art-bazhin/spred/commit/c7b663a603233a3e65f2d613f37cc18c5b27f558))
+* update coverage badge in readme ([cd45c67](https://github.com/art-bazhin/spred/commit/cd45c6724da820d62e3ae7453a51601d44ebd58b))
+
 ### [0.9.3](https://github.com/art-bazhin/spred/compare/v0.9.2...v0.9.3) (2021-12-10)
 
 
