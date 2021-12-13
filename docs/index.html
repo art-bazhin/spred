@@ -3,7 +3,7 @@
   <h1>Spred</h1>
 </a>
 <p><a href="http://npm.im/spred"><img src="https://img.shields.io/npm/v/spred.svg" alt="npm"></a>
-<a href="https://coveralls.io/github/art-bazhin/spred?branch=master"><img src="https://coveralls.io/repos/github/art-bazhin/spred/badge.svg?branch=master" alt="Coverage Status"></a>
+<a href="https://codecov.io/gh/art-bazhin/spred"><img src="https://codecov.io/gh/art-bazhin/spred/branch/master/graph/badge.svg?token=G3AF7HLH7W" alt="codecov"></a>
 <a href="https://unpkg.com/spred/dist/spred.min.js"><img src="http://img.badgesize.io/https://unpkg.com/spred/dist/spred.min.js?compression=gzip&label=gzip" alt="gzip size"></a></p>
 <p>Simple and fast JavaScript reactive programming library.</p>
 <ul>
@@ -23,6 +23,27 @@
   <h2>Installation</h2>
 </a>
 <pre><code class="language-sh"><span class="hl-1">npm install spred --save</span>
+</code></pre>
+
+<a href="#atoms" id="atoms" style="color: inherit; text-decoration: none;">
+  <h2>Atoms</h2>
+</a>
+<p><a href="https://art-bazhin.github.io/spred/interfaces/Atom.html">Atom</a> is the basic reactive primitive of the library. An atom stores a value and notifies its subscripts when it changes. There are two kinds of atoms - writable and computed.</p>
+
+<a href="#writable-atoms" id="writable-atoms" style="color: inherit; text-decoration: none;">
+  <h3>Writable Atoms</h3>
+</a>
+<p><a href="https://art-bazhin.github.io/spred/interfaces/WritableAtom.html">Writable atoms</a> are created with a <a href="https://art-bazhin.github.io/spred/modules.html#writable">writable</a> function that takes the initial value of the atom.</p>
+<pre><code class="language-ts"><span class="hl-0">import</span><span class="hl-1"> { </span><span class="hl-2">writable</span><span class="hl-1"> } </span><span class="hl-0">from</span><span class="hl-1"> </span><span class="hl-3">&#39;spred&#39;</span><span class="hl-1">;</span><br/><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-5">$counter</span><span class="hl-1"> = </span><span class="hl-7">writable</span><span class="hl-1">(</span><span class="hl-10">0</span><span class="hl-1">);</span>
+</code></pre>
+<p>To get the value of the atom, you need to call it without arguments.</p>
+<pre><code class="language-ts"><span class="hl-2">console</span><span class="hl-1">.</span><span class="hl-7">log</span><span class="hl-1">(</span><span class="hl-7">$counter</span><span class="hl-1">()); </span><span class="hl-9">// 0</span>
+</code></pre>
+<p>To set a new value of the writable atom, you need to pass the value as an argument.</p>
+<pre><code class="language-ts"><span class="hl-7">$counter</span><span class="hl-1">(</span><span class="hl-10">1</span><span class="hl-1">);</span><br/><span class="hl-2">console</span><span class="hl-1">.</span><span class="hl-7">log</span><span class="hl-1">(</span><span class="hl-7">$counter</span><span class="hl-1">()); </span><span class="hl-9">// `` 1</span>
+</code></pre>
+<p>Atom value updates can be subscribed to using the <a href="https://art-bazhin.github.io/spred/interfaces/Atom.html#subscribe">subscribe</a> method. The second argument of the method specifies whether the function should be called immediately after subscribing, and defaults to true. The method returns the unsubscribe function.</p>
+<pre><code class="language-ts"><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-5">unsub</span><span class="hl-1"> = </span><span class="hl-2">$counter</span><span class="hl-1">.</span><span class="hl-7">subscribe</span><span class="hl-1">((</span><span class="hl-2">value</span><span class="hl-1">) </span><span class="hl-4">=&gt;</span><br/><span class="hl-1">  </span><span class="hl-2">console</span><span class="hl-1">.</span><span class="hl-7">log</span><span class="hl-1">(</span><span class="hl-3">&#39;The value is &#39;</span><span class="hl-1"> + </span><span class="hl-2">value</span><span class="hl-1">)</span><br/><span class="hl-1">); </span><span class="hl-9">// The value is 1</span><br/><span class="hl-7">$counter</span><span class="hl-1">(</span><span class="hl-10">2</span><span class="hl-1">); </span><span class="hl-9">// The value is 2</span>
 </code></pre>
 
 <a href="#todo" id="todo" style="color: inherit; text-decoration: none;">
