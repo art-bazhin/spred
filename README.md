@@ -47,4 +47,40 @@ birthday('1940-07-07');
 npm install spred --save
 ```
 
+## Atoms
+
+[Atom](https://art-bazhin.github.io/spred/interfaces/Atom.html) is the basic reactive primitive of the library. An atom stores a value and notifies its subscripts when it changes. There are two kinds of atoms - writable and computed.
+
+### Writable Atoms
+
+[Writable atoms](https://art-bazhin.github.io/spred/interfaces/WritableAtom.html) are created with a [writable](https://art-bazhin.github.io/spred/modules.html#writable) function that takes the initial value of the atom.
+
+```ts
+import { writable } from 'spred';
+
+const $counter = writable(0);
+```
+
+To get the value of the atom, you need to call it without arguments.
+
+```ts
+console.log($counter()); // 0
+```
+
+To set a new value of the writable atom, you need to pass the value as an argument.
+
+```ts
+$counter(1);
+console.log($counter()); // `` 1
+```
+
+Atom value updates can be subscribed to using the [subscribe](https://art-bazhin.github.io/spred/interfaces/Atom.html#subscribe) method. The second argument of the method specifies whether the function should be called immediately after subscribing, and defaults to true. The method returns the unsubscribe function.
+
+```ts
+const unsub = $counter.subscribe((value) =>
+  console.log('The value is ' + value)
+); // The value is 1
+$counter(2); // The value is 2
+```
+
 ## TODO
