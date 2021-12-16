@@ -8,7 +8,7 @@ import { VOID } from '../void/void';
 
 export type EffectStatus = 'pristine' | 'pending' | 'fulfilled' | 'rejected';
 
-interface EffectStatusObject {
+export interface EffectStatusObject {
   readonly value: EffectStatus;
   readonly pristine: boolean;
   readonly pending: boolean;

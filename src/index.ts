@@ -1,5 +1,5 @@
 import { writable, WritableAtom } from './writable/writable';
-import { signal, Signal } from './signal/signal';
+import { signal, Signal, SignalResult } from './signal/signal';
 import {
   onActivate,
   onDeactivate,
@@ -9,14 +9,22 @@ import {
   onException,
 } from './lifecycle/lifecycle';
 import { computed } from './computed/computed';
-import { store } from './store/store';
+import { store, Store, StoreData, StoreOptions } from './store/store';
 import { readonly } from './readonly/readonly';
-import { configure } from './config/config';
+import { configure, Config } from './config/config';
 import { Atom } from './atom/atom';
 import { watch } from './watch/watch';
 import { recalc } from './core/core';
 import { on } from './on/on';
-import { effect, Effect, EffectStatus } from './effect/effect';
+import {
+  effect,
+  Effect,
+  EffectStatus,
+  EffectStatusObject,
+} from './effect/effect';
+import { Filter } from './filter/filter';
+import { Subscriber } from './subscriber/subscriber';
+import { Listener } from './listener/listener';
 import { VOID } from './void/void';
 
 export {
@@ -24,7 +32,16 @@ export {
   WritableAtom,
   Effect,
   EffectStatus,
+  EffectStatusObject,
   Signal,
+  SignalResult,
+  Store,
+  StoreData,
+  StoreOptions,
+  Filter,
+  Config,
+  Subscriber,
+  Listener,
   VOID,
   writable,
   computed,
@@ -43,15 +60,3 @@ export {
   onException,
   effect,
 };
-
-const test = writable(1);
-
-test.value();
-
-const x2Test = computed(() => test(), null);
-
-test();
-test.value();
-x2Test.activate();
-
-x2Test.subscribe((f) => {});

@@ -58,29 +58,30 @@ npm install spred --save
 ```ts
 import { writable } from 'spred';
 
-const $counter = writable(0);
+const counter = writable(0);
 ```
 
 To get the value of the atom, you need to call it without arguments.
 
 ```ts
-console.log($counter()); // 0
+console.log(counter()); // 0
 ```
 
 To set a new value of the writable atom, you need to pass the value as an argument.
 
 ```ts
-$counter(1);
-console.log($counter()); // `` 1
+counter(1);
+console.log(counter()); // `` 1
 ```
 
 Atom value updates can be subscribed to using the [subscribe](https://art-bazhin.github.io/spred/interfaces/Atom.html#subscribe) method. The second argument of the method specifies whether the function should be called immediately after subscribing, and defaults to true. The method returns the unsubscribe function.
 
 ```ts
-const unsub = $counter.subscribe((value) =>
+const unsub = counter.subscribe((value) =>
   console.log('The value is ' + value)
 ); // The value is 1
-$counter(2); // The value is 2
+
+counter(2); // The value is 2
 ```
 
 ## TODO

@@ -5,16 +5,12 @@ import { commit } from '../core/core';
 import { config } from '../config/config';
 import { readonly } from '../readonly/readonly';
 
-interface StoreOptions<T> {
-  getItemId?: (item: T) => string;
+export interface StoreOptions<T> {
+  getItemId: (item: T) => string;
   shouldUpdate?: (value: T | undefined, prevValue?: T | undefined) => boolean;
 }
 
-interface StoreOptionsWithId<T> extends StoreOptions<T> {
-  getItemId: (item: T) => string;
-}
-
-interface StoreData<T> {
+export interface StoreData<T> {
   [id: string]: T | undefined;
 }
 
@@ -70,7 +66,7 @@ export interface Store<T> {
 }
 
 interface _Store<T> extends Store<T> {
-  _options: StoreOptions<T>;
+  _options: Partial<StoreOptions<T>>;
   _idFn: (item: T) => string;
   _data: WritableAtom<StoreData<T>>;
   _force: WritableAtom<undefined>;
@@ -172,7 +168,7 @@ function clear<T>(this: _Store<T>) {
  */
 export function store<T extends { id: string }>(
   data?: StoreData<T>,
-  options?: StoreOptions<T>
+  options?: Partial<StoreOptions<T>>
 ): Store<T>;
 
 /**
@@ -182,7 +178,7 @@ export function store<T extends { id: string }>(
  */
 export function store<T extends { id: string }>(
   items?: T[],
-  options?: StoreOptions<T>
+  options?: Partial<StoreOptions<T>>
 ): Store<T>;
 
 /**
@@ -193,7 +189,7 @@ export function store<T extends { id: string }>(
  */
 export function store<T>(
   items: StoreData<T>,
-  options: StoreOptionsWithId<T>
+  options: StoreOptions<T>
 ): Store<T>;
 
 /**
@@ -201,7 +197,7 @@ export function store<T>(
  * @param items Array of items.
  * @param options Store options.
  */
-export function store<T>(items: T[], options: StoreOptionsWithId<T>): Store<T>;
+export function store<T>(items: T[], options: StoreOptions<T>): Store<T>;
 
 export function store<T>(items?: any, options?: any) {
   const opts = Object.assign({}, DEFAULT_STORE_OPTIONS, options || {});

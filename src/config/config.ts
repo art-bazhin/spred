@@ -1,6 +1,6 @@
 import { Filter } from '../filter/filter';
 
-interface Config {
+export interface Config {
   batchUpdates: boolean;
   logException: (e: unknown) => any;
   shouldUpdate: Filter<any>;
