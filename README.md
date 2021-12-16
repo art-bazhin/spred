@@ -113,7 +113,7 @@ counter(5);
 ### Computed Atoms
 
 Computed atoms automatically track their dependencies and recalculate their value when any of the dependencies changes.
-A computed atom can be created using the [computed](https://art-bazhin.github.io/spred/modules.html#computed) function. It takes as its argument a pure function that calculates the value of the atom.
+A computed atom can be created using the [computed](https://art-bazhin.github.io/spred/modules.html#computed) function. It takes as its argument a function that calculates the value of the atom and depends only on other atom values.
 
 ```ts
 import { writable, computed } from 'spred';
