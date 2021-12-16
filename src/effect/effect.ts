@@ -101,27 +101,23 @@ export function effect<T, A extends unknown[]>(
   const exception = readonly(_exception);
 
   const done = computed((last) => {
+    const data = _data();
+    const exception = _exception();
+
     switch (_status()) {
       case 'pristine':
       case 'fulfilled':
-        return _data();
+        return data;
 
       case 'rejected':
-        return _exception();
+        return exception;
 
       default:
         return last;
     }
   });
 
-  const data = computed(
-    () => {
-      if (status().rejected) throw _exception();
-      return _data();
-    },
-    null,
-    TRUE
-  );
+  const data = readonly(_data);
 
   const abort = () => {
     if (!status().pending) return;
