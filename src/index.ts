@@ -25,7 +25,6 @@ import {
 import { Filter } from './filter/filter';
 import { Subscriber } from './subscriber/subscriber';
 import { Listener } from './listener/listener';
-import { VOID } from './void/void';
 
 export {
   Atom,
@@ -42,7 +41,6 @@ export {
   Config,
   Subscriber,
   Listener,
-  VOID,
   writable,
   computed,
   store,

@@ -2,7 +2,6 @@ import { Atom } from '../atom/atom';
 import { Listener } from '../listener/listener';
 import { addListener, Signal } from '../signal/signal';
 import { Subscriber } from '../subscriber/subscriber';
-import { VOID } from '../void/void';
 
 /**
  * Subscribes the function to updates of the atom value.
@@ -12,7 +11,7 @@ import { VOID } from '../void/void';
  */
 export function on<T>(
   atom: Atom<T>,
-  subscriber: Subscriber<Exclude<T, VOID>>
+  subscriber: Subscriber<Exclude<T, undefined>>
 ): () => void;
 
 /**

@@ -2,7 +2,6 @@ import { Atom } from '../atom/atom';
 import { atomProto } from '../atom/atom';
 import { Filter } from '../filter/filter';
 import { createState } from '../state/state';
-import { VOID } from '../void/void';
 
 /**
  * Creates an atom that automatically calculates its value from other atoms
@@ -12,7 +11,7 @@ import { VOID } from '../void/void';
  * @returns Computed atom.
  */
 export function computed<T>(
-  computedFn: (currentValue: T | VOID) => T,
+  computedFn: (currentValue: T | undefined) => T,
   catchException?: ((e: unknown, cuurentValue?: T) => T) | null,
   shouldUpdate?: Filter<T>
 ) {
@@ -20,7 +19,12 @@ export function computed<T>(
     return f.get();
   };
 
-  f._state = createState(VOID as any, computedFn, catchException, shouldUpdate);
+  f._state = createState(
+    undefined as any,
+    computedFn,
+    catchException,
+    shouldUpdate
+  );
 
   f.constructor = computed;
   f.get = atomProto.get;

@@ -7,11 +7,11 @@ import { readonly } from '../readonly/readonly';
 
 export interface StoreOptions<T> {
   getItemId: (item: T) => string;
-  shouldUpdate?: (value: T | undefined, prevValue?: T | undefined) => boolean;
+  shouldUpdate?: (value: T | null, prevValue?: T | null) => boolean;
 }
 
 export interface StoreData<T> {
-  [id: string]: T | undefined;
+  [id: string]: T | null;
 }
 
 /**
@@ -22,13 +22,13 @@ export interface Store<T> {
    * Returnes the item atom by id. Returns the same atom for the same id.
    * @param id Unique item id.
    */
-  getAtom(id: string): Atom<T | undefined>;
+  getAtom(id: string): Atom<T | null>;
 
   /**
    * Returnes the item by id. The returned value will be tracked when used in computed atoms.
    * @param id Unique item id.
    */
-  get(id: string): T | undefined;
+  get(id: string): T | null;
 
   /**
    * Updates the item in the store.
@@ -69,9 +69,9 @@ interface _Store<T> extends Store<T> {
   _options: Partial<StoreOptions<T>>;
   _idFn: (item: T) => string;
   _data: WritableAtom<StoreData<T>>;
-  _force: WritableAtom<undefined>;
+  _force: WritableAtom<null>;
   _atoms: {
-    [id: string]: Atom<T | undefined> | undefined;
+    [id: string]: Atom<T | null> | undefined;
   };
 }
 
@@ -97,7 +97,7 @@ function getAtom<T>(this: _Store<T>, id: string) {
     : this._options.shouldUpdate;
 
   if (!this._atoms[id]) {
-    this._atoms[id] = computed<T | undefined>(
+    this._atoms[id] = computed<T | null>(
       () => this._data()[id] || this._force(),
       null,
       shouldUpdate
@@ -211,7 +211,7 @@ export function store<T>(items?: any, options?: any) {
     _options: opts,
     _idFn: opts.getItemId,
     _atoms: {},
-    _force: writable(undefined),
+    _force: writable(null),
     _data,
     data,
     getAtom,

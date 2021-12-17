@@ -4,7 +4,6 @@ import { readonly } from '../readonly/readonly';
 import { commit } from '../core/core';
 import { Atom } from '../atom/atom';
 import { TRUE } from '../utils/functions';
-import { VOID } from '../void/void';
 
 export type EffectStatus = 'pristine' | 'pending' | 'fulfilled' | 'rejected';
 
@@ -24,7 +23,7 @@ export interface Effect<T, A extends unknown[]> {
   /**
    * Atom that receives the result of the fulfilled effect.
    */
-  readonly data: Atom<T | VOID>;
+  readonly data: Atom<T | undefined>;
 
   /**
    * Atom that receives the result of the rejected effect.
@@ -69,12 +68,12 @@ export function effect<T, A extends unknown[]>(
   let current = -1;
 
   const _status = writable<EffectStatus>('pristine');
-  const _exception = writable<unknown>(VOID, TRUE);
-  const _data = writable<T | VOID>(VOID, TRUE);
+  const _exception = writable<unknown>(undefined, TRUE);
+  const _data = writable<T | undefined>(undefined, TRUE);
 
   const lastStatus = computed(() => {
     const status = _status();
-    return status === 'pending' ? VOID : status;
+    return status === 'pending' ? undefined : status;
   }, null);
 
   lastStatus.activate();

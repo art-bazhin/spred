@@ -1,7 +1,6 @@
 import { getStateValue, addSubscriber, removeSubscriber } from '../core/core';
 import { State } from '../state/state';
 import { Subscriber } from '../subscriber/subscriber';
-import { VOID } from '../void/void';
 import { NOOP } from '../utils/functions';
 
 /**
@@ -21,7 +20,7 @@ export interface Atom<T> {
   /**
    * Returns the current value of the atom without calculation.
    */
-  value(): T | VOID;
+  value(): T | undefined;
 
   /**
    * Subscribes the function to updates of the atom value.
@@ -30,7 +29,9 @@ export interface Atom<T> {
    * @returns Unsubscribe function.
    */
   subscribe<E extends boolean>(
-    subscriber: true extends E ? Subscriber<T> : Subscriber<Exclude<T, VOID>>,
+    subscriber: true extends E
+      ? Subscriber<T>
+      : Subscriber<Exclude<T, undefined>>,
     exec: E
   ): () => void;
 

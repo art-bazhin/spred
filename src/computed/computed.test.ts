@@ -1,6 +1,6 @@
 import { computed } from './computed';
 import { writable } from '../writable/writable';
-import { VOID } from '../index';
+import { undefined } from '../index';
 
 describe('computed', () => {
   const a = writable(1);
@@ -42,7 +42,7 @@ describe('computed', () => {
     expect(a.subscribe).toBeDefined;
   });
 
-  it('filters VOID values', () => {
+  it('filters undefined values', () => {
     const counter = writable(0);
     let test: any;
     let unsub: any;
@@ -50,13 +50,13 @@ describe('computed', () => {
     const x2Counter = computed(() => {
       const c = counter() * 2;
       if (c > 25) return c;
-      return VOID;
+      return undefined;
     }, null);
 
-    expect(x2Counter()).toBe(VOID);
+    expect(x2Counter()).toBe(undefined);
 
     counter(11);
-    expect(x2Counter()).toBe(VOID);
+    expect(x2Counter()).toBe(undefined);
 
     counter(15);
     expect(x2Counter()).toBe(30);

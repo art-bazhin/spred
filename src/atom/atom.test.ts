@@ -3,7 +3,6 @@ import { writable, WritableAtom } from '../writable/writable';
 import { recalc } from '../core/core';
 import { configure } from '../config/config';
 import { signal } from '../signal/signal';
-import { VOID } from '../void/void';
 import { TRUE } from '../utils/functions';
 import { on } from '../on/on';
 
@@ -30,7 +29,7 @@ describe('atom', () => {
 
     expect(subscriber).toBeCalled();
     expect(num).toBe(0);
-    expect(prevNum).toBe(VOID);
+    expect(prevNum).toBe(undefined);
     expect(x2Num).toBe(0);
   });
 
@@ -40,7 +39,7 @@ describe('atom', () => {
 
     expect(subscriber).toHaveBeenCalledTimes(1);
     expect(num).toBe(0);
-    expect(prevNum).toBe(VOID);
+    expect(prevNum).toBe(undefined);
     expect(x2Num).toBe(0);
 
     counter(1);
@@ -487,7 +486,7 @@ describe('atom', () => {
       const counter = writable(5);
       const x2Counter = computed(() => counter() * 2);
 
-      expect(x2Counter.value()).toBe(VOID);
+      expect(x2Counter.value()).toBe(undefined);
 
       x2Counter();
       expect(x2Counter.value()).toBe(10);
@@ -499,10 +498,10 @@ describe('atom', () => {
       const counter = writable(5);
       const x2Counter = computed(() => counter() * 2);
 
-      expect(x2Counter.value()).toBe(VOID);
+      expect(x2Counter.value()).toBe(undefined);
 
       counter(10);
-      expect(x2Counter.value()).toBe(VOID);
+      expect(x2Counter.value()).toBe(undefined);
 
       x2Counter.activate();
       expect(x2Counter.value()).toBe(20);

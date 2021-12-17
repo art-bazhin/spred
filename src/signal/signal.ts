@@ -1,4 +1,3 @@
-import { VOID } from '../void/void';
 import { endEmitingSignal, startEmitingSignal } from '../core/core';
 import { Listener } from '../listener/listener';
 import { removeFromArray } from '../utils/removeFromArray';
@@ -40,7 +39,7 @@ export function addListener<T>(signal: _Signal<T>, listener: Listener<T>) {
 }
 
 function emitSignal<T>(signal: _Signal<T>, payload: T) {
-  if (payload === (VOID as any)) return;
+  if (payload === (undefined as any)) return;
 
   startEmitingSignal();
 

@@ -12,9 +12,9 @@ interface Person {
 
 describe('store', () => {
   let persons: Store<Person>;
-  let ringo: Atom<Person | undefined>;
-  let paul: Atom<Person | undefined>;
-  let ringoSurname: string | undefined;
+  let ringo: Atom<Person | null>;
+  let paul: Atom<Person | null>;
+  let ringoSurname: string | null;
 
   it('is created by store function', () => {
     persons = store();
@@ -51,7 +51,7 @@ describe('store', () => {
 
     expect(nobody).toBeDefined();
     expect(nobody).toBe(sameNobody);
-    expect(nobody()).toBeUndefined();
+    expect(nobody()).toBeNull();
 
     expect(ringo).toBeDefined();
     expect(ringo()).toBeDefined();
@@ -62,7 +62,7 @@ describe('store', () => {
 
   it('allows to set items', () => {
     ringo.subscribe((person) => {
-      ringoSurname = person && person.surname;
+      ringoSurname = (person && person.surname) || null;
     });
 
     persons.set([
@@ -81,18 +81,18 @@ describe('store', () => {
     persons.delete('4');
     persons.delete('1234');
 
-    expect(ringo()).toBeUndefined();
-    expect(ringoSurname).toBeUndefined();
+    expect(ringo()).toBeNull();
+    expect(ringoSurname).toBeNull();
   });
 
   it('allows to clear store', () => {
     persons.clear();
 
-    expect(persons.get('1')).toBeUndefined();
-    expect(persons.get('2')).toBeUndefined();
-    expect(persons.get('3')).toBeUndefined();
-    expect(persons.get('4')).toBeUndefined();
-    expect(persons.get('5')).toBeUndefined();
+    expect(persons.get('1')).toBeNull();
+    expect(persons.get('2')).toBeNull();
+    expect(persons.get('3')).toBeNull();
+    expect(persons.get('4')).toBeNull();
+    expect(persons.get('5')).toBeNull();
   });
 
   it('it updates previously created items after clearing', () => {

@@ -6,7 +6,6 @@ import { push, pop } from '../stack/stack';
 import { microtask } from '../utils/microtask';
 import { config } from '../config/config';
 import { CircularDependencyError } from '../errors/errors';
-import { VOID } from '../void/void';
 
 let currentComputed = pop();
 
@@ -102,6 +101,14 @@ function emitUpdateSignal(state: State<any>, value: any) {
     prevValue: state.value,
   });
 }
+
+function checkShouldUpdate(value: any, state: State<any>) {
+  return (
+    value !== undefined &&
+    (state.value === undefined || state.filter(value, state.value))
+  );
+}
+
 /**
  * Immediately calculates the updated values of the atoms and notifies their subscribers.
  */
@@ -133,9 +140,9 @@ export function recalc() {
 
     if (!state.computedFn) {
       const value = state.nextValue;
-      const shouldUpdate = state.filter(value, state.value);
+      const shouldUpdate = checkShouldUpdate(value, state);
 
-      if (!state.isNotifying && (!shouldUpdate || value === VOID)) continue;
+      if (!state.isNotifying && !shouldUpdate) continue;
 
       if (shouldUpdate) {
         emitUpdateSignal(state, value);
@@ -185,11 +192,7 @@ export function recalc() {
 
     if (!isCalculated) value = calcComputed(state);
 
-    if (
-      !state.hasException &&
-      state.filter(value, state.value) &&
-      value !== VOID
-    ) {
+    if (!state.hasException && checkShouldUpdate(value, state)) {
       emitUpdateSignal(state, value);
 
       state.prevValue = state.value;
@@ -261,7 +264,7 @@ export function getStateValue<T>(state: State<T>): T {
   if (state.computedFn && !state.activeCount && !state.isCached()) {
     const value = calcComputed(state);
 
-    if (state.filter(value, state.value) && value !== (VOID as any)) {
+    if (checkShouldUpdate(value, state)) {
       state.prevValue = state.value;
       state.value = value;
     }

@@ -1,5 +1,4 @@
 import { configure } from '../config/config';
-import { VOID } from '../void/void';
 import { effect } from './effect';
 
 describe('effect', () => {
@@ -17,8 +16,8 @@ describe('effect', () => {
   const { data, exception, status, reset, abort, call } = effect(fn);
 
   it('is initialized with default state', () => {
-    expect(data()).toBe(VOID);
-    expect(exception()).toBe(VOID);
+    expect(data()).toBe(undefined);
+    expect(exception()).toBe(undefined);
     expect(status().value).toBe('pristine');
     expect(status().pristine).toBe(true);
     expect(status().pending).toBe(false);
@@ -32,8 +31,8 @@ describe('effect', () => {
   it('has pending status after run', async () => {
     const res = call(5);
 
-    expect(data()).toBe(VOID);
-    expect(exception()).toBe(VOID);
+    expect(data()).toBe(undefined);
+    expect(exception()).toBe(undefined);
     expect(status().value).toBe('pending');
     expect(status().pristine).toBe(false);
     expect(status().pending).toBe(true);
@@ -46,7 +45,7 @@ describe('effect', () => {
 
   it('has fulfilled status after success', () => {
     expect(data()).toBe(5);
-    expect(exception()).toBe(VOID);
+    expect(exception()).toBe(undefined);
     expect(status().value).toBe('fulfilled');
     expect(status().pristine).toBe(false);
     expect(status().pending).toBe(false);
