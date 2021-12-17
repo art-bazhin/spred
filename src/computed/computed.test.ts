@@ -1,6 +1,5 @@
 import { computed } from './computed';
 import { writable } from '../writable/writable';
-import { undefined } from '../index';
 
 describe('computed', () => {
   const a = writable(1);

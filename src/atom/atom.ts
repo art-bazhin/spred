@@ -29,9 +29,7 @@ export interface Atom<T> {
    * @returns Unsubscribe function.
    */
   subscribe<E extends boolean>(
-    subscriber: true extends E
-      ? Subscriber<T>
-      : Subscriber<Exclude<T, undefined>>,
+    subscriber: true extends E ? Subscriber<T> : Subscriber<Exclude<T, void>>,
     exec: E
   ): () => void;
 

@@ -264,7 +264,7 @@ export function getStateValue<T>(state: State<T>): T {
   if (state.computedFn && !state.activeCount && !state.isCached()) {
     const value = calcComputed(state);
 
-    if (checkShouldUpdate(value, state)) {
+    if (!state.hasException && checkShouldUpdate(value, state)) {
       state.prevValue = state.value;
       state.value = value;
     }

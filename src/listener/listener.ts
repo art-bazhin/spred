@@ -1,1 +1,1 @@
-export type Listener<T> = (payload: T) => any;
+export type Listener<T> = (payload: Exclude<T, void>) => any;

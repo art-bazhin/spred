@@ -11,7 +11,7 @@ import { Subscriber } from '../subscriber/subscriber';
  */
 export function on<T>(
   atom: Atom<T>,
-  subscriber: Subscriber<Exclude<T, undefined>>
+  subscriber: Subscriber<Exclude<T, void>>
 ): () => void;
 
 /**
