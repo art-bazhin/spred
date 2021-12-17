@@ -20,6 +20,21 @@ describe('signal function', () => {
   });
 });
 
+describe('signal without payload', () => {
+  it('is emited without payload', () => {
+    const [s, emit] = signal();
+    const listener = jest.fn();
+
+    on(s, listener);
+
+    emit();
+    emit();
+    emit();
+
+    expect(listener).toBeCalledTimes(3);
+  });
+});
+
 // describe('signal', () => {
 //   describe('map method', () => {
 //     const [setCountSignal, setCount] = signal();

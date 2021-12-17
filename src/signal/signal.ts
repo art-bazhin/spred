@@ -26,7 +26,13 @@ export function signal<T>() {
     _listeners: [],
   } as any;
 
-  return [s, (payload: T) => emitSignal(s, payload)] as SignalResult<T>;
+  return [
+    s,
+    function (payload: T) {
+      if (!arguments.length) emitSignal(s, null as any);
+      else emitSignal(s, payload);
+    },
+  ] as SignalResult<T>;
 }
 
 export function addListener<T>(signal: _Signal<T>, listener: Listener<T>) {
@@ -39,7 +45,7 @@ export function addListener<T>(signal: _Signal<T>, listener: Listener<T>) {
 }
 
 function emitSignal<T>(signal: _Signal<T>, payload: T) {
-  if (payload === (undefined as any)) return;
+  if (payload === undefined) return;
 
   startEmitingSignal();
 
