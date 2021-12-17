@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.10.0](https://github.com/art-bazhin/spred/compare/v0.9.4...v0.10.0) (2021-12-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* VOID => undefined
+
+### Features
+
+* **signal:** add signal map method ([0ea8a4f](https://github.com/art-bazhin/spred/commit/0ea8a4fbc036fcb80edbe0373b0d7119a92cdb53))
+
+
+### Bug Fixes
+
+* **effect:** remove throwing error in effect data ([9fc5c4a](https://github.com/art-bazhin/spred/commit/9fc5c4a5c3d0ff26cb9707b8e924bd409dece17a))
+* **signal:** fix signal payload filtering ([ae40f89](https://github.com/art-bazhin/spred/commit/ae40f8917d7afa325143051e28b1ed75165b340c))
+
+
+### Code Refactoring
+
+* remove VOID ([8f94238](https://github.com/art-bazhin/spred/commit/8f94238432000e1ada15d360206534a5cd00e8bb))
+
+
+### Docs
+
+* update docs ([c75f9ed](https://github.com/art-bazhin/spred/commit/c75f9ed3a00b11f1f3cab3d84fddd35d9fb329d3))
+* update docs ([9e3076c](https://github.com/art-bazhin/spred/commit/9e3076c82beb934d58a7a94b9ab96860c647a160))
+* update docs ([9027b7f](https://github.com/art-bazhin/spred/commit/9027b7f6a676a11cedd0f604bd11966b8b2c2c57))
+* update docs ([6bbd104](https://github.com/art-bazhin/spred/commit/6bbd104bca6f7fdd3e881c98a5342365394c31d0))
+* update docs ([869f1de](https://github.com/art-bazhin/spred/commit/869f1de8d8a5477e2379cc7fd323584f2b0de321))
+* update readme ([706766e](https://github.com/art-bazhin/spred/commit/706766ef5ac84e07b224b7b756faaafa8ff03177))
+
 ### [0.9.4](https://github.com/art-bazhin/spred/compare/v0.9.3...v0.9.4) (2021-12-12)
 
 
