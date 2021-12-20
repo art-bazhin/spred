@@ -1,5 +1,5 @@
 import { writable, WritableAtom } from './writable/writable';
-import { signal, Signal, SignalResult } from './signal/signal';
+import { signal, SignalResult } from './signal/signal';
 import {
   onActivate,
   onDeactivate,
@@ -24,7 +24,6 @@ import {
 } from './effect/effect';
 import { Filter } from './filter/filter';
 import { Subscriber } from './subscriber/subscriber';
-import { Listener } from './listener/listener';
 
 export {
   Atom,
@@ -32,7 +31,6 @@ export {
   Effect,
   EffectStatus,
   EffectStatusObject,
-  Signal,
   SignalResult,
   Store,
   StoreData,
@@ -40,7 +38,6 @@ export {
   Filter,
   Config,
   Subscriber,
-  Listener,
   writable,
   computed,
   store,

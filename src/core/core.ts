@@ -93,13 +93,15 @@ function resetStateQueueParams(state: State<any>) {
   state.receivedException = false;
 }
 
-function emitUpdateSignal(state: State<any>, value: any) {
-  if (!state.signals.update) return;
+function emitUpdateLifecycle(state: State<any>, value: any) {
+  if (!state.lifecycle.update) return;
 
-  state.signals.update[1]({
-    value: value,
-    prevValue: state.value,
-  });
+  state.lifecycle.update.forEach((fn) =>
+    fn({
+      value: value,
+      prevValue: state.value,
+    })
+  );
 }
 
 function checkShouldUpdate(value: any, state: State<any>) {
@@ -145,7 +147,7 @@ export function recalc() {
       if (!state.isNotifying && !shouldUpdate) continue;
 
       if (shouldUpdate) {
-        emitUpdateSignal(state, value);
+        emitUpdateLifecycle(state, value);
         state.prevValue = state.value;
         state.value = value;
       }
@@ -176,8 +178,8 @@ export function recalc() {
     }
 
     if (!state.dirtyCount) {
-      if (state.receivedException && state.signals.exception) {
-        state.signals.exception[1](state.exception);
+      if (state.receivedException && state.lifecycle.exception) {
+        state.lifecycle.exception.forEach((fn) => fn(state.exception));
       }
 
       if (state.dependants.length) {
@@ -193,7 +195,7 @@ export function recalc() {
     if (!isCalculated) value = calcComputed(state);
 
     if (!state.hasException && checkShouldUpdate(value, state)) {
-      emitUpdateSignal(state, value);
+      emitUpdateLifecycle(state, value);
 
       state.prevValue = state.value;
       state.value = value;
@@ -238,16 +240,16 @@ function decreaseDirtyCount(state: State<any>) {
 function runSubscribers<T>(state: State<T>) {
   if (!state.subscribers.length) return;
 
-  if (state.signals.notifyStart) {
-    state.signals.notifyStart[1](state.value);
+  if (state.lifecycle.notifyStart) {
+    state.lifecycle.notifyStart.forEach((fn) => fn(state.value));
   }
 
   for (let subscriber of state.subscribers) {
     subscriber(state.value, state.prevValue);
   }
 
-  if (state.signals.notifyEnd) {
-    state.signals.notifyEnd[1](state.value);
+  if (state.lifecycle.notifyEnd) {
+    state.lifecycle.notifyEnd.forEach((fn) => fn(state.value));
   }
 }
 
@@ -330,8 +332,8 @@ function calcComputed<T>(state: State<T>) {
   }
 
   if (state.hasException) {
-    if (state.signals.exception) {
-      state.signals.exception[1](state.exception);
+    if (state.lifecycle.exception) {
+      state.lifecycle.exception.forEach((fn) => fn(state.exception));
     }
 
     if (
@@ -348,8 +350,8 @@ function calcComputed<T>(state: State<T>) {
 function activateDependencies<T>(state: State<T>) {
   if (state.activeCount) return;
 
-  if (state.signals.activate) {
-    state.signals.activate[1](state.value);
+  if (state.lifecycle.activate) {
+    state.lifecycle.activate.forEach((fn) => fn(state.value));
   }
 
   for (let dependency of state.dependencies) {
@@ -362,8 +364,8 @@ function activateDependencies<T>(state: State<T>) {
 function deactivateDependencies<T>(state: State<T>) {
   if (state.activeCount) return;
 
-  if (state.signals.deactivate) {
-    state.signals.deactivate[1](state.value);
+  if (state.lifecycle.deactivate) {
+    state.lifecycle.deactivate.forEach((fn) => fn(state.value));
   }
 
   for (let dependency of state.dependencies) {

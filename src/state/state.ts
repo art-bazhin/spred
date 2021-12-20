@@ -28,13 +28,13 @@ export interface State<T> {
   isComputing: boolean;
   isCached: () => boolean;
   hasCycle: boolean;
-  signals: {
-    activate?: SignalResult<T>;
-    deactivate?: SignalResult<T>;
-    update?: SignalResult<{ value: T; prevValue: T | undefined }>;
-    notifyStart?: SignalResult<T>;
-    notifyEnd?: SignalResult<T>;
-    exception?: SignalResult<unknown>;
+  lifecycle: {
+    activate?: ((value: T) => any)[];
+    deactivate?: ((value: T) => any)[];
+    update?: ((change: { value: T; prevValue: T | undefined }) => any)[];
+    notifyStart?: ((value: T) => any)[];
+    notifyEnd?: ((value: T) => any)[];
+    exception?: ((e: unknown) => any)[];
   };
 }
 
@@ -64,6 +64,6 @@ export function createState<T>(
     isComputing: false,
     hasCycle: false,
     isCached: FALSE,
-    signals: {},
+    lifecycle: {},
   };
 }
