@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.10.1](https://github.com/art-bazhin/spred/compare/v0.10.0...v0.10.1) (2021-12-20)
+
+
+### Code Refactoring
+
+* use atoms as signals ([b751103](https://github.com/art-bazhin/spred/commit/b751103c32af84341573aca00b7ce35226fc5ece))
+
 ## [0.10.0](https://github.com/art-bazhin/spred/compare/v0.9.4...v0.10.0) (2021-12-17)
 
 
