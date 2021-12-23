@@ -14,6 +14,7 @@ import { configure, Config } from './config/config';
 import { Signal } from './signal-base/signal-base';
 import { watch } from './watch/watch';
 import { batch } from './core/core';
+import { action } from './action/action';
 import { on } from './on/on';
 import {
   effect,
@@ -39,6 +40,7 @@ export {
   memo,
   watch,
   batch,
+  action,
   on,
   onActivate,
   onDeactivate,
