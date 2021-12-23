@@ -126,6 +126,7 @@ function set<T>(this: _Store<T>, items: any) {
       if (atom) update(atom);
     }
 
+    update(this._data);
     update(this._force);
   });
 }
@@ -145,6 +146,8 @@ function remove<T>(this: _Store<T>, ids: any) {
 
       if (atom) update(atom);
     }
+
+    update(this._data);
   });
 }
 
@@ -194,9 +197,8 @@ export function store<T>(items: T[], options: StoreOptions<T>): Store<T>;
 
 export function store<T>(items?: any, options?: any) {
   const opts = Object.assign({}, DEFAULT_STORE_OPTIONS, options || {});
-  const storeMap = Array.isArray(items)
-    ? createData(items, opts.getItemId)
-    : items;
+  const storeMap =
+    (Array.isArray(items) ? createData(items, opts.getItemId) : items) || {};
   const _data = writable(storeMap);
   const data = readonly(_data);
 

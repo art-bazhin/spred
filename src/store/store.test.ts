@@ -2,7 +2,8 @@ import { Atom } from '../atom/atom';
 import { store, Store } from './store';
 import { writable } from '../writable/writable';
 import { computed } from '../computed/computed';
-import { batch } from '..';
+import { batch } from '../core/core';
+import { on } from '../on/on';
 
 interface Person {
   id: string;
@@ -191,5 +192,22 @@ describe('store', () => {
     });
 
     expect(subscriber).toBeCalledTimes(2);
+  });
+
+  describe('data property', () => {
+    it('pass data to subscribers in every update', () => {
+      const items = store<any>();
+      const spy = jest.fn();
+
+      on(items.data, spy);
+
+      items.set({ id: '1', value: 1 });
+      items.set({ id: '2', value: 2 });
+      items.delete('1');
+      items.delete('2');
+      items.clear();
+
+      expect(spy).toBeCalledTimes(5);
+    });
   });
 });
