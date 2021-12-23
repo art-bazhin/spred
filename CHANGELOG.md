@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.12.0](https://github.com/art-bazhin/spred/compare/v0.11.1...v0.12.0) (2021-12-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* rename atom to signal, remove old signal function
+
+### Features
+
+* add catcher ([d02eed4](https://github.com/art-bazhin/spred/commit/d02eed4b32383b1a1c8145ff795efd198ee3c4d4))
+* **memo:** add memo ([1660399](https://github.com/art-bazhin/spred/commit/1660399a380fe98779a5721180c7189cffb06b4c))
+
+
+### Code Refactoring
+
+* rename atom to signal ([dcb7186](https://github.com/art-bazhin/spred/commit/dcb718667e82dc071e4d1a1c654e21391ef28b61))
+
 ### [0.11.1](https://github.com/art-bazhin/spred/compare/v0.11.0...v0.11.1) (2021-12-23)
 
 
