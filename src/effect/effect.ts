@@ -1,8 +1,9 @@
 import { signal } from '../signal/signal';
 import { computed } from '../computed/computed';
-import { readonly } from '../readonly/readonly';
 import { Signal } from '../signal-base/signal-base';
 import { batch } from '../core/core';
+import { NOOP } from '../utils/functions';
+import { memo } from '../memo/memo';
 
 export type EffectStatus = 'pristine' | 'pending' | 'fulfilled' | 'rejected';
 
@@ -20,22 +21,22 @@ export interface EffectStatusObject {
  */
 export interface Effect<T, A extends unknown[]> {
   /**
-   * Atom that receives the result of the fulfilled effect.
+   * Signal that receives the result of the fulfilled effect.
    */
   readonly data: Signal<T | undefined>;
 
   /**
-   * Atom that receives the result of the rejected effect.
+   * Signal that receives the result of the rejected effect.
    */
   readonly exception: Signal<unknown>;
 
   /**
-   * Atom that receives any result of the effect, both fulfilled and rejected.
+   * Signal that receives any result of the effect, both fulfilled and rejected.
    */
   readonly done: Signal<unknown>;
 
   /**
-   * Atom that receives status object of the effect.
+   * Signal that receives status object of the effect.
    */
   readonly status: Signal<EffectStatusObject>;
 
@@ -70,14 +71,14 @@ export function effect<T, A extends unknown[]>(
   const _exception = signal();
   const _data = signal<T>();
 
-  const lastStatus = computed(() => {
+  const lastStatus = memo(() => {
     const status = _status();
     return status === 'pending' ? undefined : status;
-  }, null);
+  });
 
-  lastStatus.activate();
+  lastStatus.subscribe(NOOP);
 
-  const status = computed(
+  const status = memo(
     () => {
       const value = _status();
 
@@ -90,13 +91,12 @@ export function effect<T, A extends unknown[]>(
         settled: value === 'fulfilled' || value === 'rejected',
       };
     },
-    null
-    // (status, prevStatus) => {
-    //   return status.value !== prevStatus.value;
-    // }
+    (status, prevStatus) => {
+      return status.value === prevStatus.value;
+    }
   );
 
-  const exception = readonly(_exception);
+  const exception = computed(_exception);
 
   const done = computed((last) => {
     const data = _data();
@@ -115,7 +115,7 @@ export function effect<T, A extends unknown[]>(
     }
   });
 
-  const data = readonly(_data);
+  const data = computed(_data);
 
   const abort = () => {
     if (!status().pending) return;

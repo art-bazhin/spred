@@ -3,11 +3,11 @@ import { Signal, _Signal } from '../signal-base/signal-base';
 import { removeFromArray } from '../utils/removeFromArray';
 
 function addListener<T>(
-  atom: Signal<any>,
+  signal: Signal<any>,
   lifecycleName: string,
   listener: (value: T) => any
 ) {
-  const lifecycleMethods = (atom as any)._state.lifecycle;
+  const lifecycleMethods = (signal as any)._state.lifecycle;
 
   if (!lifecycleMethods[lifecycleName]) {
     lifecycleMethods[lifecycleName] = [];
@@ -22,64 +22,73 @@ function addListener<T>(
 }
 
 /**
- * Subscribes the function to the atom activation signal. The signal is triggered at the first subscription or at the first activation of a dependent atom.
- * @param atom Atom.
- * @param listener Function that listens to the atom activation signal.
+ * Subscribes the function to the signal activation signal. The signal is triggered at the first subscription or at the first activation of a dependent signal.
+ * @param signal Signal.
+ * @param listener Function that listens to the signal activation signal.
  * @returns Unsubscribe function.
  */
-export function onActivate<T>(atom: Signal<T>, listener: (value: T) => any) {
-  return addListener<T>(atom, 'activate', listener);
+export function onActivate<T>(signal: Signal<T>, listener: (value: T) => any) {
+  return addListener<T>(signal, 'activate', listener);
 }
 
 /**
- * Subscribes the function to the atom deactivation signal. The signal is triggered when there are no subscribers or active dependent atoms left.
- * @param atom Atom.
- * @param listener Function that listens to the atom deactivation signal.
+ * Subscribes the function to the signal deactivation signal. The signal is triggered when there are no subscribers or active dependent signals left.
+ * @param signal Signal.
+ * @param listener Function that listens to the signal deactivation signal.
  * @returns Unsubscribe function.
  */
-export function onDeactivate<T>(atom: Signal<T>, listener: (value: T) => any) {
-  return addListener<T>(atom, 'deactivate', listener);
+export function onDeactivate<T>(
+  signal: Signal<T>,
+  listener: (value: T) => any
+) {
+  return addListener<T>(signal, 'deactivate', listener);
 }
 
 /**
- * Subscribes the function to the atom update signal. The signal is triggered every time the atom value is updated.
- * @param atom Atom.
- * @param listener Function that listens to the atom update signal.
+ * Subscribes the function to the signal update signal. The signal is triggered every time the signal value is updated.
+ * @param signal Signal.
+ * @param listener Function that listens to the signal update signal.
  * @returns Unsubscribe function.
  */
 export function onUpdate<T>(
-  atom: Signal<T>,
+  signal: Signal<T>,
   listener: (change: { value: T; prevValue: T }) => any
 ) {
-  return addListener<{ value: T; prevValue: T }>(atom, 'update', listener);
+  return addListener<{ value: T; prevValue: T }>(signal, 'update', listener);
 }
 
 /**
- * Subscribes the function to the atom exception signal. The signal is triggered for every unhandled exception in the calculation of the atom value.
- * @param atom Atom.
- * @param listener Function that listens to the atom exception signal.
+ * Subscribes the function to the signal exception signal. The signal is triggered for every unhandled exception in the calculation of the signal value.
+ * @param signal Signal.
+ * @param listener Function that listens to the signal exception signal.
  * @returns Unsubscribe function.
  */
-export function onException<T>(atom: Signal<T>, listener: (e: unknown) => any) {
-  return addListener<T>(atom, 'exception', listener);
+export function onException<T>(
+  signal: Signal<T>,
+  listener: (e: unknown) => any
+) {
+  return addListener<T>(signal, 'exception', listener);
 }
 
 /**
- * Subscribes the function to the atom notification start signal. The signal is triggered before atom subscribers are notified.
- * @param atom Atom.
- * @param listener Function that listens to the atom notification start signal.
+ * Subscribes the function to the signal notification start signal. The signal is triggered before signal subscribers are notified.
+ * @param signal Signal.
+ * @param listener Function that listens to the signal notification start signal.
  * @returns Unsubscribe function.
  */
-export function onNotifyStart<T>(atom: Signal<T>, listener: (value: T) => any) {
-  return addListener<T>(atom, 'notifyStart', listener);
+export function onNotifyStart<T>(
+  signal: Signal<T>,
+  listener: (value: T) => any
+) {
+  return addListener<T>(signal, 'notifyStart', listener);
 }
 
 /**
- * Subscribes the function to the atom notification end signal. The signal is triggered after atom subscribers are notified.
- * @param atom Atom.
- * @param listener Function that listens to the atom notification start signal.
+ * Subscribes the function to the signal notification end signal. The signal is triggered after signal subscribers are notified.
+ * @param signal Signal.
+ * @param listener Function that listens to the signal notification start signal.
  * @returns Unsubscribe function.
  */
-export function onNotifyEnd<T>(atom: Signal<T>, listener: (value: T) => any) {
-  return addListener<T>(atom, 'notifyEnd', listener);
+export function onNotifyEnd<T>(signal: Signal<T>, listener: (value: T) => any) {
+  return addListener<T>(signal, 'notifyEnd', listener);
 }

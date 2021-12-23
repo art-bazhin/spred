@@ -8,22 +8,22 @@ import { NOOP } from '../utils/functions';
  */
 export interface Signal<T> {
   /**
-   * Calculates and returns the current value of the atom.
+   * Calculates and returns the current value of the signal.
    */
   (): T;
 
   /**
-   * Calculates and returns the current value of the atom.
+   * Calculates and returns the current value of the signal.
    */
   get(): T;
 
   /**
-   * Returns the current value of the atom without calculation.
+   * Returns the current value of the signal without calculation.
    */
-  value(): T | undefined;
+  value(): T;
 
   /**
-   * Subscribes the function to updates of the atom value.
+   * Subscribes the function to updates of the signal value.
    * @param subscriber A function that listens to updates.
    * @param exec Determines whether the function should be called immediately after subscription.
    * @returns Unsubscribe function.
@@ -34,17 +34,11 @@ export interface Signal<T> {
   ): () => void;
 
   /**
-   * Subscribes the function to updates of the atom value and calls it immediately.
+   * Subscribes the function to updates of the signal value and calls it immediately.
    * @param subscriber A function that listens to updates.
    * @returns Unsubscribe function.
    */
   subscribe(subscriber: Subscriber<T>): () => void;
-
-  /**
-   * Subscribes an empty function to the atom to put the atom in the active state.
-   * @returns Unsubscribe function.
-   */
-  activate(): () => void;
 }
 
 export interface _Signal<T> extends Signal<T> {
@@ -59,10 +53,6 @@ export const signalProto = {
   subscribe(subscriber: any, exec = true) {
     addSubscriber(this as any, subscriber, exec);
     return () => removeSubscriber(this as any, subscriber);
-  },
-
-  activate() {
-    return this.subscribe(NOOP);
   },
 
   value(this: _Signal<any>) {

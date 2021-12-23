@@ -36,7 +36,7 @@ describe('computed', () => {
     expect(d2()).toBe(4);
   });
 
-  it('has Atom methods', () => {
+  it('has Signal methods', () => {
     expect(a.get).toBeDefined;
     expect(a.subscribe).toBeDefined;
   });

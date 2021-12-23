@@ -1,8 +1,6 @@
 import { signal, WritableSignal } from '../signal/signal';
 import { Signal, _Signal } from '../signal-base/signal-base';
 import { computed } from '../computed/computed';
-import { config } from '../config/config';
-import { readonly } from '../readonly/readonly';
 import { batch, update } from '../core/core';
 
 export interface StoreOptions<T> {
@@ -93,8 +91,7 @@ function createData<T>(items: T[], getItemId: (item: T) => string) {
 function getSignal<T>(this: _Store<T>, id: string) {
   if (!this._signals[id]) {
     this._signals[id] = computed<T | null>(
-      () => this._data()[id] || this._force(),
-      null
+      () => this._data()[id] || this._force()
     ) as any;
   }
 
@@ -194,7 +191,7 @@ export function store<T>(items?: any, options?: any) {
   const storeMap =
     (Array.isArray(items) ? createData(items, opts.getItemId) : items) || {};
   const _data = signal(storeMap);
-  const data = readonly(_data);
+  const data = computed(_data);
 
   const res: _Store<T> = {
     _options: opts,

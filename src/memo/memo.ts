@@ -1,21 +1,24 @@
 import { computed } from '../computed/computed';
+import { isWritableSignal } from '../utils/isSignal';
 
-function defaultIsEqual<T>(value: T, prevValue?: T) {
+function defaultIsEqual<T>(value: T, prevValue: T) {
   return Object.is(value, prevValue);
 }
 
 export function memo<T>(
-  computedFn: (currentValue?: T) => T,
-  catchException?: ((e: unknown, cuurentValue?: T) => T) | null,
-  isEqual = defaultIsEqual
+  fn: (prevValue?: T) => T,
+  isEqual?: (value: T, prevValue: T) => boolean
 ) {
-  const comp = computed((currentValue?: T) => {
-    const value = computedFn(currentValue);
+  const check = isEqual || defaultIsEqual;
+  const valueFn = isWritableSignal(fn) ? () => fn() : fn;
 
-    if (isEqual(value, currentValue)) return undefined as unknown as T;
+  const comp = computed((prevValue?: T) => {
+    const value = valueFn(prevValue);
+
+    if (prevValue && check(value, prevValue)) return undefined as unknown as T;
 
     return value;
-  }, catchException);
+  });
 
   return comp;
 }

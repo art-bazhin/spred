@@ -1,7 +1,7 @@
 import { computed } from '../computed/computed';
 import { signal, WritableSignal } from '../signal/signal';
 import { configure } from '../config/config';
-import { batch } from '..';
+import { batch } from '../core/core';
 
 describe('signal', () => {
   configure({
@@ -143,74 +143,67 @@ describe('signal', () => {
     expect(subscriber).toBeCalledTimes(2);
   });
 
-  it('catches exception and pass it down to dependants', () => {
-    let error: Error | undefined = undefined;
-
+  it('passes exceptions down to dependants', () => {
     const obj: WritableSignal<{ a: number } | null> = signal({ a: 1 });
     const num = signal(1);
     const objNum = computed(() => (obj() as any).a as number);
-    const sum = computed(
-      () => {
-        error = undefined;
-        return num() + objNum();
-      },
-      (e) => {
-        error = e as any;
-        throw e;
-      }
-    );
+    const sum = computed(() => num() + objNum());
+    const x2Sum = computed(() => sum() * 2);
 
     const subscriber = jest.fn();
 
-    sum.subscribe(subscriber);
+    x2Sum.subscribe(subscriber);
 
     expect(sum()).toBe(2);
-    expect(error).toBeUndefined();
+    expect(x2Sum()).toBe(4);
 
-    obj(null);
-    num(5);
+    batch(() => {
+      obj(null);
+      num(5);
+    });
+
+    expect(num()).toBe(5);
     expect(sum()).toBe(2);
-    expect(error).toBeDefined();
+    expect(x2Sum()).toBe(4);
 
     obj({ a: 5 });
     expect(sum()).toBe(10);
-    expect(error).toBeUndefined();
+    expect(x2Sum()).toBe(20);
   });
 
-  it('can handle exceptions', () => {
-    const subscriber = jest.fn();
-    const counter = signal(0);
+  // it('can handle exceptions', () => {
+  //   const subscriber = jest.fn();
+  //   const counter = signal(0);
 
-    const isMoreThanFive = computed(() => counter() > 5);
+  //   const isMoreThanFive = computed(() => counter() > 5);
 
-    const textWithError = computed(() => {
-      if (isMoreThanFive()) throw new Error();
-      return counter() + ' is less than five';
-    });
+  //   const textWithError = computed(() => {
+  //     if (isMoreThanFive()) throw new Error();
+  //     return counter() + ' is less than five';
+  //   });
 
-    const text = computed(
-      () => textWithError(),
-      () => counter() + ' is more than five'
-    );
+  //   const text = computed(
+  //     () => textWithError(),
+  //     () => counter() + ' is more than five'
+  //   );
 
-    expect(text()).toBe('0 is less than five');
+  //   expect(text()).toBe('0 is less than five');
 
-    counter(6);
-    expect(text()).toBe('6 is more than five');
+  //   counter(6);
+  //   expect(text()).toBe('6 is more than five');
 
-    text.subscribe(subscriber, false);
+  //   text.subscribe(subscriber, false);
 
-    counter(4);
-    expect(text()).toBe('4 is less than five');
-    expect(subscriber).toBeCalledTimes(1);
+  //   counter(4);
+  //   expect(text()).toBe('4 is less than five');
+  //   expect(subscriber).toBeCalledTimes(1);
 
-    counter(10);
-    expect(text()).toBe('10 is more than five');
-    expect(subscriber).toBeCalledTimes(2);
-  });
+  //   counter(10);
+  //   expect(text()).toBe('10 is more than five');
+  //   expect(subscriber).toBeCalledTimes(2);
+  // });
 
   it('continues to trigger dependants after error eliminated', () => {
-    let error: Error | undefined = undefined;
     let str = '';
 
     const tumbler = signal(false);
@@ -226,42 +219,27 @@ describe('signal', () => {
 
     const x4Counter = computed(() => x2Counter() * 2);
 
-    const text = computed(
-      () => {
-        let res = 'OFF';
-        if (tumbler()) res = `ON (${x4Counter()})`;
+    const text = computed(() => {
+      let res = 'OFF';
+      if (tumbler()) res = `ON (${x4Counter()})`;
 
-        error = undefined;
-
-        return res;
-      },
-      (e) => {
-        error = e as any;
-        throw e;
-      }
-    );
+      return res;
+    });
 
     text.subscribe((value) => {
       str = value;
     });
 
     expect(str).toBe('OFF');
-    expect(error).toBeUndefined();
 
     tumbler(true);
-
     expect(str).toBe('ON (0)');
-    expect(error).toBeUndefined();
 
     counter(5);
-
     expect(str).toBe('ON (0)');
-    expect(error).toBeDefined();
 
     tumbler(false);
-
     expect(str).toBe('OFF');
-    expect(error).toBeUndefined();
   });
 
   it('returns previous value if an exception occured', () => {
@@ -338,7 +316,7 @@ describe('signal', () => {
     expect(counter).toBeLessThan(2);
   });
 
-  it('can update atoms in subscribers', () => {
+  it('can update signals in subscribers', () => {
     const counter = signal(0);
     const x2Counter = signal(0);
 
@@ -349,11 +327,11 @@ describe('signal', () => {
     expect(x2Counter()).toBe(2);
   });
 
-  it('can use actual atom state in subscribers', () => {
+  it('can use actual signal state in subscribers', () => {
     const counter = signal(0);
     const x2Counter = computed(() => counter() * 2);
 
-    x2Counter.activate();
+    x2Counter.subscribe(() => {});
 
     counter.subscribe((value) => {
       expect(value * 2).toBe(x2Counter());
@@ -378,7 +356,7 @@ describe('signal', () => {
   });
 
   describe('value method', () => {
-    it('returns current atom value without calculation', () => {
+    it('returns current signal value without calculation', () => {
       const counter = signal(5);
       const x2Counter = computed(() => counter() * 2);
 
@@ -390,7 +368,7 @@ describe('signal', () => {
   });
 
   describe('activate method', () => {
-    it('forces an atom to recalculate its value on dependency changes', () => {
+    it('forces an signal to recalculate its value on dependency changes', () => {
       const counter = signal(5);
       const x2Counter = computed(() => counter() * 2);
 
@@ -399,7 +377,7 @@ describe('signal', () => {
       counter(10);
       expect(x2Counter.value()).toBe(undefined);
 
-      x2Counter.activate();
+      x2Counter.subscribe(() => {});
       expect(x2Counter.value()).toBe(20);
 
       counter(15);

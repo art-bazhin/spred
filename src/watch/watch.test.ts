@@ -1,4 +1,4 @@
-import { writable, computed, configure } from '../index';
+import { signal, computed, configure } from '../index';
 import { watch } from './watch';
 
 describe('watch', () => {
@@ -6,7 +6,7 @@ describe('watch', () => {
     logException: () => {},
   });
 
-  const counter = writable(0);
+  const counter = signal(0);
   const x2Counter = computed(() => {
     const res = counter() * 2;
 
@@ -31,32 +31,11 @@ describe('watch', () => {
     expect(fn).toHaveBeenCalledTimes(2);
   });
 
-  it('stops to invoke passed function after unsubscribe', () => {
+  it('stops to invoke passed function after unsubscribing', () => {
     unsub();
 
     counter(0);
 
     expect(fn).toHaveBeenCalledTimes(2);
-  });
-
-  it('invokes error handler if an error occured during calculation', () => {
-    const handleError = jest.fn();
-
-    watch(fn, handleError);
-
-    counter(1);
-
-    expect(fn).toHaveBeenCalledTimes(4);
-    expect(handleError).toHaveBeenCalledTimes(0);
-
-    counter(10);
-
-    expect(fn).toHaveBeenCalledTimes(4);
-    expect(handleError).toHaveBeenCalledTimes(1);
-
-    counter(1);
-
-    expect(fn).toHaveBeenCalledTimes(5);
-    expect(handleError).toHaveBeenCalledTimes(1);
   });
 });

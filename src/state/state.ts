@@ -8,13 +8,11 @@ export interface State<T> {
   isNotifying?: boolean;
   cachedValue?: T;
   hasException: boolean;
-  receivedException: boolean;
   exception?: unknown;
   subscribers: Subscriber<T>[];
   dependants: State<any>[];
   activeCount: number;
-  computedFn?: (currentValue: T | undefined) => T;
-  catch?: null | ((e: unknown, currentValue?: T) => T);
+  computedFn?: (prevValue: T | undefined) => T;
   dependencies: State<any>[];
   dependencyStatuses: number[];
   dependencyStatusesSum: number;
@@ -23,6 +21,7 @@ export interface State<T> {
   queueIndex: number;
   isComputing: boolean;
   isCached: () => boolean;
+  isCatcher?: boolean;
   hasCycle: boolean;
   lifecycle: {
     activate?: ((value: T) => any)[];
@@ -43,9 +42,7 @@ export function createState<T>(
     value,
     prevValue: undefined,
     computedFn,
-    catch: catchException,
     hasException: false,
-    receivedException: false,
     subscribers: [],
     dependants: [],
     dependencies: [],

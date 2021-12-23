@@ -24,8 +24,8 @@ export function batch(fn: (...args: any) => any) {
   recalc();
 }
 
-export function update<T>(atom: Signal<T>, value?: T) {
-  const state = (atom as _Signal<any>)._state;
+export function update<T>(signal: Signal<T>, value?: T) {
+  const state = (signal as _Signal<any>)._state;
   const force = arguments.length === 1;
 
   if (force) {
@@ -46,11 +46,11 @@ export function update<T>(atom: Signal<T>, value?: T) {
 }
 
 export function addSubscriber<T>(
-  atom: _Signal<T>,
+  signal: _Signal<T>,
   subscriber: Subscriber<T>,
   exec: boolean
 ) {
-  const state = atom._state;
+  const state = signal._state;
 
   if (state.subscribers.indexOf(subscriber) > -1) return;
 
@@ -64,10 +64,10 @@ export function addSubscriber<T>(
 }
 
 export function removeSubscriber<T>(
-  atom: _Signal<T>,
+  signal: _Signal<T>,
   subscriber: Subscriber<T>
 ) {
-  const state = atom._state;
+  const state = signal._state;
 
   if (removeFromArray(state.subscribers, subscriber)) {
     state.activeCount--;
@@ -79,7 +79,6 @@ export function removeSubscriber<T>(
 function resetStateQueueParams(state: State<any>) {
   state.dirtyCount = 0;
   state.queueIndex = -1;
-  state.receivedException = false;
 }
 
 function emitUpdateLifecycle(state: State<any>, value: any) {
@@ -94,7 +93,7 @@ function emitUpdateLifecycle(state: State<any>, value: any) {
 }
 
 /**
- * Immediately calculates the updated values of the atoms and notifies their subscribers.
+ * Immediately calculates the updated values of the signals and notifies their subscribers.
  */
 export function recalc(shouldNotify = true) {
   if (!queueLength) return;
@@ -107,6 +106,8 @@ export function recalc(shouldNotify = true) {
     const state = queue[i];
 
     if (state.queueIndex !== i) continue;
+
+    state.hasException = false;
 
     for (let dependant of state.dependants) {
       dependant.queueIndex = queueLength;
@@ -142,42 +143,27 @@ export function recalc(shouldNotify = true) {
       continue;
     }
 
-    let isCalculated = false;
-    let value: any;
+    if (state.hasException) {
+      state.dirtyCount = 0;
 
-    if (!state.dirtyCount && state.receivedException && state.catch) {
-      try {
-        value = state.catch(state.exception, state.value);
+      if (state.lifecycle.exception) {
+        state.lifecycle.exception.forEach((fn) => fn(state.exception));
+      }
 
-        state.hasException = false;
-        state.receivedException = false;
-        state.exception = undefined;
-
-        state.dirtyCount = 1;
-        isCalculated = true;
-      } catch (e) {
-        state.exception = e;
+      if (!state.dependants.length) {
+        config.logException(state.exception);
       }
     }
 
     if (!state.dirtyCount) {
-      if (state.receivedException && state.lifecycle.exception) {
-        state.lifecycle.exception.forEach((fn) => fn(state.exception));
-      }
-
-      if (state.dependants.length) {
-        decreaseDirtyCount(state);
-      } else if (state.receivedException) {
-        config.logException(state.exception);
-      }
-
+      decreaseDirtyCount(state);
       resetStateQueueParams(state);
       continue;
     }
 
-    if (!isCalculated) value = calcComputed(state);
+    const value = calcComputed(state);
 
-    if (!state.hasException && value !== undefined) {
+    if (value !== undefined) {
       emitUpdateLifecycle(state, value);
 
       state.prevValue = state.value;
@@ -214,11 +200,12 @@ function notify(notificationQueue: State<any>[]) {
 
 function decreaseDirtyCount(state: State<any>) {
   for (let dependant of state.dependants) {
+    if (state.hasException && dependant.isCatcher) continue;
+
     dependant.dirtyCount--;
 
-    if (state.hasException && !dependant.receivedException) {
+    if (state.hasException && !dependant.hasException) {
       dependant.hasException = true;
-      dependant.receivedException = true;
       dependant.exception = state.exception;
     }
   }
@@ -251,14 +238,18 @@ export function getStateValue<T>(state: State<T>): T {
   if (state.computedFn && !state.activeCount && !state.isCached()) {
     const value = calcComputed(state);
 
-    if (!state.hasException && value !== undefined) {
+    if (value !== undefined) {
       state.prevValue = state.value;
       state.value = value;
     }
   }
 
   if (currentComputed) {
-    if (state.hasException && !currentComputed.hasException) {
+    if (
+      state.hasException &&
+      !currentComputed.hasException &&
+      !currentComputed.isCatcher
+    ) {
       currentComputed.exception = state.exception;
       currentComputed.hasException = true;
     }
@@ -281,14 +272,14 @@ export function getStateValue<T>(state: State<T>): T {
 function calcComputed<T>(state: State<T>) {
   state.hasException = false;
 
-  let value = state.value;
+  let value = undefined;
 
   currentComputed = push(state);
   currentComputed.dependencyStatuses = [];
   currentComputed.dependencyStatusesSum = 0;
 
   try {
-    value = state.computedFn!(value);
+    value = state.computedFn!(state.value);
   } catch (e: any) {
     state.exception = e;
     state.hasException = true;
@@ -303,20 +294,9 @@ function calcComputed<T>(state: State<T>) {
 
   currentComputed = pop();
 
-  if (!state.hasException) return value;
-
-  if (state.catch) {
-    try {
-      value = state.catch(state.exception, state.value);
-
-      state.hasException = false;
-      state.exception = undefined;
-    } catch (e) {
-      state.exception = e;
-    }
-  }
-
   if (state.hasException) {
+    value = undefined;
+
     if (state.lifecycle.exception) {
       state.lifecycle.exception.forEach((fn) => fn(state.exception));
     }

@@ -26,12 +26,8 @@ const subscriber = function () {};
 
 const Cell = cellx.Cell;
 
-// spred.configure({
-//   async: false
-// });
-
-const writable = spred.writable;
-const computed = spred.computed;
+const signal = spred.signal;
+const memo = spred.memo;
 const batch = spred.batch;
 
 const resultDiv = document.getElementById('result');
@@ -80,12 +76,10 @@ function testCellx(layerCount, newValues) {
         }),
       };
 
-      // if (!i) {
       s.prop1.on('change', subscriber);
       s.prop2.on('change', subscriber);
       s.prop3.on('change', subscriber);
       s.prop4.on('change', subscriber);
-      // }
 
       return s;
     })(layer);
@@ -126,10 +120,10 @@ function testSpred(layerCount, newValues) {
   const initTimestamp = performance.now();
 
   const start = {
-    prop1: writable(1),
-    prop2: writable(2),
-    prop3: writable(3),
-    prop4: writable(4),
+    prop1: signal(1),
+    prop2: signal(2),
+    prop3: signal(3),
+    prop4: signal(4),
   };
 
   let layer = start;
@@ -137,24 +131,26 @@ function testSpred(layerCount, newValues) {
   for (let i = layerCount; i--; ) {
     layer = (function (m) {
       const s = {
-        prop1: computed(function () {
+        prop1: memo(function () {
           return m.prop2();
         }),
-        prop2: computed(function () {
+        prop2: memo(function () {
           return m.prop1() - m.prop3();
         }),
-        prop3: computed(function () {
+        prop3: memo(function () {
           return m.prop2() + m.prop4();
         }),
-        prop4: computed(function () {
+        prop4: memo(function () {
           return m.prop3();
         }),
       };
 
-      s.prop1.subscribe(subscriber);
-      s.prop2.subscribe(subscriber);
-      s.prop3.subscribe(subscriber);
-      s.prop4.subscribe(subscriber);
+      if (!i) {
+        s.prop1.subscribe(subscriber);
+        s.prop2.subscribe(subscriber);
+        s.prop3.subscribe(subscriber);
+        s.prop4.subscribe(subscriber);
+      }
 
       return s;
     })(layer);
@@ -525,90 +521,3 @@ function runBenchmark() {
 }
 
 runButton.addEventListener('click', runBenchmark);
-
-// ------------------------------------------------
-
-// const signal = spred.signal;
-// const effect = spred.effect;
-// const watch = spred.watch;
-// const readonly = spred.readonly;
-// const onActivate = spred.onActivate;
-// const onDeactivate = spred.onDeactivate;
-
-// function debounce(ms) {
-//   return function (source) {
-//     let isActive;
-//     let lastValue;
-//     let timeout;
-
-//     const target = writable(source());
-
-//     const subscriber = (value) => {
-//       lastValue = value;
-
-//       if (timeout) {
-//         clearTimeout(timeout);
-//         timeout = null;
-//       }
-
-//       timeout = setTimeout(() => {
-//         if (isActive) target(lastValue);
-//       }, ms);
-//     };
-
-//     let unsub;
-
-//     onActivate(target, () => {
-//       isActive = true;
-//       unsub = source.subscribe(subscriber);
-//     });
-
-//     onDeactivate(target, () => {
-//       isActive = false;
-//       unsub();
-//     });
-
-//     return readonly(target);
-//   };
-// }
-
-// function fetchRandomJoke() {
-//   return fetch('https://api.chucknorris.io/jokes/random').then((res) =>
-//     res.json()
-//   );
-// }
-
-// const appDiv = document.createElement('div');
-
-// document.body.innerHTML = '';
-// document.body.appendChild(appDiv);
-
-// const [{ data, status }, fetchJoke] = effect(fetchRandomJoke);
-
-// const debouncedStatus = debounce(150)(status);
-
-// const createdAt = computed(() => {
-//   const date = new Date(data().created_at);
-//   return date.toLocaleString();
-// });
-
-// const text = computed(() => data().value);
-
-// const html = computed(() => {
-//   const { pristine, pending, rejected } = debouncedStatus();
-
-//   if (pristine) return '<h3>No joke fetched</h3>';
-//   if (pending) return '<h3>Loading...</h3>';
-//   if (rejected) return '<h3>CONNECTION ERROR</h3>';
-
-//   return `
-//     <h3>${createdAt()}</h3>
-//     <p>${text()}</p>
-//   `;
-// });
-
-// watch(() => {
-//   document.body.innerHTML = html();
-// });
-
-// document.addEventListener('click', fetchJoke);

@@ -1,6 +1,6 @@
 import { signal } from './signal';
 
-describe('writable signal', () => {
+describe('signal signal', () => {
   const counter = signal(0);
 
   it('is created with default value', () => {
@@ -23,26 +23,26 @@ describe('writable signal', () => {
   });
 
   it('force emits subscribers using notify method', () => {
-    const atom = signal({} as any);
+    const s = signal({} as any);
 
     let value: any;
     const subscriber = jest.fn((v: any) => (value = v.a));
 
-    atom.subscribe(subscriber);
+    s.subscribe(subscriber);
 
-    atom.notify();
+    s.notify();
 
     expect(subscriber).toBeCalledTimes(2);
     expect(value).toBe(undefined);
 
-    atom().a = 1;
-    atom.notify();
+    s().a = 1;
+    s.notify();
 
     expect(subscriber).toBeCalledTimes(3);
     expect(value).toBe(1);
 
-    atom().a = 2;
-    atom.notify();
+    s().a = 2;
+    s.notify();
 
     expect(subscriber).toBeCalledTimes(4);
     expect(value).toBe(2);

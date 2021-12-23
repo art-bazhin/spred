@@ -43,7 +43,7 @@ describe('store', () => {
     expect(persons).toBeDefined();
   });
 
-  it('allows to get the item atom by id', () => {
+  it('allows to get the item signal by id', () => {
     const nobody = persons.getSignal('123');
     const sameNobody = persons.getSignal('123');
 
@@ -116,10 +116,10 @@ describe('store', () => {
   //       (value && value.num) !== (prevValue && prevValue.num),
   //   });
 
-  //   const atom = testStore.getSignal('1');
+  //   const signal = testStore.getSignal('1');
   //   const subscriber = jest.fn();
 
-  //   atom.subscribe(subscriber, false);
+  //   signal.subscribe(subscriber, false);
 
   //   testStore.set({ id: '1', num: 6 });
   //   expect(subscriber).toBeCalledTimes(1);
