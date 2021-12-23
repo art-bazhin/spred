@@ -13,6 +13,7 @@ import {
   createSignal,
   createMemo,
   createComputed,
+  batch as solidBatch,
 } from 'https://unpkg.com/solid-js@1.2.3/dist/solid.js';
 
 window.process = {
@@ -378,10 +379,12 @@ function testSolid(layerCount, newValues) {
 
   const st = performance.now();
 
-  signals.prop1[1](newValues[0]);
-  signals.prop2[1](newValues[1]);
-  signals.prop3[1](newValues[2]);
-  signals.prop4[1](newValues[3]);
+  solidBatch(() => {
+    signals.prop1[1](newValues[0]);
+    signals.prop2[1](newValues[1]);
+    signals.prop3[1](newValues[2]);
+    signals.prop4[1](newValues[3]);
+  });
 
   report.afterChange = [end.prop1(), end.prop2(), end.prop3(), end.prop4()];
 

@@ -1,5 +1,5 @@
-import { writable, WritableAtom } from '../writable/writable';
-import { Atom, _Atom } from '../atom/atom';
+import { signal, WritableSignal } from '../signal/signal';
+import { Signal, _Signal } from '../signal-base/signal-base';
 import { computed } from '../computed/computed';
 import { config } from '../config/config';
 import { readonly } from '../readonly/readonly';
@@ -7,7 +7,6 @@ import { batch, update } from '../core/core';
 
 export interface StoreOptions<T> {
   getItemId: (item: T) => string;
-  shouldUpdate?: (value: T | null, prevValue?: T | null) => boolean;
 }
 
 export interface StoreData<T> {
@@ -19,13 +18,13 @@ export interface StoreData<T> {
  */
 export interface Store<T> {
   /**
-   * Returnes the item atom by id. Returns the same atom for the same id.
+   * Returnes the item signal by id. Returns the same signal for the same id.
    * @param id Unique item id.
    */
-  getAtom(id: string): Atom<T | null>;
+  getSignal(id: string): Signal<T | null>;
 
   /**
-   * Returnes the item by id. The returned value will be tracked when used in computed atoms.
+   * Returnes the item by id. The returned value will be tracked when used in computed signals.
    * @param id Unique item id.
    */
   get(id: string): T | null;
@@ -60,18 +59,18 @@ export interface Store<T> {
   clear(): void;
 
   /**
-   * Atom that receives the store data every time it is updated. Useful for synchronizing with external storage.
+   * signal that receives the store data every time it is updated. Useful for synchronizing with external storage.
    */
-  data: Atom<StoreData<T>>;
+  data: Signal<StoreData<T>>;
 }
 
 interface _Store<T> extends Store<T> {
   _options: Partial<StoreOptions<T>>;
   _idFn: (item: T) => string;
-  _data: WritableAtom<StoreData<T>>;
-  _force: WritableAtom<null>;
-  _atoms: {
-    [id: string]: Atom<T | null> | undefined;
+  _data: WritableSignal<StoreData<T>>;
+  _force: WritableSignal<null>;
+  _signals: {
+    [id: string]: Signal<T | null> | undefined;
   };
 }
 
@@ -91,24 +90,19 @@ function createData<T>(items: T[], getItemId: (item: T) => string) {
   return data;
 }
 
-function getAtom<T>(this: _Store<T>, id: string) {
-  const shouldUpdate = !this._options.shouldUpdate
-    ? config.shouldUpdate
-    : this._options.shouldUpdate;
-
-  if (!this._atoms[id]) {
-    this._atoms[id] = computed<T | null>(
+function getSignal<T>(this: _Store<T>, id: string) {
+  if (!this._signals[id]) {
+    this._signals[id] = computed<T | null>(
       () => this._data()[id] || this._force(),
-      null,
-      shouldUpdate
+      null
     ) as any;
   }
 
-  return this._atoms[id]!;
+  return this._signals[id]!;
 }
 
 function get<T>(this: _Store<T>, id: string) {
-  return this.getAtom(id)();
+  return this.getSignal(id)();
 }
 
 function set<T>(this: _Store<T>, item: T): void;
@@ -122,8 +116,8 @@ function set<T>(this: _Store<T>, items: any) {
       const id = this._idFn(item);
       data[id] = item;
 
-      const atom = this._atoms[id];
-      if (atom) update(atom);
+      const signal = this._signals[id];
+      if (signal) update(signal);
     }
 
     update(this._data);
@@ -139,12 +133,12 @@ function remove<T>(this: _Store<T>, ids: any) {
 
   batch(() => {
     for (let id of idArr) {
-      const atom = this._atoms[id];
+      const signal = this._signals[id];
 
-      delete this._atoms[id];
+      delete this._signals[id];
       delete data[id];
 
-      if (atom) update(atom);
+      if (signal) update(signal);
     }
 
     update(this._data);
@@ -153,7 +147,7 @@ function remove<T>(this: _Store<T>, ids: any) {
 
 function clear<T>(this: _Store<T>) {
   this._data({});
-  this._atoms = {};
+  this._signals = {};
 }
 
 /**
@@ -199,17 +193,17 @@ export function store<T>(items?: any, options?: any) {
   const opts = Object.assign({}, DEFAULT_STORE_OPTIONS, options || {});
   const storeMap =
     (Array.isArray(items) ? createData(items, opts.getItemId) : items) || {};
-  const _data = writable(storeMap);
+  const _data = signal(storeMap);
   const data = readonly(_data);
 
   const res: _Store<T> = {
     _options: opts,
     _idFn: opts.getItemId,
-    _atoms: {},
-    _force: writable(null),
+    _signals: {},
+    _force: signal(null),
     _data,
     data,
-    getAtom,
+    getSignal: getSignal,
     get,
     set,
     clear,

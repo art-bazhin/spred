@@ -1,9 +1,9 @@
 import { on } from '../on/on';
-import { Atom, _Atom } from '../atom/atom';
+import { Signal, _Signal } from '../signal-base/signal-base';
 import { removeFromArray } from '../utils/removeFromArray';
 
 function addListener<T>(
-  atom: Atom<any>,
+  atom: Signal<any>,
   lifecycleName: string,
   listener: (value: T) => any
 ) {
@@ -27,7 +27,7 @@ function addListener<T>(
  * @param listener Function that listens to the atom activation signal.
  * @returns Unsubscribe function.
  */
-export function onActivate<T>(atom: Atom<T>, listener: (value: T) => any) {
+export function onActivate<T>(atom: Signal<T>, listener: (value: T) => any) {
   return addListener<T>(atom, 'activate', listener);
 }
 
@@ -37,7 +37,7 @@ export function onActivate<T>(atom: Atom<T>, listener: (value: T) => any) {
  * @param listener Function that listens to the atom deactivation signal.
  * @returns Unsubscribe function.
  */
-export function onDeactivate<T>(atom: Atom<T>, listener: (value: T) => any) {
+export function onDeactivate<T>(atom: Signal<T>, listener: (value: T) => any) {
   return addListener<T>(atom, 'deactivate', listener);
 }
 
@@ -48,7 +48,7 @@ export function onDeactivate<T>(atom: Atom<T>, listener: (value: T) => any) {
  * @returns Unsubscribe function.
  */
 export function onUpdate<T>(
-  atom: Atom<T>,
+  atom: Signal<T>,
   listener: (change: { value: T; prevValue: T }) => any
 ) {
   return addListener<{ value: T; prevValue: T }>(atom, 'update', listener);
@@ -60,7 +60,7 @@ export function onUpdate<T>(
  * @param listener Function that listens to the atom exception signal.
  * @returns Unsubscribe function.
  */
-export function onException<T>(atom: Atom<T>, listener: (e: unknown) => any) {
+export function onException<T>(atom: Signal<T>, listener: (e: unknown) => any) {
   return addListener<T>(atom, 'exception', listener);
 }
 
@@ -70,7 +70,7 @@ export function onException<T>(atom: Atom<T>, listener: (e: unknown) => any) {
  * @param listener Function that listens to the atom notification start signal.
  * @returns Unsubscribe function.
  */
-export function onNotifyStart<T>(atom: Atom<T>, listener: (value: T) => any) {
+export function onNotifyStart<T>(atom: Signal<T>, listener: (value: T) => any) {
   return addListener<T>(atom, 'notifyStart', listener);
 }
 
@@ -80,6 +80,6 @@ export function onNotifyStart<T>(atom: Atom<T>, listener: (value: T) => any) {
  * @param listener Function that listens to the atom notification start signal.
  * @returns Unsubscribe function.
  */
-export function onNotifyEnd<T>(atom: Atom<T>, listener: (value: T) => any) {
+export function onNotifyEnd<T>(atom: Signal<T>, listener: (value: T) => any) {
   return addListener<T>(atom, 'notifyEnd', listener);
 }

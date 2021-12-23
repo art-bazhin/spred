@@ -1,11 +1,11 @@
 import { computed } from './computed';
-import { writable } from '../writable/writable';
+import { signal } from '../signal/signal';
 
 describe('computed', () => {
-  const a = writable(1);
-  const b = writable(2);
-  const c = writable(3);
-  const d = writable(4);
+  const a = signal(1);
+  const b = signal(2);
+  const c = signal(3);
+  const d = signal(4);
 
   const a1 = computed(() => b());
   const b1 = computed(() => a() - c());
@@ -42,7 +42,7 @@ describe('computed', () => {
   });
 
   it('filters undefined values', () => {
-    const counter = writable(0);
+    const counter = signal(0);
     let test: any;
     let unsub: any;
 

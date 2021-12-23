@@ -1,6 +1,3 @@
-import { config } from '../config/config';
-import { Filter } from '../filter/filter';
-import { SignalResult } from '../signal/signal';
 import { Subscriber } from '../subscriber/subscriber';
 import { FALSE } from '../utils/functions';
 
@@ -18,7 +15,6 @@ export interface State<T> {
   activeCount: number;
   computedFn?: (currentValue: T | undefined) => T;
   catch?: null | ((e: unknown, currentValue?: T) => T);
-  filter: Filter<T>;
   dependencies: State<any>[];
   dependencyStatuses: number[];
   dependencyStatusesSum: number;
@@ -41,15 +37,13 @@ export interface State<T> {
 export function createState<T>(
   value: T,
   computedFn?: (curentValue: T | undefined) => T,
-  catchException?: ((e: unknown, cuurentValue?: T) => T) | null,
-  filter?: undefined | null | false | Filter<T>
+  catchException?: ((e: unknown, cuurentValue?: T) => T) | null
 ): State<T> {
   return {
     value,
     prevValue: undefined,
     computedFn,
     catch: catchException,
-    filter: filter || config.shouldUpdate,
     hasException: false,
     receivedException: false,
     subscribers: [],

@@ -1,36 +1,28 @@
-import { Atom } from '../atom/atom';
-import { atomProto } from '../atom/atom';
-import { Filter } from '../filter/filter';
+import { Signal } from '../signal-base/signal-base';
+import { signalProto } from '../signal-base/signal-base';
 import { createState } from '../state/state';
 
 /**
  * Creates an atom that automatically calculates its value from other atoms
  * @param computedFn The function that calculates atom value and returns it.
  * @param catchException A function that handles an exception thrown when calculating the atom and returns the new atom value.
- * @param shouldUpdate A function that takes the new and current atom value, and returns true if the atom value needs to be updated.
  * @returns Computed atom.
  */
 export function computed<T>(
-  computedFn: (currentValue: T | undefined) => T,
-  catchException?: ((e: unknown, cuurentValue?: T) => T) | null,
-  shouldUpdate?: Filter<T>
+  computedFn: (currentValue?: T) => T,
+  catchException?: ((e: unknown, cuurentValue?: T) => T) | null
 ) {
   const f: any = function () {
     return f.get();
   };
 
-  f._state = createState(
-    undefined as any,
-    computedFn,
-    catchException,
-    shouldUpdate
-  );
+  f._state = createState(undefined as any, computedFn, catchException);
 
   f.constructor = computed;
-  f.get = atomProto.get;
-  f.subscribe = atomProto.subscribe;
-  f.activate = atomProto.activate;
-  f.value = atomProto.value;
+  f.get = signalProto.get;
+  f.subscribe = signalProto.subscribe;
+  f.activate = signalProto.activate;
+  f.value = signalProto.value;
 
-  return f as Atom<T>;
+  return f as Signal<T>;
 }

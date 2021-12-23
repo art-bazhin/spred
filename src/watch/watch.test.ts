@@ -56,7 +56,7 @@ describe('watch', () => {
 
     counter(1);
 
-    expect(fn).toHaveBeenCalledTimes(4);
+    expect(fn).toHaveBeenCalledTimes(5);
     expect(handleError).toHaveBeenCalledTimes(1);
   });
 });

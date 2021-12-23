@@ -1,17 +1,14 @@
 import { computed } from '../computed/computed';
-import { writable, WritableAtom } from '../writable/writable';
+import { signal, WritableSignal } from '../signal/signal';
 import { configure } from '../config/config';
-import { signal } from '../signal/signal';
-import { TRUE } from '../utils/functions';
-import { on } from '../on/on';
 import { batch } from '..';
 
-describe('atom', () => {
+describe('signal', () => {
   configure({
     logException: () => {},
   });
 
-  const counter = writable(0);
+  const counter = signal(0);
   let unsub: () => any;
   let num: number;
   let prevNum: number;
@@ -21,6 +18,7 @@ describe('atom', () => {
     prevNum = prevValue;
     num = value;
   });
+
   const altSubscriber = jest.fn((value: number) => (x2Num = value * 2));
 
   it('runs subscribers on subscribe', () => {
@@ -33,17 +31,17 @@ describe('atom', () => {
     expect(x2Num).toBe(0);
   });
 
-  it('runs subscribers on value change', () => {
+  it('runs subscribers on every incoming value', () => {
     counter(0);
 
-    expect(subscriber).toHaveBeenCalledTimes(1);
+    expect(subscriber).toHaveBeenCalledTimes(2);
     expect(num).toBe(0);
-    expect(prevNum).toBe(undefined);
+    expect(prevNum).toBe(0);
     expect(x2Num).toBe(0);
 
     counter(1);
 
-    expect(subscriber).toHaveBeenCalledTimes(2);
+    expect(subscriber).toHaveBeenCalledTimes(3);
     expect(num).toBe(1);
     expect(prevNum).toBe(0);
     expect(x2Num).toBe(2);
@@ -52,7 +50,7 @@ describe('atom', () => {
   it("doesn't subscribe one subscriber more than 1 time", () => {
     counter.subscribe(subscriber);
 
-    expect(subscriber).toHaveBeenCalledTimes(2);
+    expect(subscriber).toHaveBeenCalledTimes(3);
     expect(num).toBe(1);
   });
 
@@ -60,7 +58,7 @@ describe('atom', () => {
     unsub();
     counter(2);
 
-    expect(subscriber).toHaveBeenCalledTimes(2);
+    expect(subscriber).toHaveBeenCalledTimes(3);
     expect(num).toBe(1);
   });
 
@@ -75,27 +73,6 @@ describe('atom', () => {
 
     counter(3);
     expect(x2Counter()).toBe(6);
-  });
-
-  it("doesn't trigger subscribers if value hasn't changed", () => {
-    const a = writable(1);
-    const b = writable(2);
-    const c = computed(() => a() + b());
-    const d = computed(() => c() * 2);
-
-    const subscriber = jest.fn();
-
-    d.subscribe(subscriber, false);
-
-    expect(d()).toBe(6);
-
-    batch(() => {
-      a(2);
-      b(1);
-    });
-
-    expect(d()).toBe(6);
-    expect(subscriber).toHaveBeenCalledTimes(0);
   });
 
   it('handles diamond problem', () => {
@@ -116,7 +93,7 @@ describe('atom', () => {
      *            └─────┘
      */
 
-    const a = writable(0);
+    const a = signal(0);
     const b = computed(() => a() * 2);
     const c = computed(() => a() * 2);
     const d = computed(() => c() * 2);
@@ -133,8 +110,8 @@ describe('atom', () => {
   });
 
   it('dynamically updates dependencies', () => {
-    const counter = writable(0);
-    const tumbler = writable(false);
+    const counter = signal(0);
+    const tumbler = signal(false);
     const x2Counter = computed(() => counter() * 2);
     const result = computed(() => (tumbler() ? x2Counter() : 'FALSE'));
 
@@ -169,8 +146,8 @@ describe('atom', () => {
   it('catches exception and pass it down to dependants', () => {
     let error: Error | undefined = undefined;
 
-    const obj: WritableAtom<{ a: number } | null> = writable({ a: 1 });
-    const num = writable(1);
+    const obj: WritableSignal<{ a: number } | null> = signal({ a: 1 });
+    const num = signal(1);
     const objNum = computed(() => (obj() as any).a as number);
     const sum = computed(
       () => {
@@ -202,7 +179,7 @@ describe('atom', () => {
 
   it('can handle exceptions', () => {
     const subscriber = jest.fn();
-    const counter = writable(0);
+    const counter = signal(0);
 
     const isMoreThanFive = computed(() => counter() > 5);
 
@@ -236,8 +213,8 @@ describe('atom', () => {
     let error: Error | undefined = undefined;
     let str = '';
 
-    const tumbler = writable(false);
-    const counter = writable(0);
+    const tumbler = signal(false);
+    const counter = signal(0);
 
     const x2Counter = computed(() => {
       const res = counter() * 2;
@@ -288,7 +265,7 @@ describe('atom', () => {
   });
 
   it('returns previous value if an exception occured', () => {
-    const counter = writable(0);
+    const counter = signal(0);
 
     const x2Counter = computed(() => {
       if (counter() > 5) throw new Error();
@@ -306,7 +283,7 @@ describe('atom', () => {
   it('does not run subscribers if an exception occured', () => {
     const subscriber = jest.fn();
 
-    const counter = writable(0);
+    const counter = signal(0);
 
     const x2Counter = computed(() => {
       if (counter() > 5) throw new Error();
@@ -329,7 +306,7 @@ describe('atom', () => {
   it('prevents circular dependencies', () => {
     let counter = 0;
 
-    const a = writable(0);
+    const a = signal(0);
 
     const b: any = computed(() => {
       if (!a()) return 0;
@@ -362,8 +339,8 @@ describe('atom', () => {
   });
 
   it('can update atoms in subscribers', () => {
-    const counter = writable(0);
-    const x2Counter = writable(0);
+    const counter = signal(0);
+    const x2Counter = signal(0);
 
     counter.subscribe((value) => x2Counter(value * 2));
 
@@ -373,7 +350,7 @@ describe('atom', () => {
   });
 
   it('can use actual atom state in subscribers', () => {
-    const counter = writable(0);
+    const counter = signal(0);
     const x2Counter = computed(() => counter() * 2);
 
     x2Counter.activate();
@@ -385,28 +362,9 @@ describe('atom', () => {
     counter(1);
   });
 
-  it('immediately runs subscribers on value change in sync mode', () => {
-    configure({
-      batchUpdates: false,
-    });
-
-    const subscriber = jest.fn();
-    const counter = writable(0);
-
-    counter.subscribe(subscriber, false);
-
-    counter(1);
-    counter(2);
-    counter(3);
-
-    expect(subscriber).toHaveBeenCalledTimes(3);
-
-    configure();
-  });
-
   it('batches updates using batch function', () => {
     const subscriber = jest.fn();
-    const counter = writable(0);
+    const counter = signal(0);
 
     counter.subscribe(subscriber, false);
 
@@ -421,7 +379,7 @@ describe('atom', () => {
 
   describe('value method', () => {
     it('returns current atom value without calculation', () => {
-      const counter = writable(5);
+      const counter = signal(5);
       const x2Counter = computed(() => counter() * 2);
 
       expect(x2Counter.value()).toBe(undefined);
@@ -433,7 +391,7 @@ describe('atom', () => {
 
   describe('activate method', () => {
     it('forces an atom to recalculate its value on dependency changes', () => {
-      const counter = writable(5);
+      const counter = signal(5);
       const x2Counter = computed(() => counter() * 2);
 
       expect(x2Counter.value()).toBe(undefined);
@@ -446,35 +404,6 @@ describe('atom', () => {
 
       counter(15);
       expect(x2Counter.value()).toBe(30);
-    });
-  });
-
-  describe('shouldUpdate argument', () => {
-    it('defines if atom value needs to be updated', () => {
-      const nonFiltered = writable(0, TRUE);
-      let subscriber = jest.fn();
-
-      nonFiltered.subscribe(subscriber, false);
-
-      nonFiltered(0);
-
-      expect(subscriber).toBeCalledTimes(1);
-
-      const customFiltered = writable(
-        0,
-        (value, prevValue) => value > (prevValue || 0)
-      );
-      subscriber = jest.fn();
-
-      customFiltered.subscribe(subscriber, false);
-
-      customFiltered(-1);
-
-      expect(subscriber).toBeCalledTimes(0);
-
-      customFiltered(1);
-
-      expect(subscriber).toBeCalledTimes(1);
     });
   });
 });

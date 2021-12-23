@@ -1,4 +1,4 @@
-import { _Atom, Atom } from '../atom/atom';
+import { _Signal, Signal } from '../signal-base/signal-base';
 import { State } from '../state/state';
 import { Subscriber } from '../subscriber/subscriber';
 import { removeFromArray } from '../utils/removeFromArray';
@@ -24,8 +24,8 @@ export function batch(fn: (...args: any) => any) {
   recalc();
 }
 
-export function update<T>(atom: Atom<T>, value?: T) {
-  const state = (atom as _Atom<any>)._state;
+export function update<T>(atom: Signal<T>, value?: T) {
+  const state = (atom as _Signal<any>)._state;
   const force = arguments.length === 1;
 
   if (force) {
@@ -46,7 +46,7 @@ export function update<T>(atom: Atom<T>, value?: T) {
 }
 
 export function addSubscriber<T>(
-  atom: _Atom<T>,
+  atom: _Signal<T>,
   subscriber: Subscriber<T>,
   exec: boolean
 ) {
@@ -63,7 +63,10 @@ export function addSubscriber<T>(
   if (exec) subscriber(value, state.prevValue, true);
 }
 
-export function removeSubscriber<T>(atom: _Atom<T>, subscriber: Subscriber<T>) {
+export function removeSubscriber<T>(
+  atom: _Signal<T>,
+  subscriber: Subscriber<T>
+) {
   const state = atom._state;
 
   if (removeFromArray(state.subscribers, subscriber)) {
@@ -87,13 +90,6 @@ function emitUpdateLifecycle(state: State<any>, value: any) {
       value: value,
       prevValue: state.value,
     })
-  );
-}
-
-function checkShouldUpdate(value: any, state: State<any>) {
-  return (
-    value !== undefined &&
-    (state.value === undefined || state.filter(value, state.value))
   );
 }
 
@@ -129,7 +125,7 @@ export function recalc(shouldNotify = true) {
 
     if (!state.computedFn) {
       const value = state.nextValue;
-      const shouldUpdate = checkShouldUpdate(value, state);
+      const shouldUpdate = value !== undefined;
 
       if (!state.isNotifying && !shouldUpdate) continue;
 
@@ -181,7 +177,7 @@ export function recalc(shouldNotify = true) {
 
     if (!isCalculated) value = calcComputed(state);
 
-    if (!state.hasException && checkShouldUpdate(value, state)) {
+    if (!state.hasException && value !== undefined) {
       emitUpdateLifecycle(state, value);
 
       state.prevValue = state.value;
@@ -255,7 +251,7 @@ export function getStateValue<T>(state: State<T>): T {
   if (state.computedFn && !state.activeCount && !state.isCached()) {
     const value = calcComputed(state);
 
-    if (!state.hasException && checkShouldUpdate(value, state)) {
+    if (!state.hasException && value !== undefined) {
       state.prevValue = state.value;
       state.value = value;
     }

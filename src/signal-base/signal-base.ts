@@ -6,7 +6,7 @@ import { NOOP } from '../utils/functions';
 /**
  * Basic reactive primitive.
  */
-export interface Atom<T> {
+export interface Signal<T> {
   /**
    * Calculates and returns the current value of the atom.
    */
@@ -47,11 +47,11 @@ export interface Atom<T> {
   activate(): () => void;
 }
 
-export interface _Atom<T> extends Atom<T> {
+export interface _Signal<T> extends Signal<T> {
   _state: State<T>;
 }
 
-export const atomProto = {
+export const signalProto = {
   get() {
     return getStateValue((this as any)._state);
   },
@@ -65,7 +65,7 @@ export const atomProto = {
     return this.subscribe(NOOP);
   },
 
-  value(this: _Atom<any>) {
+  value(this: _Signal<any>) {
     return this._state.value;
   },
 };

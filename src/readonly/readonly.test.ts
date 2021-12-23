@@ -1,9 +1,9 @@
-import { writable } from '../writable/writable';
+import { signal } from '../signal/signal';
 import { readonly } from './readonly';
 
 describe('readonly function', () => {
   it('creates a readonly copy of the writable atom', () => {
-    const counter = writable(0);
+    const counter = signal(0);
     const readonlyCounter = readonly(counter);
 
     (readonlyCounter as any)(5);

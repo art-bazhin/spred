@@ -1,4 +1,4 @@
-import { Atom } from '../atom/atom';
+import { Signal } from '../signal-base/signal-base';
 import { Subscriber } from '../subscriber/subscriber';
 
 /**
@@ -7,6 +7,9 @@ import { Subscriber } from '../subscriber/subscriber';
  * @param subscriber Function that listens to the atom updates.
  * @returns Unsubscribe function.
  */
-export function on<T>(atom: Atom<T>, subscriber: Subscriber<Exclude<T, void>>) {
+export function on<T>(
+  atom: Signal<T>,
+  subscriber: Subscriber<Exclude<T, void>>
+) {
   return atom.subscribe(subscriber, false);
 }
