@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.12.1](https://github.com/art-bazhin/spred/compare/v0.12.0...v0.12.1) (2021-12-23)
+
+
+### Features
+
+* add action ([d51bf75](https://github.com/art-bazhin/spred/commit/d51bf755758ecf55c15473e44120e190481a3beb))
+
 ## [0.12.0](https://github.com/art-bazhin/spred/compare/v0.11.1...v0.12.0) (2021-12-23)
 
 
