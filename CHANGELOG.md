@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.11.0](https://github.com/art-bazhin/spred/compare/v0.10.2...v0.11.0) (2021-12-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* Default async batching has been removed. Use batch function instead.
+
+### Code Refactoring
+
+* remove async batching ([de07a87](https://github.com/art-bazhin/spred/commit/de07a87855e30510fe3f3625a928543fa8eef1d6))
+
 ### [0.10.2](https://github.com/art-bazhin/spred/compare/v0.10.1...v0.10.2) (2021-12-20)
 
 
