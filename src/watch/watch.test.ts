@@ -1,4 +1,4 @@
-import { writable, computed, configure, recalc } from '../index';
+import { writable, computed, configure } from '../index';
 import { watch } from './watch';
 
 describe('watch', () => {
@@ -27,7 +27,6 @@ describe('watch', () => {
 
   it('invokes passed function on dependency change', () => {
     counter(1);
-    recalc();
 
     expect(fn).toHaveBeenCalledTimes(2);
   });
@@ -36,7 +35,6 @@ describe('watch', () => {
     unsub();
 
     counter(0);
-    recalc();
 
     expect(fn).toHaveBeenCalledTimes(2);
   });
@@ -47,19 +45,16 @@ describe('watch', () => {
     watch(fn, handleError);
 
     counter(1);
-    recalc();
 
     expect(fn).toHaveBeenCalledTimes(4);
     expect(handleError).toHaveBeenCalledTimes(0);
 
     counter(10);
-    recalc();
 
     expect(fn).toHaveBeenCalledTimes(4);
     expect(handleError).toHaveBeenCalledTimes(1);
 
     counter(1);
-    recalc();
 
     expect(fn).toHaveBeenCalledTimes(4);
     expect(handleError).toHaveBeenCalledTimes(1);

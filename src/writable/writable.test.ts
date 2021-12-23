@@ -1,4 +1,4 @@
-import { recalc } from '../core/core';
+import { batch } from '../core/core';
 import { writable } from './writable';
 
 describe('writable', () => {
@@ -32,21 +32,18 @@ describe('writable', () => {
     atom.subscribe(subscriber);
 
     atom.notify();
-    recalc();
 
     expect(subscriber).toBeCalledTimes(2);
     expect(value).toBe(undefined);
 
     atom().a = 1;
     atom.notify();
-    recalc();
 
     expect(subscriber).toBeCalledTimes(3);
     expect(value).toBe(1);
 
     atom().a = 2;
     atom.notify();
-    recalc();
 
     expect(subscriber).toBeCalledTimes(4);
     expect(value).toBe(2);
@@ -59,22 +56,23 @@ describe('writable', () => {
     atom.subscribe(subscriber, false);
 
     atom(0);
-    recalc();
 
     expect(subscriber).toBeCalledTimes(0);
 
-    atom(1);
-    atom(2);
-    atom(0);
-    recalc();
+    batch(() => {
+      atom(1);
+      atom(2);
+      atom(0);
+    });
 
     expect(subscriber).toBeCalledTimes(0);
 
-    atom.notify();
-    atom(1);
-    atom(2);
-    atom(0);
-    recalc();
+    batch(() => {
+      atom.notify();
+      atom(1);
+      atom(2);
+      atom(0);
+    });
 
     expect(subscriber).toBeCalledTimes(1);
   });

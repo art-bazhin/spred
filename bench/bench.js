@@ -31,6 +31,7 @@ const Cell = cellx.Cell;
 
 const writable = spred.writable;
 const computed = spred.computed;
+const batch = spred.batch;
 
 const resultDiv = document.getElementById('result');
 const runButton = document.getElementById('run');
@@ -166,10 +167,12 @@ function testSpred(layerCount, newValues) {
 
   const st = performance.now();
 
-  start.prop1(newValues[0]);
-  start.prop2(newValues[1]);
-  start.prop3(newValues[2]);
-  start.prop4(newValues[3]);
+  batch(() => {
+    start.prop1(newValues[0]);
+    start.prop2(newValues[1]);
+    start.prop3(newValues[2]);
+    start.prop4(newValues[3]);
+  });
 
   report.afterChange = [end.prop1(), end.prop2(), end.prop3(), end.prop4()];
 

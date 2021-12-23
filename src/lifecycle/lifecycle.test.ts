@@ -1,4 +1,4 @@
-import { writable, recalc, computed, configure } from '../index';
+import { writable, computed, configure } from '../index';
 import {
   onActivate,
   onUpdate,
@@ -23,11 +23,8 @@ describe('lifecycle signals', () => {
     onNotifyEnd(counter, () => (result.notifyEnd = ++order));
 
     const unsub = counter.subscribe(() => {});
-    recalc();
     counter(1);
-    recalc();
     unsub();
-    recalc();
 
     expect(result.activate).toBe(1);
     expect(result.update).toBe(2);
@@ -50,17 +47,14 @@ describe('onActivate function', () => {
     expect(listener).toBeCalledTimes(0);
 
     unsub = counter.subscribe(() => {});
-    recalc();
     expect(value).toBe(0);
     expect(listener).toBeCalledTimes(1);
 
     counter(1);
-    recalc();
     expect(value).toBe(0);
     expect(listener).toBeCalledTimes(1);
 
     unsub();
-    recalc();
     expect(value).toBe(0);
     expect(listener).toBeCalledTimes(1);
   });
@@ -75,7 +69,6 @@ describe('onDeactivate function', () => {
     const listener = jest.fn((v) => (value = v));
 
     onDeactivate(counter, listener);
-    recalc();
     expect(value).toBeUndefined();
     expect(listener).toBeCalledTimes(0);
 
@@ -84,12 +77,10 @@ describe('onDeactivate function', () => {
     expect(listener).toBeCalledTimes(0);
 
     counter(1);
-    recalc();
     expect(value).toBeUndefined();
     expect(listener).toBeCalledTimes(0);
 
     unsub();
-    recalc();
     expect(value).toBe(1);
     expect(listener).toBeCalledTimes(1);
   });
@@ -114,7 +105,6 @@ describe('onUpdate function', () => {
     expect(listener).toBeCalledTimes(0);
 
     counter(1);
-    recalc();
     expect(value.value).toBe(1);
     expect(value.prevValue).toBe(0);
     expect(listener).toBeCalledTimes(1);
@@ -144,7 +134,6 @@ describe('onUpdate function', () => {
     expect(listener).toBeCalledTimes(0);
 
     counter(1);
-    recalc();
     expect(value.value).toBe(1);
     expect(value.prevValue).toBe(0);
     expect(listener).toBeCalledTimes(1);
@@ -173,7 +162,6 @@ describe('onNotifyStart function', () => {
     expect(listener).toBeCalledTimes(0);
 
     counter(1);
-    recalc();
     expect(value).toBe(1);
     expect(listener).toBeCalledTimes(1);
 
@@ -200,7 +188,6 @@ describe('onNotifyEnd function', () => {
     expect(listener).toBeCalledTimes(0);
 
     counter(1);
-    recalc();
     expect(value).toBe(1);
     expect(listener).toBeCalledTimes(1);
 
@@ -235,22 +222,18 @@ describe('onException function', () => {
     expect(listener).toBeCalledTimes(0);
 
     counter(2);
-    recalc();
     expect(error).toBeUndefined();
     expect(listener).toBeCalledTimes(0);
 
     counter(5);
-    recalc();
     expect(error).toBe('error');
     expect(listener).toBeCalledTimes(1);
 
     counter(6);
-    recalc();
     expect(error).toBe('error');
     expect(listener).toBeCalledTimes(2);
 
     counter(3);
-    recalc();
     expect(error).toBe('error');
     expect(listener).toBeCalledTimes(2);
 
@@ -286,22 +269,18 @@ describe('onException function', () => {
     expect(listener).toBeCalledTimes(0);
 
     counter(2);
-    recalc();
     expect(error).toBeUndefined();
     expect(listener).toBeCalledTimes(0);
 
     counter(5);
-    recalc();
     expect(error).toBe('error');
     expect(listener).toBeCalledTimes(1);
 
     counter(6);
-    recalc();
     expect(error).toBe('error');
     expect(listener).toBeCalledTimes(2);
 
     counter(3);
-    recalc();
     expect(error).toBe('error');
     expect(listener).toBeCalledTimes(2);
 

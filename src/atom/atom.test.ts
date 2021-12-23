@@ -1,10 +1,10 @@
 import { computed } from '../computed/computed';
 import { writable, WritableAtom } from '../writable/writable';
-import { recalc } from '../core/core';
 import { configure } from '../config/config';
 import { signal } from '../signal/signal';
 import { TRUE } from '../utils/functions';
 import { on } from '../on/on';
+import { batch } from '..';
 
 describe('atom', () => {
   configure({
@@ -35,7 +35,6 @@ describe('atom', () => {
 
   it('runs subscribers on value change', () => {
     counter(0);
-    recalc();
 
     expect(subscriber).toHaveBeenCalledTimes(1);
     expect(num).toBe(0);
@@ -43,7 +42,6 @@ describe('atom', () => {
     expect(x2Num).toBe(0);
 
     counter(1);
-    recalc();
 
     expect(subscriber).toHaveBeenCalledTimes(2);
     expect(num).toBe(1);
@@ -61,7 +59,6 @@ describe('atom', () => {
   it('stops to trigger subscribers after unsubscribe', () => {
     unsub();
     counter(2);
-    recalc();
 
     expect(subscriber).toHaveBeenCalledTimes(2);
     expect(num).toBe(1);
@@ -92,8 +89,10 @@ describe('atom', () => {
 
     expect(d()).toBe(6);
 
-    a(2);
-    b(1);
+    batch(() => {
+      a(2);
+      b(1);
+    });
 
     expect(d()).toBe(6);
     expect(subscriber).toHaveBeenCalledTimes(0);
@@ -149,8 +148,11 @@ describe('atom', () => {
     expect(result()).toBe('FALSE');
     expect(subscriber).toBeCalledTimes(0);
 
-    tumbler(true);
-    counter(2);
+    batch(() => {
+      tumbler(true);
+      counter(2);
+    });
+
     expect(result()).toBe(4);
     expect(subscriber).toBeCalledTimes(1);
 
@@ -270,19 +272,16 @@ describe('atom', () => {
     expect(error).toBeUndefined();
 
     tumbler(true);
-    recalc();
 
     expect(str).toBe('ON (0)');
     expect(error).toBeUndefined();
 
     counter(5);
-    recalc();
 
     expect(str).toBe('ON (0)');
     expect(error).toBeDefined();
 
     tumbler(false);
-    recalc();
 
     expect(str).toBe('OFF');
     expect(error).toBeUndefined();
@@ -369,7 +368,6 @@ describe('atom', () => {
     counter.subscribe((value) => x2Counter(value * 2));
 
     counter(1);
-    recalc();
 
     expect(x2Counter()).toBe(2);
   });
@@ -385,7 +383,6 @@ describe('atom', () => {
     });
 
     counter(1);
-    recalc();
   });
 
   it('immediately runs subscribers on value change in sync mode', () => {
@@ -407,78 +404,19 @@ describe('atom', () => {
     configure();
   });
 
-  it('batches updates and subscribers by default', () => {
+  it('batches updates using batch function', () => {
     const subscriber = jest.fn();
     const counter = writable(0);
 
     counter.subscribe(subscriber, false);
 
-    counter(1);
-    counter(2);
-    counter(3);
-
-    recalc();
+    batch(() => {
+      counter(1);
+      counter(2);
+      counter(3);
+    });
 
     expect(subscriber).toHaveBeenCalledTimes(1);
-  });
-
-  describe('get method', () => {
-    it('does not trigger recalculations when notificating atom listeners', () => {
-      const spy = jest.fn();
-
-      const atom1 = writable(0);
-      const atom2 = writable(0);
-      const atom3 = writable(0);
-      const atom4 = computed(() => {
-        spy();
-        return atom2();
-      });
-
-      atom4.activate();
-
-      on(atom1, (v) => {
-        atom2(v + 1);
-      });
-
-      on(atom1, () => {
-        atom3(atom2() + 1);
-      });
-
-      atom1(1);
-      expect(spy).toBeCalledTimes(1);
-
-      recalc();
-      expect(spy).toBeCalledTimes(2);
-    });
-
-    it('does not trigger recalculations when notificating signal listeners', () => {
-      const spy = jest.fn();
-
-      const [setCountSignal, setCount] = signal<number>();
-
-      const atom2 = writable(0);
-      const atom3 = writable(0);
-      const atom4 = computed(() => {
-        spy();
-        return atom2();
-      });
-
-      atom4.activate();
-
-      on(setCountSignal, (v) => {
-        atom2(v + 1);
-      });
-
-      on(setCountSignal, () => {
-        atom3(atom2() + 1);
-      });
-
-      setCount(1);
-      expect(spy).toBeCalledTimes(1);
-
-      recalc();
-      expect(spy).toBeCalledTimes(2);
-    });
   });
 
   describe('value method', () => {
@@ -507,7 +445,6 @@ describe('atom', () => {
       expect(x2Counter.value()).toBe(20);
 
       counter(15);
-      recalc();
       expect(x2Counter.value()).toBe(30);
     });
   });
@@ -520,7 +457,6 @@ describe('atom', () => {
       nonFiltered.subscribe(subscriber, false);
 
       nonFiltered(0);
-      recalc();
 
       expect(subscriber).toBeCalledTimes(1);
 
@@ -533,12 +469,10 @@ describe('atom', () => {
       customFiltered.subscribe(subscriber, false);
 
       customFiltered(-1);
-      recalc();
 
       expect(subscriber).toBeCalledTimes(0);
 
       customFiltered(1);
-      recalc();
 
       expect(subscriber).toBeCalledTimes(1);
     });

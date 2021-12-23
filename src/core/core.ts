@@ -3,60 +3,46 @@ import { State } from '../state/state';
 import { Subscriber } from '../subscriber/subscriber';
 import { removeFromArray } from '../utils/removeFromArray';
 import { push, pop } from '../stack/stack';
-import { microtask } from '../utils/microtask';
 import { config } from '../config/config';
 import { CircularDependencyError } from '../errors/errors';
 
 let currentComputed = pop();
+let batchLevel = 0;
+let calcLevel = 0;
 
 let queue: State<any>[] = [];
 let queueLength = 0;
 let fullQueueLength = 0;
 
-let isCalcActive = false;
-let emitingSignalsCount = 0;
+export function batch(fn: (...args: any) => any) {
+  batchLevel++;
+  fn();
+  batchLevel--;
 
-export function startEmitingSignal() {
-  emitingSignalsCount++;
-}
+  if (calcLevel || batchLevel) return;
 
-export function endEmitingSignal() {
-  emitingSignalsCount--;
+  recalc();
 }
 
 export function update<T>(atom: Atom<T>, value?: T) {
-  if (arguments.length === 1) {
-    commit([[atom]]);
-    return;
+  const state = (atom as _Atom<any>)._state;
+  const force = arguments.length === 1;
+
+  if (force) {
+    state.isNotifying = true;
+    state.nextValue = state.value;
+  } else {
+    state.nextValue = value;
   }
 
-  commit([[atom, value]]);
-}
+  if (state.computedFn) state.dirtyCount++;
 
-export function commit(pairs: [atom: Atom<any>, value?: any][]) {
-  for (let pair of pairs) {
-    const [atom, value] = pair;
+  state.queueIndex = queueLength - fullQueueLength;
+  queueLength = queue.push(state);
 
-    const state = (atom as _Atom<any>)._state;
-    const force = pair.length === 1;
+  if (calcLevel || batchLevel) return;
 
-    if (force) {
-      state.isNotifying = true;
-      state.nextValue = state.value;
-    } else {
-      state.nextValue = value;
-    }
-
-    if (state.computedFn) state.dirtyCount++;
-
-    state.queueIndex = queueLength - fullQueueLength;
-    queueLength = queue.push(state);
-  }
-
-  if (isCalcActive) return;
-
-  if (config.batchUpdates) microtask(recalc);
-  else recalc();
+  recalc();
 }
 
 export function addSubscriber<T>(
@@ -114,11 +100,12 @@ function checkShouldUpdate(value: any, state: State<any>) {
 /**
  * Immediately calculates the updated values of the atoms and notifies their subscribers.
  */
-export function recalc() {
+export function recalc(shouldNotify = true) {
   if (!queueLength) return;
 
-  isCalcActive = true;
   const notificationQueue: State<any>[] = [];
+
+  calcLevel++;
 
   for (let i = 0; i < queueLength; i++) {
     const state = queue[i];
@@ -208,10 +195,18 @@ export function recalc() {
     resetStateQueueParams(state);
   }
 
+  calcLevel--;
+
   queue = queue.slice(fullQueueLength);
   queueLength = queue.length;
   fullQueueLength = queueLength;
 
+  recalc(false);
+
+  if (shouldNotify) notify(notificationQueue);
+}
+
+function notify(notificationQueue: State<any>[]) {
   const wrapper = (config as any)._notificationWrapper;
 
   if (wrapper) {
@@ -219,10 +214,6 @@ export function recalc() {
   } else {
     notificationQueue.forEach(runSubscribers);
   }
-
-  recalc();
-
-  isCalcActive = false;
 }
 
 function decreaseDirtyCount(state: State<any>) {
@@ -260,8 +251,6 @@ export function getStateValue<T>(state: State<T>): T {
 
     return state.value;
   }
-
-  if (!isCalcActive && !emitingSignalsCount) recalc();
 
   if (state.computedFn && !state.activeCount && !state.isCached()) {
     const value = calcComputed(state);

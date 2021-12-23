@@ -1,9 +1,9 @@
 import { writable } from '../writable/writable';
 import { computed } from '../computed/computed';
 import { readonly } from '../readonly/readonly';
-import { commit } from '../core/core';
 import { Atom } from '../atom/atom';
 import { TRUE } from '../utils/functions';
+import { batch } from '../core/core';
 
 export type EffectStatus = 'pristine' | 'pending' | 'fulfilled' | 'rejected';
 
@@ -147,18 +147,22 @@ export function effect<T, A extends unknown[]>(
     return exec(++counter, ...args)
       .then((v) => {
         if (current !== counter) return v;
-        commit([
-          [_data, v],
-          [_status, 'fulfilled'],
-        ]);
+
+        batch(() => {
+          _data(v);
+          _status('fulfilled');
+        });
+
         return v;
       })
       .catch((e) => {
         if (current !== counter) throw e;
-        commit([
-          [_exception, e],
-          [_status, 'rejected'],
-        ]);
+
+        batch(() => {
+          _exception(e);
+          _status('rejected');
+        });
+
         throw e;
       });
   };

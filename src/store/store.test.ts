@@ -1,8 +1,8 @@
-import { recalc } from '../core/core';
 import { Atom } from '../atom/atom';
 import { store, Store } from './store';
 import { writable } from '../writable/writable';
 import { computed } from '../computed/computed';
+import { batch } from '..';
 
 interface Person {
   id: string;
@@ -121,15 +121,12 @@ describe('store', () => {
     atom.subscribe(subscriber, false);
 
     testStore.set({ id: '1', num: 6 });
-    recalc();
     expect(subscriber).toBeCalledTimes(1);
 
     testStore.set({ id: '1', num: 6 });
-    recalc();
     expect(subscriber).toBeCalledTimes(1);
 
     testStore.set({ id: '1', num: 8 });
-    recalc();
     expect(subscriber).toBeCalledTimes(2);
   });
 
@@ -168,30 +165,30 @@ describe('store', () => {
 
     $itemList.subscribe(subscriber, false);
 
-    itemStore.set({
-      id: '1',
-      text: 'foo',
-    });
+    batch(() => {
+      itemStore.set({
+        id: '1',
+        text: 'foo',
+      });
 
-    itemStore.set({
-      id: '2',
-      text: 'bar',
-    });
+      itemStore.set({
+        id: '2',
+        text: 'bar',
+      });
 
-    itemStore.set({
-      id: '3',
-      text: 'hello',
+      itemStore.set({
+        id: '3',
+        text: 'hello',
+      });
     });
-
-    recalc();
 
     expect(subscriber).toBeCalledTimes(1);
 
-    itemStore.delete('1');
-    itemStore.delete('2');
-    itemStore.delete('3');
-
-    recalc();
+    batch(() => {
+      itemStore.delete('1');
+      itemStore.delete('2');
+      itemStore.delete('3');
+    });
 
     expect(subscriber).toBeCalledTimes(2);
   });

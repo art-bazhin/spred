@@ -1,9 +1,9 @@
 import { writable, WritableAtom } from '../writable/writable';
 import { Atom, _Atom } from '../atom/atom';
 import { computed } from '../computed/computed';
-import { commit } from '../core/core';
 import { config } from '../config/config';
 import { readonly } from '../readonly/readonly';
+import { batch, update } from '../core/core';
 
 export interface StoreOptions<T> {
   getItemId: (item: T) => string;
@@ -117,20 +117,17 @@ function set<T>(this: _Store<T>, items: any) {
   const itemArr = Array.isArray(items) ? items : [items];
   const data = this._data.value();
 
-  const atomsToUpdate: [Atom<any>][] = [];
+  batch(() => {
+    for (let item of itemArr) {
+      const id = this._idFn(item);
+      data[id] = item;
 
-  for (let item of itemArr) {
-    const id = this._idFn(item);
-    data[id] = item;
+      const atom = this._atoms[id];
+      if (atom) update(atom);
+    }
 
-    const atom = this._atoms[id];
-    if (atom) atomsToUpdate.push([atom]);
-  }
-
-  atomsToUpdate.push([this._force]);
-  atomsToUpdate.push([this.data]);
-
-  commit(atomsToUpdate);
+    update(this._force);
+  });
 }
 
 function remove<T>(this: _Store<T>, id: string): void;
@@ -139,20 +136,16 @@ function remove<T>(this: _Store<T>, ids: any) {
   const idArr = Array.isArray(ids) ? ids : [ids];
   const data = this._data.value();
 
-  const atomsToUpdate: [Atom<any>][] = [];
+  batch(() => {
+    for (let id of idArr) {
+      const atom = this._atoms[id];
 
-  for (let id of idArr) {
-    const atom = this._atoms[id];
+      delete this._atoms[id];
+      delete data[id];
 
-    delete this._atoms[id];
-    delete data[id];
-
-    if (atom) atomsToUpdate.push([atom]);
-  }
-
-  atomsToUpdate.push([this.data]);
-
-  commit(atomsToUpdate);
+      if (atom) update(atom);
+    }
+  });
 }
 
 function clear<T>(this: _Store<T>) {

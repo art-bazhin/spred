@@ -14,7 +14,7 @@ import { readonly } from './readonly/readonly';
 import { configure, Config } from './config/config';
 import { Atom } from './atom/atom';
 import { watch } from './watch/watch';
-import { recalc } from './core/core';
+import { batch } from './core/core';
 import { on } from './on/on';
 import {
   effect,
@@ -43,7 +43,7 @@ export {
   store,
   readonly,
   watch,
-  recalc,
+  batch,
   configure,
   signal,
   on,

@@ -70,12 +70,12 @@ describe('computed', () => {
 
     counter(20);
     counter(11);
-    expect(x2Counter()).toBe(30);
-    expect(test).toBe(30);
+    expect(x2Counter()).toBe(40);
+    expect(test).toBe(40);
 
     counter(1);
-    expect(x2Counter()).toBe(30);
-    expect(test).toBe(30);
+    expect(x2Counter()).toBe(40);
+    expect(test).toBe(40);
 
     counter(16);
     expect(x2Counter()).toBe(32);
