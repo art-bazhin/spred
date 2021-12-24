@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.13.1](https://github.com/art-bazhin/spred/compare/v0.13.0...v0.13.1) (2021-12-24)
+
+
+### Bug Fixes
+
+* **signal:** add signal initial value ([ecbc3e2](https://github.com/art-bazhin/spred/commit/ecbc3e2b86f95a2b839c64fc83923f207d0c38c3))
+
 ## [0.13.0](https://github.com/art-bazhin/spred/compare/v0.12.2...v0.13.0) (2021-12-24)
 
 
