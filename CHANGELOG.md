@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.13.2](https://github.com/art-bazhin/spred/compare/v0.13.1...v0.13.2) (2021-12-24)
+
+
+### Others
+
+* fix package module type ([2638dc2](https://github.com/art-bazhin/spred/commit/2638dc2afe8255d586e331c15fc87059f70cb3d3))
+
 ### [0.13.1](https://github.com/art-bazhin/spred/compare/v0.13.0...v0.13.1) (2021-12-24)
 
 
