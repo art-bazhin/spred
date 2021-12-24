@@ -15,9 +15,8 @@ export function memo<T>(
   const comp = computed((prevValue?: T) => {
     const value = valueFn(prevValue);
 
-    if (prevValue && check(value, prevValue)) return undefined as unknown as T;
-
-    return value;
+    if (prevValue === undefined || !check(value, prevValue)) return value;
+    return undefined as unknown as T;
   });
 
   return comp;
