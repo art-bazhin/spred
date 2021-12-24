@@ -7,6 +7,7 @@
   "version": "0.13.1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "type": "module",
   "license": "MIT",
   "devDependencies": {
     "@babel/preset-env": "^7.16.4",
