@@ -34,6 +34,21 @@ export default [
         },
       }),
     ],
-    output: { file: pkg.main, format: 'es' },
+    output: { file: pkg.main, format: 'cjs' },
+  },
+
+  {
+    input: 'src/index.ts',
+    plugins: [
+      ts({
+        tsconfig: {
+          target: 'ES2015',
+          module: 'es2015',
+          declaration: true,
+          strict: true,
+        },
+      }),
+    ],
+    output: { file: pkg.esm, format: 'es' },
   },
 ];

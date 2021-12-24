@@ -6,8 +6,8 @@
   "bugs": "https://github.com/art-bazhin/spred/issues",
   "version": "0.13.2",
   "main": "dist/index.js",
+  "esm": "dist/index.mjs",
   "types": "dist/index.d.ts",
-  "type": "module",
   "license": "MIT",
   "devDependencies": {
     "@babel/preset-env": "^7.16.4",
