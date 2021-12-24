@@ -1,4 +1,4 @@
-import { _Signal, Signal } from '../signal-base/signal-base';
+import { _Signal, Signal } from '../signal-type/signal-type';
 import { State } from '../state/state';
 import { Subscriber } from '../subscriber/subscriber';
 import { removeFromArray } from '../utils/removeFromArray';

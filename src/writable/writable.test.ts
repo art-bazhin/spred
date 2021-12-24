@@ -1,7 +1,7 @@
-import { signal } from './signal';
+import { writable } from './writable';
 
-describe('signal signal', () => {
-  const counter = signal(0);
+describe('writable writable', () => {
+  const counter = writable(0);
 
   it('is created with default value', () => {
     expect(counter()).toBe(0);
@@ -23,7 +23,7 @@ describe('signal signal', () => {
   });
 
   it('force emits subscribers using notify method', () => {
-    const s = signal({} as any);
+    const s = writable({} as any);
 
     let value: any;
     const subscriber = jest.fn((v: any) => (value = v.a));

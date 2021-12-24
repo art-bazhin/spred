@@ -1,6 +1,6 @@
-import { Signal } from '../signal-base/signal-base';
+import { Signal } from '../writable-type/writable-type';
 import { store, Store } from './store';
-import { signal } from '../signal/signal';
+import { writable } from '../writable/writable';
 import { computed } from '../computed/computed';
 import { batch } from '../core/core';
 import { on } from '../on/on';
@@ -43,7 +43,7 @@ describe('store', () => {
     expect(persons).toBeDefined();
   });
 
-  it('allows to get the item signal by id', () => {
+  it('allows to get the item writable by id', () => {
     const nobody = persons.getSignal('123');
     const sameNobody = persons.getSignal('123');
 
@@ -116,10 +116,10 @@ describe('store', () => {
   //       (value && value.num) !== (prevValue && prevValue.num),
   //   });
 
-  //   const signal = testStore.getSignal('1');
+  //   const writable = testStore.getSignal('1');
   //   const subscriber = jest.fn();
 
-  //   signal.subscribe(subscriber, false);
+  //   writable.subscribe(subscriber, false);
 
   //   testStore.set({ id: '1', num: 6 });
   //   expect(subscriber).toBeCalledTimes(1);
@@ -161,7 +161,7 @@ describe('store', () => {
 
     const ids = items.map((item) => item.id);
 
-    const $ids = signal(ids);
+    const $ids = writable(ids);
     const $itemList = computed(() => $ids().map((id) => itemStore.get(id)));
 
     $itemList.subscribe(subscriber, false);

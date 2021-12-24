@@ -1,4 +1,4 @@
-import { signal, computed, configure } from '../index';
+import { writable, computed, configure } from '../index';
 import { watch } from './watch';
 
 describe('watch', () => {
@@ -6,7 +6,7 @@ describe('watch', () => {
     logException: () => {},
   });
 
-  const counter = signal(0);
+  const counter = writable(0);
   const x2Counter = computed(() => {
     const res = counter() * 2;
 

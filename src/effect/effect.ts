@@ -1,6 +1,6 @@
-import { signal } from '../signal/signal';
+import { writable } from '../writable/writable';
 import { computed } from '../computed/computed';
-import { Signal } from '../signal-base/signal-base';
+import { Signal } from '../signal-type/signal-type';
 import { batch } from '../core/core';
 import { NOOP } from '../utils/functions';
 import { memo } from '../memo/memo';
@@ -67,9 +67,9 @@ export function effect<T, A extends unknown[]>(
   let counter = 0;
   let current = -1;
 
-  const _status = signal<EffectStatus>('pristine');
-  const _exception = signal();
-  const _data = signal<T>();
+  const _status = writable<EffectStatus>('pristine');
+  const _exception = writable();
+  const _data = writable<T>();
 
   const lastStatus = memo(() => {
     const status = _status();

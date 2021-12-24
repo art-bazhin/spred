@@ -1,11 +1,11 @@
 import { computed } from './computed';
-import { signal } from '../signal/signal';
+import { writable } from '../writable/writable';
 
 describe('computed', () => {
-  const a = signal(1);
-  const b = signal(2);
-  const c = signal(3);
-  const d = signal(4);
+  const a = writable(1);
+  const b = writable(2);
+  const c = writable(3);
+  const d = writable(4);
 
   const a1 = computed(() => b());
   const b1 = computed(() => a() - c());
@@ -42,7 +42,7 @@ describe('computed', () => {
   });
 
   it('filters undefined values', () => {
-    const counter = signal(0);
+    const counter = writable(0);
     let test: any;
     let unsub: any;
 
@@ -50,7 +50,7 @@ describe('computed', () => {
       const c = counter() * 2;
       if (c > 25) return c;
       return undefined;
-    }, null);
+    });
 
     expect(x2Counter()).toBe(undefined);
 

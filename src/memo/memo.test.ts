@@ -1,9 +1,9 @@
-import { signal } from '..';
+import { writable } from '..';
 import { memo } from './memo';
 
 describe('memo', () => {
   it('creates a computed which does not trigger dependants until its value is changed', () => {
-    const counter = signal(0);
+    const counter = writable(0);
     const x2Counter = memo(() => counter() * 2);
     const spy = jest.fn();
 

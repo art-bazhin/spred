@@ -1,5 +1,5 @@
-import { signal, WritableSignal } from '../signal/signal';
-import { Signal, _Signal } from '../signal-base/signal-base';
+import { writable, WritableSignal } from '../writable/writable';
+import { Signal, _Signal } from '../signal-type/signal-type';
 import { computed } from '../computed/computed';
 import { batch, update } from '../core/core';
 
@@ -190,14 +190,14 @@ export function store<T>(items?: any, options?: any) {
   const opts = Object.assign({}, DEFAULT_STORE_OPTIONS, options || {});
   const storeMap =
     (Array.isArray(items) ? createData(items, opts.getItemId) : items) || {};
-  const _data = signal(storeMap);
+  const _data = writable(storeMap);
   const data = computed(_data);
 
   const res: _Store<T> = {
     _options: opts,
     _idFn: opts.getItemId,
     _signals: {},
-    _force: signal(null),
+    _force: writable(null),
     _data,
     data,
     getSignal: getSignal,

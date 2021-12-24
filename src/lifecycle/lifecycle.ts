@@ -1,5 +1,5 @@
 import { on } from '../on/on';
-import { Signal, _Signal } from '../signal-base/signal-base';
+import { Signal, _Signal } from '../signal-type/signal-type';
 import { removeFromArray } from '../utils/removeFromArray';
 
 function addListener<T>(

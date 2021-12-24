@@ -1,7 +1,6 @@
 import { getStateValue, addSubscriber, removeSubscriber } from '../core/core';
 import { State } from '../state/state';
 import { Subscriber } from '../subscriber/subscriber';
-import { NOOP } from '../utils/functions';
 
 /**
  * Basic reactive primitive.

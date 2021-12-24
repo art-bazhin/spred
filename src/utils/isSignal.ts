@@ -1,5 +1,5 @@
-import { Signal } from '../signal-base/signal-base';
-import { WritableSignal } from '../signal/signal';
+import { Signal } from '../signal-type/signal-type';
+import { WritableSignal } from '../writable/writable';
 
 export function isSignal<T>(value: (...args: any) => T): value is Signal<T> {
   return (value as any)._state && (value as any).subscribe;

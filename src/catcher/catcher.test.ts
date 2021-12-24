@@ -1,4 +1,4 @@
-import { signal, computed, configure } from '..';
+import { writable, computed, configure } from '..';
 import { catcher } from './catcher';
 
 configure({
@@ -6,8 +6,8 @@ configure({
 });
 
 describe('catcher', () => {
-  it('allows to handle inactive signal exceptions', () => {
-    const count = signal(0);
+  it('allows to handle inactive writable exceptions', () => {
+    const count = writable(0);
 
     const withError = computed(() => {
       if (count() < 5) throw Error();
@@ -25,8 +25,8 @@ describe('catcher', () => {
     expect(handledError()).toBe(42);
   });
 
-  it('allows to handle active signal exceptions', () => {
-    const count = signal(0);
+  it('allows to handle active writable exceptions', () => {
+    const count = writable(0);
 
     const withError = computed(() => {
       if (count() < 5) throw Error();
@@ -52,7 +52,7 @@ describe('catcher', () => {
   });
 
   it('allows to throw a new exception', () => {
-    const count = signal(0);
+    const count = writable(0);
 
     const withError = computed(() => {
       if (count() < 5) throw 5 - count();

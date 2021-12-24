@@ -1,4 +1,4 @@
-import { signal, WritableSignal } from './signal/signal';
+import { writable, WritableSignal } from './writable/writable';
 import {
   onActivate,
   onDeactivate,
@@ -11,10 +11,10 @@ import { computed } from './computed/computed';
 import { memo } from './memo/memo';
 import { store, Store, StoreData, StoreOptions } from './store/store';
 import { configure, Config } from './config/config';
-import { Signal } from './signal-base/signal-base';
+import { Signal } from './signal-type/signal-type';
 import { watch } from './watch/watch';
 import { batch } from './core/core';
-import { action } from './action/action';
+import { signal } from './signal/signal';
 import { on } from './on/on';
 import {
   effect,
@@ -35,12 +35,12 @@ export {
   StoreOptions,
   Config,
   Subscriber,
-  signal,
+  writable,
   computed,
   memo,
   watch,
   batch,
-  action,
+  signal,
   on,
   onActivate,
   onDeactivate,

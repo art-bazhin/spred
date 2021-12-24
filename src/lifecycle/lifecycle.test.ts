@@ -1,4 +1,4 @@
-import { signal, computed, configure } from '../index';
+import { writable, computed, configure } from '../index';
 import {
   onActivate,
   onUpdate,
@@ -8,9 +8,9 @@ import {
   onNotifyStart,
 } from './lifecycle';
 
-describe('lifecycle signals', () => {
+describe('lifecycle writables', () => {
   it('emits in right order', () => {
-    const counter = signal(0);
+    const counter = writable(0);
 
     const result: any = {};
     let order = 0;
@@ -35,11 +35,11 @@ describe('lifecycle signals', () => {
 });
 
 describe('onActivate function', () => {
-  it('subscribes the listener to the signal activate signal', () => {
+  it('subscribes the listener to the writable activate writable', () => {
     let value: any;
     let unsub: any;
 
-    const counter = signal(0);
+    const counter = writable(0);
     const listener = jest.fn((v) => (value = v));
 
     onActivate(counter, listener);
@@ -61,11 +61,11 @@ describe('onActivate function', () => {
 });
 
 describe('onDeactivate function', () => {
-  it('subscribes the listener to the signal deactivate signal', () => {
+  it('subscribes the listener to the writable deactivate writable', () => {
     let value: any;
     let unsub: any;
 
-    const counter = signal(0);
+    const counter = writable(0);
     const listener = jest.fn((v) => (value = v));
 
     onDeactivate(counter, listener);
@@ -87,11 +87,11 @@ describe('onDeactivate function', () => {
 });
 
 describe('onUpdate function', () => {
-  it('subscribes the listener to the signal signal update signal', () => {
+  it('subscribes the listener to the writable writable update writable', () => {
     let value: any = {};
     let unsub: any;
 
-    const counter = signal(0);
+    const counter = writable(0);
     const listener = jest.fn((v) => (value = v));
 
     onUpdate(counter, listener);
@@ -115,11 +115,11 @@ describe('onUpdate function', () => {
     expect(listener).toBeCalledTimes(1);
   });
 
-  it('subscribes the listener to the signal change signal', () => {
+  it('subscribes the listener to the writable change writable', () => {
     let value: any = {};
     let unsub: any;
 
-    const counter = signal(0);
+    const counter = writable(0);
     const computedCounter = computed(() => counter());
     const listener = jest.fn((v) => (value = v));
 
@@ -146,11 +146,11 @@ describe('onUpdate function', () => {
 });
 
 describe('onNotifyStart function', () => {
-  it('subscribes the listener to the signal notifyStart signal', () => {
+  it('subscribes the listener to the writable notifyStart writable', () => {
     let value: any;
     let unsub: any;
 
-    const counter = signal(0);
+    const counter = writable(0);
     const listener = jest.fn((v) => (value = v));
 
     onNotifyStart(counter, listener);
@@ -172,11 +172,11 @@ describe('onNotifyStart function', () => {
 });
 
 describe('onNotifyEnd function', () => {
-  it('subscribes the listener to the signal notifyEnd signal', () => {
+  it('subscribes the listener to the writable notifyEnd writable', () => {
     let value: any;
     let unsub: any;
 
-    const counter = signal(0);
+    const counter = writable(0);
     const listener = jest.fn((v) => (value = v));
 
     onNotifyEnd(counter, listener);
@@ -198,7 +198,7 @@ describe('onNotifyEnd function', () => {
 });
 
 describe('onException function', () => {
-  it('subscribes the listener to the signal exception signal', () => {
+  it('subscribes the listener to the writable exception writable', () => {
     configure({
       logException: () => {},
     });
@@ -206,7 +206,7 @@ describe('onException function', () => {
     let error: any;
     let unsub: any;
 
-    const counter = signal(0);
+    const counter = writable(0);
     const x2Counter = computed(() => {
       if (counter() > 4) throw 'error';
       return counter() * 2;
@@ -244,7 +244,7 @@ describe('onException function', () => {
     configure();
   });
 
-  it('correctly reacts to exceptions in intermideate computed signals', () => {
+  it('correctly reacts to exceptions in intermideate computed writables', () => {
     configure({
       logException: () => {},
     });
@@ -252,7 +252,7 @@ describe('onException function', () => {
     let error: any;
     let unsub: any;
 
-    const counter = signal(0);
+    const counter = writable(0);
     const x2Counter = computed(() => {
       if (counter() > 4) throw 'error';
       return counter() * 2;
