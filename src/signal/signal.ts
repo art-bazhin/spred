@@ -1,16 +1,18 @@
+import { Signal } from '../signal-type/signal-type';
 import { computed } from '../computed/computed';
 import { writable } from '../writable/writable';
 
-export function signal<T>() {
-  const source = writable<T>();
+export function signal(): [Signal<unknown>, () => void];
+export function signal<T>(): [Signal<T | undefined>, (payload: T) => void];
+export function signal<T>(initialValue: T): [Signal<T>, (payload: T) => void];
 
-  function emit(payload: T) {
-    if (payload === undefined) source({} as any);
+export function signal(initialValue?: any) {
+  const source = writable(initialValue);
+
+  function set(payload: any) {
+    if (payload === undefined) source({});
     else source(payload);
   }
 
-  return [
-    computed(source),
-    emit as unknown extends T ? () => void : (payload: T) => void,
-  ] as const;
+  return [computed(source), set];
 }
