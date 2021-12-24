@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.13.3](https://github.com/art-bazhin/spred/compare/v0.13.2...v0.13.3) (2021-12-24)
+
+
+### Build System
+
+* fix configs extension ([db72dd8](https://github.com/art-bazhin/spred/commit/db72dd8cd31e3c3bfa0df9c2ddcf7655c57c0305))
+* use commonjs ([4032c2d](https://github.com/art-bazhin/spred/commit/4032c2d916eac7ef7dce1a6d303646c8f0354bf1))
+
 ### [0.13.2](https://github.com/art-bazhin/spred/compare/v0.13.1...v0.13.2) (2021-12-24)
 
 
