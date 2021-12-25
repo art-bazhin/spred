@@ -95,7 +95,7 @@ function emitUpdateLifecycle(state: State<any>, value: any) {
 /**
  * Immediately calculates the updated values of the signals and notifies their subscribers.
  */
-export function recalc(shouldNotify = true) {
+export function recalc() {
   if (!queueLength) return;
 
   const notificationQueue: State<any>[] = [];
@@ -183,9 +183,8 @@ export function recalc(shouldNotify = true) {
   queueLength = queue.length;
   fullQueueLength = queueLength;
 
-  recalc(false);
-
-  if (shouldNotify) notify(notificationQueue);
+  notify(notificationQueue);
+  recalc();
 }
 
 function notify(notificationQueue: State<any>[]) {

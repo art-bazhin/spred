@@ -93,4 +93,27 @@ describe('computed', () => {
     counter(11);
     expect(x2Counter()).toBe(30);
   });
+
+  it('can pass values to writable signals during computing', () => {
+    const counter = writable(0);
+    const stringCounter = writable('0');
+
+    const x2Counter = computed(() => {
+      stringCounter(counter() + '');
+      return counter() * 2;
+    });
+
+    let value = '';
+
+    stringCounter.subscribe((v) => (value = v));
+    x2Counter.subscribe(() => {});
+
+    expect(value).toBe('0');
+
+    counter(1);
+    expect(value).toBe('1');
+
+    counter(2);
+    expect(value).toBe('2');
+  });
 });
