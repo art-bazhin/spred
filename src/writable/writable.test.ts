@@ -1,6 +1,6 @@
 import { writable } from './writable';
 
-describe('writable writable', () => {
+describe('writable', () => {
   const counter = writable(0);
 
   it('is created with default value', () => {

@@ -383,34 +383,4 @@ describe('signal', () => {
 
     expect(subscriber).toHaveBeenCalledTimes(1);
   });
-
-  describe('value method', () => {
-    it('returns current writable value without calculation', () => {
-      const counter = writable(5);
-      const x2Counter = computed(() => counter() * 2);
-
-      expect(x2Counter.value()).toBe(undefined);
-
-      x2Counter();
-      expect(x2Counter.value()).toBe(10);
-    });
-  });
-
-  describe('activate method', () => {
-    it('forces an writable to recalculate its value on dependency changes', () => {
-      const counter = writable(5);
-      const x2Counter = computed(() => counter() * 2);
-
-      expect(x2Counter.value()).toBe(undefined);
-
-      counter(10);
-      expect(x2Counter.value()).toBe(undefined);
-
-      x2Counter.subscribe(() => {});
-      expect(x2Counter.value()).toBe(20);
-
-      counter(15);
-      expect(x2Counter.value()).toBe(30);
-    });
-  });
 });

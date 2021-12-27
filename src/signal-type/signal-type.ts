@@ -17,7 +17,7 @@ export interface Signal<T> {
   get(): T;
 
   /**
-   * Returns the current value of the signal without calculation.
+   * Returns the current value of the signal without dependency tracking.
    */
   value(): T;
 
@@ -55,6 +55,6 @@ export const signalProto = {
   },
 
   value(this: _Signal<any>) {
-    return this._state.value;
+    return getStateValue((this as any)._state, false);
   },
 };
