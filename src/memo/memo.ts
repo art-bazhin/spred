@@ -1,5 +1,5 @@
 import { computed } from '../computed/computed';
-import { isWritableSignal } from '../utils/isSignal';
+import { isWritableSignal } from '../guards/guards';
 
 function defaultIsEqual<T>(value: T, prevValue: T) {
   return Object.is(value, prevValue);

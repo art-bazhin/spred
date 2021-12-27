@@ -49,6 +49,6 @@ export default [
         },
       }),
     ],
-    output: { file: pkg.esm, format: 'es' },
+    output: { file: pkg.module, format: 'es' },
   },
 ];

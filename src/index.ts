@@ -23,6 +23,7 @@ import {
   EffectStatusObject,
 } from './effect/effect';
 import { Subscriber } from './subscriber/subscriber';
+import { isSignal, isWritableSignal, get, sample } from './guards/guards';
 
 export {
   Signal,
@@ -51,4 +52,8 @@ export {
   effect,
   store,
   configure,
+  isSignal,
+  isWritableSignal,
+  get,
+  sample,
 };

@@ -1,6 +1,6 @@
 import { computed } from '../computed/computed';
 import { NOOP } from '../utils/functions';
-import { isSignal } from '../utils/isSignal';
+import { isSignal } from '../guards/guards';
 
 /**
  * Calls the passed function immediately and every time the signals it depends on are updated.

@@ -35,7 +35,7 @@ export interface WritableSignal<T> extends Signal<T> {
    */
   notify(): T;
 
-  value(): T;
+  sample(): T;
 }
 
 /**
@@ -64,7 +64,7 @@ export function writable(value?: any) {
   f.get = signalSignalProto.get;
   f.notify = signalSignalProto.notify;
   f.subscribe = signalSignalProto.subscribe;
-  f.value = signalSignalProto.value;
+  f.sample = signalSignalProto.sample;
 
   return f;
 }

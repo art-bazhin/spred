@@ -6,7 +6,7 @@
   "bugs": "https://github.com/art-bazhin/spred/issues",
   "version": "0.13.4",
   "main": "dist/index.js",
-  "esm": "dist/index.mjs",
+  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "license": "MIT",
   "devDependencies": {

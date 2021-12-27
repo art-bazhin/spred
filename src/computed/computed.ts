@@ -1,7 +1,7 @@
 import { Signal } from '../signal-type/signal-type';
 import { signalProto } from '../signal-type/signal-type';
 import { createState } from '../state/state';
-import { isWritableSignal } from '../utils/isSignal';
+import { isWritableSignal } from '../guards/guards';
 
 /**
  * Creates an signal that automatically calculates its value from other signals
@@ -20,7 +20,7 @@ export function computed<T>(computedFn: (prevValue?: T) => T) {
   f.constructor = computed;
   f.get = signalProto.get;
   f.subscribe = signalProto.subscribe;
-  f.value = signalProto.value;
+  f.sample = signalProto.sample;
 
   return f as Signal<T>;
 }

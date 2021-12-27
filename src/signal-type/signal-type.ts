@@ -19,7 +19,7 @@ export interface Signal<T> {
   /**
    * Returns the current value of the signal without dependency tracking.
    */
-  value(): T;
+  sample(): T;
 
   /**
    * Subscribes the function to updates of the signal value.
@@ -54,7 +54,7 @@ export const signalProto = {
     return () => removeSubscriber(this as any, subscriber);
   },
 
-  value(this: _Signal<any>) {
+  sample(this: _Signal<any>) {
     return getStateValue((this as any)._state, false);
   },
 };

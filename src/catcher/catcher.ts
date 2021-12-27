@@ -1,6 +1,6 @@
 import { computed } from '../computed/computed';
 import { State } from '../state/state';
-import { isSignal } from '../utils/isSignal';
+import { isSignal } from '../guards/guards';
 
 export function catcher<T>(
   fn: (prevValue?: T) => T,
