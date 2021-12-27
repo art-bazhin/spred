@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.14.0](https://github.com/art-bazhin/spred/compare/v0.13.4...v0.14.0) (2021-12-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* rename value method to sample
+
+### Features
+
+* add type guards ([5ca628c](https://github.com/art-bazhin/spred/commit/5ca628ce44aa3ea18d3b349ad5dae0a88b33f116))
+
+
+### Bug Fixes
+
+* don't track dependencies inside subscribers ([7396078](https://github.com/art-bazhin/spred/commit/73960789b0c710517b71b59a8a3958860c0ed564))
+* fix value method ([471b85f](https://github.com/art-bazhin/spred/commit/471b85fb0f6b54536fd9c49d21dc378cd84e5f66))
+
 ### [0.13.4](https://github.com/art-bazhin/spred/compare/v0.13.3...v0.13.4) (2021-12-25)
 
 
