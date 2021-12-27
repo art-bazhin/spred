@@ -54,7 +54,7 @@ export function addSubscriber<T>(
 
   if (state.subscribers.indexOf(subscriber) > -1) return;
 
-  const value = getStateValue(state);
+  const value = getStateValue(state, false);
 
   activateDependencies(state);
 
@@ -226,7 +226,7 @@ function runSubscribers<T>(state: State<T>) {
   }
 }
 
-export function getStateValue<T>(state: State<T>): T {
+export function getStateValue<T>(state: State<T>, trackDeps = true): T {
   if (state.isComputing || state.hasCycle) {
     state.hasCycle = true;
     config.logException(new CircularDependencyError());
@@ -243,7 +243,7 @@ export function getStateValue<T>(state: State<T>): T {
     }
   }
 
-  if (currentComputed) {
+  if (trackDeps && currentComputed) {
     if (
       state.hasException &&
       !currentComputed.hasException &&

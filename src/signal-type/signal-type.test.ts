@@ -2,8 +2,9 @@ import { computed } from '../computed/computed';
 import { writable, WritableSignal } from '../writable/writable';
 import { configure } from '../config/config';
 import { batch } from '../core/core';
+import { memo } from '..';
 
-describe('writable', () => {
+describe('signal', () => {
   configure({
     logException: () => {},
   });
@@ -73,6 +74,34 @@ describe('writable', () => {
 
     counter(3);
     expect(x2Counter()).toBe(6);
+  });
+
+  it('does not track dependencies inside subscriber function', () => {
+    const counter = writable(0);
+    const gt5 = memo(() => counter() > 5);
+    const res = memo(() => {
+      if (gt5()) {
+        const obj: any = {};
+
+        counter.subscribe((v) => (obj.value = v));
+        return obj;
+      }
+
+      return {} as any;
+    });
+
+    const spy = jest.fn();
+
+    res.subscribe(spy, false);
+
+    counter(1);
+    counter(2);
+    counter(3);
+    counter(6);
+    counter(7);
+    counter(8);
+
+    expect(spy).toBeCalledTimes(1);
   });
 
   it('handles diamond problem', () => {
