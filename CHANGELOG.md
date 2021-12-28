@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.14.1](https://github.com/art-bazhin/spred/compare/v0.14.0...v0.14.1) (2021-12-28)
+
+
+### Bug Fixes
+
+* **store:** fix redundant notifications bug ([1a3d6c3](https://github.com/art-bazhin/spred/commit/1a3d6c33a6173db21e54b1fbb231d4712026a27d))
+
+
+### Others
+
+* **bench:** fix import ([8200da1](https://github.com/art-bazhin/spred/commit/8200da1c6f59905f4bd18620031842a759dd626d))
+
+
+### Code Refactoring
+
+* move calc and batch check in recalc function ([fc3f4a1](https://github.com/art-bazhin/spred/commit/fc3f4a13e08a9259232516549ae44c8f2a4a6fef))
+
 ## [0.14.0](https://github.com/art-bazhin/spred/compare/v0.13.4...v0.14.0) (2021-12-27)
 
 
