@@ -26,7 +26,7 @@ const subscriber = function () {};
 
 const Cell = cellx.Cell;
 
-const signal = spred.signal;
+const writable = spred.writable;
 const memo = spred.memo;
 const batch = spred.batch;
 
@@ -120,10 +120,10 @@ function testSpred(layerCount, newValues) {
   const initTimestamp = performance.now();
 
   const start = {
-    prop1: signal(1),
-    prop2: signal(2),
-    prop3: signal(3),
-    prop4: signal(4),
+    prop1: writable(1),
+    prop2: writable(2),
+    prop3: writable(3),
+    prop4: writable(4),
   };
 
   let layer = start;
