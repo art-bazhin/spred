@@ -1,4 +1,4 @@
-import { Signal } from '../writable-type/writable-type';
+import { Signal } from '../signal-type/signal-type';
 import { store, Store } from './store';
 import { writable } from '../writable/writable';
 import { computed } from '../computed/computed';
@@ -62,7 +62,7 @@ describe('store', () => {
   });
 
   it('allows to set items', () => {
-    ringo.subscribe((person) => {
+    ringo.subscribe((person: any) => {
       ringoSurname = (person && person.surname) || null;
     });
 
@@ -110,29 +110,9 @@ describe('store', () => {
     expect(ringoSurname).toBe('4');
   });
 
-  // it('uses shouldUpdate option to check if the value needs to be updated', () => {
-  //   const testStore = store<{ id: string; num: number }>([], {
-  //     shouldUpdate: (value, prevValue) =>
-  //       (value && value.num) !== (prevValue && prevValue.num),
-  //   });
-
-  //   const writable = testStore.getSignal('1');
-  //   const subscriber = jest.fn();
-
-  //   writable.subscribe(subscriber, false);
-
-  //   testStore.set({ id: '1', num: 6 });
-  //   expect(subscriber).toBeCalledTimes(1);
-
-  //   testStore.set({ id: '1', num: 6 });
-  //   expect(subscriber).toBeCalledTimes(1);
-
-  //   testStore.set({ id: '1', num: 8 });
-  //   expect(subscriber).toBeCalledTimes(2);
-  // });
-
   it('does not cause redundant calculations', () => {
     const subscriber = jest.fn();
+    const id5Subscriber = jest.fn();
 
     const items = [
       {
@@ -166,6 +146,8 @@ describe('store', () => {
 
     $itemList.subscribe(subscriber, false);
 
+    itemStore.getSignal('5').subscribe(id5Subscriber, false);
+
     batch(() => {
       itemStore.set({
         id: '1',
@@ -192,6 +174,7 @@ describe('store', () => {
     });
 
     expect(subscriber).toBeCalledTimes(2);
+    expect(id5Subscriber).toBeCalledTimes(0);
   });
 
   describe('data property', () => {

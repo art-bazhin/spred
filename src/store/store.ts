@@ -117,7 +117,7 @@ function set<T>(this: _Store<T>, items: any) {
       if (signal) update(signal);
     }
 
-    update(this._data);
+    update(this.data);
     update(this._force);
   });
 }
@@ -138,7 +138,7 @@ function remove<T>(this: _Store<T>, ids: any) {
       if (signal) update(signal);
     }
 
-    update(this._data);
+    update(this.data);
   });
 }
 
