@@ -19,8 +19,6 @@ export function batch(fn: (...args: any) => any) {
   fn();
   batchLevel--;
 
-  if (calcLevel || batchLevel) return;
-
   recalc();
 }
 
@@ -39,8 +37,6 @@ export function update<T>(signal: Signal<T>, value?: T) {
 
   state.queueIndex = queueLength - fullQueueLength;
   queueLength = queue.push(state);
-
-  if (calcLevel || batchLevel) return;
 
   recalc();
 }
@@ -96,7 +92,7 @@ function emitUpdateLifecycle(state: State<any>, value: any) {
  * Immediately calculates the updated values of the signals and notifies their subscribers.
  */
 export function recalc() {
-  if (!queueLength) return;
+  if (!queueLength || calcLevel || batchLevel) return;
 
   const notificationQueue: State<any>[] = [];
 
