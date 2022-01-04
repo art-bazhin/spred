@@ -401,16 +401,16 @@ function testLib(testFn, layers, iterations, newValues) {
   let resultInit = null;
   let name;
 
+  const initArr = [];
+  const recalcArr = [];
+
   for (let i = 0; i < iterations; i++) {
     const report = testFn(layers, newValues);
     const recalcTime = report.recalcTime;
     const initTime = report.initTime;
 
-    if (recalcTime < minRecalc) minRecalc = recalcTime;
-    if (recalcTime > maxRecalc) maxRecalc = recalcTime;
-
-    if (initTime < minInit) minInit = initTime;
-    if (initTime > maxInit) maxInit = initTime;
+    initArr.push(initTime);
+    recalcArr.push(recalcTime);
 
     totalTimeRecalc += report.recalcTime;
     resultRecalc = report.afterChange;
@@ -421,20 +421,27 @@ function testLib(testFn, layers, iterations, newValues) {
     name = report.name;
   }
 
+  initArr.sort();
+  recalcArr.sort();
+
+  const middle = Math.floor(iterations / 2);
+
   return {
     init: {
       name,
       result: resultInit,
-      min: minInit,
-      max: maxInit,
+      min: initArr[0],
+      max: initArr[iterations - 1],
+      med: initArr[middle],
       avg: totalTimeInit / iterations,
     },
 
     recalc: {
       name,
       result: resultRecalc,
-      min: minRecalc,
-      max: maxRecalc,
+      min: recalcArr[0],
+      max: recalcArr[iterations - 1],
+      med: recalcArr[middle],
       avg: totalTimeRecalc / iterations,
     },
   };
@@ -450,6 +457,7 @@ function drawTables() {
       <tr>
         <th>Lib</th>
         <th>Avg</th>
+        <th>Med</th>
         <th>Min</th>
         <th>Max</th>
         <th>Values</th>
@@ -464,6 +472,7 @@ function drawTables() {
       <tr>
         <th>Lib</th>
         <th>Avg</th>
+        <th>Med</th>
         <th>Min</th>
         <th>Max</th>
         <th>Values</th>
@@ -478,6 +487,7 @@ function createTableRow(libReport) {
   row.innerHTML = `
     <td>${libReport.name}</td>
     <td>${formatTime(libReport.avg)}</td>
+    <td>${formatTime(libReport.med)}</td>
     <td>${formatTime(libReport.min)}</td>
     <td>${formatTime(libReport.max)}</td>
     <td>${libReport.result}</td>`;
