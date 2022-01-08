@@ -48,13 +48,12 @@ export function addSubscriber<T>(
 ) {
   const state = signal._state;
 
-  if (state.subscribers.indexOf(subscriber) > -1) return;
-
+  if (state.subscribers.has(subscriber)) return;
   const value = getStateValue(state, false);
 
   activateDependencies(state);
 
-  state.subscribers.push(subscriber);
+  state.subscribers.add(subscriber);
   state.activeCount++;
   if (exec) subscriber(value, state.prevValue, true);
 }
@@ -65,9 +64,7 @@ export function removeSubscriber<T>(
 ) {
   const state = signal._state;
 
-  if (removeFromArray(state.subscribers, subscriber)) {
-    state.activeCount--;
-  }
+  if (state.subscribers.delete(subscriber)) state.activeCount--;
 
   deactivateDependencies(state);
 }
@@ -207,7 +204,7 @@ function decreaseDirtyCount(state: State<any>) {
 }
 
 function runSubscribers<T>(state: State<T>) {
-  if (!state.subscribers.length) return;
+  if (!state.subscribers.size) return;
 
   if (state.lifecycle.notifyStart) {
     state.lifecycle.notifyStart.forEach((fn) => fn(state.value));

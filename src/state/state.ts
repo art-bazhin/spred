@@ -9,7 +9,7 @@ export interface State<T> {
   cachedValue?: T;
   hasException: boolean;
   exception?: unknown;
-  subscribers: Subscriber<T>[];
+  subscribers: Set<Subscriber<T>>;
   dependants: State<any>[];
   activeCount: number;
   computedFn?: (prevValue: T | undefined) => T;
@@ -35,15 +35,14 @@ export interface State<T> {
 
 export function createState<T>(
   value: T,
-  computedFn?: (curentValue: T | undefined) => T,
-  catchException?: ((e: unknown, cuurentValue?: T) => T) | null
+  computedFn?: (curentValue: T | undefined) => T
 ): State<T> {
   return {
     value,
     prevValue: undefined,
     computedFn,
     hasException: false,
-    subscribers: [],
+    subscribers: new Set(),
     dependants: [],
     dependencies: [],
     dependencyStatuses: [],

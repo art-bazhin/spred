@@ -57,7 +57,7 @@ export function writable(value?: any) {
     return f.set(value);
   };
 
-  f._state = createState(value, undefined, undefined);
+  f._state = createState(value, undefined);
 
   f.constructor = writable;
   f.set = signalSignalProto.set;

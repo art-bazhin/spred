@@ -145,12 +145,10 @@ function testSpred(layerCount, newValues) {
         }),
       };
 
-      if (!i) {
-        s.prop1.subscribe(subscriber);
-        s.prop2.subscribe(subscriber);
-        s.prop3.subscribe(subscriber);
-        s.prop4.subscribe(subscriber);
-      }
+      s.prop1.subscribe(subscriber);
+      s.prop2.subscribe(subscriber);
+      s.prop3.subscribe(subscriber);
+      s.prop4.subscribe(subscriber);
 
       return s;
     })(layer);
