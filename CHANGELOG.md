@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.14.2](https://github.com/art-bazhin/spred/compare/v0.14.1...v0.14.2) (2022-01-08)
+
+
+### Performance Improvements
+
+* use subscribers set instead of an arra ([e30182c](https://github.com/art-bazhin/spred/commit/e30182cd3844e473373e52112cee2d9196fa39a1))
+
+
+### Others
+
+* add med values in benchmark ([2c3eadf](https://github.com/art-bazhin/spred/commit/2c3eadf24d41496079bb2f30aa3afd5aff8dc799))
+
 ### [0.14.1](https://github.com/art-bazhin/spred/compare/v0.14.0...v0.14.1) (2021-12-28)
 
 
