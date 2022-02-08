@@ -30,6 +30,25 @@ const writable = spred.writable;
 const memo = spred.memo;
 const batch = spred.batch;
 
+window.testAct = (n) => {
+  const arr = [];
+
+  for (let i = 0; i < n; i++) {
+    arr.push(writable(0));
+  }
+
+  const res = memo(() => arr.map((v) => v()));
+
+  res.subscribe(() => {});
+  // res._state.xxx = 1;
+
+  const ts = performance.now();
+
+  arr[0](arr[0]() + 1);
+
+  return performance.now() - ts;
+};
+
 const resultDiv = document.getElementById('result');
 const runButton = document.getElementById('run');
 
