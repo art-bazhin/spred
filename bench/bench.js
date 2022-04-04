@@ -1,7 +1,7 @@
 import {
   atom,
   computed as computedNano,
-} from 'https://unpkg.com/nanostores@0.5.6/index.js';
+} from 'https://unpkg.com/nanostores@0.5.12/index.js';
 
 import {
   createStore,
@@ -14,7 +14,7 @@ import {
   createMemo as solidCreateMemo,
   createComputed as solidCreateComputed,
   batch as solidBatch,
-} from 'https://unpkg.com/solid-js@1.2.3/dist/solid.js';
+} from 'https://unpkg.com/solid-js@1.3.13/dist/solid.js';
 
 window.process = {
   env: {
