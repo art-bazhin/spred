@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.15.0](https://github.com/art-bazhin/spred/compare/v0.14.2...v0.15.0) (2022-04-04)
+
+
+### ⚠ BREAKING CHANGES
+
+* add create prefix to factory methods
+
+### Performance Improvements
+
+* improve dependency actualization ([da778d5](https://github.com/art-bazhin/spred/commit/da778d5e39d27dac78ad0937c4072089a98bf6cb))
+
+
+### Docs
+
+* update docs ([909f226](https://github.com/art-bazhin/spred/commit/909f2262173963422f0aa4d64ba681ae9a642b57))
+
+
+### Code Refactoring
+
+* rename API methods ([23d3dfd](https://github.com/art-bazhin/spred/commit/23d3dfd235e2e736889e6988e9a1054f55fb9cec))
+
+
+### Tests
+
+* update lib versions in benchmark ([eabcfa4](https://github.com/art-bazhin/spred/commit/eabcfa4bfa4cc693aa55eacfaf503cd485be7f67))
+
+
+### Build System
+
+* update dependencies ([5b9b3f8](https://github.com/art-bazhin/spred/commit/5b9b3f88545bdb2bbb22b048ff7e5b7feea5a42f))
+
 ### [0.14.2](https://github.com/art-bazhin/spred/compare/v0.14.1...v0.14.2) (2022-01-08)
 
 
