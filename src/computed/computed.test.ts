@@ -1,21 +1,21 @@
-import { computed } from './computed';
-import { writable } from '../writable/writable';
+import { createComputed } from './computed';
+import { createWritable } from '../writable/writable';
 
 describe('computed', () => {
-  const a = writable(1);
-  const b = writable(2);
-  const c = writable(3);
-  const d = writable(4);
+  const a = createWritable(1);
+  const b = createWritable(2);
+  const c = createWritable(3);
+  const d = createWritable(4);
 
-  const a1 = computed(() => b());
-  const b1 = computed(() => a() - c());
-  const c1 = computed(() => b() + d());
-  const d1 = computed(() => c());
+  const a1 = createComputed(() => b());
+  const b1 = createComputed(() => a() - c());
+  const c1 = createComputed(() => b() + d());
+  const d1 = createComputed(() => c());
 
-  const a2 = computed(() => b1());
-  const b2 = computed(() => a1() - c1());
-  const c2 = computed(() => b1() + d1());
-  const d2 = computed(() => c1());
+  const a2 = createComputed(() => b1());
+  const b2 = createComputed(() => a1() - c1());
+  const c2 = createComputed(() => b1() + d1());
+  const d2 = createComputed(() => c1());
 
   it('is calculates value properly after creation', () => {
     expect(a2()).toBe(-2);
@@ -42,11 +42,11 @@ describe('computed', () => {
   });
 
   it('filters undefined values', () => {
-    const counter = writable(0);
+    const counter = createWritable(0);
     let test: any;
     let unsub: any;
 
-    const x2Counter = computed(() => {
+    const x2Counter = createComputed(() => {
       const c = counter() * 2;
       if (c > 25) return c;
       return undefined;
@@ -95,10 +95,10 @@ describe('computed', () => {
   });
 
   it('can pass values to writable signals during computing', () => {
-    const counter = writable(0);
-    const stringCounter = writable('0');
+    const counter = createWritable(0);
+    const stringCounter = createWritable('0');
 
-    const x2Counter = computed(() => {
+    const x2Counter = createComputed(() => {
       stringCounter(counter() + '');
       return counter() * 2;
     });

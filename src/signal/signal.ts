@@ -1,23 +1,28 @@
 import { Signal } from '../signal-type/signal-type';
-import { computed } from '../computed/computed';
-import { writable } from '../writable/writable';
+import { createComputed } from '../computed/computed';
+import { createWritable } from '../writable/writable';
 
-export function signal(): [Signal<unknown>, () => void];
-export function signal<T>(): [Signal<T | undefined>, (payload: T) => void];
-export function signal<T>(initialValue: T): [Signal<T>, (payload: T) => void];
+export function createSignal(): [Signal<unknown>, () => void];
+export function createSignal<T>(): [
+  Signal<T | undefined>,
+  (payload: T) => void
+];
+export function createSignal<T>(
+  initialValue: T
+): [Signal<T>, (payload: T) => void];
 
 /**
  * Creates a tuple of signal and setter function
  * @param initialValue
  * @returns A tuple of signal and setter function
  */
-export function signal(initialValue?: any) {
-  const source = writable(initialValue);
+export function createSignal(initialValue?: any) {
+  const source = createWritable(initialValue);
 
   function set(payload: any) {
     if (payload === undefined) source({});
     else source(payload);
   }
 
-  return [computed(source), set];
+  return [createComputed(source), set];
 }

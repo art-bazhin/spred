@@ -16,7 +16,6 @@ export interface State<T> {
   dependencies: State<any>[];
   dependencyStatuses: number[];
   dependencyStatusesSum: number;
-  oldDependencies: State<any>[];
   dirtyCount: number;
   queueIndex: number;
   isComputing: boolean;
@@ -50,7 +49,6 @@ export function createState<T>(
     dependencies: [],
     dependencyStatuses: [],
     dependencyStatusesSum: 0,
-    oldDependencies: [],
     dirtyCount: 0,
     queueIndex: -1,
     activeCount: 0,

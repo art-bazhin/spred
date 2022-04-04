@@ -1,4 +1,4 @@
-import { writable, WritableSignal } from './writable/writable';
+import { createWritable, WritableSignal } from './writable/writable';
 import {
   onActivate,
   onDeactivate,
@@ -7,17 +7,17 @@ import {
   onUpdate,
   onException,
 } from './lifecycle/lifecycle';
-import { computed } from './computed/computed';
-import { memo } from './memo/memo';
-import { store, Store, StoreData, StoreOptions } from './store/store';
+import { createComputed } from './computed/computed';
+import { createMemo } from './memo/memo';
+import { createStore, Store, StoreData, StoreOptions } from './store/store';
 import { configure, Config } from './config/config';
 import { Signal } from './signal-type/signal-type';
 import { watch } from './watch/watch';
 import { batch } from './core/core';
-import { signal } from './signal/signal';
+import { createSignal } from './signal/signal';
 import { on } from './on/on';
 import {
-  effect,
+  createEffect,
   Effect,
   EffectStatus,
   EffectStatusObject,
@@ -36,12 +36,12 @@ export {
   StoreOptions,
   Config,
   Subscriber,
-  writable,
-  computed,
-  memo,
+  createWritable,
+  createComputed,
+  createMemo,
   watch,
   batch,
-  signal,
+  createSignal,
   on,
   onActivate,
   onDeactivate,
@@ -49,8 +49,8 @@ export {
   onNotifyEnd,
   onUpdate,
   onException,
-  effect,
-  store,
+  createEffect,
+  createStore,
   configure,
   isSignal,
   isWritableSignal,

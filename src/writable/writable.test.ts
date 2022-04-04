@@ -1,7 +1,7 @@
-import { writable } from './writable';
+import { createWritable } from './writable';
 
 describe('writable', () => {
-  const counter = writable(0);
+  const counter = createWritable(0);
 
   it('is created with default value', () => {
     expect(counter()).toBe(0);
@@ -23,7 +23,7 @@ describe('writable', () => {
   });
 
   it('force emits subscribers using notify method', () => {
-    const s = writable({} as any);
+    const s = createWritable({} as any);
 
     let value: any;
     const subscriber = jest.fn((v: any) => (value = v.a));

@@ -1,14 +1,14 @@
-import { computed } from '../computed/computed';
+import { createComputed } from '../computed/computed';
 import { State } from '../state/state';
 import { isSignal } from '../guards/guards';
 
-export function catcher<T>(
+export function createCatcher<T>(
   fn: (prevValue?: T) => T,
   catchException: (e: unknown, lastValue?: T) => T
 ) {
-  const src = isSignal(fn) ? fn : computed(fn);
+  const src = isSignal(fn) ? fn : createComputed(fn);
 
-  const comp = computed((prevValue: any) => {
+  const comp = createComputed((prevValue: any) => {
     const value = src();
     const state = (src as any)._state as State<T>;
 

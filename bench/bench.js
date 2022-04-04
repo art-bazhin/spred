@@ -10,9 +10,9 @@ import {
 } from 'https://unpkg.com/effector@22.1.2/effector.mjs';
 
 import {
-  createSignal,
-  createMemo,
-  createComputed,
+  createSignal as solidCreateSignal,
+  createMemo as solidCreateMemo,
+  createComputed as solidCreateComputed,
   batch as solidBatch,
 } from 'https://unpkg.com/solid-js@1.2.3/dist/solid.js';
 
@@ -26,18 +26,18 @@ const subscriber = function () {};
 
 const Cell = cellx.Cell;
 
-const writable = spred.writable;
-const memo = spred.memo;
+const createWritable = spred.createWritable;
+const createMemo = spred.createMemo;
 const batch = spred.batch;
 
 window.testAct = (n) => {
   const arr = [];
 
   for (let i = 0; i < n; i++) {
-    arr.push(writable(0));
+    arr.push(createWritable(0));
   }
 
-  const res = memo(() => arr.map((v) => v()));
+  const res = createMemo(() => arr.map((v) => v()));
 
   res.subscribe(() => {});
   // res._state.xxx = 1;
@@ -139,10 +139,10 @@ function testSpred(layerCount, newValues) {
   const initTimestamp = performance.now();
 
   const start = {
-    prop1: writable(1),
-    prop2: writable(2),
-    prop3: writable(3),
-    prop4: writable(4),
+    prop1: createWritable(1),
+    prop2: createWritable(2),
+    prop3: createWritable(3),
+    prop4: createWritable(4),
   };
 
   let layer = start;
@@ -150,16 +150,16 @@ function testSpred(layerCount, newValues) {
   for (let i = layerCount; i--; ) {
     layer = (function (m) {
       const s = {
-        prop1: memo(function () {
+        prop1: createMemo(function () {
           return m.prop2();
         }),
-        prop2: memo(function () {
+        prop2: createMemo(function () {
           return m.prop1() - m.prop3();
         }),
-        prop3: memo(function () {
+        prop3: createMemo(function () {
           return m.prop2() + m.prop4();
         }),
-        prop4: memo(function () {
+        prop4: createMemo(function () {
           return m.prop3();
         }),
       };
@@ -343,10 +343,10 @@ function testSolid(layerCount, newValues) {
   const initTimestamp = performance.now();
 
   const signals = {
-    prop1: createSignal(1),
-    prop2: createSignal(2),
-    prop3: createSignal(3),
-    prop4: createSignal(4),
+    prop1: solidCreateSignal(1),
+    prop2: solidCreateSignal(2),
+    prop3: solidCreateSignal(3),
+    prop4: solidCreateSignal(4),
   };
 
   const start = {
@@ -361,24 +361,24 @@ function testSolid(layerCount, newValues) {
   for (let i = layerCount; i--; ) {
     layer = (function (m) {
       const s = {
-        prop1: createMemo(function () {
+        prop1: solidCreateMemo(function () {
           return m.prop2();
         }),
-        prop2: createMemo(function () {
+        prop2: solidCreateMemo(function () {
           return m.prop1() - m.prop3();
         }),
-        prop3: createMemo(function () {
+        prop3: solidCreateMemo(function () {
           return m.prop2() + m.prop4();
         }),
-        prop4: createMemo(function () {
+        prop4: solidCreateMemo(function () {
           return m.prop3();
         }),
       };
 
-      createComputed(s.prop1);
-      createComputed(s.prop2);
-      createComputed(s.prop3);
-      createComputed(s.prop4);
+      solidCreateComputed(s.prop1);
+      solidCreateComputed(s.prop2);
+      solidCreateComputed(s.prop3);
+      solidCreateComputed(s.prop4);
 
       return s;
     })(layer);

@@ -1,4 +1,4 @@
-import { writable, computed, configure } from '../index';
+import { createWritable, createComputed, configure } from '..';
 import { watch } from './watch';
 
 describe('watch', () => {
@@ -6,8 +6,8 @@ describe('watch', () => {
     logException: () => {},
   });
 
-  const counter = writable(0);
-  const x2Counter = computed(() => {
+  const counter = createWritable(0);
+  const x2Counter = createComputed(() => {
     const res = counter() * 2;
 
     if (res > 4) throw new Error();

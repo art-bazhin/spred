@@ -8,7 +8,7 @@ import { isWritableSignal } from '../guards/guards';
  * @param computedFn The function that calculates signal value and returns it.
  * @returns Computed signal.
  */
-export function computed<T>(computedFn: (prevValue?: T) => T) {
+export function createComputed<T>(computedFn: (prevValue?: T) => T) {
   const f: any = function () {
     return f.get();
   };
@@ -17,7 +17,7 @@ export function computed<T>(computedFn: (prevValue?: T) => T) {
 
   f._state = createState(undefined as any, fn);
 
-  f.constructor = computed;
+  f.constructor = createComputed;
   f.get = signalProto.get;
   f.subscribe = signalProto.subscribe;
   f.sample = signalProto.sample;

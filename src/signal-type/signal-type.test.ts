@@ -1,15 +1,15 @@
-import { computed } from '../computed/computed';
-import { writable, WritableSignal } from '../writable/writable';
+import { createComputed } from '../computed/computed';
+import { createWritable, WritableSignal } from '../writable/writable';
 import { configure } from '../config/config';
 import { batch } from '../core/core';
-import { memo } from '..';
+import { createMemo } from '..';
 
 describe('signal', () => {
   configure({
     logException: () => {},
   });
 
-  const counter = writable(0);
+  const counter = createWritable(0);
   let unsub: () => any;
   let num: number;
   let prevNum: number;
@@ -64,7 +64,7 @@ describe('signal', () => {
   });
 
   it('correctly handles multiple unsubscribing', () => {
-    const x2Counter = computed(() => 2 * counter());
+    const x2Counter = createComputed(() => 2 * counter());
     const x2Unsub = x2Counter.subscribe(() => {});
 
     expect(x2Counter()).toBe(4);
@@ -77,9 +77,9 @@ describe('signal', () => {
   });
 
   it('does not track dependencies inside subscriber function', () => {
-    const counter = writable(0);
-    const gt5 = memo(() => counter() > 5);
-    const res = memo(() => {
+    const counter = createWritable(0);
+    const gt5 = createMemo(() => counter() > 5);
+    const res = createMemo(() => {
       if (gt5()) {
         const obj: any = {};
 
@@ -122,11 +122,11 @@ describe('signal', () => {
      *            └─────┘
      */
 
-    const a = writable(0);
-    const b = computed(() => a() * 2);
-    const c = computed(() => a() * 2);
-    const d = computed(() => c() * 2);
-    const e = computed(() => b() + d());
+    const a = createWritable(0);
+    const b = createComputed(() => a() * 2);
+    const c = createComputed(() => a() * 2);
+    const d = createComputed(() => c() * 2);
+    const e = createComputed(() => b() + d());
 
     const subscriber = jest.fn();
 
@@ -139,10 +139,10 @@ describe('signal', () => {
   });
 
   it('dynamically updates dependencies', () => {
-    const counter = writable(0);
-    const tumbler = writable(false);
-    const x2Counter = computed(() => counter() * 2);
-    const result = computed(() => (tumbler() ? x2Counter() : 'FALSE'));
+    const counter = createWritable(0);
+    const tumbler = createWritable(false);
+    const x2Counter = createComputed(() => counter() * 2);
+    const result = createComputed(() => (tumbler() ? x2Counter() : 'FALSE'));
 
     const subscriber = jest.fn();
 
@@ -173,11 +173,13 @@ describe('signal', () => {
   });
 
   it('passes exceptions down to dependants', () => {
-    const obj: WritableSignal<{ a: number } | null> = writable({ a: 1 });
-    const num = writable(1);
-    const objNum = computed(() => (obj() as any).a as number);
-    const sum = computed(() => num() + objNum());
-    const x2Sum = computed(() => sum() * 2);
+    const obj: WritableSignal<{ a: number } | null> = createWritable({
+      a: 1,
+    } as any);
+    const num = createWritable(1);
+    const objNum = createComputed(() => (obj() as any).a as number);
+    const sum = createComputed(() => num() + objNum());
+    const x2Sum = createComputed(() => sum() * 2);
 
     const subscriber = jest.fn();
 
@@ -235,10 +237,10 @@ describe('signal', () => {
   it('continues to trigger dependants after error eliminated', () => {
     let str = '';
 
-    const tumbler = writable(false);
-    const counter = writable(0);
+    const tumbler = createWritable(false);
+    const counter = createWritable(0);
 
-    const x2Counter = computed(() => {
+    const x2Counter = createComputed(() => {
       const res = counter() * 2;
 
       if (res > 5) throw new Error();
@@ -246,9 +248,9 @@ describe('signal', () => {
       return res;
     });
 
-    const x4Counter = computed(() => x2Counter() * 2);
+    const x4Counter = createComputed(() => x2Counter() * 2);
 
-    const text = computed(() => {
+    const text = createComputed(() => {
       let res = 'OFF';
       if (tumbler()) res = `ON (${x4Counter()})`;
 
@@ -272,14 +274,14 @@ describe('signal', () => {
   });
 
   it('returns previous value if an exception occured', () => {
-    const counter = writable(0);
+    const counter = createWritable(0);
 
-    const x2Counter = computed(() => {
+    const x2Counter = createComputed(() => {
       if (counter() > 5) throw new Error();
       return counter() * 2;
     });
 
-    const x4Counter = computed(() => x2Counter() * 2);
+    const x4Counter = createComputed(() => x2Counter() * 2);
 
     expect(x4Counter()).toBe(0);
 
@@ -290,14 +292,14 @@ describe('signal', () => {
   it('does not run subscribers if an exception occured', () => {
     const subscriber = jest.fn();
 
-    const counter = writable(0);
+    const counter = createWritable(0);
 
-    const x2Counter = computed(() => {
+    const x2Counter = createComputed(() => {
       if (counter() > 5) throw new Error();
       return counter() * 2;
     });
 
-    const x4Counter = computed(() => x2Counter() * 2);
+    const x4Counter = createComputed(() => x2Counter() * 2);
 
     x4Counter.subscribe(subscriber, false);
 
@@ -313,9 +315,9 @@ describe('signal', () => {
   it('prevents circular dependencies', () => {
     let counter = 0;
 
-    const a = writable(0);
+    const a = createWritable(0);
 
-    const b: any = computed(() => {
+    const b: any = createComputed(() => {
       if (!a()) return 0;
 
       const res = c();
@@ -324,7 +326,7 @@ describe('signal', () => {
       return res;
     });
 
-    const c = computed(() => {
+    const c = createComputed(() => {
       return b();
     });
 
@@ -346,8 +348,8 @@ describe('signal', () => {
   });
 
   it('can update writables in subscribers', () => {
-    const counter = writable(0);
-    const x2Counter = writable(0);
+    const counter = createWritable(0);
+    const x2Counter = createWritable(0);
 
     counter.subscribe((value) => x2Counter(value * 2));
 
@@ -357,8 +359,8 @@ describe('signal', () => {
   });
 
   it('can use actual writable state in subscribers', () => {
-    const counter = writable(0);
-    const x2Counter = computed(() => counter() * 2);
+    const counter = createWritable(0);
+    const x2Counter = createComputed(() => counter() * 2);
 
     x2Counter.subscribe(() => {});
 
@@ -371,7 +373,7 @@ describe('signal', () => {
 
   it('batches updates using batch function', () => {
     const subscriber = jest.fn();
-    const counter = writable(0);
+    const counter = createWritable(0);
 
     counter.subscribe(subscriber, false);
 
