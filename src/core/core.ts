@@ -246,16 +246,28 @@ export function getStateValue<T>(state: State<T>, trackDeps = true): T {
       currentComputed.hasException = true;
     }
 
-    let i = currentComputed.dependencies.indexOf(state);
     let status = 1;
+    let i: number;
+
+    if (
+      state.currentComputed === currentComputed &&
+      state.currentComputedIndex !== undefined &&
+      currentComputed.dependencies[state.currentComputedIndex!] === state
+    ) {
+      i = state.currentComputedIndex;
+    } else {
+      i = -1;
+    }
 
     if (i < 0) {
       i = currentComputed.dependencies.push(state) - 1;
       status = -1;
     }
 
-    currentComputed.dependencyStatuses[i] = status;
-    currentComputed.dependencyStatusesSum += status;
+    if (!currentComputed.dependencyStatuses[i]) {
+      currentComputed.dependencyStatuses[i] = status;
+      currentComputed.dependencyStatusesSum += status;
+    }
   }
 
   return state.value;

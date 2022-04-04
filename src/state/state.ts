@@ -31,6 +31,9 @@ export interface State<T> {
     notifyEnd?: ((value: T) => any)[];
     exception?: ((e: unknown) => any)[];
   };
+
+  currentComputed?: State<any>;
+  currentComputedIndex?: number;
 }
 
 export function createState<T>(
