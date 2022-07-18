@@ -18,7 +18,12 @@ export default [
           strict: true,
         },
       }),
-      terser(),
+      terser({
+        compress: {
+          reduce_vars: false,
+          reduce_funcs: false,
+        },
+      }),
     ],
   },
 

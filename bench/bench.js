@@ -16,6 +16,8 @@ import {
   batch as solidBatch,
 } from 'https://unpkg.com/solid-js@1.3.13/dist/solid.js';
 
+import { createMemo, createWritable, batch } from '/dist/index.mjs';
+
 window.process = {
   env: {
     NODE_ENV: 'production',
@@ -25,10 +27,6 @@ window.process = {
 const subscriber = function () {};
 
 const Cell = cellx.Cell;
-
-const createWritable = spred.createWritable;
-const createMemo = spred.createMemo;
-const batch = spred.batch;
 
 window.testAct = (n) => {
   const arr = [];
