@@ -14,15 +14,15 @@ Simple and fast JavaScript reactive programming library.
 ## Example
 
 ```ts
-import { signal, computed, watch, batch } from 'spred';
+import { createSignal, createComputed, watch, batch } from 'spred';
 
 const formatter = new Intl.DateTimeFormat('en-GB');
 
-const [name, setName] = signal('Paul');
-const [instrument, setInstrument] = signal('bass');
-const [birthday, setBirthday] = signal('1942-06-18');
+const [name, setName] = createSignal('Paul');
+const [instrument, setInstrument] = createSignal('bass');
+const [birthday, setBirthday] = createSignal('1942-06-18');
 
-const formattedBirthday = computed(() =>
+const formattedBirthday = createComputed(() =>
   formatter.format(new Date(birthday()))
 );
 
@@ -55,12 +55,12 @@ npm install spred --save
 
 ### Writable Signals
 
-[Writable signals](https://art-bazhin.github.io/spred/interfaces/WritableSignal.html) are created with a [writable](https://art-bazhin.github.io/spred/modules.html#writable) function that takes the initial value of the signal.
+[Writable signals](https://art-bazhin.github.io/spred/interfaces/WritableSignal.html) are created with a [createWritable](https://art-bazhin.github.io/spred/modules.html#createWritable) function that takes the initial value of the signal.
 
 ```ts
-import { writable } from 'spred';
+import { createWritable } from 'spred';
 
-const counter = writable(0);
+const counter = createWritable(0);
 ```
 
 To get the value of the signal, you need to call it without arguments.
@@ -99,13 +99,13 @@ counter(2);
 ### Computed Signals
 
 Computed signals automatically track their dependencies and recalculate their value when any of the dependencies changes.
-A computed signal can be created using the [computed](https://art-bazhin.github.io/spred/modules.html#computed) function. It takes as its argument a function that calculates the value of the signal and depends only on other signal values.
+A computed signal can be created using the [createComputed](https://art-bazhin.github.io/spred/modules.html#createComputed) function. It takes as its argument a function that calculates the value of the signal and depends only on other signal values.
 
 ```ts
-import { writable, computed } from 'spred';
+import { createWritable, createComputed } from 'spred';
 
-const counter = writable(0);
-const doubleCounter = computed(() => counter() * 2);
+const counter = createWritable(0);
+const doubleCounter = createComputed(() => counter() * 2);
 
 doubleCounter.subscribe((value) => console.log('Double value is ' + value));
 
@@ -114,6 +114,24 @@ doubleCounter.subscribe((value) => console.log('Double value is ' + value));
 counter(1);
 
 // > Double value is 2
+```
+
+### Signal Creation
+
+If you need to create a readonly signal and a separate setter at once, you can use the [createSignal](https://art-bazhin.github.io/spred/modules.html#createSignal) function.
+
+```ts
+import { createSignal } from 'spred';
+
+const [counter, setCounter] = createSignal(0);
+
+counter.subscribe((value) => console.log('The value is ' + value));
+
+// > The value is 0
+
+setCounter(1);
+
+// > The value is 2
 ```
 
 ## TODO
