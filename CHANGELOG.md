@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.15.1](https://github.com/art-bazhin/spred/compare/v0.15.0...v0.15.1) (2022-07-18)
+
+
+### Build System
+
+* update terser config ([eaa98ef](https://github.com/art-bazhin/spred/commit/eaa98ef5534a9ed6d25ce18bcea0c397af906421))
+
+
+### Docs
+
+* update docs ([85d48d3](https://github.com/art-bazhin/spred/commit/85d48d380c047629cb90b5cc5095fae2a258663e))
+* update readme ([dc14092](https://github.com/art-bazhin/spred/commit/dc14092bde3a85522b29ba1a856bab301206b914))
+
 ## [0.15.0](https://github.com/art-bazhin/spred/compare/v0.14.2...v0.15.0) (2022-04-04)
 
 
