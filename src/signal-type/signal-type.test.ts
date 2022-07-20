@@ -170,6 +170,18 @@ describe('signal', () => {
     counter(4);
     expect(result()).toBe('FALSE');
     expect(subscriber).toBeCalledTimes(2);
+
+    tumbler(true);
+    expect(result()).toBe(8);
+    expect(subscriber).toBeCalledTimes(3);
+
+    counter(5);
+    expect(result()).toBe(10);
+    expect(subscriber).toBeCalledTimes(4);
+
+    counter(6);
+    expect(result()).toBe(12);
+    expect(subscriber).toBeCalledTimes(5);
   });
 
   it('passes exceptions down to dependants', () => {
