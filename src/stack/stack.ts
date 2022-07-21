@@ -43,11 +43,6 @@ export function push(state: State<any>) {
 
   current.isCached = FALSE;
 
-  current.dependencies.forEach((dep, i) => {
-    dep.currentComputed = current;
-    dep.currentComputedIndex = i;
-  });
-
   return current;
 }
 
@@ -61,13 +56,6 @@ export function pop() {
   }
 
   current = states.pop();
-
-  if (current) {
-    current.dependencies.forEach((dep, i) => {
-      dep.currentComputed = current;
-      dep.currentComputedIndex = i;
-    });
-  }
 
   return current;
 }
