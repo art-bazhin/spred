@@ -184,6 +184,23 @@ describe('signal', () => {
     expect(subscriber).toBeCalledTimes(5);
   });
 
+  it('dynamically updates dependencies (case 2))', () => {
+    const count = createWritable(0);
+    const x2Count = createComputed(() => count() * 2);
+    const sum = createComputed(() => count() + x2Count());
+
+    const subSum = jest.fn();
+    const subX2Xount = jest.fn();
+
+    sum.subscribe(subSum);
+    x2Count.subscribe(subX2Xount);
+
+    expect(subX2Xount).toBeCalledTimes(1);
+
+    count(1);
+    expect(subX2Xount).toBeCalledTimes(2);
+  });
+
   it('passes exceptions down to dependants', () => {
     const obj: WritableSignal<{ a: number } | null> = createWritable({
       a: 1,
