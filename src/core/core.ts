@@ -63,9 +63,10 @@ export function removeSubscriber<T>(
 ) {
   const state = signal._state;
 
-  if (state.subscribers.delete(subscriber)) state.activeCount--;
-
-  deactivateDependencies(state);
+  if (state.subscribers.delete(subscriber)) {
+    state.activeCount--;
+    deactivateDependencies(state);
+  }
 }
 
 function resetStateQueueParams(state: State<any>) {
