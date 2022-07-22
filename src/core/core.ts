@@ -245,13 +245,11 @@ export function getStateValue<T>(state: State<T>, trackDeps = true): T {
       currentComputed.hasException = true;
     }
 
-    const isNewDep = !currentComputed.dependencies.has(state);
+    const isNewDep = !currentComputed.dependencies.delete(state);
 
     currentComputed.newDeps.add(state);
 
     if (isNewDep) {
-      currentComputed.dependencies.add(state);
-
       if (currentComputed.activeCount) {
         activateDependencies(state);
 
@@ -334,18 +332,17 @@ function deactivateDependencies<T>(state: State<T>) {
 function removeObsoleteDependencies(state: State<any>) {
   if (state.activeCount) {
     for (let dependency of state.dependencies) {
-      if (!state.newDeps.has(dependency)) {
-        state.dependencies.delete(dependency);
-        dependency.activeCount--;
-        dependency.dependants.delete(state);
-        deactivateDependencies(dependency);
-      }
+      state.dependencies.delete(dependency);
+      dependency.activeCount--;
+      dependency.dependants.delete(state);
+      deactivateDependencies(dependency);
     }
   } else {
-    const temp = state.dependencies;
-    state.dependencies = state.newDeps;
-    state.newDeps = temp;
+    state.dependencies.clear();
   }
 
-  state.newDeps.clear();
+  const temp = state.dependencies;
+
+  state.dependencies = state.newDeps;
+  state.newDeps = temp;
 }
