@@ -1,13 +1,11 @@
 import { _Signal, Signal } from '../signal-type/signal-type';
 import { State } from '../state/state';
 import { Subscriber } from '../subscriber/subscriber';
-import { removeFromArray } from '../utils/removeFromArray';
 import { push, pop } from '../stack/stack';
 import { config } from '../config/config';
 import { CircularDependencyError } from '../errors/errors';
 
 let currentComputed = pop();
-let level = 0;
 let batchLevel = 0;
 let calcLevel = 0;
 
@@ -247,15 +245,19 @@ export function getStateValue<T>(state: State<T>, trackDeps = true): T {
       currentComputed.hasException = true;
     }
 
-    if (state.levels[level]) return state.value;
+    const isNewDep = !currentComputed.dependencies.has(state);
 
-    const index = ++currentComputed.depIndex;
-    state.levels[level] = -1 as any;
+    currentComputed.newDeps.add(state);
 
-    if (currentComputed.dependencies[index] === state) {
-      state.levels[level] = 1;
-    } else {
-      currentComputed.dependencies.push(state);
+    if (isNewDep) {
+      currentComputed.dependencies.add(state);
+
+      if (currentComputed.activeCount) {
+        activateDependencies(state);
+
+        state.dependants.add(currentComputed);
+        state.activeCount++;
+      }
     }
   }
 
@@ -268,11 +270,6 @@ function calcComputed<T>(state: State<T>) {
   let value = undefined;
 
   currentComputed = push(state);
-  currentComputed.dependencyStatuses = [];
-  currentComputed.dependencyStatusesSum = 0;
-  currentComputed.depIndex = -1;
-
-  ++level;
 
   try {
     value = state.computedFn!(state.value);
@@ -281,13 +278,9 @@ function calcComputed<T>(state: State<T>) {
     state.hasException = true;
   }
 
-  // actNew(state);
-
-  actualizeDependencies(state);
+  removeObsoleteDependencies(state);
 
   currentComputed = pop();
-
-  --level;
 
   if (state.hasException) {
     value = undefined;
@@ -338,94 +331,21 @@ function deactivateDependencies<T>(state: State<T>) {
   }
 }
 
-function actNew(state: State<any>) {
-  const newDependencies = [];
-  const shouldUpdate = state.activeCount;
-
-  for (let dependency of state.dependencies) {
-    const opt = dependency.levels[level] || 0;
-
-    if (shouldUpdate) {
-      switch (opt) {
-        case 1:
-          newDependencies.push(dependency);
-          break;
-        case 0:
-          dependency.activeCount--;
-          dependency.dependants.delete(state);
-          deactivateDependencies(dependency);
-          break;
-        case -1:
-          newDependencies.push(dependency);
-
-          activateDependencies(dependency);
-
-          if (dependency.dependants.has(state)) console.log('FAIL');
-
-          dependency.dependants.add(state);
-          dependency.activeCount++;
-          break;
-      }
-    }
-
-    delete dependency.levels[level];
-  }
-
-  state.dependencies = newDependencies;
-
-  return;
-}
-
-function actualizeDependencies(state: State<any>) {
-  // if (!state.activeCount) {
-  //   for (let dependency of state.dependencies) {
-  //     delete dependency.levels[level];
-  //   }
-  //   return;
-  // }
-
-  const newDependencies: State<any>[] = [];
-
-  state.dependencies.forEach((dependency) => {
-    const opt = dependency.levels[level] || 0;
-
-    switch (opt) {
-      case 1:
-        newDependencies.push(state);
-        break;
-      case 0:
+function removeObsoleteDependencies(state: State<any>) {
+  if (state.activeCount) {
+    for (let dependency of state.dependencies) {
+      if (!state.newDeps.has(dependency)) {
+        state.dependencies.delete(dependency);
         dependency.activeCount--;
         dependency.dependants.delete(state);
         deactivateDependencies(dependency);
-        break;
-      case -1:
-        newDependencies.push(state);
-        activateDependencies(dependency);
-
-        if (dependency.dependants.has(state)) console.log('FAIL');
-
-        dependency.dependants.add(state);
-        dependency.activeCount++;
-        break;
+      }
     }
-
-    // delete dependency.levels[level];
-  });
-
-  state.dependencies = state.dependencies.filter(
-    (dependency) => dependency.levels[level]
-  );
-
-  for (let dependency of state.dependencies) {
-    delete dependency.levels[level];
+  } else {
+    const temp = state.dependencies;
+    state.dependencies = state.newDeps;
+    state.newDeps = temp;
   }
 
-  // state.dependencies = newDependencies;
-
-  // state.dependencies.forEach((d, i) => {
-  //   if (d !== newDependencies[i]) console.log('___');
-  // });
-
-  if (state.dependencies.length !== newDependencies.length)
-    console.log('WRONG LENGTH');
+  state.newDeps.clear();
 }

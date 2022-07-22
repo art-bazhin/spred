@@ -184,7 +184,7 @@ describe('signal', () => {
     expect(subscriber).toBeCalledTimes(5);
   });
 
-  it('dynamically updates dependencies (case 2))', () => {
+  it('dynamically updates dependencies (case 2)', () => {
     const count = createWritable(0);
     const x2Count = createComputed(() => count() * 2);
     const sum = createComputed(() => count() + x2Count());
@@ -199,6 +199,29 @@ describe('signal', () => {
 
     count(1);
     expect(subX2Xount).toBeCalledTimes(2);
+  });
+
+  it('dynamically updates dependencies (case 3)', () => {
+    const tumbler = createWritable(true);
+    const a = createWritable('a');
+    const b = createWritable('b');
+
+    const sum = createMemo(() => {
+      if (tumbler()) return a() + b();
+      return b() + a();
+    });
+
+    const subSum = jest.fn();
+
+    sum.subscribe(subSum);
+
+    expect(subSum).toBeCalledTimes(1);
+
+    tumbler(false);
+    expect(subSum).toBeCalledTimes(2);
+
+    tumbler(true);
+    expect(subSum).toBeCalledTimes(3);
   });
 
   it('passes exceptions down to dependants', () => {

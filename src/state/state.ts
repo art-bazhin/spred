@@ -13,9 +13,8 @@ export interface State<T> {
   dependants: Set<State<any>>;
   activeCount: number;
   computedFn?: (prevValue: T | undefined) => T;
-  dependencies: State<any>[];
-  dependencyStatuses: number[];
-  dependencyStatusesSum: number;
+  dependencies: Set<State<any>>;
+  newDeps: Set<State<any>>;
   dirtyCount: number;
   queueIndex: number;
   isComputing: boolean;
@@ -30,15 +29,6 @@ export interface State<T> {
     notifyEnd?: ((value: T) => any)[];
     exception?: ((e: unknown) => any)[];
   };
-
-  depIndex: number;
-  isTracked: boolean;
-
-  isDirty: boolean;
-
-  levels: {
-    [level: number]: number;
-  };
 }
 
 export function createState<T>(
@@ -52,9 +42,8 @@ export function createState<T>(
     hasException: false,
     subscribers: new Set(),
     dependants: new Set(),
-    dependencies: [],
-    dependencyStatuses: [],
-    dependencyStatusesSum: 0,
+    dependencies: new Set(),
+    newDeps: new Set(),
     dirtyCount: 0,
     queueIndex: -1,
     activeCount: 0,
@@ -62,9 +51,5 @@ export function createState<T>(
     hasCycle: false,
     isCached: FALSE,
     lifecycle: {},
-    depIndex: -1,
-    isTracked: false,
-    levels: {},
-    isDirty: false,
   };
 }
