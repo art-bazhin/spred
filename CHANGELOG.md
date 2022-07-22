@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.15.2](https://github.com/art-bazhin/spred/compare/v0.15.1...v0.15.2) (2022-07-22)
+
+
+### Bug Fixes
+
+* fix redundant deps deactivation ([5661be8](https://github.com/art-bazhin/spred/commit/5661be860f34d8d11e9754cd3625769b5c099f65))
+* remove console log ([d875600](https://github.com/art-bazhin/spred/commit/d875600a2178cdd468f8c242eaa27912cf0a2b41))
+
+
+### Performance Improvements
+
+* improve deps actualization wip ([ad6886b](https://github.com/art-bazhin/spred/commit/ad6886b679714f5f7c6ad930f4959d0f0f1e23a1))
+
+
+### Tests
+
+* add missing test case ([2153ff2](https://github.com/art-bazhin/spred/commit/2153ff27fb145b44a026383a14c8aa3afe38e5d9))
+* add missing test cases ([fa17bb8](https://github.com/art-bazhin/spred/commit/fa17bb80a050aae879fa20c9d0c600225fab2fe0))
+* add unsub perf benchmark ([19f3c47](https://github.com/art-bazhin/spred/commit/19f3c47bb6091c0928bdc9c61a6345dbdae2df54))
+
+
+### Code Refactoring
+
+* refactor depedndencies removal ([6e12f3a](https://github.com/art-bazhin/spred/commit/6e12f3a562e46120f7f4792c6a94476a6f5739c3))
+* rewrite dependencies with sets ([114997f](https://github.com/art-bazhin/spred/commit/114997f48e7c3e70b27201f464ad4ff512d0c3d8))
+
 ### [0.15.1](https://github.com/art-bazhin/spred/compare/v0.15.0...v0.15.1) (2022-07-18)
 
 
