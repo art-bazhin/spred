@@ -307,9 +307,6 @@ function activateDependencies<T>(state: State<T>) {
 
   for (let dependency of state.dependencies) {
     activateDependencies(dependency);
-
-    if (dependency.dependants.has(state)) console.log('FAIL');
-
     dependency.dependants.add(state);
     dependency.activeCount++;
   }
