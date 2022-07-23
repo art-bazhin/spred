@@ -2,7 +2,7 @@ import { Signal, signalProto, _Signal } from '../signal-type/signal-type';
 import { update } from '../core/core';
 import { createState } from '../state/state';
 
-const signalSignalProto = {
+const writableSignalProto = {
   ...signalProto,
 
   set(this: _Signal<any>, value: any) {
@@ -60,11 +60,11 @@ export function createWritable(value?: any) {
   f._state = createState(value, undefined);
 
   f.constructor = createWritable;
-  f.set = signalSignalProto.set;
-  f.get = signalSignalProto.get;
-  f.notify = signalSignalProto.notify;
-  f.subscribe = signalSignalProto.subscribe;
-  f.sample = signalSignalProto.sample;
+  f.set = writableSignalProto.set;
+  f.get = writableSignalProto.get;
+  f.notify = writableSignalProto.notify;
+  f.subscribe = writableSignalProto.subscribe;
+  f.sample = writableSignalProto.sample;
 
   return f;
 }
