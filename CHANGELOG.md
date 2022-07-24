@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.16.0](https://github.com/art-bazhin/spred/compare/v0.15.3...v0.16.0) (2022-07-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* subscribers will not recieve previous value as second argument
+
+### Features
+
+* remove previous value from state ([03529f9](https://github.com/art-bazhin/spred/commit/03529f9e0b2ccb44934c13b5f90c9b8723a905eb))
+
+
+### Code Refactoring
+
+* change lifecycle methods placement ([d3e6904](https://github.com/art-bazhin/spred/commit/d3e69043713ace0889dc551207da45c5b3ff0255))
+
 ### [0.15.3](https://github.com/art-bazhin/spred/compare/v0.15.2...v0.15.3) (2022-07-24)
 
 
