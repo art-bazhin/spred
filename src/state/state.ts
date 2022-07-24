@@ -21,14 +21,14 @@ export interface State<T> {
   isCached: { status?: boolean };
   isCatcher?: boolean;
   hasCycle?: boolean;
-  lifecycle: {
-    activate?: ((value: T) => any)[];
-    deactivate?: ((value: T) => any)[];
-    update?: ((change: { value: T; prevValue: T | undefined }) => any)[];
-    notifyStart?: ((value: T) => any)[];
-    notifyEnd?: ((value: T) => any)[];
-    exception?: ((e: unknown) => any)[];
-  };
+
+  // lifecycle:
+  onActivate?: ((value: T) => any)[];
+  onDeactivate?: ((value: T) => any)[];
+  onUpdate?: ((change: { value: T; prevValue: T | undefined }) => any)[];
+  onNotifyStart?: ((value: T) => any)[];
+  onNotifyEnd?: ((value: T) => any)[];
+  onException?: ((e: unknown) => any)[];
 }
 
 export function createState<T>(
@@ -46,6 +46,5 @@ export function createState<T>(
     queueIndex: -1,
     activeCount: 0,
     isCached: FALSE_STATUS,
-    lifecycle: {},
   };
 }

@@ -3,16 +3,16 @@ import { removeFromArray } from '../utils/removeFromArray';
 
 function addListener<T>(
   signal: Signal<any>,
-  lifecycleName: string,
+  lifecycleKey: string,
   listener: (value: T) => any
 ) {
-  const lifecycleMethods = (signal as any)._state.lifecycle;
+  const state = (signal as any)._state;
 
-  if (!lifecycleMethods[lifecycleName]) {
-    lifecycleMethods[lifecycleName] = [];
+  if (!state[lifecycleKey]) {
+    state[lifecycleKey] = [];
   }
 
-  const arr = lifecycleMethods[lifecycleName];
+  const arr = state[lifecycleKey];
 
   if (arr.indexOf(listener) > -1) return;
   arr.push(listener);
@@ -27,7 +27,7 @@ function addListener<T>(
  * @returns Unsubscribe function.
  */
 export function onActivate<T>(signal: Signal<T>, listener: (value: T) => any) {
-  return addListener<T>(signal, 'activate', listener);
+  return addListener<T>(signal, 'onActivate', listener);
 }
 
 /**
@@ -40,7 +40,7 @@ export function onDeactivate<T>(
   signal: Signal<T>,
   listener: (value: T) => any
 ) {
-  return addListener<T>(signal, 'deactivate', listener);
+  return addListener<T>(signal, 'onDeactivate', listener);
 }
 
 /**
@@ -53,7 +53,7 @@ export function onUpdate<T>(
   signal: Signal<T>,
   listener: (change: { value: T; prevValue: T }) => any
 ) {
-  return addListener<{ value: T; prevValue: T }>(signal, 'update', listener);
+  return addListener<{ value: T; prevValue: T }>(signal, 'onUpdate', listener);
 }
 
 /**
@@ -66,7 +66,7 @@ export function onException<T>(
   signal: Signal<T>,
   listener: (e: unknown) => any
 ) {
-  return addListener<T>(signal, 'exception', listener);
+  return addListener<T>(signal, 'onException', listener);
 }
 
 /**
@@ -79,7 +79,7 @@ export function onNotifyStart<T>(
   signal: Signal<T>,
   listener: (value: T) => any
 ) {
-  return addListener<T>(signal, 'notifyStart', listener);
+  return addListener<T>(signal, 'onNotifyStart', listener);
 }
 
 /**
@@ -89,5 +89,5 @@ export function onNotifyStart<T>(
  * @returns Unsubscribe function.
  */
 export function onNotifyEnd<T>(signal: Signal<T>, listener: (value: T) => any) {
-  return addListener<T>(signal, 'notifyEnd', listener);
+  return addListener<T>(signal, 'onNotifyEnd', listener);
 }

@@ -74,9 +74,9 @@ function resetStateQueueParams(state: State<any>) {
 }
 
 function emitUpdateLifecycle(state: State<any>, value: any) {
-  if (!state.lifecycle.update) return;
+  if (!state.onUpdate) return;
 
-  state.lifecycle.update.forEach((fn) =>
+  state.onUpdate.forEach((fn) =>
     fn({
       value: value,
       prevValue: state.value,
@@ -138,8 +138,8 @@ export function recalc() {
     if (state.hasException) {
       state.dirtyCount = 0;
 
-      if (state.lifecycle.exception) {
-        state.lifecycle.exception.forEach((fn) => fn(state.exception));
+      if (state.onException) {
+        state.onException.forEach((fn) => fn(state.exception));
       }
 
       if (!state.dependants.size) {
@@ -205,16 +205,16 @@ function decreaseDirtyCount(state: State<any>) {
 function runSubscribers<T>(state: State<T>) {
   if (!state.subscribers.size) return;
 
-  if (state.lifecycle.notifyStart) {
-    state.lifecycle.notifyStart.forEach((fn) => fn(state.value));
+  if (state.onNotifyStart) {
+    state.onNotifyStart.forEach((fn) => fn(state.value));
   }
 
   for (let subscriber of state.subscribers) {
     subscriber(state.value, state.prevValue);
   }
 
-  if (state.lifecycle.notifyEnd) {
-    state.lifecycle.notifyEnd.forEach((fn) => fn(state.value));
+  if (state.onNotifyEnd) {
+    state.onNotifyEnd.forEach((fn) => fn(state.value));
   }
 }
 
@@ -283,8 +283,8 @@ function calcComputed<T>(state: State<T>) {
   if (state.hasException) {
     value = undefined;
 
-    if (state.lifecycle.exception) {
-      state.lifecycle.exception.forEach((fn) => fn(state.exception));
+    if (state.onException) {
+      state.onException.forEach((fn) => fn(state.exception));
     }
 
     if (
@@ -301,8 +301,8 @@ function calcComputed<T>(state: State<T>) {
 function activateDependencies<T>(state: State<T>) {
   if (state.activeCount) return;
 
-  if (state.lifecycle.activate) {
-    state.lifecycle.activate.forEach((fn) => fn(state.value));
+  if (state.onActivate) {
+    state.onActivate.forEach((fn) => fn(state.value));
   }
 
   for (let dependency of state.dependencies) {
@@ -315,8 +315,8 @@ function activateDependencies<T>(state: State<T>) {
 function deactivateDependencies<T>(state: State<T>) {
   if (state.activeCount) return;
 
-  if (state.lifecycle.deactivate) {
-    state.lifecycle.deactivate.forEach((fn) => fn(state.value));
+  if (state.onDeactivate) {
+    state.onDeactivate.forEach((fn) => fn(state.value));
   }
 
   for (let dependency of state.dependencies) {
