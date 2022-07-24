@@ -1,38 +1,15 @@
 import { State } from '../state/state';
-import { FALSE } from '../utils/functions';
+import { FALSE_STATUS } from '../utils/constants';
 
 let states: State<any>[] = [];
 let current: State<any> | undefined;
-
 let length = 0;
 
-function get(this: { status?: boolean }) {
-  return this.status;
-}
-
-function reset(this: { status?: boolean }) {
-  this.status = undefined;
-}
-
-function createContainer() {
-  return {
-    status: true,
-    get,
-    reset,
-  };
-}
-
-function createGetter(container: { get: () => any }) {
-  return () => container.get();
-}
-
-let container = createContainer();
-let getter = createGetter(container);
+let container = { status: true };
 
 export function push(state: State<any>) {
   if (!length && !state.activeCount) {
-    container = createContainer();
-    getter = createGetter(container);
+    container = { status: true };
   }
 
   if (!state.activeCount) length++;
@@ -41,7 +18,7 @@ export function push(state: State<any>) {
   current = state;
   current.isComputing = true;
 
-  current.isCached = FALSE;
+  current.isCached = FALSE_STATUS;
 
   return current;
 }
@@ -49,10 +26,10 @@ export function push(state: State<any>) {
 export function pop() {
   if (current) {
     current.isComputing = false;
-    current.isCached = getter;
+    current.isCached = container;
 
     if (length) length--;
-    if (!length) container.reset();
+    if (!length) container.status = false;
   }
 
   current = states.pop();

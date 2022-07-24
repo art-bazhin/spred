@@ -227,7 +227,7 @@ export function getStateValue<T>(state: State<T>, trackDeps = true): T {
     return state.value;
   }
 
-  if (state.computedFn && !state.activeCount && !state.isCached()) {
+  if (state.computedFn && !state.activeCount && !state.isCached.status) {
     const value = calcComputed(state);
 
     if (value !== undefined) {

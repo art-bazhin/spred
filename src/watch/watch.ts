@@ -1,5 +1,5 @@
 import { createComputed } from '../computed/computed';
-import { NOOP } from '../utils/functions';
+import { NOOP_FN } from '../utils/constants';
 import { isSignal } from '../guards/guards';
 
 /**
@@ -9,5 +9,5 @@ import { isSignal } from '../guards/guards';
  */
 export function watch<T>(fn: (prevValue?: T) => T) {
   const comp = isSignal(fn) ? fn : createComputed(fn);
-  return comp.subscribe(NOOP);
+  return comp.subscribe(NOOP_FN);
 }

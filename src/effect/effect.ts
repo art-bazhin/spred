@@ -2,7 +2,7 @@ import { createWritable } from '../writable/writable';
 import { createComputed } from '../computed/computed';
 import { Signal } from '../signal-type/signal-type';
 import { batch } from '../core/core';
-import { NOOP } from '../utils/functions';
+import { NOOP_FN } from '../utils/constants';
 import { createMemo } from '../memo/memo';
 
 export type EffectStatus = 'pristine' | 'pending' | 'fulfilled' | 'rejected';
@@ -76,7 +76,7 @@ export function createEffect<T, A extends unknown[]>(
     return status === 'pending' ? undefined : status;
   });
 
-  lastStatus.subscribe(NOOP);
+  lastStatus.subscribe(NOOP_FN);
 
   const status = createMemo(
     () => {

@@ -1,5 +1,5 @@
 import { Subscriber } from '../subscriber/subscriber';
-import { FALSE } from '../utils/functions';
+import { FALSE_STATUS } from '../utils/constants';
 
 export interface State<T> {
   value: T;
@@ -18,7 +18,7 @@ export interface State<T> {
   dirtyCount: number;
   queueIndex: number;
   isComputing: boolean;
-  isCached: () => boolean;
+  isCached: { status?: boolean };
   isCatcher?: boolean;
   hasCycle: boolean;
   lifecycle: {
@@ -49,7 +49,7 @@ export function createState<T>(
     activeCount: 0,
     isComputing: false,
     hasCycle: false,
-    isCached: FALSE,
+    isCached: FALSE_STATUS,
     lifecycle: {},
   };
 }

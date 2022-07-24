@@ -1,4 +1,3 @@
-import { on } from '../on/on';
 import { Signal, _Signal } from '../signal-type/signal-type';
 import { removeFromArray } from '../utils/removeFromArray';
 
