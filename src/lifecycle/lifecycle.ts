@@ -1,4 +1,4 @@
-import { Signal, _Signal } from '../signal-type/signal-type';
+import { Signal, _Signal } from '../signal/signal';
 import { removeFromArray } from '../utils/removeFromArray';
 
 function addListener<T>(

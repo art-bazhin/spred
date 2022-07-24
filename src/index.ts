@@ -11,10 +11,10 @@ import { createComputed } from './computed/computed';
 import { createMemo } from './memo/memo';
 import { createStore, Store, StoreData, StoreOptions } from './store/store';
 import { configure, Config } from './config/config';
-import { Signal } from './signal-type/signal-type';
+import { Signal } from './signal/signal';
 import { watch } from './watch/watch';
 import { batch } from './core/core';
-import { createSignal } from './signal/signal';
+import { createSignal } from './create-signal/create-signal';
 import { on } from './on/on';
 import {
   createEffect,

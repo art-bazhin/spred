@@ -1,4 +1,4 @@
-import { Signal } from '../signal-type/signal-type';
+import { Signal } from '../signal/signal';
 import { Subscriber } from '../subscriber/subscriber';
 
 /**

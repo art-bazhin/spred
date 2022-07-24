@@ -1,4 +1,4 @@
-import { _Signal, Signal } from '../signal-type/signal-type';
+import { _Signal, Signal } from '../signal/signal';
 import { State } from '../state/state';
 import { Subscriber } from '../subscriber/subscriber';
 import { push, pop } from '../stack/stack';

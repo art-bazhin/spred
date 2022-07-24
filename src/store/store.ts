@@ -1,5 +1,5 @@
 import { createWritable, WritableSignal } from '../writable/writable';
-import { Signal, _Signal } from '../signal-type/signal-type';
+import { Signal, _Signal } from '../signal/signal';
 import { createComputed } from '../computed/computed';
 import { batch, update } from '../core/core';
 

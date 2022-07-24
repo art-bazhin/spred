@@ -1,4 +1,4 @@
-import { Signal } from '../signal-type/signal-type';
+import { Signal } from '../signal/signal';
 import { createStore, Store } from './store';
 import { createWritable } from '../writable/writable';
 import { createComputed } from '../computed/computed';

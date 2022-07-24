@@ -1,28 +1,60 @@
-import { Signal } from '../signal-type/signal-type';
-import { createComputed } from '../computed/computed';
-import { createWritable } from '../writable/writable';
-
-export function createSignal(): [Signal<unknown>, () => void];
-export function createSignal<T>(): [
-  Signal<T | undefined>,
-  (payload: T) => void
-];
-export function createSignal<T>(
-  initialValue: T
-): [Signal<T>, (payload: T) => void];
+import { getStateValue, addSubscriber, removeSubscriber } from '../core/core';
+import { State } from '../state/state';
+import { Subscriber } from '../subscriber/subscriber';
 
 /**
- * Creates a tuple of signal and setter function
- * @param initialValue
- * @returns A tuple of signal and setter function
+ * Basic reactive primitive.
  */
-export function createSignal(initialValue?: any) {
-  const source = createWritable(initialValue);
+export interface Signal<T> {
+  /**
+   * Calculates and returns the current value of the signal.
+   */
+  (): T;
 
-  function set(payload: any) {
-    if (payload === undefined) source({});
-    else source(payload);
-  }
+  /**
+   * Calculates and returns the current value of the signal.
+   */
+  get(): T;
 
-  return [createComputed(source), set];
+  /**
+   * Returns the current value of the signal without dependency tracking.
+   */
+  sample(): T;
+
+  /**
+   * Subscribes the function to updates of the signal value.
+   * @param subscriber A function that listens to updates.
+   * @param exec Determines whether the function should be called immediately after subscription.
+   * @returns Unsubscribe function.
+   */
+  subscribe<E extends boolean>(
+    subscriber: true extends E ? Subscriber<T> : Subscriber<Exclude<T, void>>,
+    exec: E
+  ): () => void;
+
+  /**
+   * Subscribes the function to updates of the signal value and calls it immediately.
+   * @param subscriber A function that listens to updates.
+   * @returns Unsubscribe function.
+   */
+  subscribe(subscriber: Subscriber<T>): () => void;
 }
+
+export interface _Signal<T> extends Signal<T> {
+  _state: State<T>;
+}
+
+export const signalProto = {
+  get() {
+    return getStateValue((this as any)._state);
+  },
+
+  subscribe(subscriber: any, exec = true) {
+    addSubscriber(this as any, subscriber, exec);
+    return () => removeSubscriber(this as any, subscriber);
+  },
+
+  sample(this: _Signal<any>) {
+    return getStateValue((this as any)._state, false);
+  },
+};

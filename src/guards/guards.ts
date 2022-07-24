@@ -1,4 +1,4 @@
-import { Signal } from '../signal-type/signal-type';
+import { Signal } from '../signal/signal';
 import { WritableSignal } from '../writable/writable';
 
 export function isSignal<T>(value: (...args: any) => T): value is Signal<T>;

@@ -1,4 +1,4 @@
-import { Signal, signalProto, _Signal } from '../signal-type/signal-type';
+import { Signal, signalProto, _Signal } from '../signal/signal';
 import { update } from '../core/core';
 import { createState } from '../state/state';
 

@@ -1,5 +1,5 @@
-import { Signal } from '../signal-type/signal-type';
-import { signalProto } from '../signal-type/signal-type';
+import { Signal } from '../signal/signal';
+import { signalProto } from '../signal/signal';
 import { createState } from '../state/state';
 import { isWritableSignal } from '../guards/guards';
 
