@@ -1,18 +1,23 @@
 import { Signal, signalProto, _Signal } from '../signal/signal';
-import { update } from '../core/core';
+import { getStateValue, update } from '../core/core';
 import { createState } from '../state/state';
 
 const writableSignalProto = {
   ...signalProto,
 
   set(this: _Signal<any>, value: any) {
-    update(this, value);
+    update(this._state, value);
   },
 
   notify(this: _Signal<any>) {
-    update(this);
+    update(this._state);
   },
 };
+
+function writableSelf(this: any, value: any) {
+  if (!arguments.length) return getStateValue(this);
+  return update(this, value);
+}
 
 /**
  * A signal whose value can be set.
@@ -52,19 +57,16 @@ export function createWritable<T>(): WritableSignal<T | undefined>;
 export function createWritable<T>(value: T): WritableSignal<T>;
 
 export function createWritable(value?: any) {
-  const f: any = function (value?: any) {
-    if (!arguments.length) return f.get();
-    return f.set(value);
-  };
+  const state = createState(value, undefined);
+  const writable: any = writableSelf.bind(state);
 
-  f._state = createState(value, undefined);
+  writable._state = state;
+  writable.constructor = createWritable;
+  writable.set = writableSignalProto.set;
+  writable.get = writableSignalProto.get;
+  writable.notify = writableSignalProto.notify;
+  writable.subscribe = writableSignalProto.subscribe;
+  writable.sample = writableSignalProto.sample;
 
-  f.constructor = createWritable;
-  f.set = writableSignalProto.set;
-  f.get = writableSignalProto.get;
-  f.notify = writableSignalProto.notify;
-  f.subscribe = writableSignalProto.subscribe;
-  f.sample = writableSignalProto.sample;
-
-  return f;
+  return writable;
 }

@@ -1,4 +1,4 @@
-import { _Signal, Signal } from '../signal/signal';
+import { _Signal } from '../signal/signal';
 import { State } from '../state/state';
 import { Subscriber } from '../subscriber/subscriber';
 import { push, pop } from '../stack/stack';
@@ -21,8 +21,7 @@ export function batch(fn: (...args: any) => any) {
   recalc();
 }
 
-export function update<T>(signal: Signal<T>, value?: T) {
-  const state = (signal as _Signal<any>)._state;
+export function update<T>(state: State<T>, value?: T) {
   const force = arguments.length === 1;
 
   if (force) {

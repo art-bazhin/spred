@@ -114,11 +114,11 @@ function set<T>(this: _Store<T>, items: any) {
       data[id] = item;
 
       const signal = this._signals[id];
-      if (signal) update(signal);
+      if (signal) update((signal as any)._state);
     }
 
-    update(this.data);
-    update(this._force);
+    update((this.data as any)._state);
+    update((this._force as any)._state);
   });
 }
 
@@ -135,10 +135,10 @@ function remove<T>(this: _Store<T>, ids: any) {
       delete this._signals[id];
       delete data[id];
 
-      if (signal) update(signal);
+      if (signal) update((signal as any)._state);
     }
 
-    update(this.data);
+    update((this.data as any)._state);
   });
 }
 
