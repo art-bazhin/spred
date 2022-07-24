@@ -3,11 +3,11 @@ import { FALSE_STATUS } from '../utils/constants';
 
 export interface State<T> {
   value: T;
-  prevValue: T | undefined;
+  prevValue?: T | undefined;
   nextValue?: T;
   isNotifying?: boolean;
   cachedValue?: T;
-  hasException: boolean;
+  hasException?: boolean;
   exception?: unknown;
   subscribers: Set<Subscriber<T>>;
   dependants: Set<State<any>>;
@@ -17,10 +17,10 @@ export interface State<T> {
   newDeps: Set<State<any>>;
   dirtyCount: number;
   queueIndex: number;
-  isComputing: boolean;
+  isComputing?: boolean;
   isCached: { status?: boolean };
   isCatcher?: boolean;
-  hasCycle: boolean;
+  hasCycle?: boolean;
   lifecycle: {
     activate?: ((value: T) => any)[];
     deactivate?: ((value: T) => any)[];
@@ -37,9 +37,7 @@ export function createState<T>(
 ): State<T> {
   return {
     value,
-    prevValue: undefined,
     computedFn,
-    hasException: false,
     subscribers: new Set(),
     dependants: new Set(),
     dependencies: new Set(),
@@ -47,8 +45,6 @@ export function createState<T>(
     dirtyCount: 0,
     queueIndex: -1,
     activeCount: 0,
-    isComputing: false,
-    hasCycle: false,
     isCached: FALSE_STATUS,
     lifecycle: {},
   };
