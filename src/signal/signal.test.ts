@@ -12,11 +12,9 @@ describe('signal', () => {
   const counter = createWritable(0);
   let unsub: () => any;
   let num: number;
-  let prevNum: number;
   let x2Num: number;
 
   const subscriber = jest.fn((value: number, prevValue) => {
-    prevNum = prevValue;
     num = value;
   });
 
@@ -28,7 +26,6 @@ describe('signal', () => {
 
     expect(subscriber).toBeCalled();
     expect(num).toBe(0);
-    expect(prevNum).toBe(undefined);
     expect(x2Num).toBe(0);
   });
 
@@ -37,14 +34,12 @@ describe('signal', () => {
 
     expect(subscriber).toHaveBeenCalledTimes(2);
     expect(num).toBe(0);
-    expect(prevNum).toBe(0);
     expect(x2Num).toBe(0);
 
     counter(1);
 
     expect(subscriber).toHaveBeenCalledTimes(3);
     expect(num).toBe(1);
-    expect(prevNum).toBe(0);
     expect(x2Num).toBe(2);
   });
 

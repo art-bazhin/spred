@@ -3,7 +3,6 @@ import { FALSE_STATUS } from '../utils/constants';
 
 export interface State<T> {
   value: T;
-  prevValue?: T | undefined;
   nextValue?: T;
   isNotifying?: boolean;
   cachedValue?: T;

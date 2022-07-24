@@ -53,7 +53,7 @@ export function addSubscriber<T>(
 
   state.subscribers.add(subscriber);
   state.activeCount++;
-  if (exec) subscriber(value, state.prevValue, true);
+  if (exec) subscriber(value, true);
 }
 
 export function removeSubscriber<T>(
@@ -124,7 +124,6 @@ export function recalc() {
 
       if (shouldUpdate) {
         emitUpdateLifecycle(state, value);
-        state.prevValue = state.value;
         state.value = value;
       }
 
@@ -157,10 +156,7 @@ export function recalc() {
 
     if (value !== undefined) {
       emitUpdateLifecycle(state, value);
-
-      state.prevValue = state.value;
       state.value = value;
-
       notificationQueue.push(state);
     } else {
       decreaseDirtyCount(state);
@@ -210,7 +206,7 @@ function runSubscribers<T>(state: State<T>) {
   }
 
   for (let subscriber of state.subscribers) {
-    subscriber(state.value, state.prevValue);
+    subscriber(state.value);
   }
 
   if (state.onNotifyEnd) {
@@ -230,7 +226,6 @@ export function getStateValue<T>(state: State<T>, trackDeps = true): T {
     const value = calcComputed(state);
 
     if (value !== undefined) {
-      state.prevValue = state.value;
       state.value = value;
     }
   }
