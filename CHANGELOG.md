@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.15.3](https://github.com/art-bazhin/spred/compare/v0.15.2...v0.15.3) (2022-07-24)
+
+
+### Styling
+
+* fix var name ([c580900](https://github.com/art-bazhin/spred/commit/c580900c3c31b878306464c233541d4c521fada8))
+
+
+### Tests
+
+* update cellx benchmark ([4e05865](https://github.com/art-bazhin/spred/commit/4e058651bbbecdc0f2c018b1630610615fcc369f))
+
+
+### Code Refactoring
+
+* refactor caching values ([4777100](https://github.com/art-bazhin/spred/commit/47771004b7b01147c608b312be7e6678e483c63f))
+* refactor signal factories ([4e6f9c0](https://github.com/art-bazhin/spred/commit/4e6f9c04101248297f729a04f4be96282ebbd6d4))
+* remove redundant code from state creation ([fc87ad3](https://github.com/art-bazhin/spred/commit/fc87ad3b7b580cc62ee08ee927f51587fb6a5e8f))
+* update file structure ([b004d19](https://github.com/art-bazhin/spred/commit/b004d197a786f5db761975c5fef451ea423ff509))
+
 ### [0.15.2](https://github.com/art-bazhin/spred/compare/v0.15.1...v0.15.2) (2022-07-22)
 
 
