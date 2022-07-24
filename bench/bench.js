@@ -26,7 +26,7 @@ window.process = {
 
 const subscriber = function () {};
 
-const Cell = cellx.Cell;
+const createCell = cellx.cellx;
 
 window.testAct = (n) => {
   const arr = [];
@@ -68,10 +68,10 @@ function testCellx(layerCount, newValues) {
   const initTimestamp = performance.now();
 
   const start = {
-    prop1: new Cell(1),
-    prop2: new Cell(2),
-    prop3: new Cell(3),
-    prop4: new Cell(4),
+    prop1: createCell(1),
+    prop2: createCell(2),
+    prop3: createCell(3),
+    prop4: createCell(4),
   };
 
   let layer = start;
@@ -79,17 +79,17 @@ function testCellx(layerCount, newValues) {
   for (let i = layerCount; i--; ) {
     layer = (function (m) {
       const s = {
-        prop1: new Cell(function () {
-          return m.prop2.get();
+        prop1: createCell(function () {
+          return m.prop2();
         }),
-        prop2: new Cell(function () {
-          return m.prop1.get() - m.prop3.get();
+        prop2: createCell(function () {
+          return m.prop1() - m.prop3();
         }),
-        prop3: new Cell(function () {
-          return m.prop2.get() + m.prop4.get();
+        prop3: createCell(function () {
+          return m.prop2() + m.prop4();
         }),
-        prop4: new Cell(function () {
-          return m.prop3.get();
+        prop4: createCell(function () {
+          return m.prop3();
         }),
       };
 
@@ -106,26 +106,16 @@ function testCellx(layerCount, newValues) {
 
   const end = layer;
 
-  report.beforeChange = [
-    end.prop1.get(),
-    end.prop2.get(),
-    end.prop3.get(),
-    end.prop4.get(),
-  ];
+  report.beforeChange = [end.prop1(), end.prop2(), end.prop3(), end.prop4()];
 
   const st = performance.now();
 
-  start.prop1.set(newValues[0]);
-  start.prop2.set(newValues[1]);
-  start.prop3.set(newValues[2]);
-  start.prop4.set(newValues[3]);
+  start.prop1(newValues[0]);
+  start.prop2(newValues[1]);
+  start.prop3(newValues[2]);
+  start.prop4(newValues[3]);
 
-  report.afterChange = [
-    end.prop1.get(),
-    end.prop2.get(),
-    end.prop3.get(),
-    end.prop4.get(),
-  ];
+  report.afterChange = [end.prop1(), end.prop2(), end.prop3(), end.prop4()];
 
   report.recalcTime = performance.now() - st;
 
