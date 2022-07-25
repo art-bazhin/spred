@@ -241,8 +241,8 @@ export function getStateValue<T>(state: State<T>, trackDeps = true): T {
     }
 
     const isNewDep = !currentComputed.dependencies.delete(state);
-
-    currentComputed.newDeps.add(state);
+    currentComputed.dependencies.add(state);
+    --currentComputed.oldDepsCount;
 
     if (isNewDep) {
       if (currentComputed.activeCount) {
@@ -263,6 +263,7 @@ function calcComputed<T>(state: State<T>) {
   let value = undefined;
 
   currentComputed = push(state);
+  state.oldDepsCount = state.dependencies.size;
 
   try {
     value = state.computedFn!(state.value);
@@ -271,7 +272,16 @@ function calcComputed<T>(state: State<T>) {
     state.hasException = true;
   }
 
-  removeObsoleteDependencies(state);
+  let i = state.oldDepsCount;
+
+  for (let dependency of currentComputed.dependencies) {
+    if (i <= 0) break;
+    state.dependencies.delete(dependency);
+    dependency.activeCount--;
+    dependency.dependants.delete(state);
+    deactivateDependencies(dependency);
+    --i;
+  }
 
   currentComputed = pop();
 
@@ -319,22 +329,4 @@ function deactivateDependencies<T>(state: State<T>) {
     dependency.dependants.delete(state);
     deactivateDependencies(dependency);
   }
-}
-
-function removeObsoleteDependencies(state: State<any>) {
-  if (state.activeCount) {
-    for (let dependency of state.dependencies) {
-      state.dependencies.delete(dependency);
-      dependency.activeCount--;
-      dependency.dependants.delete(state);
-      deactivateDependencies(dependency);
-    }
-  } else {
-    state.dependencies.clear();
-  }
-
-  const temp = state.dependencies;
-
-  state.dependencies = state.newDeps;
-  state.newDeps = temp;
 }

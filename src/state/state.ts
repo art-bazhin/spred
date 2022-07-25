@@ -13,13 +13,13 @@ export interface State<T> {
   activeCount: number;
   computedFn?: (prevValue: T | undefined) => T;
   dependencies: Set<State<any>>;
-  newDeps: Set<State<any>>;
   dirtyCount: number;
   queueIndex: number;
   isComputing?: boolean;
   isCached: { status?: boolean };
   isCatcher?: boolean;
   hasCycle?: boolean;
+  oldDepsCount: number;
 
   // lifecycle:
   onActivate?: ((value: T) => any)[];
@@ -40,10 +40,10 @@ export function createState<T>(
     subscribers: new Set(),
     dependants: new Set(),
     dependencies: new Set(),
-    newDeps: new Set(),
     dirtyCount: 0,
     queueIndex: -1,
     activeCount: 0,
+    oldDepsCount: 0,
     isCached: FALSE_STATUS,
   };
 }
