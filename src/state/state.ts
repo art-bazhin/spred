@@ -8,9 +8,8 @@ export interface State<T> {
   cachedValue?: T;
   hasException?: boolean;
   exception?: unknown;
-  subscribers: Set<Subscriber<T>>;
-  dependants: Set<State<any>>;
-  activeCount: number;
+  observers: Set<Subscriber<T> | State<any>>;
+  subsCount: number;
   computedFn?: (prevValue: T | undefined) => T;
   dependencies: Set<State<any>>;
   dirtyCount: number;
@@ -37,12 +36,11 @@ export function createState<T>(
   return {
     value,
     computedFn,
-    subscribers: new Set(),
-    dependants: new Set(),
+    observers: new Set(),
     dependencies: new Set(),
     dirtyCount: 0,
     queueIndex: -1,
-    activeCount: 0,
+    subsCount: 0,
     oldDepsCount: 0,
     isCached: FALSE_STATUS,
   };

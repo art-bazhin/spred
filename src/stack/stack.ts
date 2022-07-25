@@ -8,11 +8,11 @@ let length = 0;
 let container = { status: true };
 
 export function push(state: State<any>) {
-  if (!length && !state.activeCount) {
+  if (!length && !state.observers.size) {
     container = { status: true };
   }
 
-  if (!state.activeCount) length++;
+  if (!state.observers.size) length++;
   if (current) states.push(current);
 
   current = state;

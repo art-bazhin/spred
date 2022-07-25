@@ -46,13 +46,13 @@ export function addSubscriber<T>(
 ) {
   const state = signal._state;
 
-  if (state.subscribers.has(subscriber)) return;
+  if (state.observers.has(subscriber)) return;
   const value = getStateValue(state, false);
 
   activateDependencies(state);
 
-  state.subscribers.add(subscriber);
-  state.activeCount++;
+  state.observers.add(subscriber);
+  state.subsCount++;
   if (exec) subscriber(value, true);
 }
 
@@ -62,8 +62,8 @@ export function removeSubscriber<T>(
 ) {
   const state = signal._state;
 
-  if (state.subscribers.delete(subscriber)) {
-    state.activeCount--;
+  if (state.observers.delete(subscriber)) {
+    state.subsCount--;
     deactivateDependencies(state);
   }
 }
@@ -101,7 +101,8 @@ export function recalc() {
 
     state.hasException = false;
 
-    for (let dependant of state.dependants) {
+    for (let dependant of state.observers) {
+      if (typeof dependant === 'function') continue;
       dependant.queueIndex = queueLength;
       dependant.dirtyCount++;
 
@@ -141,7 +142,7 @@ export function recalc() {
         state.onException.forEach((fn) => fn(state.exception));
       }
 
-      if (!state.dependants.size) {
+      if (!(state.observers.size - state.subsCount)) {
         config.logException(state.exception);
       }
     }
@@ -186,7 +187,8 @@ function notify(notificationQueue: State<any>[]) {
 }
 
 function decreaseDirtyCount(state: State<any>) {
-  for (let dependant of state.dependants) {
+  for (let dependant of state.observers) {
+    if (typeof dependant === 'function') continue;
     if (state.hasException && dependant.isCatcher) continue;
 
     dependant.dirtyCount--;
@@ -199,14 +201,19 @@ function decreaseDirtyCount(state: State<any>) {
 }
 
 function runSubscribers<T>(state: State<T>) {
-  if (!state.subscribers.size) return;
+  let i = state.subsCount;
+
+  if (!i) return;
 
   if (state.onNotifyStart) {
     state.onNotifyStart.forEach((fn) => fn(state.value));
   }
 
-  for (let subscriber of state.subscribers) {
+  for (let subscriber of state.observers) {
+    if (!i) break;
+    if (typeof subscriber !== 'function') continue;
     subscriber(state.value);
+    --i;
   }
 
   if (state.onNotifyEnd) {
@@ -222,7 +229,7 @@ export function getStateValue<T>(state: State<T>, trackDeps = true): T {
     return state.value;
   }
 
-  if (state.computedFn && !state.activeCount && !state.isCached.status) {
+  if (state.computedFn && !state.observers.size && !state.isCached.status) {
     const value = calcComputed(state);
 
     if (value !== undefined) {
@@ -245,11 +252,9 @@ export function getStateValue<T>(state: State<T>, trackDeps = true): T {
     --currentComputed.oldDepsCount;
 
     if (isNewDep) {
-      if (currentComputed.activeCount) {
+      if (currentComputed.observers.size) {
         activateDependencies(state);
-
-        state.dependants.add(currentComputed);
-        state.activeCount++;
+        state.observers.add(currentComputed);
       }
     }
   }
@@ -277,8 +282,7 @@ function calcComputed<T>(state: State<T>) {
   for (let dependency of currentComputed.dependencies) {
     if (i <= 0) break;
     state.dependencies.delete(dependency);
-    dependency.activeCount--;
-    dependency.dependants.delete(state);
+    dependency.observers.delete(state);
     deactivateDependencies(dependency);
     --i;
   }
@@ -293,8 +297,8 @@ function calcComputed<T>(state: State<T>) {
     }
 
     if (
-      (!state.activeCount && !currentComputed) ||
-      (state.activeCount && !state.dependants.size)
+      (!state.observers.size && !currentComputed) ||
+      (state.observers.size && !(state.observers.size - state.subsCount))
     ) {
       config.logException(state.exception);
     }
@@ -304,7 +308,7 @@ function calcComputed<T>(state: State<T>) {
 }
 
 function activateDependencies<T>(state: State<T>) {
-  if (state.activeCount) return;
+  if (state.observers.size) return;
 
   if (state.onActivate) {
     state.onActivate.forEach((fn) => fn(state.value));
@@ -312,21 +316,19 @@ function activateDependencies<T>(state: State<T>) {
 
   for (let dependency of state.dependencies) {
     activateDependencies(dependency);
-    dependency.dependants.add(state);
-    dependency.activeCount++;
+    dependency.observers.add(state);
   }
 }
 
 function deactivateDependencies<T>(state: State<T>) {
-  if (state.activeCount) return;
+  if (state.observers.size) return;
 
   if (state.onDeactivate) {
     state.onDeactivate.forEach((fn) => fn(state.value));
   }
 
   for (let dependency of state.dependencies) {
-    dependency.activeCount--;
-    dependency.dependants.delete(state);
+    dependency.observers.delete(state);
     deactivateDependencies(dependency);
   }
 }
