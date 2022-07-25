@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.16.1](https://github.com/art-bazhin/spred/compare/v0.16.0...v0.16.1) (2022-07-25)
+
+
+### Performance Improvements
+
+* upgrade dependency actualization ([b638f78](https://github.com/art-bazhin/spred/commit/b638f787c45289dfef03d36a818bb1417bb1bf5e))
+
+
+### Code Refactoring
+
+* use one set of observers instad of two ([36b2272](https://github.com/art-bazhin/spred/commit/36b22727664c74514c9ce7039f1a0c4fd32486dd))
+
 ## [0.16.0](https://github.com/art-bazhin/spred/compare/v0.15.3...v0.16.0) (2022-07-24)
 
 
