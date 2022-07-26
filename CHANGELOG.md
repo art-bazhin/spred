@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.16.2](https://github.com/art-bazhin/spred/compare/v0.16.1...v0.16.2) (2022-07-26)
+
+
+### Code Refactoring
+
+* refactor stack of computeds ([fe8619a](https://github.com/art-bazhin/spred/commit/fe8619a53990adb8f0aec1ac5faa86e163ed6a02))
+
 ### [0.16.1](https://github.com/art-bazhin/spred/compare/v0.16.0...v0.16.1) (2022-07-25)
 
 
