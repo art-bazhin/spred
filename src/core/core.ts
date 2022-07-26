@@ -5,7 +5,7 @@ import { push, pop } from '../stack/stack';
 import { config } from '../config/config';
 import { CircularDependencyError } from '../errors/errors';
 
-let currentComputed = pop();
+let currentComputed: State<any> | undefined;
 let batchLevel = 0;
 let calcLevel = 0;
 
@@ -263,12 +263,10 @@ export function getStateValue<T>(state: State<T>, trackDeps = true): T {
 }
 
 function calcComputed<T>(state: State<T>) {
-  state.hasException = false;
-
-  let value = undefined;
+  const prevComputed = currentComputed;
+  let value;
 
   currentComputed = push(state);
-  state.oldDepsCount = state.dependencies.size;
 
   try {
     value = state.computedFn!(state.value);
@@ -279,7 +277,7 @@ function calcComputed<T>(state: State<T>) {
 
   let i = state.oldDepsCount;
 
-  for (let dependency of currentComputed.dependencies) {
+  for (let dependency of state.dependencies) {
     if (i <= 0) break;
     state.dependencies.delete(dependency);
     dependency.observers.delete(state);
@@ -287,11 +285,9 @@ function calcComputed<T>(state: State<T>) {
     --i;
   }
 
-  currentComputed = pop();
+  currentComputed = pop(prevComputed);
 
   if (state.hasException) {
-    value = undefined;
-
     if (state.onException) {
       state.onException.forEach((fn) => fn(state.exception));
     }

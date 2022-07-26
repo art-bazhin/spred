@@ -1,10 +1,8 @@
 import { State } from '../state/state';
 import { FALSE_STATUS } from '../utils/constants';
 
-let states: State<any>[] = [];
 let current: State<any> | undefined;
 let length = 0;
-
 let container = { status: true };
 
 export function push(state: State<any>) {
@@ -13,17 +11,17 @@ export function push(state: State<any>) {
   }
 
   if (!state.observers.size) length++;
-  if (current) states.push(current);
 
   current = state;
   current.isComputing = true;
-
   current.isCached = FALSE_STATUS;
+  current.oldDepsCount = state.dependencies.size;
+  current.hasException = false;
 
   return current;
 }
 
-export function pop() {
+export function pop(state?: State<any> | undefined) {
   if (current) {
     current.isComputing = false;
     current.isCached = container;
@@ -32,7 +30,7 @@ export function pop() {
     if (!length) container.status = false;
   }
 
-  current = states.pop();
+  current = state;
 
   return current;
 }
