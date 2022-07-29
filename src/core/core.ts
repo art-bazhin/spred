@@ -13,6 +13,14 @@ let queue: State<any>[] = [];
 let queueLength = 0;
 let fullQueueLength = 0;
 
+let checked = false;
+
+export function check(fn: () => any) {
+  checked = false;
+  fn();
+  return checked;
+}
+
 export function batch(fn: (...args: any) => any) {
   batchLevel++;
   fn();
@@ -222,6 +230,8 @@ function runSubscribers<T>(state: State<T>) {
 }
 
 export function getStateValue<T>(state: State<T>, notTrackDeps?: boolean): T {
+  if (!notTrackDeps) checked = true;
+
   if (state.isComputing || state.hasCycle) {
     state.hasCycle = true;
     config.logException(new CircularDependencyError());
