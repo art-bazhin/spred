@@ -47,7 +47,7 @@ export function addSubscriber<T>(
   const state = signal._state;
 
   if (state.observers.has(subscriber)) return;
-  const value = getStateValue(state, false);
+  const value = getStateValue(state, true);
 
   activateDependencies(state);
 
@@ -221,7 +221,7 @@ function runSubscribers<T>(state: State<T>) {
   }
 }
 
-export function getStateValue<T>(state: State<T>, trackDeps = true): T {
+export function getStateValue<T>(state: State<T>, notTrackDeps?: boolean): T {
   if (state.isComputing || state.hasCycle) {
     state.hasCycle = true;
     config.logException(new CircularDependencyError());
@@ -230,14 +230,14 @@ export function getStateValue<T>(state: State<T>, trackDeps = true): T {
   }
 
   if (state.computedFn && !state.observers.size && !state.isCached.status) {
-    const value = calcComputed(state);
+    const value = calcComputed(state, notTrackDeps);
 
     if (value !== undefined) {
       state.value = value;
     }
   }
 
-  if (trackDeps && currentComputed) {
+  if (currentComputed && !notTrackDeps) {
     if (
       state.hasException &&
       !currentComputed.hasException &&
@@ -262,7 +262,7 @@ export function getStateValue<T>(state: State<T>, trackDeps = true): T {
   return state.value;
 }
 
-function calcComputed<T>(state: State<T>) {
+function calcComputed<T>(state: State<T>, logException?: boolean) {
   const prevComputed = currentComputed;
   let value;
 
@@ -293,6 +293,7 @@ function calcComputed<T>(state: State<T>) {
     }
 
     if (
+      logException ||
       (!state.observers.size && !currentComputed) ||
       (state.observers.size && !(state.observers.size - state.subsCount))
     ) {

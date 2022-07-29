@@ -55,6 +55,6 @@ export const signalProto = {
   },
 
   sample(this: _Signal<any>) {
-    return getStateValue((this as any)._state, false);
+    return getStateValue((this as any)._state, true);
   },
 };

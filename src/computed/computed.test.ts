@@ -1,5 +1,6 @@
 import { createComputed } from './computed';
 import { createWritable } from '../writable/writable';
+import { configure } from '../config/config';
 
 describe('computed', () => {
   const a = createWritable(1);
@@ -115,5 +116,43 @@ describe('computed', () => {
 
     counter(2);
     expect(value).toBe('2');
+  });
+
+  it('logs unhandled exceptions', () => {
+    const spy = jest.fn();
+
+    configure({
+      logException: spy,
+    });
+
+    const obj = null as any;
+
+    const field = createWritable('bar');
+    const count = createComputed(() => obj[field()]);
+
+    count.subscribe(() => {});
+
+    expect(spy).toBeCalledTimes(1);
+  });
+
+  it('logs unhandled exceptions in nested computeds', () => {
+    const spy = jest.fn();
+
+    configure({
+      logException: spy,
+    });
+
+    const obj = null as any;
+
+    const field = createWritable('bar');
+    const count = createComputed(() => obj[field()]);
+
+    const parent = createComputed(() => {
+      count.subscribe(() => {});
+    });
+
+    parent.subscribe(() => {});
+
+    expect(spy).toBeCalledTimes(1);
   });
 });
