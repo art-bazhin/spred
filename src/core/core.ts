@@ -1,11 +1,11 @@
 import { _Signal } from '../signal/signal';
 import { State } from '../state/state';
 import { Subscriber } from '../subscriber/subscriber';
-import { push, pop, storeStackValues } from '../stack/stack';
 import { config } from '../config/config';
 import { CircularDependencyError } from '../errors/errors';
+import { FALSE_STATUS } from '../utils/constants';
 
-let currentComputed: State<any> | undefined;
+let tracking: State<any> | undefined;
 let batchLevel = 0;
 let calcLevel = 0;
 
@@ -14,6 +14,9 @@ let queueLength = 0;
 let fullQueueLength = 0;
 
 let checked = false;
+
+let depth = 0;
+let cacheStatus = { status: true };
 
 export function check(fn: () => any) {
   checked = false;
@@ -27,12 +30,17 @@ export function isolate<A extends unknown[]>(
   args: A
 ): void;
 export function isolate(fn: any, args?: any) {
-  const restore = storeStackValues();
+  const prevCacheStatus = cacheStatus;
+  const prevDepth = depth;
+  const prevTracking = tracking;
 
-  currentComputed = push();
+  push();
   if (args) fn(...args);
   else fn();
-  currentComputed = restore();
+
+  cacheStatus = prevCacheStatus;
+  depth = prevDepth;
+  tracking = prevTracking;
 }
 
 export function batch(fn: (...args: any) => any) {
@@ -261,24 +269,20 @@ export function getStateValue<T>(state: State<T>, notTrackDeps?: boolean): T {
     }
   }
 
-  if (currentComputed && !notTrackDeps) {
-    if (
-      state.hasException &&
-      !currentComputed.hasException &&
-      !currentComputed.isCatcher
-    ) {
-      currentComputed.exception = state.exception;
-      currentComputed.hasException = true;
+  if (tracking && !notTrackDeps) {
+    if (state.hasException && !tracking.hasException && !tracking.isCatcher) {
+      tracking.exception = state.exception;
+      tracking.hasException = true;
     }
 
-    const isNewDep = !currentComputed.dependencies.delete(state);
-    currentComputed.dependencies.add(state);
-    --currentComputed.oldDepsCount;
+    const isNewDep = !tracking.dependencies.delete(state);
+    tracking.dependencies.add(state);
+    --tracking.oldDepsCount;
 
     if (isNewDep) {
-      if (currentComputed.observers.size) {
+      if (tracking.observers.size) {
         activateDependencies(state);
-        state.observers.add(currentComputed);
+        state.observers.add(tracking);
       }
     }
   }
@@ -287,10 +291,10 @@ export function getStateValue<T>(state: State<T>, notTrackDeps?: boolean): T {
 }
 
 function calcComputed<T>(state: State<T>, logException?: boolean) {
-  const prevComputed = currentComputed;
+  const prevTracking = tracking;
   let value;
 
-  currentComputed = push(state);
+  push(state);
 
   try {
     value = state.computedFn!(state.value);
@@ -309,7 +313,7 @@ function calcComputed<T>(state: State<T>, logException?: boolean) {
     --i;
   }
 
-  currentComputed = pop(prevComputed);
+  pop(prevTracking);
 
   if (state.hasException) {
     if (state.onException) {
@@ -318,7 +322,7 @@ function calcComputed<T>(state: State<T>, logException?: boolean) {
 
     if (
       logException ||
-      (!state.observers.size && !currentComputed) ||
+      (!state.observers.size && !tracking) ||
       (state.observers.size && !(state.observers.size - state.subsCount))
     ) {
       config.logException(state.exception);
@@ -352,4 +356,40 @@ function deactivateDependencies<T>(state: State<T>) {
     dependency.observers.delete(state);
     deactivateDependencies(dependency);
   }
+}
+
+function push(state?: State<any>) {
+  if (!state) {
+    tracking = state;
+    cacheStatus = { status: true };
+    depth = 0;
+    return;
+  }
+
+  if (!state.observers.size) {
+    if (!depth) cacheStatus = { status: true };
+    ++depth;
+  }
+
+  tracking = state;
+  tracking.isComputing = true;
+  tracking.isCached = FALSE_STATUS;
+  tracking.oldDepsCount = state.dependencies.size;
+  tracking.hasException = false;
+
+  return tracking;
+}
+
+function pop(state?: State<any> | undefined) {
+  if (tracking) {
+    tracking.isComputing = false;
+    tracking.isCached = cacheStatus;
+
+    if (depth) --depth;
+    if (!depth) cacheStatus.status = false;
+  }
+
+  tracking = state;
+
+  return tracking;
 }
