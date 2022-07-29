@@ -1,7 +1,7 @@
 import { _Signal } from '../signal/signal';
 import { State } from '../state/state';
 import { Subscriber } from '../subscriber/subscriber';
-import { push, pop } from '../stack/stack';
+import { push, pop, storeStackValues } from '../stack/stack';
 import { config } from '../config/config';
 import { CircularDependencyError } from '../errors/errors';
 
@@ -17,8 +17,16 @@ let checked = false;
 
 export function check(fn: () => any) {
   checked = false;
-  fn();
+  isolate(fn);
   return checked;
+}
+
+export function isolate(fn: () => any) {
+  const restore = storeStackValues();
+
+  currentComputed = push();
+  fn();
+  currentComputed = restore();
 }
 
 export function batch(fn: (...args: any) => any) {

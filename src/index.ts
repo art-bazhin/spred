@@ -25,6 +25,7 @@ import {
 import { Subscriber } from './subscriber/subscriber';
 import { isSignal, isWritableSignal, get, sample } from './guards/guards';
 import { check } from './check/check';
+import { isolate } from './isolate/isolate';
 
 export {
   Signal,
@@ -58,4 +59,5 @@ export {
   get,
   sample,
   check,
+  isolate,
 };

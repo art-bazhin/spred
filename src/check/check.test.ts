@@ -1,3 +1,4 @@
+import { createComputed } from '../computed/computed';
 import { createWritable } from '../writable/writable';
 import { check } from './check';
 
@@ -25,5 +26,20 @@ describe('check', () => {
     const fn = () => signal();
 
     expect(check(fn)).toBe(true);
+  });
+
+  it('does not affect current computed dependencies', () => {
+    const signal = createWritable(0);
+    const fn = () => signal();
+    const spy = jest.fn(() => {
+      check(fn);
+    });
+    const computed = createComputed(spy);
+
+    computed.subscribe(() => {});
+
+    signal(1);
+    signal(2);
+    expect(spy).toBeCalledTimes(1);
   });
 });
