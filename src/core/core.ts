@@ -21,11 +21,17 @@ export function check(fn: () => any) {
   return checked;
 }
 
-export function isolate(fn: () => any) {
+export function isolate(fn: () => any): void;
+export function isolate<A extends unknown[]>(
+  fn: (...args: A) => any,
+  args: A
+): void;
+export function isolate(fn: any, args?: any) {
   const restore = storeStackValues();
 
   currentComputed = push();
-  fn();
+  if (args) fn(...args);
+  else fn();
   currentComputed = restore();
 }
 
