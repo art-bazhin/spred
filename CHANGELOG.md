@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.16.5](https://github.com/art-bazhin/spred/compare/v0.16.4...v0.16.5) (2022-07-29)
+
+
+### Features
+
+* pass arguments to isolate fn ([00c73b4](https://github.com/art-bazhin/spred/commit/00c73b41087a6f37961b136a270596cc48da1131))
+
+
+### Code Refactoring
+
+* refactor stack ([1e25d16](https://github.com/art-bazhin/spred/commit/1e25d164dba1e216d9c267c941184e79ebcfe928))
+
 ### [0.16.4](https://github.com/art-bazhin/spred/compare/v0.16.3...v0.16.4) (2022-07-29)
 
 
