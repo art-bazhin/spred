@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.16.6](https://github.com/art-bazhin/spred/compare/v0.16.5...v0.16.6) (2022-07-30)
+
+
+### Features
+
+* clear subscriptions inside isolated fn ([1141d9d](https://github.com/art-bazhin/spred/commit/1141d9d0e6b517c6a4264f087d6abd7500c6f3c4))
+
 ### [0.16.5](https://github.com/art-bazhin/spred/compare/v0.16.4...v0.16.5) (2022-07-29)
 
 
