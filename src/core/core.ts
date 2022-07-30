@@ -5,7 +5,9 @@ import { config } from '../config/config';
 import { CircularDependencyError } from '../errors/errors';
 import { FALSE_STATUS } from '../utils/constants';
 
-let tracking: State<any> | undefined;
+export let tracking: State<any> | undefined;
+export let scope: State<any> | undefined;
+
 let batchLevel = 0;
 let calcLevel = 0;
 
@@ -33,6 +35,10 @@ export function isolate(fn: any, args?: any) {
   const prevCacheStatus = cacheStatus;
   const prevDepth = depth;
   const prevTracking = tracking;
+  const prevScope = scope;
+
+  scope = tracking;
+  if (scope) scope.unsubs = [];
 
   push();
   if (args) fn(...args);
@@ -41,6 +47,7 @@ export function isolate(fn: any, args?: any) {
   cacheStatus = prevCacheStatus;
   depth = prevDepth;
   tracking = prevTracking;
+  scope = prevScope;
 }
 
 export function batch(fn: (...args: any) => any) {
@@ -294,6 +301,7 @@ function calcComputed<T>(state: State<T>, logException?: boolean) {
   const prevTracking = tracking;
   let value;
 
+  clearSubs(state);
   push(state);
 
   try {
@@ -348,6 +356,8 @@ function activateDependencies<T>(state: State<T>) {
 function deactivateDependencies<T>(state: State<T>) {
   if (state.observers.size) return;
 
+  clearSubs(state);
+
   if (state.onDeactivate) {
     state.onDeactivate.forEach((fn) => fn(state.value));
   }
@@ -392,4 +402,10 @@ function pop(state?: State<any> | undefined) {
   tracking = state;
 
   return tracking;
+}
+
+function clearSubs(state: State<any>) {
+  if (!state.unsubs || !state.unsubs.length) return;
+  for (let unsub of state.unsubs) unsub();
+  state.unsubs = [];
 }

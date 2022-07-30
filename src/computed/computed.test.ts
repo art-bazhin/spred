@@ -147,12 +147,34 @@ describe('computed', () => {
     const field = createWritable('bar');
     const count = createComputed(() => obj[field()]);
 
-    const parent = createComputed(() => {
-      count.subscribe(() => {});
-    });
+    const parent = createComputed(() => count());
 
     parent.subscribe(() => {});
 
     expect(spy).toBeCalledTimes(1);
+  });
+
+  it('does not allow to subscribe inside computations', () => {
+    const spy = jest.fn();
+    const logger = jest.fn();
+
+    configure({
+      logException: logger,
+    });
+
+    const source = createWritable(0);
+    const ext = createWritable(0);
+
+    const computed = createComputed(() => {
+      ext.subscribe(spy);
+      return source();
+    });
+
+    computed.subscribe(() => {});
+    expect(spy).toBeCalledTimes(0);
+    expect(logger).toBeCalledTimes(1);
+
+    source(1);
+    expect(spy).toBeCalledTimes(0);
   });
 });

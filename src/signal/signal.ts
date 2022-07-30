@@ -1,6 +1,15 @@
-import { getStateValue, addSubscriber, removeSubscriber } from '../core/core';
+import { config } from '../config/config';
+import {
+  getStateValue,
+  addSubscriber,
+  removeSubscriber,
+  tracking,
+  scope,
+} from '../core/core';
+import { SubscriptionInsideComputationError } from '../errors/errors';
 import { State } from '../state/state';
 import { Subscriber } from '../subscriber/subscriber';
+import { NOOP_FN } from '../utils/constants';
 
 /**
  * Basic reactive primitive.
@@ -50,8 +59,17 @@ export const signalProto = {
   },
 
   subscribe(subscriber: any, exec = true) {
+    if (tracking) {
+      config.logException(new SubscriptionInsideComputationError());
+      return NOOP_FN;
+    }
+
     addSubscriber(this as any, subscriber, exec);
-    return () => removeSubscriber(this as any, subscriber);
+    const unsub = () => removeSubscriber(this as any, subscriber);
+
+    if (scope) scope.unsubs!.push(unsub);
+
+    return unsub;
   },
 
   sample(this: _Signal<any>) {

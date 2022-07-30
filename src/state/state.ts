@@ -1,3 +1,4 @@
+import { scope } from '../core/core';
 import { Subscriber } from '../subscriber/subscriber';
 import { FALSE_STATUS } from '../utils/constants';
 
@@ -19,6 +20,7 @@ export interface State<T> {
   isCatcher?: boolean;
   hasCycle?: boolean;
   oldDepsCount: number;
+  unsubs?: (() => any)[];
 
   // lifecycle:
   onActivate?: ((value: T) => any)[];
