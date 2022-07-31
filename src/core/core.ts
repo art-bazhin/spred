@@ -91,7 +91,12 @@ export function addSubscriber<T>(
   state.subsCount++;
 
   if (exec) {
+    const prevScope = scope;
+    scope = state;
+
     isolate(() => subscriber(value, true));
+
+    scope = prevScope;
   }
 }
 
@@ -163,6 +168,7 @@ export function recalc() {
       if (!state.isNotifying && !shouldUpdate) continue;
 
       if (shouldUpdate) {
+        clearChildren(state);
         emitUpdateLifecycle(state, value);
         state.value = value;
       }
@@ -220,9 +226,11 @@ function notify(notificationQueue: State<any>[]) {
 
   isolate(() => {
     if (wrapper) {
-      wrapper(() => notificationQueue.forEach(runSubscribers));
+      wrapper(() => {
+        for (let state of notificationQueue) runSubscribers(state);
+      });
     } else {
-      notificationQueue.forEach(runSubscribers);
+      for (let state of notificationQueue) runSubscribers(state);
     }
   });
 }
@@ -243,12 +251,14 @@ function decreaseDirtyCount(state: State<any>) {
 
 function runSubscribers<T>(state: State<T>) {
   let i = state.subsCount;
-
   if (!i) return;
 
   if (state.onNotifyStart) {
     state.onNotifyStart.forEach((fn) => fn(state.value));
   }
+
+  const prevScope = scope;
+  scope = state;
 
   for (let subscriber of state.observers) {
     if (!i) break;
@@ -256,6 +266,8 @@ function runSubscribers<T>(state: State<T>) {
     subscriber(state.value);
     --i;
   }
+
+  scope = prevScope;
 
   if (state.onNotifyEnd) {
     state.onNotifyEnd.forEach((fn) => fn(state.value));

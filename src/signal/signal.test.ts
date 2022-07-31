@@ -277,38 +277,6 @@ describe('signal', () => {
     expect(x2Sum()).toBe(20);
   });
 
-  // it('can handle exceptions', () => {
-  //   const subscriber = jest.fn();
-  //   const counter = writable(0);
-
-  //   const isMoreThanFive = computed(() => counter() > 5);
-
-  //   const textWithError = computed(() => {
-  //     if (isMoreThanFive()) throw new Error();
-  //     return counter() + ' is less than five';
-  //   });
-
-  //   const text = computed(
-  //     () => textWithError(),
-  //     () => counter() + ' is more than five'
-  //   );
-
-  //   expect(text()).toBe('0 is less than five');
-
-  //   counter(6);
-  //   expect(text()).toBe('6 is more than five');
-
-  //   text.subscribe(subscriber, false);
-
-  //   counter(4);
-  //   expect(text()).toBe('4 is less than five');
-  //   expect(subscriber).toBeCalledTimes(1);
-
-  //   counter(10);
-  //   expect(text()).toBe('10 is more than five');
-  //   expect(subscriber).toBeCalledTimes(2);
-  // });
-
   it('continues to trigger dependants after error eliminated', () => {
     let str = '';
 
