@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.16.9](https://github.com/art-bazhin/spred/compare/v0.16.8...v0.16.9) (2022-07-31)
+
+
+### Bug Fixes
+
+* fix subscriptions cleanup bug ([7af5f61](https://github.com/art-bazhin/spred/commit/7af5f61827225d1c72fcee394fe82faafe433884))
+
 ### [0.16.8](https://github.com/art-bazhin/spred/compare/v0.16.7...v0.16.8) (2022-07-31)
 
 
