@@ -202,4 +202,30 @@ describe('computed', () => {
     b(2);
     expect(spy).toBeCalledTimes(4);
   });
+
+  it('clean up deep nested subscriptions on every update', () => {
+    const spy = jest.fn();
+    const a = createWritable(0);
+    const aComp = createComputed(() => a());
+    const b = createWritable(0);
+
+    const wrap = createComputed(() => {
+      aComp.subscribe(() => {
+        b.subscribe(() => spy());
+      });
+    });
+
+    wrap();
+
+    expect(spy).toBeCalledTimes(1);
+
+    a(1);
+    expect(spy).toBeCalledTimes(2);
+
+    b(1);
+    expect(spy).toBeCalledTimes(3);
+
+    b(2);
+    expect(spy).toBeCalledTimes(4);
+  });
 });

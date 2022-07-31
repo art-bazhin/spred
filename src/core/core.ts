@@ -91,12 +91,12 @@ export function addSubscriber<T>(
   state.subsCount++;
 
   if (exec) {
-    const prevScope = scope;
-    scope = state;
+    const prevTracking = tracking;
+    tracking = state;
 
     isolate(() => subscriber(value, true));
 
-    scope = prevScope;
+    tracking = prevTracking;
   }
 }
 
