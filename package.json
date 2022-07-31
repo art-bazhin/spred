@@ -4,7 +4,7 @@
   "homepage": "https://github.com/art-bazhin/spred",
   "repository": "git@github.com/art-bazhin/spred.git",
   "bugs": "https://github.com/art-bazhin/spred/issues",
-  "version": "0.16.7",
+  "version": "0.16.8",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
