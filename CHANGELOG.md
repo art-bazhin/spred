@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.16.7](https://github.com/art-bazhin/spred/compare/v0.16.6...v0.16.7) (2022-07-31)
+
+
+### Bug Fixes
+
+* fix unsubscribing nested subs ([3d902e2](https://github.com/art-bazhin/spred/commit/3d902e2b45715024d0847dbe9bf325e1df26d3d4))
+
+
+### Tests
+
+* add missing tests ([83c0798](https://github.com/art-bazhin/spred/commit/83c0798efb898f6b8dd193ee50b3c11d9ee36330))
+* add missing tests ([5d2b413](https://github.com/art-bazhin/spred/commit/5d2b4139f2042c7b70766d2c2e13ef1e46321143))
+
 ### [0.16.6](https://github.com/art-bazhin/spred/compare/v0.16.5...v0.16.6) (2022-07-30)
 
 
