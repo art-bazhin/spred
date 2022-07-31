@@ -1,4 +1,4 @@
-import { scope } from '../core/core';
+import { scope, tracking } from '../core/core';
 import { Subscriber } from '../subscriber/subscriber';
 import { FALSE_STATUS } from '../utils/constants';
 
@@ -20,7 +20,8 @@ export interface State<T> {
   isCatcher?: boolean;
   hasCycle?: boolean;
   oldDepsCount: number;
-  unsubs?: (() => any)[];
+  children: ((() => any) | State<any>)[];
+  parent?: State<any>;
 
   // lifecycle:
   onActivate?: ((value: T) => any)[];
@@ -35,7 +36,9 @@ export function createState<T>(
   value: T,
   computedFn?: (curentValue: T | undefined) => T
 ): State<T> {
-  return {
+  const parent = tracking || scope;
+
+  const state: State<T> = {
     value,
     computedFn,
     observers: new Set(),
@@ -45,5 +48,13 @@ export function createState<T>(
     subsCount: 0,
     oldDepsCount: 0,
     isCached: FALSE_STATUS,
+    children: [],
+    parent,
   };
+
+  if (parent) {
+    parent.children.push(state);
+  }
+
+  return state;
 }

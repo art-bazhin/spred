@@ -37,8 +37,7 @@ export function isolate(fn: any, args?: any) {
   const prevTracking = tracking;
   const prevScope = scope;
 
-  scope = tracking;
-  if (scope) scope.unsubs = [];
+  if (tracking) scope = tracking;
 
   push();
   if (args) fn(...args);
@@ -90,7 +89,10 @@ export function addSubscriber<T>(
 
   state.observers.add(subscriber);
   state.subsCount++;
-  if (exec) subscriber(value, true);
+
+  if (exec) {
+    isolate(() => subscriber(value, true));
+  }
 }
 
 export function removeSubscriber<T>(
@@ -216,11 +218,13 @@ export function recalc() {
 function notify(notificationQueue: State<any>[]) {
   const wrapper = (config as any)._notificationWrapper;
 
-  if (wrapper) {
-    wrapper(() => notificationQueue.forEach(runSubscribers));
-  } else {
-    notificationQueue.forEach(runSubscribers);
-  }
+  isolate(() => {
+    if (wrapper) {
+      wrapper(() => notificationQueue.forEach(runSubscribers));
+    } else {
+      notificationQueue.forEach(runSubscribers);
+    }
+  });
 }
 
 function decreaseDirtyCount(state: State<any>) {
@@ -301,7 +305,6 @@ function calcComputed<T>(state: State<T>, logException?: boolean) {
   const prevTracking = tracking;
   let value;
 
-  clearSubs(state);
   push(state);
 
   try {
@@ -356,8 +359,6 @@ function activateDependencies<T>(state: State<T>) {
 function deactivateDependencies<T>(state: State<T>) {
   if (state.observers.size) return;
 
-  clearSubs(state);
-
   if (state.onDeactivate) {
     state.onDeactivate.forEach((fn) => fn(state.value));
   }
@@ -375,6 +376,8 @@ function push(state?: State<any>) {
     depth = 0;
     return;
   }
+
+  clearChildren(state);
 
   if (!state.observers.size) {
     if (!depth) cacheStatus = { status: true };
@@ -404,8 +407,13 @@ function pop(state?: State<any> | undefined) {
   return tracking;
 }
 
-function clearSubs(state: State<any>) {
-  if (!state.unsubs || !state.unsubs.length) return;
-  for (let unsub of state.unsubs) unsub();
-  state.unsubs = [];
+function clearChildren(state: State<any>) {
+  if (!state.children.length) return;
+
+  for (let child of state.children) {
+    if (typeof child === 'function') child();
+    else clearChildren(child);
+  }
+
+  state.children = [];
 }
