@@ -47,7 +47,7 @@ describe('isolate', () => {
       return source();
     });
 
-    const unsub = computed.subscribe(() => {});
+    computed.subscribe(() => {});
     expect(innerSpy).toBeCalledTimes(1);
     expect(externalSpy).toBeCalledTimes(1);
     expect(deepSpy).toBeCalledTimes(1);
@@ -71,5 +71,101 @@ describe('isolate', () => {
     expect(innerSpy).toBeCalledTimes(5);
     expect(externalSpy).toBeCalledTimes(5);
     expect(deepSpy).toBeCalledTimes(5);
+  });
+
+  it('unsubscribes all inner subscriptions on parent calculation (case 2)', () => {
+    const spy = jest.fn();
+
+    const source = createWritable(0);
+    const external = createWritable(0);
+
+    const innerFn1 = () => {
+      isolate(() => {
+        external.subscribe(() => spy());
+      });
+
+      return true;
+    };
+
+    const innerFn2 = () => {
+      let res: any;
+
+      isolate(() => {
+        res = innerFn1();
+      });
+
+      return res;
+    };
+
+    const computed = createComputed(() => {
+      isolate(() => {
+        const innerToggle = createWritable(true);
+        const innerComp = createComputed(() => innerToggle() && innerFn2());
+
+        innerComp.subscribe(() => {});
+      });
+
+      return source();
+    });
+
+    computed.subscribe(() => {});
+    expect(spy).toBeCalledTimes(1);
+
+    source(1);
+    expect(spy).toBeCalledTimes(2);
+
+    external(1);
+    expect(spy).toBeCalledTimes(3);
+
+    external(2);
+    expect(spy).toBeCalledTimes(4);
+  });
+
+  it('unsubscribes all inner subscriptions on parent calculation (case 3)', () => {
+    const spy = jest.fn();
+
+    const source = createWritable(0);
+    const external = createWritable(0);
+
+    const innerFn1 = () => {
+      isolate(() => {
+        external.subscribe(() => spy());
+      });
+
+      return true;
+    };
+
+    const innerFn2 = () => {
+      let res: any;
+
+      isolate(() => {
+        res = innerFn1();
+      });
+
+      return res;
+    };
+
+    const computed = createComputed(() => {
+      isolate(() => {
+        const innerToggle = createWritable(true);
+        const innerComp = createComputed(() => innerToggle() && innerFn2());
+
+        innerComp();
+      });
+
+      return source();
+    });
+
+    computed.subscribe(() => {});
+    expect(spy).toBeCalledTimes(1);
+
+    source(1);
+    expect(spy).toBeCalledTimes(2);
+
+    external(1);
+    expect(spy).toBeCalledTimes(3);
+
+    external(2);
+    expect(spy).toBeCalledTimes(4);
   });
 });
