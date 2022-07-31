@@ -71,7 +71,7 @@ describe('signal', () => {
     expect(x2Counter()).toBe(6);
   });
 
-  it('does not track dependencies inside subscriber function', () => {
+  it('does not track itself on subscribing', () => {
     const counter = createWritable(0);
     const gt5 = createMemo(() => counter() > 5);
     const res = createMemo(() => {
@@ -79,6 +79,34 @@ describe('signal', () => {
         const obj: any = {};
 
         counter.subscribe((v) => (obj.value = v));
+        return obj;
+      }
+
+      return {} as any;
+    });
+
+    const spy = jest.fn();
+
+    res.subscribe(spy, false);
+
+    counter(1);
+    counter(2);
+    counter(3);
+    counter(6);
+    counter(7);
+    counter(8);
+
+    expect(spy).toBeCalledTimes(1);
+  });
+
+  it('does not track dependencies inside subscriber function', () => {
+    const counter = createWritable(0);
+    const gt5 = createMemo(() => counter() > 5);
+    const res = createMemo(() => {
+      if (gt5()) {
+        const obj: any = {};
+
+        counter.subscribe((v) => (obj.value = counter()));
         return obj;
       }
 

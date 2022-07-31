@@ -154,27 +154,30 @@ describe('computed', () => {
     expect(spy).toBeCalledTimes(1);
   });
 
-  it('does not allow to subscribe inside computations', () => {
+  it('unsubscribes inner subscriptions on every calculation', () => {
     const spy = jest.fn();
-    const logger = jest.fn();
-
-    configure({
-      logException: logger,
-    });
 
     const source = createWritable(0);
     const ext = createWritable(0);
 
     const computed = createComputed(() => {
-      ext.subscribe(spy);
+      ext.subscribe(() => spy());
       return source();
     });
 
     computed.subscribe(() => {});
-    expect(spy).toBeCalledTimes(0);
-    expect(logger).toBeCalledTimes(1);
+    expect(spy).toBeCalledTimes(1);
 
     source(1);
-    expect(spy).toBeCalledTimes(0);
+    expect(spy).toBeCalledTimes(2);
+
+    source(2);
+    expect(spy).toBeCalledTimes(3);
+
+    ext(1);
+    expect(spy).toBeCalledTimes(4);
+
+    ext(2);
+    expect(spy).toBeCalledTimes(5);
   });
 });
