@@ -253,12 +253,12 @@ function runSubscribers<T>(state: State<T>) {
   let i = state.subsCount;
   if (!i) return;
 
+  const prevScope = scope;
+  scope = state;
+
   if (state.onNotifyStart) {
     state.onNotifyStart.forEach((fn) => fn(state.value));
   }
-
-  const prevScope = scope;
-  scope = state;
 
   for (let subscriber of state.observers) {
     if (!i) break;
@@ -267,11 +267,11 @@ function runSubscribers<T>(state: State<T>) {
     --i;
   }
 
-  scope = prevScope;
-
   if (state.onNotifyEnd) {
     state.onNotifyEnd.forEach((fn) => fn(state.value));
   }
+
+  scope = prevScope;
 }
 
 export function getStateValue<T>(state: State<T>, notTrackDeps?: boolean): T {

@@ -1,3 +1,4 @@
+import { scope, tracking } from '../core/core';
 import { Signal, _Signal } from '../signal/signal';
 import { removeFromArray } from '../utils/removeFromArray';
 
@@ -17,7 +18,14 @@ function addListener<T>(
   if (arr.indexOf(listener) > -1) return;
   arr.push(listener);
 
-  return () => removeFromArray(arr, listener);
+  const unsub = () => removeFromArray(arr, listener);
+  const parent = tracking || scope;
+
+  if (parent) {
+    parent.children.push(unsub);
+  }
+
+  return unsub;
 }
 
 /**

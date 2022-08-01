@@ -21,7 +21,6 @@ export interface State<T> {
   hasCycle?: boolean;
   oldDepsCount: number;
   children: ((() => any) | State<any>)[];
-  parent?: State<any>;
 
   // lifecycle:
   onActivate?: ((value: T) => any)[];
@@ -49,7 +48,6 @@ export function createState<T>(
     oldDepsCount: 0,
     isCached: FALSE_STATUS,
     children: [],
-    parent,
   };
 
   if (parent) {
