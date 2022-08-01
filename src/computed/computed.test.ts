@@ -245,6 +245,27 @@ describe('computed', () => {
     expect(onDeactivateSpy).toBeCalledTimes(1);
   });
 
+  it('handles automatic unsubscribing in the right order', () => {
+    const spy = jest.fn();
+    const onDeactivateSpy = jest.fn();
+
+    const source = writable(0);
+    const ext = writable(0);
+
+    const comp = computed(() => {
+      onDeactivate(ext, () => onDeactivateSpy());
+      ext.subscribe(() => {});
+
+      return source();
+    });
+
+    comp.subscribe(() => {});
+    expect(onDeactivateSpy).toBeCalledTimes(0);
+
+    source(1);
+    expect(onDeactivateSpy).toBeCalledTimes(1);
+  });
+
   it('cleans up subscriptions inside a subscriber on every update', () => {
     const spy = jest.fn();
     const a = writable(0);
