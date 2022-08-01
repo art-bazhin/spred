@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.18.0](https://github.com/art-bazhin/spred/compare/v0.16.9...v0.18.0) (2022-08-01)
+
+
+### ⚠ BREAKING CHANGES
+
+* createEntity -> entity
+
+### Features
+
+* rename api methods ([3589c10](https://github.com/art-bazhin/spred/commit/3589c106a9f5efbd916373b8f0e4a83a23c2e448))
+
+
+### Bug Fixes
+
+* clean up lifecycle subs ([d9fe0d9](https://github.com/art-bazhin/spred/commit/d9fe0d9fd14c0904d0ac0f6c82fc242e552438f2))
+
+
+### Others
+
+* **release:** 0.17.0 ([7334e02](https://github.com/art-bazhin/spred/commit/7334e0216098d387b29aceb61e5ee4997bdbb836))
+
+
+### Tests
+
+* add lifecycle unsubscribing tests ([40a6e52](https://github.com/art-bazhin/spred/commit/40a6e52638e08823c6fb07d909ba58685f7abe72))
+
 ## [0.17.0](https://github.com/art-bazhin/spred/compare/v0.16.9...v0.17.0) (2022-08-01)
 
 
