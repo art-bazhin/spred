@@ -168,13 +168,12 @@
                 >Writable signals</a
               >
               are created with a
-              <a
-                href="https://art-bazhin.github.io/spred/modules.html#createWritable"
-                >createWritable</a
+              <a href="https://art-bazhin.github.io/spred/modules.html#writable"
+                >writable</a
               >
               function that takes the initial value of the signal.
             </p>
-            <pre><code class="language-ts"><span class="hl-0">import</span><span class="hl-1"> { </span><span class="hl-2">createWritable</span><span class="hl-1"> } </span><span class="hl-0">from</span><span class="hl-1"> </span><span class="hl-3">&#39;spred&#39;</span><span class="hl-1">;</span><br/><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-5">counter</span><span class="hl-1"> = </span><span class="hl-7">createWritable</span><span class="hl-1">(</span><span class="hl-10">0</span><span class="hl-1">);</span>
+            <pre><code class="language-ts"><span class="hl-0">import</span><span class="hl-1"> { </span><span class="hl-2">writable</span><span class="hl-1"> } </span><span class="hl-0">from</span><span class="hl-1"> </span><span class="hl-3">&#39;spred&#39;</span><span class="hl-1">;</span><br/><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-5">counter</span><span class="hl-1"> = </span><span class="hl-7">writable</span><span class="hl-1">(</span><span class="hl-10">0</span><span class="hl-1">);</span>
 </code></pre>
             <p>
               To get the value of the signal, you need to call it without
@@ -218,7 +217,7 @@
               function. It takes as its argument a function that calculates the
               value of the signal and depends only on other signal values.
             </p>
-            <pre><code class="language-ts"><span class="hl-0">import</span><span class="hl-1"> { </span><span class="hl-2">createWritable</span><span class="hl-1">, </span><span class="hl-2">computed</span><span class="hl-1"> } </span><span class="hl-0">from</span><span class="hl-1"> </span><span class="hl-3">&#39;spred&#39;</span><span class="hl-1">;</span><br/><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-5">counter</span><span class="hl-1"> = </span><span class="hl-7">createWritable</span><span class="hl-1">(</span><span class="hl-10">0</span><span class="hl-1">);</span><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-5">doubleCounter</span><span class="hl-1"> = </span><span class="hl-7">computed</span><span class="hl-1">(() </span><span class="hl-4">=&gt;</span><span class="hl-1"> </span><span class="hl-7">counter</span><span class="hl-1">() * </span><span class="hl-10">2</span><span class="hl-1">);</span><br/><br/><span class="hl-2">doubleCounter</span><span class="hl-1">.</span><span class="hl-7">subscribe</span><span class="hl-1">((</span><span class="hl-2">value</span><span class="hl-1">) </span><span class="hl-4">=&gt;</span><span class="hl-1"> </span><span class="hl-2">console</span><span class="hl-1">.</span><span class="hl-7">log</span><span class="hl-1">(</span><span class="hl-3">&#39;Double value is &#39;</span><span class="hl-1"> + </span><span class="hl-2">value</span><span class="hl-1">));</span><br/><br/><span class="hl-9">// &gt; Double value is 0</span><br/><br/><span class="hl-7">counter</span><span class="hl-1">(</span><span class="hl-10">1</span><span class="hl-1">);</span><br/><br/><span class="hl-9">// &gt; Double value is 2</span>
+            <pre><code class="language-ts"><span class="hl-0">import</span><span class="hl-1"> { </span><span class="hl-2">writable</span><span class="hl-1">, </span><span class="hl-2">computed</span><span class="hl-1"> } </span><span class="hl-0">from</span><span class="hl-1"> </span><span class="hl-3">&#39;spred&#39;</span><span class="hl-1">;</span><br/><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-5">counter</span><span class="hl-1"> = </span><span class="hl-7">writable</span><span class="hl-1">(</span><span class="hl-10">0</span><span class="hl-1">);</span><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-5">doubleCounter</span><span class="hl-1"> = </span><span class="hl-7">computed</span><span class="hl-1">(() </span><span class="hl-4">=&gt;</span><span class="hl-1"> </span><span class="hl-7">counter</span><span class="hl-1">() * </span><span class="hl-10">2</span><span class="hl-1">);</span><br/><br/><span class="hl-2">doubleCounter</span><span class="hl-1">.</span><span class="hl-7">subscribe</span><span class="hl-1">((</span><span class="hl-2">value</span><span class="hl-1">) </span><span class="hl-4">=&gt;</span><span class="hl-1"> </span><span class="hl-2">console</span><span class="hl-1">.</span><span class="hl-7">log</span><span class="hl-1">(</span><span class="hl-3">&#39;Double value is &#39;</span><span class="hl-1"> + </span><span class="hl-2">value</span><span class="hl-1">));</span><br/><br/><span class="hl-9">// &gt; Double value is 0</span><br/><br/><span class="hl-7">counter</span><span class="hl-1">(</span><span class="hl-10">1</span><span class="hl-1">);</span><br/><br/><span class="hl-9">// &gt; Double value is 2</span>
 </code></pre>
 
             <a
@@ -340,7 +339,7 @@
                 >
               </li>
               <li class="tsd-kind-function tsd-has-type-parameter">
-                <a href="modules.html#createWritable" class="tsd-kind-icon"
+                <a href="modules.html#writable" class="tsd-kind-icon"
                   >create<wbr />Writable</a
                 >
               </li>

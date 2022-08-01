@@ -55,12 +55,12 @@ npm install spred --save
 
 ### Writable Signals
 
-[Writable signals](https://art-bazhin.github.io/spred/interfaces/WritableSignal.html) are created with a [createWritable](https://art-bazhin.github.io/spred/modules.html#createWritable) function that takes the initial value of the signal.
+[Writable signals](https://art-bazhin.github.io/spred/interfaces/WritableSignal.html) are created with a [writable](https://art-bazhin.github.io/spred/modules.html#writable) function that takes the initial value of the signal.
 
 ```ts
-import { createWritable } from 'spred';
+import { writable } from 'spred';
 
-const counter = createWritable(0);
+const counter = writable(0);
 ```
 
 To get the value of the signal, you need to call it without arguments.
@@ -102,9 +102,9 @@ Computed signals automatically track their dependencies and recalculate their va
 A computed signal can be created using the [computed](https://art-bazhin.github.io/spred/modules.html#computed) function. It takes as its argument a function that calculates the value of the signal and depends only on other signal values.
 
 ```ts
-import { createWritable, computed } from 'spred';
+import { writable, computed } from 'spred';
 
-const counter = createWritable(0);
+const counter = writable(0);
 const doubleCounter = computed(() => counter() * 2);
 
 doubleCounter.subscribe((value) => console.log('Double value is ' + value));
