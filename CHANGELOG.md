@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.18.3](https://github.com/art-bazhin/spred/compare/v0.18.2...v0.18.3) (2022-08-01)
+
+
+### Bug Fixes
+
+* fix lifecycle unsubscribing order ([396de37](https://github.com/art-bazhin/spred/commit/396de3744f848c4ee45dffe90242138abcddb597))
+
+
+### Tests
+
+* check that lifecycle unsubscibing occurs after value unsubscribing ([07ed3f5](https://github.com/art-bazhin/spred/commit/07ed3f5e93eda9dba0c6192545a40b2b9af51c7f))
+
 ### [0.18.2](https://github.com/art-bazhin/spred/compare/v0.18.1...v0.18.2) (2022-08-01)
 
 
