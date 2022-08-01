@@ -14,15 +14,15 @@ Simple and fast JavaScript reactive programming library.
 ## Example
 
 ```ts
-import { createSignal, createComputed, watch, batch } from 'spred';
+import { signal, computed, watch, batch } from 'spred';
 
 const formatter = new Intl.DateTimeFormat('en-GB');
 
-const [name, setName] = createSignal('Paul');
-const [instrument, setInstrument] = createSignal('bass');
-const [birthday, setBirthday] = createSignal('1942-06-18');
+const [name, setName] = signal('Paul');
+const [instrument, setInstrument] = signal('bass');
+const [birthday, setBirthday] = signal('1942-06-18');
 
-const formattedBirthday = createComputed(() =>
+const formattedBirthday = computed(() =>
   formatter.format(new Date(birthday()))
 );
 
@@ -99,13 +99,13 @@ counter(2);
 ### Computed Signals
 
 Computed signals automatically track their dependencies and recalculate their value when any of the dependencies changes.
-A computed signal can be created using the [createComputed](https://art-bazhin.github.io/spred/modules.html#createComputed) function. It takes as its argument a function that calculates the value of the signal and depends only on other signal values.
+A computed signal can be created using the [computed](https://art-bazhin.github.io/spred/modules.html#computed) function. It takes as its argument a function that calculates the value of the signal and depends only on other signal values.
 
 ```ts
-import { createWritable, createComputed } from 'spred';
+import { createWritable, computed } from 'spred';
 
 const counter = createWritable(0);
-const doubleCounter = createComputed(() => counter() * 2);
+const doubleCounter = computed(() => counter() * 2);
 
 doubleCounter.subscribe((value) => console.log('Double value is ' + value));
 
@@ -118,12 +118,12 @@ counter(1);
 
 ### Signal Creation
 
-If you need to create a readonly signal and a separate setter at once, you can use the [createSignal](https://art-bazhin.github.io/spred/modules.html#createSignal) function.
+If you need to create a readonly signal and a separate setter at once, you can use the [signal](https://art-bazhin.github.io/spred/modules.html#signal) function.
 
 ```ts
-import { createSignal } from 'spred';
+import { signal } from 'spred';
 
-const [counter, setCounter] = createSignal(0);
+const [counter, setCounter] = signal(0);
 
 counter.subscribe((value) => console.log('The value is ' + value));
 

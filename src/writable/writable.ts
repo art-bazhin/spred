@@ -47,21 +47,21 @@ export interface WritableSignal<T> extends Signal<T> {
  * Сreates a writable signal.
  * @returns Writable signal.
  */
-export function createWritable<T>(): WritableSignal<T | undefined>;
+export function writable<T>(): WritableSignal<T | undefined>;
 
 /**
  * Сreates a writable signal.
  * @param value Initial value of the signal.
  * @returns Writable signal.
  */
-export function createWritable<T>(value: T): WritableSignal<T>;
+export function writable<T>(value: T): WritableSignal<T>;
 
-export function createWritable(value?: any) {
+export function writable(value?: any) {
   const state = createState(value, undefined);
   const writable: any = writableSelf.bind(state);
 
   writable._state = state;
-  writable.constructor = createWritable;
+  writable.constructor = writable;
   writable.set = writableSignalProto.set;
   writable.get = writableSignalProto.get;
   writable.notify = writableSignalProto.notify;

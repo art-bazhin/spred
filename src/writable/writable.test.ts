@@ -1,7 +1,7 @@
-import { createWritable } from './writable';
+import { writable } from './writable';
 
 describe('writable', () => {
-  const counter = createWritable(0);
+  const counter = writable(0);
 
   it('is created with default value', () => {
     expect(counter()).toBe(0);
@@ -23,7 +23,7 @@ describe('writable', () => {
   });
 
   it('force emits subscribers using notify method', () => {
-    const s = createWritable({} as any);
+    const s = writable({} as any);
 
     let value: any;
     const subscriber = jest.fn((v: any) => (value = v.a));
@@ -50,8 +50,8 @@ describe('writable', () => {
 
   it('clean up nested subscriptions on every update', () => {
     const spy = jest.fn();
-    const a = createWritable(0);
-    const b = createWritable(0);
+    const a = writable(0);
+    const b = writable(0);
 
     a.subscribe(() => {
       b.subscribe(() => spy());

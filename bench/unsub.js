@@ -1,4 +1,4 @@
-import { createMemo, createSignal, batch } from '/dist/index.mjs';
+import { memo, signal, batch } from '/dist/index.mjs';
 
 const COUNT = 20000;
 
@@ -13,13 +13,13 @@ const unsubs = [];
 
 const subscriber = () => {};
 
-const [value, getValue] = createSignal(0);
+const [value, getValue] = signal(0);
 
 for (let i = 0; i < COUNT; i++) {
-  // const [value, getValue] = createSignal(0);
-  const x2Value = createMemo(() => value() * 2);
-  const x4Value = createMemo(() => x2Value() * 2);
-  const x8Value = createMemo(() => x4Value() * 2);
+  // const [value, getValue] = signal(0);
+  const x2Value = memo(() => value() * 2);
+  const x4Value = memo(() => x2Value() * 2);
+  const x8Value = memo(() => x4Value() * 2);
 
   signals.push(x8Value);
 }

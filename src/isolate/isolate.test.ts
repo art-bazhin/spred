@@ -1,20 +1,20 @@
-import { createComputed } from '../computed/computed';
-import { createWritable } from '../writable/writable';
+import { computed } from '../computed/computed';
+import { writable } from '../writable/writable';
 import { isolate } from './isolate';
 
 describe('isolate', () => {
   it('isolates passed fn from dependency tracking', () => {
     const spy = jest.fn();
-    const count = createWritable(0);
+    const count = writable(0);
 
-    const computed = createComputed(() => {
+    const comp = computed(() => {
       isolate(() => {
         spy();
         count();
       });
     });
 
-    computed.subscribe(() => {});
+    comp.subscribe(() => {});
     expect(spy).toBeCalledTimes(1);
 
     count(1);
@@ -26,14 +26,14 @@ describe('isolate', () => {
     const externalSpy = jest.fn();
     const deepSpy = jest.fn();
 
-    const source = createWritable(0);
-    const external = createWritable(0);
+    const source = writable(0);
+    const external = writable(0);
 
-    const computed = createComputed(() => {
+    const comp = computed(() => {
       isolate(() => {
-        const inner = createComputed(() => {
+        const inner = computed(() => {
           isolate(() => {
-            const deep = createComputed(external);
+            const deep = computed(external);
             deep.subscribe(() => deepSpy());
           });
 
@@ -47,7 +47,7 @@ describe('isolate', () => {
       return source();
     });
 
-    computed.subscribe(() => {});
+    comp.subscribe(() => {});
     expect(innerSpy).toBeCalledTimes(1);
     expect(externalSpy).toBeCalledTimes(1);
     expect(deepSpy).toBeCalledTimes(1);
@@ -76,8 +76,8 @@ describe('isolate', () => {
   it('unsubscribes all inner subscriptions on parent calculation (case 2)', () => {
     const spy = jest.fn();
 
-    const source = createWritable(0);
-    const external = createWritable(0);
+    const source = writable(0);
+    const external = writable(0);
 
     const innerFn1 = () => {
       isolate(() => {
@@ -97,10 +97,10 @@ describe('isolate', () => {
       return res;
     };
 
-    const computed = createComputed(() => {
+    const comp = computed(() => {
       isolate(() => {
-        const innerToggle = createWritable(true);
-        const innerComp = createComputed(() => innerToggle() && innerFn2());
+        const innerToggle = writable(true);
+        const innerComp = computed(() => innerToggle() && innerFn2());
 
         innerComp.subscribe(() => {});
       });
@@ -108,7 +108,7 @@ describe('isolate', () => {
       return source();
     });
 
-    computed.subscribe(() => {});
+    comp.subscribe(() => {});
     expect(spy).toBeCalledTimes(1);
 
     source(1);
@@ -124,8 +124,8 @@ describe('isolate', () => {
   it('unsubscribes all inner subscriptions on parent calculation (case 3)', () => {
     const spy = jest.fn();
 
-    const source = createWritable(0);
-    const external = createWritable(0);
+    const source = writable(0);
+    const external = writable(0);
 
     const innerFn1 = () => {
       isolate(() => {
@@ -145,10 +145,10 @@ describe('isolate', () => {
       return res;
     };
 
-    const computed = createComputed(() => {
+    const comp = computed(() => {
       isolate(() => {
-        const innerToggle = createWritable(true);
-        const innerComp = createComputed(() => innerToggle() && innerFn2());
+        const innerToggle = writable(true);
+        const innerComp = computed(() => innerToggle() && innerFn2());
 
         innerComp();
       });
@@ -156,7 +156,7 @@ describe('isolate', () => {
       return source();
     });
 
-    computed.subscribe(() => {});
+    comp.subscribe(() => {});
     expect(spy).toBeCalledTimes(1);
 
     source(1);

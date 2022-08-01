@@ -1,5 +1,5 @@
-import { createWritable, createComputed, configure } from '..';
-import { createCatcher } from './catcher';
+import { writable, computed, configure } from '..';
+import { catcher } from './catcher';
 
 configure({
   logException: () => {},
@@ -7,14 +7,14 @@ configure({
 
 describe('catcher', () => {
   it('allows to handle inactive writable exceptions', () => {
-    const count = createWritable(0);
+    const count = writable(0);
 
-    const withError = createComputed(() => {
+    const withError = computed(() => {
       if (count() < 5) throw Error();
       return count();
     });
 
-    const handledError = createCatcher(withError, () => 42);
+    const handledError = catcher(withError, () => 42);
 
     expect(handledError()).toBe(42);
 
@@ -26,17 +26,17 @@ describe('catcher', () => {
   });
 
   it('allows to handle active writable exceptions', () => {
-    const count = createWritable(0);
+    const count = writable(0);
 
-    const withError = createComputed(() => {
+    const withError = computed(() => {
       if (count() < 5) throw Error();
       return count();
     });
 
-    const withErrorComp = createComputed(withError);
+    const withErrorComp = computed(withError);
     withErrorComp.subscribe(() => {}, false);
 
-    const handledError = createCatcher(
+    const handledError = catcher(
       () => withErrorComp(),
       () => 42
     );
@@ -52,21 +52,21 @@ describe('catcher', () => {
   });
 
   it('allows to throw a new exception', () => {
-    const count = createWritable(0);
+    const count = writable(0);
 
-    const withError = createComputed(() => {
+    const withError = computed(() => {
       if (count() < 5) throw 5 - count();
       return count();
     });
 
-    const withErrorComp = createComputed(withError);
+    const withErrorComp = computed(withError);
 
-    const handledError = createCatcher(withErrorComp, (e: any) => {
+    const handledError = catcher(withErrorComp, (e: any) => {
       if (e > 5) throw Error();
       return 42;
     });
 
-    const secondHandledError = createCatcher(handledError, () => 999);
+    const secondHandledError = catcher(handledError, () => 999);
 
     handledError.subscribe(() => {}, false);
 

@@ -1,5 +1,5 @@
 import { configure } from '../config/config';
-import { createEffect } from './effect';
+import { effect } from './effect';
 
 describe('effect', () => {
   configure({
@@ -13,7 +13,7 @@ describe('effect', () => {
     });
   };
 
-  const { data, exception, status, reset, abort, call } = createEffect(fn);
+  const { data, exception, status, reset, abort, call } = effect(fn);
 
   it('is initialized with default state', () => {
     expect(data()).toBe(undefined);

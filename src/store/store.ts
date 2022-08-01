@@ -1,6 +1,6 @@
-import { createWritable, WritableSignal } from '../writable/writable';
+import { writable, WritableSignal } from '../writable/writable';
 import { Signal, _Signal } from '../signal/signal';
-import { createComputed } from '../computed/computed';
+import { computed } from '../computed/computed';
 import { batch, update } from '../core/core';
 
 export interface StoreOptions<T> {
@@ -90,7 +90,7 @@ function createData<T>(items: T[], getItemId: (item: T) => string) {
 
 function getSignal<T>(this: _Store<T>, id: string) {
   if (!this._signals[id]) {
-    this._signals[id] = createComputed<T | null>(
+    this._signals[id] = computed<T | null>(
       () => this._data()[id] || this._force()
     ) as any;
   }
@@ -153,7 +153,7 @@ function clear<T>(this: _Store<T>) {
  * @param options Store options.
  * @returns Store.
  */
-export function createStore<T extends { id: string }>(
+export function store<T extends { id: string }>(
   data?: StoreData<T>,
   options?: Partial<StoreOptions<T>>
 ): Store<T>;
@@ -163,7 +163,7 @@ export function createStore<T extends { id: string }>(
  * @param items Array of items.
  * @param options Store options.
  */
-export function createStore<T extends { id: string }>(
+export function store<T extends { id: string }>(
   items?: T[],
   options?: Partial<StoreOptions<T>>
 ): Store<T>;
@@ -174,7 +174,7 @@ export function createStore<T extends { id: string }>(
  * @param options Store options.
  * @returns Store.
  */
-export function createStore<T>(
+export function store<T>(
   items: StoreData<T>,
   options: StoreOptions<T>
 ): Store<T>;
@@ -184,20 +184,20 @@ export function createStore<T>(
  * @param items Array of items.
  * @param options Store options.
  */
-export function createStore<T>(items: T[], options: StoreOptions<T>): Store<T>;
+export function store<T>(items: T[], options: StoreOptions<T>): Store<T>;
 
-export function createStore<T>(items?: any, options?: any) {
+export function store<T>(items?: any, options?: any) {
   const opts = Object.assign({}, DEFAULT_STORE_OPTIONS, options || {});
   const storeMap =
     (Array.isArray(items) ? createData(items, opts.getItemId) : items) || {};
-  const _data = createWritable(storeMap);
-  const data = createComputed(_data);
+  const _data = writable(storeMap);
+  const data = computed(_data);
 
   const res: _Store<T> = {
     _options: opts,
     _idFn: opts.getItemId,
     _signals: {},
-    _force: createWritable(null),
+    _force: writable(null),
     _data,
     data,
     getSignal,

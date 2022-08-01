@@ -1,9 +1,9 @@
-import { createWritable } from '../writable/writable';
-import { createComputed } from '../computed/computed';
+import { writable } from '../writable/writable';
+import { computed } from '../computed/computed';
 import { Signal } from '../signal/signal';
 import { batch } from '../core/core';
 import { NOOP_FN } from '../utils/constants';
-import { createMemo } from '../memo/memo';
+import { memo } from '../memo/memo';
 
 export type EffectStatus = 'pristine' | 'pending' | 'fulfilled' | 'rejected';
 
@@ -61,24 +61,24 @@ export interface Effect<T, A extends unknown[]> {
  * @param asyncFn Asynchronous function
  * @returns Effect.
  */
-export function createEffect<T, A extends unknown[]>(
+export function effect<T, A extends unknown[]>(
   asyncFn: (...args: A) => Promise<T>
 ) {
   let counter = 0;
   let current = -1;
 
-  const _status = createWritable<EffectStatus>('pristine');
-  const _exception = createWritable();
-  const _data = createWritable<T>();
+  const _status = writable<EffectStatus>('pristine');
+  const _exception = writable();
+  const _data = writable<T>();
 
-  const lastStatus = createMemo(() => {
+  const lastStatus = memo(() => {
     const status = _status();
     return status === 'pending' ? undefined : status;
   });
 
   lastStatus.subscribe(NOOP_FN);
 
-  const status = createMemo(
+  const status = memo(
     () => {
       const value = _status();
 
@@ -96,9 +96,9 @@ export function createEffect<T, A extends unknown[]>(
     }
   );
 
-  const exception = createComputed(_exception);
+  const exception = computed(_exception);
 
-  const done = createComputed((last) => {
+  const done = computed((last) => {
     const data = _data();
     const exception = _exception();
 
@@ -115,7 +115,7 @@ export function createEffect<T, A extends unknown[]>(
     }
   });
 
-  const data = createComputed(_data);
+  const data = computed(_data);
 
   const abort = () => {
     if (!status().pending) return;

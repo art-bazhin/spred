@@ -1,5 +1,5 @@
-import { createComputed } from '../computed/computed';
-import { createWritable } from '../writable/writable';
+import { computed } from '../computed/computed';
+import { writable } from '../writable/writable';
 import { check } from './check';
 
 describe('check', () => {
@@ -15,28 +15,28 @@ describe('check', () => {
 
     expect(check(fn)).toBe(false);
 
-    const signal = createWritable();
+    const signal = writable();
     const fnNoCall = () => signal;
 
     expect(check(fnNoCall)).toBe(false);
   });
 
   it('returns true if passed fn contains tracked signal calls', () => {
-    const signal = createWritable();
+    const signal = writable();
     const fn = () => signal();
 
     expect(check(fn)).toBe(true);
   });
 
   it('does not affect current computed dependencies', () => {
-    const signal = createWritable(0);
+    const signal = writable(0);
     const fn = () => signal();
     const spy = jest.fn(() => {
       check(fn);
     });
-    const computed = createComputed(spy);
+    const comp = computed(spy);
 
-    computed.subscribe(() => {});
+    comp.subscribe(() => {});
 
     signal(1);
     signal(2);

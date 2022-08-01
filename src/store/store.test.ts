@@ -1,7 +1,7 @@
 import { Signal } from '../signal/signal';
-import { createStore, Store } from './store';
-import { createWritable } from '../writable/writable';
-import { createComputed } from '../computed/computed';
+import { store, Store } from './store';
+import { writable } from '../writable/writable';
+import { computed } from '../computed/computed';
 import { batch } from '../core/core';
 import { on } from '../on/on';
 
@@ -18,10 +18,10 @@ describe('store', () => {
   let ringoSurname: string | null;
 
   it('is created by store function', () => {
-    persons = createStore();
+    persons = store();
     expect(persons).toBeDefined();
 
-    persons = createStore([
+    persons = store([
       {
         id: '1',
         name: 'John',
@@ -137,14 +137,12 @@ describe('store', () => {
       },
     ];
 
-    const itemStore = createStore(items);
+    const itemStore = store(items);
 
     const ids = items.map((item) => item.id);
 
-    const $ids = createWritable(ids);
-    const $itemList = createComputed(() =>
-      $ids().map((id) => itemStore.get(id))
-    );
+    const $ids = writable(ids);
+    const $itemList = computed(() => $ids().map((id) => itemStore.get(id)));
 
     $itemList.subscribe(subscriber, false);
 
@@ -181,7 +179,7 @@ describe('store', () => {
 
   describe('data property', () => {
     it('pass data to subscribers in every update', () => {
-      const items = createStore<any>();
+      const items = store<any>();
       const spy = jest.fn();
 
       on(items.data, spy);

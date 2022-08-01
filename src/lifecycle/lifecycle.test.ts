@@ -1,4 +1,4 @@
-import { createWritable, createComputed, configure } from '..';
+import { writable, computed, configure } from '..';
 import {
   onActivate,
   onUpdate,
@@ -10,7 +10,7 @@ import {
 
 describe('lifecycle writables', () => {
   it('emits in right order', () => {
-    const counter = createWritable(0);
+    const counter = writable(0);
 
     const result: any = {};
     let order = 0;
@@ -39,7 +39,7 @@ describe('onActivate function', () => {
     let value: any;
     let unsub: any;
 
-    const counter = createWritable(0);
+    const counter = writable(0);
     const listener = jest.fn((v) => (value = v));
 
     onActivate(counter, listener);
@@ -65,7 +65,7 @@ describe('onDeactivate function', () => {
     let value: any;
     let unsub: any;
 
-    const counter = createWritable(0);
+    const counter = writable(0);
     const listener = jest.fn((v) => (value = v));
 
     onDeactivate(counter, listener);
@@ -91,7 +91,7 @@ describe('onUpdate function', () => {
     let value: any = {};
     let unsub: any;
 
-    const counter = createWritable(0);
+    const counter = writable(0);
     const listener = jest.fn((v) => (value = v));
 
     onUpdate(counter, listener);
@@ -119,8 +119,8 @@ describe('onUpdate function', () => {
     let value: any = {};
     let unsub: any;
 
-    const counter = createWritable(0);
-    const computedCounter = createComputed(() => counter());
+    const counter = writable(0);
+    const computedCounter = computed(() => counter());
     const listener = jest.fn((v) => (value = v));
 
     onUpdate(computedCounter, listener);
@@ -150,7 +150,7 @@ describe('onNotifyStart function', () => {
     let value: any;
     let unsub: any;
 
-    const counter = createWritable(0);
+    const counter = writable(0);
     const listener = jest.fn((v) => (value = v));
 
     onNotifyStart(counter, listener);
@@ -176,7 +176,7 @@ describe('onNotifyEnd function', () => {
     let value: any;
     let unsub: any;
 
-    const counter = createWritable(0);
+    const counter = writable(0);
     const listener = jest.fn((v) => (value = v));
 
     onNotifyEnd(counter, listener);
@@ -206,8 +206,8 @@ describe('onException function', () => {
     let error: any;
     let unsub: any;
 
-    const counter = createWritable(0);
-    const x2Counter = createComputed(() => {
+    const counter = writable(0);
+    const x2Counter = computed(() => {
       if (counter() > 4) throw 'error';
       return counter() * 2;
     });
@@ -252,12 +252,12 @@ describe('onException function', () => {
     let error: any;
     let unsub: any;
 
-    const counter = createWritable(0);
-    const x2Counter = createComputed(() => {
+    const counter = writable(0);
+    const x2Counter = computed(() => {
       if (counter() > 4) throw 'error';
       return counter() * 2;
     });
-    const x4Counter = createComputed(() => x2Counter() * 2);
+    const x4Counter = computed(() => x2Counter() * 2);
     const listener = jest.fn((v) => (error = v));
 
     onException(x4Counter, listener);

@@ -1,22 +1,22 @@
-import { createComputed } from './computed';
-import { createWritable } from '../writable/writable';
+import { computed } from './computed';
+import { writable } from '../writable/writable';
 import { configure } from '../config/config';
 
 describe('computed', () => {
-  const a = createWritable(1);
-  const b = createWritable(2);
-  const c = createWritable(3);
-  const d = createWritable(4);
+  const a = writable(1);
+  const b = writable(2);
+  const c = writable(3);
+  const d = writable(4);
 
-  const a1 = createComputed(() => b());
-  const b1 = createComputed(() => a() - c());
-  const c1 = createComputed(() => b() + d());
-  const d1 = createComputed(() => c());
+  const a1 = computed(() => b());
+  const b1 = computed(() => a() - c());
+  const c1 = computed(() => b() + d());
+  const d1 = computed(() => c());
 
-  const a2 = createComputed(() => b1());
-  const b2 = createComputed(() => a1() - c1());
-  const c2 = createComputed(() => b1() + d1());
-  const d2 = createComputed(() => c1());
+  const a2 = computed(() => b1());
+  const b2 = computed(() => a1() - c1());
+  const c2 = computed(() => b1() + d1());
+  const d2 = computed(() => c1());
 
   it('is calculates value properly after creation', () => {
     expect(a2()).toBe(-2);
@@ -43,11 +43,11 @@ describe('computed', () => {
   });
 
   it('filters undefined values', () => {
-    const counter = createWritable(0);
+    const counter = writable(0);
     let test: any;
     let unsub: any;
 
-    const x2Counter = createComputed(() => {
+    const x2Counter = computed(() => {
       const c = counter() * 2;
       if (c > 25) return c;
       return undefined;
@@ -96,10 +96,10 @@ describe('computed', () => {
   });
 
   it('can pass values to writable signals during computing', () => {
-    const counter = createWritable(0);
-    const stringCounter = createWritable('0');
+    const counter = writable(0);
+    const stringCounter = writable('0');
 
-    const x2Counter = createComputed(() => {
+    const x2Counter = computed(() => {
       stringCounter(counter() + '');
       return counter() * 2;
     });
@@ -127,8 +127,8 @@ describe('computed', () => {
 
     const obj = null as any;
 
-    const field = createWritable('bar');
-    const count = createComputed(() => obj[field()]);
+    const field = writable('bar');
+    const count = computed(() => obj[field()]);
 
     count.subscribe(() => {});
 
@@ -144,10 +144,10 @@ describe('computed', () => {
 
     const obj = null as any;
 
-    const field = createWritable('bar');
-    const count = createComputed(() => obj[field()]);
+    const field = writable('bar');
+    const count = computed(() => obj[field()]);
 
-    const parent = createComputed(() => count());
+    const parent = computed(() => count());
 
     parent.subscribe(() => {});
 
@@ -157,15 +157,15 @@ describe('computed', () => {
   it('unsubscribes inner subscriptions on every calculation', () => {
     const spy = jest.fn();
 
-    const source = createWritable(0);
-    const ext = createWritable(0);
+    const source = writable(0);
+    const ext = writable(0);
 
-    const computed = createComputed(() => {
+    const comp = computed(() => {
       ext.subscribe(() => spy());
       return source();
     });
 
-    computed.subscribe(() => {});
+    comp.subscribe(() => {});
     expect(spy).toBeCalledTimes(1);
 
     source(1);
@@ -183,9 +183,9 @@ describe('computed', () => {
 
   it('clean up nested subscriptions on every update', () => {
     const spy = jest.fn();
-    const a = createWritable(0);
-    const aComp = createComputed(() => a());
-    const b = createWritable(0);
+    const a = writable(0);
+    const aComp = computed(() => a());
+    const b = writable(0);
 
     aComp.subscribe(() => {
       b.subscribe(() => spy());
@@ -205,11 +205,11 @@ describe('computed', () => {
 
   it('clean up deep nested subscriptions on every update', () => {
     const spy = jest.fn();
-    const a = createWritable(0);
-    const aComp = createComputed(() => a());
-    const b = createWritable(0);
+    const a = writable(0);
+    const aComp = computed(() => a());
+    const b = writable(0);
 
-    const wrap = createComputed(() => {
+    const wrap = computed(() => {
       aComp.subscribe(() => {
         b.subscribe(() => spy());
       });

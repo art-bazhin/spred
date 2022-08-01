@@ -16,7 +16,7 @@ import {
   batch as solidBatch,
 } from 'https://unpkg.com/solid-js@1.3.13/dist/solid.js';
 
-import { createMemo, createWritable, batch } from '/dist/index.mjs';
+import { memo, writable, batch } from '/dist/index.mjs';
 
 window.process = {
   env: {
@@ -32,10 +32,10 @@ window.testAct = (n) => {
   const arr = [];
 
   for (let i = 0; i < n; i++) {
-    arr.push(createWritable(0));
+    arr.push(writable(0));
   }
 
-  const res = createMemo(() => arr.map((v) => v()));
+  const res = memo(() => arr.map((v) => v()));
 
   res.subscribe(() => {});
   // res._state.xxx = 1;
@@ -127,10 +127,10 @@ function testSpred(layerCount, newValues) {
   const initTimestamp = performance.now();
 
   const start = {
-    prop1: createWritable(1),
-    prop2: createWritable(2),
-    prop3: createWritable(3),
-    prop4: createWritable(4),
+    prop1: writable(1),
+    prop2: writable(2),
+    prop3: writable(3),
+    prop4: writable(4),
   };
 
   let layer = start;
@@ -138,16 +138,16 @@ function testSpred(layerCount, newValues) {
   for (let i = layerCount; i--; ) {
     layer = (function (m) {
       const s = {
-        prop1: createMemo(function () {
+        prop1: memo(function () {
           return m.prop2();
         }),
-        prop2: createMemo(function () {
+        prop2: memo(function () {
           return m.prop1() - m.prop3();
         }),
-        prop3: createMemo(function () {
+        prop3: memo(function () {
           return m.prop2() + m.prop4();
         }),
-        prop4: createMemo(function () {
+        prop4: memo(function () {
           return m.prop3();
         }),
       };

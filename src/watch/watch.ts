@@ -1,4 +1,4 @@
-import { createComputed } from '../computed/computed';
+import { computed } from '../computed/computed';
 import { NOOP_FN } from '../utils/constants';
 import { isSignal } from '../guards/guards';
 
@@ -8,6 +8,6 @@ import { isSignal } from '../guards/guards';
  * @returns Stop watching function.
  */
 export function watch<T>(fn: (prevValue?: T) => T) {
-  const comp = isSignal(fn) ? fn : createComputed(fn);
+  const comp = isSignal(fn) ? fn : computed(fn);
   return comp.subscribe(NOOP_FN);
 }
