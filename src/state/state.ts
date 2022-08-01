@@ -29,6 +29,7 @@ export interface State<T> {
   onNotifyStart?: ((value: T) => any)[];
   onNotifyEnd?: ((value: T) => any)[];
   onException?: ((e: unknown) => any)[];
+  lcUnsubs?: (() => any)[];
 }
 
 export function createState<T>(

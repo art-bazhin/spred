@@ -420,12 +420,15 @@ function pop(state?: State<any> | undefined) {
 }
 
 function clearChildren(state: State<any>) {
-  if (!state.children.length) return;
-
   for (let child of state.children) {
     if (typeof child === 'function') child();
     else clearChildren(child);
   }
 
-  state.children = [];
+  if (state.children.length) state.children = [];
+
+  if (state.lcUnsubs && state.lcUnsubs.length) {
+    for (let unsub of state.lcUnsubs) unsub();
+    state.lcUnsubs = [];
+  }
 }

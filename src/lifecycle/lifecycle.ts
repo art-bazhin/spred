@@ -22,7 +22,8 @@ function addListener<T>(
   const parent = tracking || scope;
 
   if (parent) {
-    parent.children.push(unsub);
+    if (!parent.lcUnsubs) parent.lcUnsubs = [];
+    parent.lcUnsubs.push(unsub);
   }
 
   return unsub;
