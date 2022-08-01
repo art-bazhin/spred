@@ -1,6 +1,14 @@
 import { computed } from './computed';
 import { writable } from '../writable/writable';
 import { configure } from '../config/config';
+import {
+  onActivate,
+  onDeactivate,
+  onException,
+  onNotifyEnd,
+  onNotifyStart,
+  onUpdate,
+} from '../lifecycle/lifecycle';
 
 describe('computed', () => {
   const a = writable(1);
@@ -181,7 +189,63 @@ describe('computed', () => {
     expect(spy).toBeCalledTimes(5);
   });
 
-  it('clean up nested subscriptions on every update', () => {
+  it('unsubscribes inner lifecycle subscriptions on every calculation', () => {
+    const onActivateSpy = jest.fn();
+    const onDeactivateSpy = jest.fn();
+    const onUpdateSpy = jest.fn();
+    const onExceptionSpy = jest.fn();
+    const onNotifyStartSpy = jest.fn();
+    const onNotifyEndSpy = jest.fn();
+
+    const source = writable(0);
+    const extSource = writable(0);
+    const ext = computed(() => {
+      if (extSource() < 0) throw 'error';
+      return extSource();
+    });
+
+    const comp = computed(() => {
+      onActivate(ext, () => onActivateSpy());
+      onDeactivate(ext, () => onDeactivateSpy());
+      onUpdate(ext, () => onUpdateSpy());
+      onException(ext, () => onExceptionSpy());
+      onNotifyStart(ext, () => onNotifyStartSpy());
+      onNotifyEnd(ext, () => onNotifyEndSpy());
+      return source();
+    });
+
+    comp.subscribe(() => {});
+    expect(onActivateSpy).toBeCalledTimes(0);
+    expect(onDeactivateSpy).toBeCalledTimes(0);
+    expect(onUpdateSpy).toBeCalledTimes(0);
+    expect(onExceptionSpy).toBeCalledTimes(0);
+    expect(onNotifyStartSpy).toBeCalledTimes(0);
+    expect(onNotifyEndSpy).toBeCalledTimes(0);
+
+    source(1);
+    expect(onActivateSpy).toBeCalledTimes(0);
+    expect(onDeactivateSpy).toBeCalledTimes(0);
+    expect(onUpdateSpy).toBeCalledTimes(0);
+    expect(onExceptionSpy).toBeCalledTimes(0);
+    expect(onNotifyStartSpy).toBeCalledTimes(0);
+    expect(onNotifyEndSpy).toBeCalledTimes(0);
+
+    const extUnsub = ext.subscribe(() => {});
+    expect(onActivateSpy).toBeCalledTimes(1);
+
+    extSource(1);
+    expect(onUpdateSpy).toBeCalledTimes(1);
+    expect(onNotifyStartSpy).toBeCalledTimes(1);
+    expect(onNotifyEndSpy).toBeCalledTimes(1);
+
+    extSource(-1);
+    expect(onExceptionSpy).toBeCalledTimes(1);
+
+    extUnsub();
+    expect(onDeactivateSpy).toBeCalledTimes(1);
+  });
+
+  it('cleans up subscriptions inside a subscriber on every update', () => {
     const spy = jest.fn();
     const a = writable(0);
     const aComp = computed(() => a());
@@ -203,7 +267,7 @@ describe('computed', () => {
     expect(spy).toBeCalledTimes(4);
   });
 
-  it('clean up deep nested subscriptions on every update', () => {
+  it('cleans up deep nested subscriptions inside a subscriber on every update', () => {
     const spy = jest.fn();
     const a = writable(0);
     const aComp = computed(() => a());
@@ -227,5 +291,121 @@ describe('computed', () => {
 
     b(2);
     expect(spy).toBeCalledTimes(4);
+  });
+
+  it('cleans up lifecycle subscriptions inside a subscriber on every update', () => {
+    const a = writable(0);
+    const aComp = computed(() => a());
+
+    const onActivateSpy = jest.fn();
+    const onDeactivateSpy = jest.fn();
+    const onUpdateSpy = jest.fn();
+    const onExceptionSpy = jest.fn();
+    const onNotifyStartSpy = jest.fn();
+    const onNotifyEndSpy = jest.fn();
+
+    const extSource = writable(0);
+    const ext = computed(() => {
+      if (extSource() < 0) throw 'error';
+      return extSource();
+    });
+
+    aComp.subscribe(() => {
+      onActivate(ext, () => onActivateSpy());
+      onDeactivate(ext, () => onDeactivateSpy());
+      onUpdate(ext, () => onUpdateSpy());
+      onException(ext, () => onExceptionSpy());
+      onNotifyStart(ext, () => onNotifyStartSpy());
+      onNotifyEnd(ext, () => onNotifyEndSpy());
+    });
+
+    expect(onActivateSpy).toBeCalledTimes(0);
+    expect(onDeactivateSpy).toBeCalledTimes(0);
+    expect(onUpdateSpy).toBeCalledTimes(0);
+    expect(onExceptionSpy).toBeCalledTimes(0);
+    expect(onNotifyStartSpy).toBeCalledTimes(0);
+    expect(onNotifyEndSpy).toBeCalledTimes(0);
+
+    a(1);
+    expect(onActivateSpy).toBeCalledTimes(0);
+    expect(onDeactivateSpy).toBeCalledTimes(0);
+    expect(onUpdateSpy).toBeCalledTimes(0);
+    expect(onExceptionSpy).toBeCalledTimes(0);
+    expect(onNotifyStartSpy).toBeCalledTimes(0);
+    expect(onNotifyEndSpy).toBeCalledTimes(0);
+
+    const extUnsub = ext.subscribe(() => {});
+    expect(onActivateSpy).toBeCalledTimes(1);
+
+    extSource(1);
+    expect(onUpdateSpy).toBeCalledTimes(1);
+    expect(onNotifyStartSpy).toBeCalledTimes(1);
+    expect(onNotifyEndSpy).toBeCalledTimes(1);
+
+    extSource(-1);
+    expect(onExceptionSpy).toBeCalledTimes(1);
+
+    extUnsub();
+    expect(onDeactivateSpy).toBeCalledTimes(1);
+  });
+
+  it('cleans up deep nested lifecycle subscriptions inside a subscriber on every update', () => {
+    const a = writable(0);
+    const aComp = computed(() => a());
+
+    const onActivateSpy = jest.fn();
+    const onDeactivateSpy = jest.fn();
+    const onUpdateSpy = jest.fn();
+    const onExceptionSpy = jest.fn();
+    const onNotifyStartSpy = jest.fn();
+    const onNotifyEndSpy = jest.fn();
+
+    const extSource = writable(0);
+    const ext = computed(() => {
+      if (extSource() < 0) throw 'error';
+      return extSource();
+    });
+
+    const wrap = computed(() => {
+      aComp.subscribe(() => {
+        onActivate(ext, () => onActivateSpy());
+        onDeactivate(ext, () => onDeactivateSpy());
+        onUpdate(ext, () => onUpdateSpy());
+        onException(ext, () => onExceptionSpy());
+        onNotifyStart(ext, () => onNotifyStartSpy());
+        onNotifyEnd(ext, () => onNotifyEndSpy());
+      });
+    });
+
+    wrap();
+
+    expect(onActivateSpy).toBeCalledTimes(0);
+    expect(onDeactivateSpy).toBeCalledTimes(0);
+    expect(onUpdateSpy).toBeCalledTimes(0);
+    expect(onExceptionSpy).toBeCalledTimes(0);
+    expect(onNotifyStartSpy).toBeCalledTimes(0);
+    expect(onNotifyEndSpy).toBeCalledTimes(0);
+
+    a(1);
+    expect(onActivateSpy).toBeCalledTimes(0);
+    expect(onDeactivateSpy).toBeCalledTimes(0);
+    expect(onUpdateSpy).toBeCalledTimes(0);
+    expect(onExceptionSpy).toBeCalledTimes(0);
+    expect(onNotifyStartSpy).toBeCalledTimes(0);
+    expect(onNotifyEndSpy).toBeCalledTimes(0);
+
+    const extUnsub = ext.subscribe(() => {});
+    expect(onActivateSpy).toBeCalledTimes(1);
+
+    extSource(1);
+    expect(onUpdateSpy).toBeCalledTimes(1);
+    expect(onNotifyStartSpy).toBeCalledTimes(1);
+    expect(onNotifyEndSpy).toBeCalledTimes(1);
+
+    extSource(-1);
+    expect(onExceptionSpy).toBeCalledTimes(1);
+
+    extUnsub();
+    expect(onDeactivateSpy).toBeCalledTimes(1);
   });
 });

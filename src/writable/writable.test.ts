@@ -1,3 +1,10 @@
+import {
+  onActivate,
+  onDeactivate,
+  onNotifyEnd,
+  onNotifyStart,
+  onUpdate,
+} from '../lifecycle/lifecycle';
 import { writable } from './writable';
 
 describe('writable', () => {
@@ -48,7 +55,7 @@ describe('writable', () => {
     expect(value).toBe(2);
   });
 
-  it('clean up nested subscriptions on every update', () => {
+  it('cleans up subscriptions inside a subscriber on every update', () => {
     const spy = jest.fn();
     const a = writable(0);
     const b = writable(0);
@@ -67,5 +74,49 @@ describe('writable', () => {
 
     b(2);
     expect(spy).toBeCalledTimes(4);
+  });
+
+  it('cleans up lifecycle subscriptions inside a subscriber on every update', () => {
+    const a = writable(0);
+
+    const onActivateSpy = jest.fn();
+    const onDeactivateSpy = jest.fn();
+    const onUpdateSpy = jest.fn();
+    const onNotifyStartSpy = jest.fn();
+    const onNotifyEndSpy = jest.fn();
+
+    const ext = writable(0);
+
+    a.subscribe(() => {
+      onActivate(ext, () => onActivateSpy());
+      onDeactivate(ext, () => onDeactivateSpy());
+      onUpdate(ext, () => onUpdateSpy());
+      onNotifyStart(ext, () => onNotifyStartSpy());
+      onNotifyEnd(ext, () => onNotifyEndSpy());
+    });
+
+    expect(onActivateSpy).toBeCalledTimes(0);
+    expect(onDeactivateSpy).toBeCalledTimes(0);
+    expect(onUpdateSpy).toBeCalledTimes(0);
+    expect(onNotifyStartSpy).toBeCalledTimes(0);
+    expect(onNotifyEndSpy).toBeCalledTimes(0);
+
+    a(1);
+    expect(onActivateSpy).toBeCalledTimes(0);
+    expect(onDeactivateSpy).toBeCalledTimes(0);
+    expect(onUpdateSpy).toBeCalledTimes(0);
+    expect(onNotifyStartSpy).toBeCalledTimes(0);
+    expect(onNotifyEndSpy).toBeCalledTimes(0);
+
+    const extUnsub = ext.subscribe(() => {});
+    expect(onActivateSpy).toBeCalledTimes(1);
+
+    ext(1);
+    expect(onUpdateSpy).toBeCalledTimes(1);
+    expect(onNotifyStartSpy).toBeCalledTimes(1);
+    expect(onNotifyEndSpy).toBeCalledTimes(1);
+
+    extUnsub();
+    expect(onDeactivateSpy).toBeCalledTimes(1);
   });
 });
