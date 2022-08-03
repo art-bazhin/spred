@@ -55,7 +55,7 @@ describe('writable', () => {
     expect(value).toBe(2);
   });
 
-  it('cleans up subscriptions inside a subscriber on every update', () => {
+  it('keeps subscriptions made inside a subscriber', () => {
     const spy = jest.fn();
     const a = writable(0);
     const b = writable(0);
@@ -70,13 +70,13 @@ describe('writable', () => {
     expect(spy).toBeCalledTimes(2);
 
     b(1);
-    expect(spy).toBeCalledTimes(3);
+    expect(spy).toBeCalledTimes(4);
 
     b(2);
-    expect(spy).toBeCalledTimes(4);
+    expect(spy).toBeCalledTimes(6);
   });
 
-  it('cleans up lifecycle subscriptions inside a subscriber on every update', () => {
+  it('keeps lifecycle subscriptions made inside a subscriber', () => {
     const a = writable(0);
 
     const onActivateSpy = jest.fn();
@@ -109,14 +109,14 @@ describe('writable', () => {
     expect(onNotifyEndSpy).toBeCalledTimes(0);
 
     const extUnsub = ext.subscribe(() => {});
-    expect(onActivateSpy).toBeCalledTimes(1);
+    expect(onActivateSpy).toBeCalledTimes(2);
 
     ext(1);
-    expect(onUpdateSpy).toBeCalledTimes(1);
-    expect(onNotifyStartSpy).toBeCalledTimes(1);
-    expect(onNotifyEndSpy).toBeCalledTimes(1);
+    expect(onUpdateSpy).toBeCalledTimes(2);
+    expect(onNotifyStartSpy).toBeCalledTimes(2);
+    expect(onNotifyEndSpy).toBeCalledTimes(2);
 
     extUnsub();
-    expect(onDeactivateSpy).toBeCalledTimes(1);
+    expect(onDeactivateSpy).toBeCalledTimes(2);
   });
 });

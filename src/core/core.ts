@@ -91,12 +91,7 @@ export function addSubscriber<T>(
   state.subsCount++;
 
   if (exec) {
-    const prevTracking = tracking;
-    tracking = state;
-
     isolate(() => subscriber(value, true));
-
-    tracking = prevTracking;
   }
 }
 
@@ -253,9 +248,6 @@ function runSubscribers<T>(state: State<T>) {
   let i = state.subsCount;
   if (!i) return;
 
-  const prevScope = scope;
-  scope = state;
-
   if (state.onNotifyStart) {
     state.onNotifyStart.forEach((fn) => fn(state.value));
   }
@@ -270,8 +262,6 @@ function runSubscribers<T>(state: State<T>) {
   if (state.onNotifyEnd) {
     state.onNotifyEnd.forEach((fn) => fn(state.value));
   }
-
-  scope = prevScope;
 }
 
 export function getStateValue<T>(state: State<T>, notTrackDeps?: boolean): T {

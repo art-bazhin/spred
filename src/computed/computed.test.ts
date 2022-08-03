@@ -189,6 +189,68 @@ describe('computed', () => {
     expect(spy).toBeCalledTimes(5);
   });
 
+  it('unsubscribes nested inner subscriptions on every calculation', () => {
+    const spy = jest.fn();
+
+    const source = writable(0);
+    const wrap = writable(0);
+    const ext = writable(0);
+
+    const comp = computed(() => {
+      wrap.subscribe(() => {
+        ext.subscribe(() => spy());
+      });
+      return source();
+    });
+
+    comp.subscribe(() => {});
+    expect(spy).toBeCalledTimes(1);
+
+    source(1);
+    expect(spy).toBeCalledTimes(2);
+
+    source(2);
+    expect(spy).toBeCalledTimes(3);
+
+    ext(1);
+    expect(spy).toBeCalledTimes(4);
+
+    ext(2);
+    expect(spy).toBeCalledTimes(5);
+  });
+
+  it('unsubscribes inner subscriptions in nested computeds on every calculation', () => {
+    const spy = jest.fn();
+
+    const source = writable(0);
+    const ext = writable(0);
+
+    const comp = computed(() => {
+      const wrap = computed(() => {
+        ext.subscribe(() => spy());
+      });
+
+      wrap.subscribe(() => {});
+
+      return source();
+    });
+
+    comp.subscribe(() => {});
+    expect(spy).toBeCalledTimes(1);
+
+    source(1);
+    expect(spy).toBeCalledTimes(2);
+
+    source(2);
+    expect(spy).toBeCalledTimes(3);
+
+    ext(1);
+    expect(spy).toBeCalledTimes(4);
+
+    ext(2);
+    expect(spy).toBeCalledTimes(5);
+  });
+
   it('unsubscribes inner lifecycle subscriptions on every calculation', () => {
     const onActivateSpy = jest.fn();
     const onDeactivateSpy = jest.fn();
@@ -246,7 +308,6 @@ describe('computed', () => {
   });
 
   it('handles automatic unsubscribing in the right order', () => {
-    const spy = jest.fn();
     const onDeactivateSpy = jest.fn();
 
     const source = writable(0);
@@ -266,7 +327,7 @@ describe('computed', () => {
     expect(onDeactivateSpy).toBeCalledTimes(1);
   });
 
-  it('cleans up subscriptions inside a subscriber on every update', () => {
+  it('keeps subscriptions made inside a subscriber', () => {
     const spy = jest.fn();
     const a = writable(0);
     const aComp = computed(() => a());
@@ -282,13 +343,13 @@ describe('computed', () => {
     expect(spy).toBeCalledTimes(2);
 
     b(1);
-    expect(spy).toBeCalledTimes(3);
+    expect(spy).toBeCalledTimes(4);
 
     b(2);
-    expect(spy).toBeCalledTimes(4);
+    expect(spy).toBeCalledTimes(6);
   });
 
-  it('cleans up deep nested subscriptions inside a subscriber on every update', () => {
+  it('keeps subscriptions made inside a deep nested subscriber', () => {
     const spy = jest.fn();
     const a = writable(0);
     const aComp = computed(() => a());
@@ -308,13 +369,13 @@ describe('computed', () => {
     expect(spy).toBeCalledTimes(2);
 
     b(1);
-    expect(spy).toBeCalledTimes(3);
+    expect(spy).toBeCalledTimes(4);
 
     b(2);
-    expect(spy).toBeCalledTimes(4);
+    expect(spy).toBeCalledTimes(6);
   });
 
-  it('cleans up lifecycle subscriptions inside a subscriber on every update', () => {
+  it('keeps lifecycle subscriptions made inside a subscriber', () => {
     const a = writable(0);
     const aComp = computed(() => a());
 
@@ -356,21 +417,21 @@ describe('computed', () => {
     expect(onNotifyEndSpy).toBeCalledTimes(0);
 
     const extUnsub = ext.subscribe(() => {});
-    expect(onActivateSpy).toBeCalledTimes(1);
+    expect(onActivateSpy).toBeCalledTimes(2);
 
     extSource(1);
-    expect(onUpdateSpy).toBeCalledTimes(1);
-    expect(onNotifyStartSpy).toBeCalledTimes(1);
-    expect(onNotifyEndSpy).toBeCalledTimes(1);
+    expect(onUpdateSpy).toBeCalledTimes(2);
+    expect(onNotifyStartSpy).toBeCalledTimes(2);
+    expect(onNotifyEndSpy).toBeCalledTimes(2);
 
     extSource(-1);
-    expect(onExceptionSpy).toBeCalledTimes(1);
+    expect(onExceptionSpy).toBeCalledTimes(2);
 
     extUnsub();
-    expect(onDeactivateSpy).toBeCalledTimes(1);
+    expect(onDeactivateSpy).toBeCalledTimes(2);
   });
 
-  it('cleans up deep nested lifecycle subscriptions inside a subscriber on every update', () => {
+  it('keeps lifecycle subscriptions made inside a deep nested subscriber', () => {
     const a = writable(0);
     const aComp = computed(() => a());
 
@@ -416,17 +477,17 @@ describe('computed', () => {
     expect(onNotifyEndSpy).toBeCalledTimes(0);
 
     const extUnsub = ext.subscribe(() => {});
-    expect(onActivateSpy).toBeCalledTimes(1);
+    expect(onActivateSpy).toBeCalledTimes(2);
 
     extSource(1);
-    expect(onUpdateSpy).toBeCalledTimes(1);
-    expect(onNotifyStartSpy).toBeCalledTimes(1);
-    expect(onNotifyEndSpy).toBeCalledTimes(1);
+    expect(onUpdateSpy).toBeCalledTimes(2);
+    expect(onNotifyStartSpy).toBeCalledTimes(2);
+    expect(onNotifyEndSpy).toBeCalledTimes(2);
 
     extSource(-1);
-    expect(onExceptionSpy).toBeCalledTimes(1);
+    expect(onExceptionSpy).toBeCalledTimes(2);
 
     extUnsub();
-    expect(onDeactivateSpy).toBeCalledTimes(1);
+    expect(onDeactivateSpy).toBeCalledTimes(2);
   });
 });
