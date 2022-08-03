@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.18.4](https://github.com/art-bazhin/spred/compare/v0.18.3...v0.18.4) (2022-08-03)
+
+
+### Features
+
+* add collect function ([34609c9](https://github.com/art-bazhin/spred/commit/34609c9b888686989fc799822fcf4a24bb5acef5))
+* do not clean up subscriptions inside subscribers ([33aca25](https://github.com/art-bazhin/spred/commit/33aca25d0be0d7228d57482afd52d9395b8db9a0))
+
 ### [0.18.3](https://github.com/art-bazhin/spred/compare/v0.18.2...v0.18.3) (2022-08-01)
 
 
