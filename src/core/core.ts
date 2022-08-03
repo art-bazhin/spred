@@ -49,6 +49,25 @@ export function isolate(fn: any, args?: any) {
   scope = prevScope;
 }
 
+export function collect(fn: () => any) {
+  const prevCacheStatus = cacheStatus;
+  const prevDepth = depth;
+  const prevTracking = tracking;
+  const prevScope = scope;
+  const fakeState = { children: [], lcUnsubs: [] } as any as State<any>;
+
+  scope = fakeState;
+  push();
+  fn();
+
+  cacheStatus = prevCacheStatus;
+  depth = prevDepth;
+  tracking = prevTracking;
+  scope = prevScope;
+
+  return () => clearChildren(fakeState);
+}
+
 export function batch(fn: (...args: any) => any) {
   batchLevel++;
   fn();
