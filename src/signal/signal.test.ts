@@ -428,4 +428,22 @@ describe('signal', () => {
 
     expect(subscriber).toHaveBeenCalledTimes(1);
   });
+
+  it('batches updates in subscribers', () => {
+    const a = writable(0);
+    const b = writable(0);
+    const c = writable(0);
+    const d = computed(() => b() + c());
+    const spy = jest.fn();
+
+    a.subscribe(() => b(b() + 1), false);
+    a.subscribe(() => c(c() + 1), false);
+    d.subscribe(spy, false);
+
+    expect(spy).toBeCalledTimes(0);
+
+    a(1);
+    expect(d()).toBe(2);
+    expect(spy).toBeCalledTimes(1);
+  });
 });

@@ -241,6 +241,8 @@ export function recalc() {
 function notify(notificationQueue: State<any>[]) {
   const wrapper = (config as any)._notificationWrapper;
 
+  batchLevel++;
+
   isolate(() => {
     if (wrapper) {
       wrapper(() => {
@@ -250,6 +252,8 @@ function notify(notificationQueue: State<any>[]) {
       for (let state of notificationQueue) runSubscribers(state);
     }
   });
+
+  batchLevel--;
 }
 
 function decreaseDirtyCount(state: State<any>) {
