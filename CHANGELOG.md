@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.18.6](https://github.com/art-bazhin/spred/compare/v0.18.5...v0.18.6) (2022-08-03)
+
+
+### Features
+
+* batch updates in subscribers ([3e914d9](https://github.com/art-bazhin/spred/commit/3e914d9b3b45e397288d59ab7f8822d0948f32e6))
+
 ### [0.18.5](https://github.com/art-bazhin/spred/compare/v0.18.4...v0.18.5) (2022-08-03)
 
 
