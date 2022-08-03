@@ -6,13 +6,12 @@ export interface State<T> {
   value: T;
   nextValue?: T;
   isNotifying?: boolean;
-  cachedValue?: T;
   hasException?: boolean;
   exception?: unknown;
   observers: Set<Subscriber<T> | State<any>>;
   subsCount: number;
   computedFn?: (prevValue: T | undefined) => T;
-  dependencies: Set<State<any>>;
+  dependencies?: Set<State<any>>;
   dirtyCount: number;
   queueIndex: number;
   isComputing?: boolean;
@@ -20,7 +19,8 @@ export interface State<T> {
   isCatcher?: boolean;
   hasCycle?: boolean;
   oldDepsCount: number;
-  children: ((() => any) | State<any>)[];
+  children?: ((() => any) | State<any>)[];
+  lcUnsubs?: (() => any)[];
 
   // lifecycle:
   onActivate?: ((value: T) => any)[];
@@ -29,7 +29,6 @@ export interface State<T> {
   onNotifyStart?: ((value: T) => any)[];
   onNotifyEnd?: ((value: T) => any)[];
   onException?: ((e: unknown) => any)[];
-  lcUnsubs?: (() => any)[];
 }
 
 export function createState<T>(
@@ -42,16 +41,17 @@ export function createState<T>(
     value,
     computedFn,
     observers: new Set(),
-    dependencies: new Set(),
     dirtyCount: 0,
     queueIndex: -1,
     subsCount: 0,
     oldDepsCount: 0,
     isCached: FALSE_STATUS,
-    children: [],
   };
 
+  if (computedFn) state.dependencies = new Set();
+
   if (parent) {
+    if (!parent.children) parent.children = [];
     parent.children.push(state);
   }
 

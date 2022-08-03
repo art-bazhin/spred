@@ -62,6 +62,7 @@ export const signalProto = {
     const parent = tracking || scope;
 
     if (parent) {
+      if (!parent.children) parent.children = [];
       parent.children.push(unsub);
     }
 

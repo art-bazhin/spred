@@ -5,8 +5,8 @@ import { config } from '../config/config';
 import { CircularDependencyError } from '../errors/errors';
 import { FALSE_STATUS } from '../utils/constants';
 
-export let tracking: State<any> | undefined;
-export let scope: State<any> | undefined;
+export let tracking: State<any> | null = null;
+export let scope: State<any> | null = null;
 
 let batchLevel = 0;
 let calcLevel = 0;
@@ -38,8 +38,9 @@ export function isolate(fn: any, args?: any) {
   const prevScope = scope;
 
   if (tracking) scope = tracking;
+  tracking = null;
+  depth = 0;
 
-  push();
   if (args) fn(...args);
   else fn();
 
@@ -54,10 +55,12 @@ export function collect(fn: () => any) {
   const prevDepth = depth;
   const prevTracking = tracking;
   const prevScope = scope;
-  const fakeState = { children: [], lcUnsubs: [] } as any as State<any>;
+  const fakeState = {} as any as State<any>;
 
   scope = fakeState;
-  push();
+  tracking = null;
+  depth = 0;
+
   fn();
 
   cacheStatus = prevCacheStatus;
@@ -307,8 +310,8 @@ export function getStateValue<T>(state: State<T>, notTrackDeps?: boolean): T {
       tracking.hasException = true;
     }
 
-    const isNewDep = !tracking.dependencies.delete(state);
-    tracking.dependencies.add(state);
+    const isNewDep = !tracking.dependencies!.delete(state);
+    tracking.dependencies!.add(state);
     --tracking.oldDepsCount;
 
     if (isNewDep) {
@@ -337,9 +340,9 @@ function calcComputed<T>(state: State<T>, logException?: boolean) {
 
   let i = state.oldDepsCount;
 
-  for (let dependency of state.dependencies) {
+  for (let dependency of state.dependencies!) {
     if (i <= 0) break;
-    state.dependencies.delete(dependency);
+    state.dependencies!.delete(dependency);
     dependency.observers.delete(state);
     deactivateDependencies(dependency);
     --i;
@@ -371,6 +374,8 @@ function activateDependencies<T>(state: State<T>) {
     state.onActivate.forEach((fn) => fn(state.value));
   }
 
+  if (!state.dependencies) return;
+
   for (let dependency of state.dependencies) {
     activateDependencies(dependency);
     dependency.observers.add(state);
@@ -384,20 +389,15 @@ function deactivateDependencies<T>(state: State<T>) {
     state.onDeactivate.forEach((fn) => fn(state.value));
   }
 
+  if (!state.dependencies) return;
+
   for (let dependency of state.dependencies) {
     dependency.observers.delete(state);
     deactivateDependencies(dependency);
   }
 }
 
-function push(state?: State<any>) {
-  if (!state) {
-    tracking = state;
-    cacheStatus = { status: true };
-    depth = 0;
-    return;
-  }
-
+function push(state: State<any>) {
   clearChildren(state);
 
   if (!state.observers.size) {
@@ -408,13 +408,13 @@ function push(state?: State<any>) {
   tracking = state;
   tracking.isComputing = true;
   tracking.isCached = FALSE_STATUS;
-  tracking.oldDepsCount = state.dependencies.size;
+  tracking.oldDepsCount = state.dependencies!.size;
   tracking.hasException = false;
 
   return tracking;
 }
 
-function pop(state?: State<any> | undefined) {
+function pop(state: State<any> | null) {
   if (tracking) {
     tracking.isComputing = false;
     tracking.isCached = cacheStatus;
@@ -429,12 +429,14 @@ function pop(state?: State<any> | undefined) {
 }
 
 function clearChildren(state: State<any>) {
-  for (let child of state.children) {
-    if (typeof child === 'function') child();
-    else clearChildren(child);
-  }
+  if (state.children && state.children.length) {
+    for (let child of state.children) {
+      if (typeof child === 'function') child();
+      else clearChildren(child);
+    }
 
-  if (state.children.length) state.children = [];
+    state.children = [];
+  }
 
   if (state.lcUnsubs && state.lcUnsubs.length) {
     for (let unsub of state.lcUnsubs) unsub();
