@@ -176,3 +176,5 @@ export function effect<T, A extends unknown[]>(
     reset,
   } as Effect<T, A>;
 }
+
+const testFx = effect(() => new Promise(() => {}));

@@ -38,4 +38,19 @@ describe('watch', () => {
 
     expect(fn).toHaveBeenCalledTimes(2);
   });
+
+  it('can receive a signal as argument', () => {
+    const spy = jest.fn();
+    const count = writable(0);
+    const double = computed(() => {
+      spy();
+      return count() * 2;
+    });
+
+    watch(double);
+    expect(spy).toBeCalledTimes(1);
+
+    count(1);
+    expect(spy).toBeCalledTimes(2);
+  });
 });

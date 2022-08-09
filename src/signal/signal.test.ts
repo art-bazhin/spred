@@ -316,6 +316,13 @@ describe('signal', () => {
     expect(str).toBe('OFF');
   });
 
+  it('has get method which returns current value', () => {
+    const test = writable(0);
+
+    expect(test.get()).toBe(0);
+    expect(test.get()).toBe(test());
+  });
+
   it('returns previous value if an exception occured', () => {
     const counter = writable(0);
 

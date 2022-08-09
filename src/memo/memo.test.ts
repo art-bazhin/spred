@@ -33,4 +33,22 @@ describe('memo', () => {
     expect(x2Counter()).toBe(4);
     expect(spy).toBeCalledTimes(2);
   });
+
+  it('can takes a writablre signal as a calc function', () => {
+    const count = writable(0);
+    const memoCount = memo(count);
+    const spy = jest.fn();
+
+    memoCount.subscribe(spy);
+    expect(spy).toBeCalledTimes(1);
+
+    count(0);
+    expect(spy).toBeCalledTimes(1);
+
+    count(1);
+    expect(spy).toBeCalledTimes(2);
+
+    count(1);
+    expect(spy).toBeCalledTimes(2);
+  });
 });

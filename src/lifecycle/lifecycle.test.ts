@@ -8,7 +8,7 @@ import {
   onNotifyStart,
 } from './lifecycle';
 
-describe('lifecycle writables', () => {
+describe('lifecycle signals', () => {
   it('emits in right order', () => {
     const counter = writable(0);
 
@@ -31,6 +31,17 @@ describe('lifecycle writables', () => {
     expect(result.notifyStart).toBe(3);
     expect(result.notifyEnd).toBe(4);
     expect(result.deactivate).toBe(5);
+  });
+
+  it('does not subscribe same listenr twice', () => {
+    const counter = writable(0);
+    const spy = jest.fn();
+
+    onUpdate(counter, spy);
+    onUpdate(counter, spy);
+
+    counter(1);
+    expect(spy).toBeCalledTimes(1);
   });
 });
 
