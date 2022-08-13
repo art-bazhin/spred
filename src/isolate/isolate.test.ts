@@ -168,4 +168,13 @@ describe('isolate', () => {
     external(2);
     expect(spy).toBeCalledTimes(4);
   });
+
+  it('can take args as second argument', () => {
+    const fn = (n: number, s: string) => {
+      expect(n).toBe(1);
+      expect(s).toBe('foo');
+    };
+
+    isolate(fn, [1, 'foo']);
+  });
 });

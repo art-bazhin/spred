@@ -119,4 +119,13 @@ describe('writable', () => {
     extUnsub();
     expect(onDeactivateSpy).toBeCalledTimes(2);
   });
+
+  it('does not update the value when undefined passed', () => {
+    const counter = writable<any>(0);
+
+    expect(counter()).toBe(0);
+
+    counter(undefined);
+    expect(counter()).toBe(0);
+  });
 });
