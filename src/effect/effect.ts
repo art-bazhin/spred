@@ -41,6 +41,11 @@ export interface Effect<T, A extends unknown[]> {
   readonly status: Signal<EffectStatusObject>;
 
   /**
+   * Signal that emits when effect is aborted or reset during execution.
+   */
+  readonly aborted: Signal<unknown>;
+
+  /**
    * Calls the effect.
    */
   readonly call: (...args: A) => Promise<T>;
@@ -70,6 +75,7 @@ export function effect<T, A extends unknown[]>(
   const _status = writable<EffectStatus>('pristine');
   const _exception = writable();
   const _data = writable<T>();
+  const _aborted = writable();
 
   const lastStatus = memo(() => {
     const status = _status();
@@ -113,15 +119,25 @@ export function effect<T, A extends unknown[]>(
   });
 
   const data = computed(_data);
+  const aborted = computed(_aborted);
 
   const abort = () => {
     if (!status().pending) return;
-    _status(lastStatus() as any);
+
+    batch(() => {
+      _status(lastStatus() as any);
+      _aborted({});
+    });
+
     counter++;
   };
 
   const reset = () => {
-    _status('pristine');
+    batch(() => {
+      if (status().pending) _aborted({});
+      _status('pristine');
+    });
+
     counter++;
   };
 
@@ -167,11 +183,10 @@ export function effect<T, A extends unknown[]>(
     data,
     exception,
     done,
+    aborted,
     status,
     call,
     abort,
     reset,
   } as Effect<T, A>;
 }
-
-const testFx = effect(() => new Promise(() => {}));

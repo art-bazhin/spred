@@ -14,7 +14,8 @@ describe('effect', () => {
     });
   };
 
-  const { data, exception, status, done, reset, abort, call } = effect(fn);
+  const { data, exception, status, done, aborted, reset, abort, call } =
+    effect(fn);
 
   it('is initialized with default state', () => {
     expect(data()).toBe(undefined);
@@ -217,6 +218,35 @@ describe('effect', () => {
       await call(20).catch(() => {});
       expect(spy).toBeCalledTimes(3);
       expect(res).toBe('FAIL');
+    });
+  });
+
+  describe('aborted signal', () => {
+    it('emits when effect is aborted or reset during execution', async () => {
+      const spy = jest.fn();
+      reset();
+
+      on(aborted, spy);
+      expect(spy).toBeCalledTimes(0);
+
+      await call(1);
+      expect(spy).toBeCalledTimes(0);
+
+      const res1 = call(2);
+      abort();
+      await res1;
+      expect(spy).toBeCalledTimes(1);
+
+      abort();
+      expect(spy).toBeCalledTimes(1);
+
+      const res2 = call(3);
+      reset();
+      await res2;
+      expect(spy).toBeCalledTimes(2);
+
+      reset();
+      expect(spy).toBeCalledTimes(2);
     });
   });
 });
