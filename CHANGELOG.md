@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.18.7](https://github.com/art-bazhin/spred/compare/v0.18.6...v0.18.7) (2022-08-13)
+
+
+### Features
+
+* **effect:** add aborted signal ([bd137ed](https://github.com/art-bazhin/spred/commit/bd137ed19df09b5c11ae18e1d01b52ce68a4d1f1))
+
+
+### Code Refactoring
+
+* remove redundant checks ([649febe](https://github.com/art-bazhin/spred/commit/649febe5c79777fd288bce30f890902877c9900b))
+
+
+### Tests
+
+* add effect tests ([76e4394](https://github.com/art-bazhin/spred/commit/76e4394213a07795da6b95841134e5a41d917f60))
+* add guards test ([51aab22](https://github.com/art-bazhin/spred/commit/51aab222c7cf66503ffe0d51bc935b1d1a442f42))
+* add missing tests ([04f9b9b](https://github.com/art-bazhin/spred/commit/04f9b9b5f439d16118f4301c69b7ab857c03a8e9))
+* add missing tests ([b34b0ca](https://github.com/art-bazhin/spred/commit/b34b0ca8c8a4eefedbfd8f259ae069455ef9c55e))
+* update store tests ([e2003b8](https://github.com/art-bazhin/spred/commit/e2003b8060769eeef4c3122052591101cb11926f))
+
+
+### Docs
+
+* update docs ([f6d0bf1](https://github.com/art-bazhin/spred/commit/f6d0bf1fd2cc4a69c7e5e0e9b9afadaeb7fc1571))
+
 ### [0.18.6](https://github.com/art-bazhin/spred/compare/v0.18.5...v0.18.6) (2022-08-03)
 
 
