@@ -15,6 +15,7 @@ describe('store', () => {
   let persons: Store<Person>;
   let ringo: Signal<Person | null>;
   let paul: Signal<Person | null>;
+  let john: Signal<Person | null>;
   let ringoSurname: string | null;
 
   it('is created by store function', () => {
@@ -79,9 +80,14 @@ describe('store', () => {
   });
 
   it('allows to delete items', () => {
+    john = persons.getSignal('1');
+
     persons.delete('4');
+    persons.delete(['1', '2']);
     persons.delete('1234');
 
+    expect(john()).toBeNull();
+    expect(paul()).toBeNull();
     expect(ringo()).toBeNull();
     expect(ringoSurname).toBeNull();
   });

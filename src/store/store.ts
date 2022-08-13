@@ -79,8 +79,6 @@ const DEFAULT_STORE_OPTIONS = {
 function createData<T>(items: T[], getItemId: (item: T) => string) {
   const data: StoreData<T> = {};
 
-  if (!items) return data;
-
   for (let item of items) {
     data[getItemId(item)] = item;
   }
