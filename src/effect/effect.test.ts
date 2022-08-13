@@ -1,4 +1,5 @@
 import { configure } from '../config/config';
+import { on } from '../on/on';
 import { effect } from './effect';
 
 describe('effect', () => {
@@ -13,7 +14,7 @@ describe('effect', () => {
     });
   };
 
-  const { data, exception, status, reset, abort, call } = effect(fn);
+  const { data, exception, status, done, reset, abort, call } = effect(fn);
 
   it('is initialized with default state', () => {
     expect(data()).toBe(undefined);
@@ -125,5 +126,97 @@ describe('effect', () => {
     expect(await res3).toBe(5);
     expect(await res2).toBe('FAIL');
     expect(await res1).toBe('FAIL');
+  });
+
+  describe('data signal', () => {
+    it('emits a successful result of the effect call', async () => {
+      const spy = jest.fn();
+      let res: any;
+
+      reset();
+
+      on(data, (value) => {
+        res = value;
+        spy();
+      });
+
+      expect(spy).toBeCalledTimes(0);
+
+      await call(1);
+      expect(spy).toBeCalledTimes(1);
+      expect(res).toBe(1);
+
+      await call(2);
+      expect(spy).toBeCalledTimes(2);
+      expect(res).toBe(2);
+
+      await call(20).catch(() => {});
+      expect(spy).toBeCalledTimes(2);
+      expect(res).toBe(2);
+
+      await call(3);
+      expect(spy).toBeCalledTimes(3);
+      expect(res).toBe(3);
+    });
+  });
+
+  describe('exception signal', () => {
+    it('emits an exception thrown by effect', async () => {
+      const spy = jest.fn();
+      let res: any;
+
+      reset();
+
+      on(exception, (value) => {
+        res = value;
+        spy();
+      });
+
+      expect(spy).toBeCalledTimes(0);
+
+      await call(1);
+      expect(spy).toBeCalledTimes(0);
+      expect(res).toBe(undefined);
+
+      await call(2);
+      expect(spy).toBeCalledTimes(0);
+      expect(res).toBe(undefined);
+
+      await call(20).catch(() => {});
+      expect(spy).toBeCalledTimes(1);
+      expect(res).toBe('FAIL');
+
+      await call(3);
+      expect(spy).toBeCalledTimes(1);
+      expect(res).toBe('FAIL');
+    });
+  });
+
+  describe('done signal', () => {
+    it('emits a successful result of the effect call or an exception', async () => {
+      const spy = jest.fn();
+      let res: any;
+
+      reset();
+
+      on(done, (value) => {
+        res = value;
+        spy();
+      });
+
+      expect(spy).toBeCalledTimes(0);
+
+      await call(1);
+      expect(spy).toBeCalledTimes(1);
+      expect(res).toBe(1);
+
+      await call(2);
+      expect(spy).toBeCalledTimes(2);
+      expect(res).toBe(2);
+
+      await call(20).catch(() => {});
+      expect(spy).toBeCalledTimes(3);
+      expect(res).toBe('FAIL');
+    });
   });
 });

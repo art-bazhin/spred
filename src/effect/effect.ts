@@ -98,20 +98,17 @@ export function effect<T, A extends unknown[]>(
 
   const exception = computed(_exception);
 
-  const done = computed((last) => {
+  const done = computed(() => {
     const data = _data();
     const exception = _exception();
 
-    switch (_status()) {
+    switch (_status.sample()) {
       case 'pristine':
       case 'fulfilled':
         return data;
 
       case 'rejected':
         return exception;
-
-      default:
-        return last;
     }
   });
 
