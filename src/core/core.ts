@@ -80,16 +80,8 @@ export function batch(fn: (...args: any) => any) {
 }
 
 export function update<T>(state: State<T>, value?: T) {
-  const force = arguments.length === 1;
-
-  if (force) {
-    state.isNotifying = true;
-    state.nextValue = state.value;
-  } else {
-    state.nextValue = value;
-  }
-
-  if (state.computedFn) state.dirtyCount++;
+  if (arguments.length === 2) state.nextValue = value;
+  else if (state.computedFn) state.dirtyCount++;
 
   state.queueIndex = queueLength - fullQueueLength;
   queueLength = queue.push(state);
@@ -182,8 +174,6 @@ export function recalc() {
       const value = state.nextValue;
       const shouldUpdate = value !== undefined;
 
-      if (!state.isNotifying && !shouldUpdate) continue;
-
       if (shouldUpdate) {
         clearChildren(state);
         emitUpdateLifecycle(state, value);
@@ -192,7 +182,6 @@ export function recalc() {
 
       notificationQueue.push(state);
       resetStateQueueParams(state);
-      state.isNotifying = false;
 
       continue;
     }
@@ -419,13 +408,11 @@ function push(state: State<any>) {
 }
 
 function pop(state: State<any> | null) {
-  if (tracking) {
-    tracking.isComputing = false;
-    tracking.isCached = cacheStatus;
+  tracking!.isComputing = false;
+  tracking!.isCached = cacheStatus;
 
-    if (depth) --depth;
-    if (!depth) cacheStatus.status = false;
-  }
+  if (depth) --depth;
+  if (!depth) cacheStatus.status = false;
 
   tracking = state;
 

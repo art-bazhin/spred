@@ -5,7 +5,6 @@ import { FALSE_STATUS } from '../utils/constants';
 export interface State<T> {
   value: T;
   nextValue?: T;
-  isNotifying?: boolean;
   hasException?: boolean;
   exception?: unknown;
   observers: Set<Subscriber<T> | State<any>>;
