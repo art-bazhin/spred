@@ -193,7 +193,7 @@ export function recalc() {
         state.onException.forEach((fn) => fn(state.exception));
       }
 
-      if (!(state.observers.size - state.subsCount)) {
+      if (state.subsCount) {
         config.logException(state.exception);
       }
     }
@@ -350,8 +350,8 @@ function calcComputed<T>(state: State<T>, logException?: boolean) {
 
     if (
       logException ||
-      (!state.observers.size && !tracking) ||
-      (state.observers.size && !(state.observers.size - state.subsCount))
+      state.subsCount ||
+      (!state.observers.size && !tracking)
     ) {
       config.logException(state.exception);
     }
