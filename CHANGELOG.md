@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.18.8](https://github.com/art-bazhin/spred/compare/v0.18.7...v0.18.8) (2022-08-14)
+
+
+### Bug Fixes
+
+* **catcher:** fix exception logging on signals with subs ([9ee7571](https://github.com/art-bazhin/spred/commit/9ee75717be41c24dd9d269dbd6d6ceb4c2e2be75))
+
+
+### Tests
+
+* **catcher:** add missing test case ([f4f4759](https://github.com/art-bazhin/spred/commit/f4f47591129d9dea6453bef9089f8da4eeb652b0))
+
 ### [0.18.7](https://github.com/art-bazhin/spred/compare/v0.18.6...v0.18.7) (2022-08-13)
 
 
