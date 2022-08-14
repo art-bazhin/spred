@@ -26,6 +26,12 @@ describe('catcher', () => {
   });
 
   it('allows to handle active writable exceptions', () => {
+    const errorSpy = jest.fn();
+
+    configure({
+      logException: errorSpy,
+    });
+
     const count = writable(0);
 
     const withError = computed(() => {
@@ -36,16 +42,16 @@ describe('catcher', () => {
     const withErrorComp = computed(withError);
     withErrorComp.subscribe(() => {}, false);
 
-    const handledError = catcher(
-      () => withErrorComp(),
-      () => 42
-    );
+    expect(errorSpy).toBeCalledTimes(1);
+
+    const handledError = catcher(withErrorComp, () => 42);
     handledError.subscribe(() => {}, false);
 
     expect(handledError()).toBe(42);
 
     count(5);
     expect(handledError()).toBe(5);
+    expect(errorSpy).toBeCalledTimes(2);
 
     count(4);
     expect(handledError()).toBe(42);
