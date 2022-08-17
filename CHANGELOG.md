@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.18.9](https://github.com/art-bazhin/spred/compare/v0.18.8...v0.18.9) (2022-08-17)
+
+
+### Bug Fixes
+
+* **effect:** emit aborted signal on pending effect call ([12bb6a1](https://github.com/art-bazhin/spred/commit/12bb6a19eb32a11de9f5327c331d4630b45f39db))
+
 ### [0.18.8](https://github.com/art-bazhin/spred/compare/v0.18.7...v0.18.8) (2022-08-14)
 
 
