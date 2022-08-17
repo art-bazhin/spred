@@ -9,7 +9,7 @@ export interface State<T> {
   exception?: unknown;
   observers: Set<Subscriber<T> | State<any>>;
   subsCount: number;
-  computedFn?: (prevValue: T | undefined) => T;
+  compute?: (prevValue: T | undefined) => T;
   dependencies?: Set<State<any>>;
   dirtyCount: number;
   queueIndex: number;
@@ -32,13 +32,13 @@ export interface State<T> {
 
 export function createState<T>(
   value: T,
-  computedFn?: (curentValue: T | undefined) => T
+  compute?: (curentValue: T | undefined) => T
 ): State<T> {
   const parent = tracking || scope;
 
   const state: State<T> = {
     value,
-    computedFn,
+    compute,
     observers: new Set(),
     dirtyCount: 0,
     queueIndex: -1,
@@ -47,7 +47,7 @@ export function createState<T>(
     isCached: FALSE_STATUS,
   };
 
-  if (computedFn) state.dependencies = new Set();
+  if (compute) state.dependencies = new Set();
 
   if (parent) {
     if (!parent.children) parent.children = [];

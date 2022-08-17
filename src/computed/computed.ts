@@ -9,13 +9,13 @@ function computedSelf(this: any) {
 }
 
 /**
- * Creates an signal that automatically calculates its value from other signals
- * @param computedFn The function that calculates signal value and returns it.
+ * Creates a signal that automatically calculates its value from other signals.
+ * @param compute The function that calculates the signal value and returns it.
  * @returns Computed signal.
  */
-export function computed<T>(computedFn: (prevValue?: T) => T): Signal<T> {
-  const fn = isWritableSignal(computedFn) ? () => computedFn() : computedFn;
-  const state = createState(undefined as any, fn);
+export function computed<T>(compute: (prevValue?: T) => T): Signal<T> {
+  const getValue = isWritableSignal(compute) ? () => compute() : compute;
+  const state = createState(undefined as any, getValue);
   const computed: any = computedSelf.bind(state);
 
   computed._state = state;

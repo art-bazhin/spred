@@ -71,6 +71,10 @@ export function collect(fn: () => any) {
   return () => clearChildren(fakeState);
 }
 
+/**
+ * Commits all writable signal updates inside the passed function as a single transaction.
+ * @param fn The function with updates.
+ */
 export function batch(fn: (...args: any) => any) {
   batchLevel++;
   fn();
@@ -81,7 +85,7 @@ export function batch(fn: (...args: any) => any) {
 
 export function update<T>(state: State<T>, value?: T) {
   if (arguments.length === 2) state.nextValue = value;
-  else if (state.computedFn) state.dirtyCount++;
+  else if (state.compute) state.dirtyCount++;
 
   state.queueIndex = queueLength - fullQueueLength;
   queueLength = queue.push(state);
@@ -170,7 +174,7 @@ export function recalc() {
 
     if (state.queueIndex !== i) continue;
 
-    if (!state.computedFn) {
+    if (!state.compute) {
       const value = state.nextValue;
       const shouldUpdate = value !== undefined;
 
@@ -289,7 +293,7 @@ export function getStateValue<T>(state: State<T>, notTrackDeps?: boolean): T {
     return state.value;
   }
 
-  if (state.computedFn && !state.observers.size && !state.isCached.status) {
+  if (state.compute && !state.observers.size && !state.isCached.status) {
     const value = calcComputed(state, notTrackDeps);
 
     if (value !== undefined) {
@@ -325,7 +329,7 @@ function calcComputed<T>(state: State<T>, logException?: boolean) {
   push(state);
 
   try {
-    value = state.computedFn!(state.value);
+    value = state.compute!(state.value);
   } catch (e: any) {
     state.exception = e;
     state.hasException = true;

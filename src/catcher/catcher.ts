@@ -2,18 +2,24 @@ import { computed } from '../computed/computed';
 import { State } from '../state/state';
 import { isSignal } from '../guards/guards';
 
+/**
+ * Creates a computed signal that handles exceptions that occur during computations.
+ * @param compute The function that calculates the signal value and returns it.
+ * @param handle The function that handles an exception and returns the new signal value.
+ * @returns Computed signal.
+ */
 export function catcher<T>(
-  fn: (prevValue?: T) => T,
-  catchException: (e: unknown, lastValue?: T) => T
+  compute: (prevValue?: T) => T,
+  handle: (e: unknown, prevValue?: T) => T
 ) {
-  const src = isSignal(fn) ? fn : computed(fn);
+  const getValue = isSignal(compute) ? compute : computed(compute);
 
   const comp = computed((prevValue: any) => {
-    const value = src();
-    const state = (src as any)._state as State<T>;
+    const value = getValue();
+    const state = (getValue as any)._state as State<T>;
 
     if (state.hasException) {
-      return catchException(state.exception, prevValue);
+      return handle(state.exception, prevValue);
     }
 
     return value;
