@@ -154,6 +154,10 @@ export function effect<T, A extends unknown[]>(
   };
 
   const call = (...args: A) => {
+    if (_status.sample() === 'pending') {
+      _aborted({});
+    }
+
     _status('pending');
 
     return exec(++counter, ...args)

@@ -245,8 +245,13 @@ describe('effect', () => {
       await res2;
       expect(spy).toBeCalledTimes(2);
 
+      const res3 = call(4);
+      call(5);
+      await res3;
+      expect(spy).toBeCalledTimes(3);
+
       reset();
-      expect(spy).toBeCalledTimes(2);
+      expect(spy).toBeCalledTimes(3);
     });
   });
 });
