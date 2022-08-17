@@ -9,6 +9,13 @@
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "license": "MIT",
+  "keywords": [
+    "reactivity",
+    "reactive",
+    "state management",
+    "state manager"
+  ],
+  "sideEffects": false,
   "devDependencies": {
     "@babel/preset-env": "^7.16.11",
     "@babel/preset-typescript": "^7.16.7",

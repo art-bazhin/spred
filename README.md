@@ -105,6 +105,8 @@ counter(2);
 Computed signals automatically track their dependencies and recalculate their value when any of the dependencies triggered.
 A computed signal can be created using the [computed](https://art-bazhin.github.io/spred/modules.html#computed) function. It takes as its argument a function that calculates the value of the signal and depends only on other signal values.
 
+Computed signals initialize their values lazily. That means that the calculation function triggers only when the signal has at least one subscriber / dependent signal with a subscriber.
+
 ```ts
 import { writable, computed } from 'spred';
 
@@ -298,15 +300,111 @@ trigger(1);
 // > a + b = 6
 ```
 
+### Watching
+
+[watch](https://art-bazhin.github.io/spred/modules.html#watch) function calls the passed callback immediately and every time the signals it depends on are triggered.
+
+```ts
+import { batch, watch, writable } from 'spred';
+
+const a = writable('Hello');
+const b = writable('World');
+
+watch(() => {
+  console.log(`${a()} ${b()}!`);
+});
+// > Hello World!
+
+batch(() => {
+  a('Foo');
+  b('Bar');
+});
+// > Foo Bar!
+```
+
 ### Lifecycle Hooks
 
 Every signal has several lifecycle hooks that can be subscribed to using special functions.
 
-- `onActivate` - emits when the signal becomes active (has at least one subscriber / dependant signal with subscriber);
-- `onDectivate` - emits when the signal becomes inactive (doesn't have any subscriber / dependant signal with subscriber);
+- `onActivate` - emits when the signal becomes active (has at least one subscriber / dependent signal with a subscriber);
+- `onDectivate` - emits when the signal becomes inactive (doesn't have any subscriber / dependent signal with a subscriber);
 - `onUpdate` - emits when the signal updates its value;
 - `onNotifyStart` - emits before notificating signal subscribers;
 - `onNotifyEnd` - emits after notificating signal subscribers;
 - `onException` - emits when an exception is thrown during the signal computation.
 
 [Example on StackBlitz](https://stackblitz.com/edit/spred-lifecycle-hooks?devToolsHeight=33&file=index.ts)
+
+## Effects
+
+[Effect](https://art-bazhin.github.io/spred/interfaces/Effect.html) is a wrapper for an asynchronous function. It creates auxiliary signals that represent the execution state of the function and its result.
+
+```ts
+import { effect, watch } from 'spred';
+
+function fetchUser(id: number) {
+  return fetch(`https://swapi.dev/api/people/${id}`).then((res) => res.json());
+}
+
+const userFx = effect(fetchUser);
+```
+
+Every effect has several signal properties.
+
+- `data` - receives the result of the fulfilled effect;
+- `exception` - receives the result of the rejected effect;
+- `done` - receives any result of the effect, both fulfilled and rejected;
+- `status` - receives status object of the effect;
+- `aborted` - emits when effect is aborted or reset during execution, including a call when the previous call is still pending.
+
+```ts
+/*...*/
+
+const { data, status, call } = userFx;
+
+watch(() => {
+  let html = '';
+
+  switch (status().value) {
+    case 'pending':
+      html = 'Loading...';
+      break;
+    case 'rejected':
+      html = 'Something went wrong';
+      break;
+    case 'fulfilled':
+      html = `<pre>${JSON.stringify(data(), null, 2)}</pre>`;
+  }
+
+  document.body.innerHTML = html;
+});
+
+call(1);
+```
+
+[Example on StackBlitz](https://stackblitz.com/edit/spred-effects?file=index.ts)
+
+## Integration
+
+### Svelte
+
+Spred signals implement [Svelte store contract](https://svelte.dev/docs#run-time-svelte-store) so you don't need any additional package to use them in Svelte apps.
+
+[Example on StackBlitz](https://stackblitz.com/edit/spred-svelte?file=src/lib/Counter.svelte)
+
+### React
+
+Use the [spred-react](https://github.com/art-bazhin/spred-react) package.
+
+[Example on StackBlitz](https://stackblitz.com/edit/spred-react?file=App.tsx)
+
+## References
+
+Big thanks for inspiration to
+
+- [cellx](https://github.com/Riim/cellx)
+- [effector](https://github.com/effector/effector)
+- [SolidJS](https://github.com/solidjs/solid)
+- [Vue 3](https://github.com/vuejs/core)
+- [nanostores](https://github.com/nanostores/nanostores)
+- [$mol](https://github.com/hyoo-ru/mam_mol)
