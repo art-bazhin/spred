@@ -15,10 +15,10 @@ export function isWritableSignal(value: any) {
   return isSignal(value) && (value as any).set;
 }
 
-export function get<T>(value: T | Signal<T>) {
+export function getValue<T>(value: T | Signal<T>) {
   return isSignal(value) ? value() : value;
 }
 
-export function sample<T>(value: T | Signal<T>) {
+export function sampleValue<T>(value: T | Signal<T>) {
   return isSignal(value) ? value.sample() : value;
 }

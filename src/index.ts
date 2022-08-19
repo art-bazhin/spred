@@ -23,7 +23,12 @@ import {
   EffectStatusObject,
 } from './effect/effect';
 import { Subscriber } from './subscriber/subscriber';
-import { isSignal, isWritableSignal, get, sample } from './guards/guards';
+import {
+  isSignal,
+  isWritableSignal,
+  getValue,
+  sampleValue,
+} from './guards/guards';
 import { check } from './check/check';
 import { isolate } from './isolate/isolate';
 import { collect } from './collect/collect';
@@ -58,8 +63,8 @@ export {
   configure,
   isSignal,
   isWritableSignal,
-  get,
-  sample,
+  getValue,
+  sampleValue,
   check,
   isolate,
   collect,
