@@ -27,28 +27,32 @@ export function check(fn: () => any) {
   return checked;
 }
 
-export function isolate(fn: () => any): void;
-export function isolate<A extends unknown[]>(
-  fn: (...args: A) => any,
+export function isolate<T>(fn: () => T): T;
+export function isolate<T, A extends unknown[]>(
+  fn: (...args: A) => T,
   args: A
-): void;
+): T;
 export function isolate(fn: any, args?: any) {
   const prevCacheStatus = cacheStatus;
   const prevDepth = depth;
   const prevTracking = tracking;
   const prevScope = scope;
 
+  let result: true;
+
   if (tracking) scope = tracking;
   tracking = null;
   depth = 0;
 
-  if (args) fn(...args);
-  else fn();
+  if (args) result = fn(...args);
+  else result = fn();
 
   cacheStatus = prevCacheStatus;
   depth = prevDepth;
   tracking = prevTracking;
   scope = prevScope;
+
+  return result;
 }
 
 export function collect(fn: () => any) {

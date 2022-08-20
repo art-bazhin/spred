@@ -177,4 +177,9 @@ describe('isolate', () => {
 
     isolate(fn, [1, 'foo']);
   });
+
+  it('returns callback result', () => {
+    expect(isolate(() => 1)).toBe(1);
+    expect(isolate((v: any) => v, [1])).toBe(1);
+  });
 });
