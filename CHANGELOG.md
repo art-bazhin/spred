@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.19.1](https://github.com/art-bazhin/spred/compare/v0.19.0...v0.19.1) (2022-08-20)
+
+
+### Features
+
+* **isolate:** isolate returns callback result ([29ec0b4](https://github.com/art-bazhin/spred/commit/29ec0b4a6f4911feed51c263ad0990e15463ba81))
+
 ## [0.19.0](https://github.com/art-bazhin/spred/compare/v0.18.11...v0.19.0) (2022-08-20)
 
 
