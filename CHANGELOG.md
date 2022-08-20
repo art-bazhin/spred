@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.20.1](https://github.com/art-bazhin/spred/compare/v0.20.0...v0.20.1) (2022-08-20)
+
+
+### Features
+
+* **computed:** pass scheduled bool as computation second arg ([24207ce](https://github.com/art-bazhin/spred/commit/24207ce437fba753b7e3cf59192aa20600ca65a6))
+
 ## [0.20.0](https://github.com/art-bazhin/spred/compare/v0.19.1...v0.20.0) (2022-08-20)
 
 
