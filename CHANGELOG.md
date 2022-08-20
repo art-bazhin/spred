@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.19.0](https://github.com/art-bazhin/spred/compare/v0.18.11...v0.19.0) (2022-08-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* **guards:** get -> getValue, sample -> sampleValue
+
+### Features
+
+* **effect:** add called signal ([87dcdc0](https://github.com/art-bazhin/spred/commit/87dcdc0801cb76d85951e975a7a0db37c6d60062))
+* **logger:** add logger ([84cad22](https://github.com/art-bazhin/spred/commit/84cad2230510a9c6d7cd0dd5253c8ff7bda1b940))
+
+
+### Code Refactoring
+
+* **guards:** rename get and sample functions ([24b20f1](https://github.com/art-bazhin/spred/commit/24b20f19a878894f85be58c75dc96826131cbdcb))
+
+
+### Docs
+
+* update docs ([480af90](https://github.com/art-bazhin/spred/commit/480af90413f119192afc792a4cc633d1093221b6))
+
 ### [0.18.11](https://github.com/art-bazhin/spred/compare/v0.18.10...v0.18.11) (2022-08-17)
 
 
