@@ -4,6 +4,7 @@ import { Subscriber } from '../subscriber/subscriber';
 import { config } from '../config/config';
 import { CircularDependencyError } from '../errors/errors';
 import { FALSE_STATUS } from '../utils/constants';
+import { LifecycleHookName } from '../lifecycle/lifecycle';
 
 export let tracking: State<any> | null = null;
 export let scope: State<any> | null = null;
@@ -131,6 +132,8 @@ function resetStateQueueParams(state: State<any>) {
 }
 
 function emitUpdateLifecycle(state: State<any>, value: any) {
+  logHook(state, 'UPDATE', value);
+
   if (!state.onUpdate) return;
 
   state.onUpdate.forEach((fn) =>
@@ -192,6 +195,8 @@ export function recalc() {
 
     if (state.hasException) {
       state.dirtyCount = 0;
+
+      logHook(state, 'EXCEPTION');
 
       if (state.onException) {
         state.onException.forEach((fn) => fn(state.exception));
@@ -267,6 +272,8 @@ function runSubscribers<T>(state: State<T>) {
   let i = state.subsCount;
   if (!i) return;
 
+  logHook(state, 'NOTIFY_START');
+
   if (state.onNotifyStart) {
     state.onNotifyStart.forEach((fn) => fn(state.value));
   }
@@ -277,6 +284,8 @@ function runSubscribers<T>(state: State<T>) {
     subscriber(state.value);
     --i;
   }
+
+  logHook(state, 'NOTIFY_END');
 
   if (state.onNotifyEnd) {
     state.onNotifyEnd.forEach((fn) => fn(state.value));
@@ -348,6 +357,8 @@ function calcComputed<T>(state: State<T>, logException?: boolean) {
   pop(prevTracking);
 
   if (state.hasException) {
+    logHook(state, 'EXCEPTION');
+
     if (state.onException) {
       state.onException.forEach((fn) => fn(state.exception));
     }
@@ -367,6 +378,8 @@ function calcComputed<T>(state: State<T>, logException?: boolean) {
 function activateDependencies<T>(state: State<T>) {
   if (state.observers.size) return;
 
+  logHook(state, 'ACTIVATE');
+
   if (state.onActivate) {
     state.onActivate.forEach((fn) => fn(state.value));
   }
@@ -381,6 +394,8 @@ function activateDependencies<T>(state: State<T>) {
 
 function deactivateDependencies<T>(state: State<T>) {
   if (state.observers.size) return;
+
+  logHook(state, 'DEACTIVATE');
 
   if (state.onDeactivate) {
     state.onDeactivate.forEach((fn) => fn(state.value));
@@ -437,4 +452,19 @@ function clearChildren(state: State<any>) {
     for (let unsub of state.lcUnsubs) unsub();
     state.lcUnsubs = [];
   }
+}
+
+function logHook<T>(state: State<T>, hook: LifecycleHookName, value?: T) {
+  if (!state.name) return;
+
+  let payload: any = state.value;
+
+  if (hook === 'EXCEPTION') payload = state.exception;
+  else if (hook === 'UPDATE')
+    payload = {
+      prevValue: state.value,
+      value,
+    };
+
+  (config as any)._log(state.name, hook, payload);
 }

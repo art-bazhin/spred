@@ -33,6 +33,8 @@ import { check } from './check/check';
 import { isolate } from './isolate/isolate';
 import { collect } from './collect/collect';
 import { catcher } from './catcher/catcher';
+import { named } from './named/named';
+import { createLogger } from './logger/logger';
 
 export {
   Signal,
@@ -69,4 +71,6 @@ export {
   isolate,
   collect,
   catcher,
+  named,
+  createLogger,
 };

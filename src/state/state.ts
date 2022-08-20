@@ -20,6 +20,7 @@ export interface State<T> {
   oldDepsCount: number;
   children?: ((() => any) | State<any>)[];
   lcUnsubs?: (() => any)[];
+  name?: string;
 
   // lifecycle:
   onActivate?: ((value: T) => any)[];

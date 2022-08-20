@@ -4,8 +4,11 @@ import { Signal } from '../signal/signal';
 import { batch } from '../core/core';
 import { NOOP_FN } from '../utils/constants';
 import { memo } from '../memo/memo';
+import { named } from '../named/named';
+import { config } from '../config/config';
 
 export type EffectStatus = 'pristine' | 'pending' | 'fulfilled' | 'rejected';
+export type EffectEventName = 'CALL' | 'ABORT' | 'RESET';
 
 export interface EffectStatusObject {
   readonly value: EffectStatus;
@@ -67,7 +70,8 @@ export interface Effect<T, A extends unknown[]> {
  * @returns Effect.
  */
 export function effect<T, A extends unknown[]>(
-  asyncFn: (...args: A) => Promise<T>
+  asyncFn: (...args: A) => Promise<T>,
+  name?: string
 ) {
   let counter = 0;
   let current = -1;
@@ -122,7 +126,9 @@ export function effect<T, A extends unknown[]>(
   const aborted = computed(_aborted);
 
   const abort = () => {
-    if (!status().pending) return;
+    if (!status.sample().pending) return;
+
+    logEvent(name, 'ABORT');
 
     batch(() => {
       _status(lastStatus() as any);
@@ -133,6 +139,10 @@ export function effect<T, A extends unknown[]>(
   };
 
   const reset = () => {
+    if (status.sample().pristine) return;
+
+    logEvent(name, 'RESET');
+
     batch(() => {
       if (status().pending) _aborted({});
       _status('pristine');
@@ -154,6 +164,8 @@ export function effect<T, A extends unknown[]>(
   };
 
   const call = (...args: A) => {
+    logEvent(name, 'CALL', args);
+
     if (_status.sample() === 'pending') {
       _aborted({});
     }
@@ -183,6 +195,14 @@ export function effect<T, A extends unknown[]>(
       });
   };
 
+  if (name) {
+    named(data, name + '.data');
+    named(exception, name + '.exception');
+    named(done, name + '.done');
+    named(aborted, name + '.aborted');
+    named(status, name + '.status');
+  }
+
   return {
     data,
     exception,
@@ -193,4 +213,13 @@ export function effect<T, A extends unknown[]>(
     abort,
     reset,
   } as Effect<T, A>;
+}
+
+function logEvent(
+  effectName?: string,
+  eventName?: EffectEventName,
+  payload?: any
+) {
+  if (!effectName) return;
+  (config as any)._log(effectName, eventName, payload);
 }

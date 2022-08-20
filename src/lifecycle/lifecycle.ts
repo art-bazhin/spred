@@ -2,6 +2,14 @@ import { scope, tracking } from '../core/core';
 import { Signal, _Signal } from '../signal/signal';
 import { removeFromArray } from '../utils/removeFromArray';
 
+export type LifecycleHookName =
+  | 'ACTIVATE'
+  | 'DEACTIVATE'
+  | 'NOTIFY_START'
+  | 'NOTIFY_END'
+  | 'UPDATE'
+  | 'EXCEPTION';
+
 function addListener<T>(
   signal: Signal<any>,
   lifecycleKey: string,

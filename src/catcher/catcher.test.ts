@@ -69,17 +69,16 @@ describe('catcher', () => {
   it('allows to throw a new exception', () => {
     const count = writable(0);
 
-    const withError = computed(() => {
-      if (count() < 5) throw 5 - count();
-      return count();
-    });
-
-    const withErrorComp = computed(withError);
-
-    const handledError = catcher(withErrorComp, (e: any) => {
-      if (e > 5) throw Error();
-      return 42;
-    });
+    const handledError = catcher(
+      () => {
+        if (count() < 5) throw 5 - count();
+        return count();
+      },
+      (e: any) => {
+        if (e > 5) throw Error();
+        return 42;
+      }
+    );
 
     const secondHandledError = catcher(handledError, () => 999);
 
