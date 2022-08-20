@@ -490,4 +490,48 @@ describe('computed', () => {
     extUnsub();
     expect(onDeactivateSpy).toBeCalledTimes(2);
   });
+
+  it('passes previous value into compute fn as first argument', () => {
+    let prev: any;
+
+    const source = writable(0);
+    const result = computed((prevValue: number | undefined) => {
+      prev = prevValue;
+      return source();
+    });
+
+    result.subscribe(() => {});
+
+    expect(prev).toBeUndefined();
+
+    source(1);
+    expect(prev).toBe(0);
+
+    source(2);
+    expect(prev).toBe(1);
+  });
+
+  it('passes true as second compute fn argument if computation was scheduled', () => {
+    let lastScheduled = false;
+
+    const source = writable(0);
+    const result = computed((_: any, scheduled: boolean) => {
+      lastScheduled = scheduled;
+      return source();
+    });
+
+    const unsub = result.subscribe(() => {});
+
+    expect(lastScheduled).toBe(false);
+
+    source(1);
+    expect(lastScheduled).toBe(true);
+
+    source(2);
+    expect(lastScheduled).toBe(true);
+
+    unsub();
+    result();
+    expect(lastScheduled).toBe(false);
+  });
 });

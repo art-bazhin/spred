@@ -217,7 +217,7 @@ export function recalc() {
       continue;
     }
 
-    const value = calcComputed(state);
+    const value = calcComputed(state, true);
 
     if (value !== undefined) {
       emitUpdateLifecycle(state, value);
@@ -307,7 +307,7 @@ export function getStateValue<T>(state: State<T>, notTrackDeps?: boolean): T {
   }
 
   if (state.compute && !state.observers.size && !state.isCached.status) {
-    const value = calcComputed(state, notTrackDeps);
+    const value = calcComputed(state, false, notTrackDeps);
 
     if (value !== undefined) {
       state.value = value;
@@ -335,14 +335,18 @@ export function getStateValue<T>(state: State<T>, notTrackDeps?: boolean): T {
   return state.value;
 }
 
-function calcComputed<T>(state: State<T>, logException?: boolean) {
+function calcComputed<T>(
+  state: State<T>,
+  scheduled: boolean,
+  logException?: boolean
+) {
   const prevTracking = tracking;
   let value;
 
   push(state);
 
   try {
-    value = state.compute!(state.value);
+    value = state.compute!(state.value, scheduled);
   } catch (e: any) {
     state.exception = e;
     state.hasException = true;

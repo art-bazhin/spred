@@ -1,16 +1,28 @@
 import { Signal } from '../signal/signal';
+import { Computation } from '../state/state';
 import { WritableSignal } from '../writable/writable';
 
-export function isSignal<T>(value: (...args: any) => T): value is Signal<T>;
-export function isSignal(value: any): value is Signal<unknown>;
+export function isSignal<T>(value: Computation<T>): value is Signal<T>;
+export function isSignal<T>(
+  value: (...args: unknown[]) => T
+): value is Signal<T>;
+export function isSignal(value: unknown): value is Signal<unknown>;
 export function isSignal(value: any) {
-  return (value as any)._state && (value as any).subscribe;
+  return value._state && value.subscribe;
 }
 
 export function isWritableSignal<T>(
-  value: (...args: any) => T
+  value: (...args: unknown[]) => T
 ): value is WritableSignal<T>;
-export function isWritableSignal(value: any): value is WritableSignal<unknown>;
+
+export function isWritableSignal<T>(
+  value: Computation<T>
+): value is WritableSignal<T>;
+
+export function isWritableSignal(
+  value: unknown
+): value is WritableSignal<unknown>;
+
 export function isWritableSignal(value: any) {
   return isSignal(value) && (value as any).set;
 }

@@ -1,5 +1,5 @@
 import { computed } from '../computed/computed';
-import { State } from '../state/state';
+import { Computation, State } from '../state/state';
 import { isSignal } from '../guards/guards';
 
 /**
@@ -9,7 +9,7 @@ import { isSignal } from '../guards/guards';
  * @returns Computed signal.
  */
 export function catcher<T>(
-  compute: (prevValue?: T) => T,
+  compute: Computation<T>,
   handle: (e: unknown, prevValue?: T) => T
 ) {
   const getValue = isSignal(compute) ? compute : computed(compute);

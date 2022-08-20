@@ -2,6 +2,11 @@ import { scope, tracking } from '../core/core';
 import { Subscriber } from '../subscriber/subscriber';
 import { FALSE_STATUS } from '../utils/constants';
 
+export type Computation<T> =
+  | (() => T)
+  | ((prevValue: T | undefined) => T)
+  | ((prevValue: T | undefined, scheduled: boolean) => T);
+
 export interface State<T> {
   value: T;
   nextValue?: T;
@@ -9,7 +14,7 @@ export interface State<T> {
   exception?: unknown;
   observers: Set<Subscriber<T> | State<any>>;
   subsCount: number;
-  compute?: (prevValue: T | undefined) => T;
+  compute?: Computation<T>;
   dependencies?: Set<State<any>>;
   dirtyCount: number;
   queueIndex: number;
@@ -31,10 +36,7 @@ export interface State<T> {
   onException?: ((e: unknown) => any)[];
 }
 
-export function createState<T>(
-  value: T,
-  compute?: (curentValue: T | undefined) => T
-): State<T> {
+export function createState<T>(value: T, compute?: Computation<T>): State<T> {
   const parent = tracking || scope;
 
   const state: State<T> = {
