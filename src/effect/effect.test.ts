@@ -14,7 +14,7 @@ describe('effect', () => {
     });
   };
 
-  const { data, exception, status, done, aborted, called, reset, abort, call } =
+  const { data, exception, status, done, aborted, args, reset, abort, call } =
     effect(fn);
 
   it('is initialized with default state', () => {
@@ -255,7 +255,7 @@ describe('effect', () => {
     });
   });
 
-  describe('called signal', () => {
+  describe('args signal', () => {
     it('receives call arguments on every effect call', async () => {
       let args: any;
       const spy = jest.fn();
@@ -266,7 +266,7 @@ describe('effect', () => {
 
       reset();
 
-      on(called, sub);
+      on(args, sub);
       expect(spy).toBeCalledTimes(0);
 
       await call(1);

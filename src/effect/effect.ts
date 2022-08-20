@@ -51,7 +51,7 @@ export interface Effect<T, A extends unknown[]> {
   /**
    * Signal that receives call arguments on every effect call.
    */
-  readonly called: Signal<A | undefined>;
+  readonly args: Signal<A | undefined>;
 
   /**
    * Calls the effect.
@@ -85,7 +85,7 @@ export function effect<T, A extends unknown[]>(
   const _exception = writable();
   const _data = writable<T>();
   const _aborted = writable();
-  const _called = writable<A>();
+  const _args = writable<A>();
 
   const lastStatus = memo(() => {
     const status = _status();
@@ -130,7 +130,7 @@ export function effect<T, A extends unknown[]>(
 
   const data = computed(_data);
   const aborted = computed(_aborted);
-  const called = computed(_called);
+  const args = computed(_args);
 
   const abort = () => {
     if (!status.sample().pending) return;
@@ -177,7 +177,7 @@ export function effect<T, A extends unknown[]>(
       _aborted({});
     }
 
-    _called(args);
+    _args(args);
     _status('pending');
 
     return exec(++counter, ...args)
@@ -208,7 +208,7 @@ export function effect<T, A extends unknown[]>(
     named(exception, name + '.exception');
     named(done, name + '.done');
     named(aborted, name + '.aborted');
-    named(called, name + '.called');
+    named(args, name + '.args');
     named(status, name + '.status');
   }
 
@@ -217,7 +217,7 @@ export function effect<T, A extends unknown[]>(
     exception,
     done,
     aborted,
-    called,
+    args,
     status,
     call,
     abort,
