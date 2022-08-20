@@ -257,11 +257,12 @@ describe('effect', () => {
 
   describe('args signal', () => {
     it('receives call arguments on every effect call', async () => {
-      let args: any;
+      let lastArgs: any;
+
       const spy = jest.fn();
       const sub = (value: any) => {
         spy();
-        args = value;
+        lastArgs = value;
       };
 
       reset();
@@ -271,18 +272,18 @@ describe('effect', () => {
 
       await call(1);
       expect(spy).toBeCalledTimes(1);
-      expect(args[0]).toBe(1);
+      expect(lastArgs[0]).toBe(1);
 
       const res1 = call(2);
       expect(spy).toBeCalledTimes(2);
       await res1;
-      expect(args[0]).toBe(2);
+      expect(lastArgs[0]).toBe(2);
 
       call(3);
       const res2 = call(4);
       expect(spy).toBeCalledTimes(4);
       await res2;
-      expect(args[0]).toBe(4);
+      expect(lastArgs[0]).toBe(4);
     });
   });
 });
