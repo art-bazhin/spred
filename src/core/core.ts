@@ -88,14 +88,24 @@ export function batch(fn: (...args: any) => any) {
   recalc();
 }
 
-export function update<T>(state: State<T>, value?: T) {
-  if (arguments.length === 2) state.nextValue = value;
-  else if (state.compute) state.dirtyCount++;
+export function update<T>(state: State<T>, value: (currentValue: T) => T): T;
+export function update<T>(state: State<T>, value: T | undefined): T;
+export function update<T>(state: State<T>): void;
+export function update<T>(state: State<T>, value?: any) {
+  let nextValue: any;
+
+  if (arguments.length === 2) {
+    if (typeof value === 'function') state.nextValue = value(state.nextValue);
+    else state.nextValue = value;
+    nextValue = state.nextValue;
+  } else if (state.compute) state.dirtyCount++;
 
   state.queueIndex = queueLength - fullQueueLength;
   queueLength = queue.push(state);
 
   recalc();
+
+  return nextValue;
 }
 
 export function addSubscriber<T>(

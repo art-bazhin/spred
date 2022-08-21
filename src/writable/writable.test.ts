@@ -1,3 +1,4 @@
+import { batch } from '../core/core';
 import {
   onActivate,
   onDeactivate,
@@ -22,6 +23,25 @@ describe('writable', () => {
   it('updates value using set method', () => {
     counter.set(2);
     expect(counter()).toBe(2);
+  });
+
+  it('returns new value after set', () => {
+    const newValue = counter(3);
+    expect(newValue).toBe(3);
+  });
+
+  it('updates value using passed update fn', () => {
+    counter((value) => value + 1);
+    expect(counter()).toBe(4);
+
+    batch(() => {
+      counter((value) => value + 1);
+      counter((value) => value + 1);
+      counter((value) => value + 1);
+      counter((value) => value + 1);
+    });
+
+    expect(counter()).toBe(8);
   });
 
   it('has Signal methods', () => {

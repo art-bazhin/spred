@@ -31,9 +31,21 @@ export interface WritableSignal<T> extends Signal<T> {
 
   /**
    * Sets the value of the signal
+   * @param updateFn Function that calculates a new value from the current value.
+   */
+  (updateFn: (currentValue: T) => T): T;
+
+  /**
+   * Sets the value of the signal
    * @param value New value of the signal.
    */
   set(value: T): T;
+
+  /**
+   * Sets the value of the signal
+   * @param updateFn Function that calculates a new value from the current value.
+   */
+  set(updateFn: (currentValue: T) => T): T;
 
   /**
    * Notify subscribers without setting a new value.
