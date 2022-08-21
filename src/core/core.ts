@@ -199,9 +199,9 @@ export function recalc() {
         clearChildren(state);
         emitUpdateLifecycle(state, value);
         state.value = value;
+        notificationQueue.push(state);
       }
 
-      notificationQueue.push(state);
       resetStateQueueParams(state);
 
       continue;
