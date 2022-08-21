@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.20.3](https://github.com/art-bazhin/spred/compare/v0.20.2...v0.20.3) (2022-08-21)
+
+
+### Bug Fixes
+
+* **writable:** do not notificate when undefined is passed ([6d5e316](https://github.com/art-bazhin/spred/commit/6d5e3168e8d701db669163333a5cce6f21241ce2))
+* **writable:** fix writable update bug ([f09866f](https://github.com/art-bazhin/spred/commit/f09866f5b1014d8449a43ba4100c0bc42aa9e332))
+
 ### [0.20.2](https://github.com/art-bazhin/spred/compare/v0.20.1...v0.20.2) (2022-08-21)
 
 
