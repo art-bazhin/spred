@@ -1,5 +1,5 @@
 import { Signal } from '../signal/signal';
-import { Computation } from '../state/state';
+import { Computation } from '../signal-state/signal-state';
 import { WritableSignal } from '../writable/writable';
 
 export function isSignal<T>(value: Computation<T>): value is Signal<T>;

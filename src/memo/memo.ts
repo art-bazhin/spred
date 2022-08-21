@@ -1,6 +1,6 @@
 import { computed } from '../computed/computed';
 import { isWritableSignal } from '../guards/guards';
-import { Computation } from '../state/state';
+import { Computation } from '../signal-state/signal-state';
 
 /**
  * Creates a computed signal that triggers its dependants and subscribers only if its value changes.

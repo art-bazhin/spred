@@ -7,15 +7,15 @@ export type Computation<T> =
   | ((prevValue: T | undefined) => T)
   | ((prevValue: T | undefined, scheduled: boolean) => T);
 
-export interface State<T> {
+export interface SignalState<T> {
   value: T;
   nextValue?: T;
   hasException?: boolean;
   exception?: unknown;
-  observers: Set<Subscriber<T> | State<any>>;
+  observers: Set<Subscriber<T> | SignalState<any>>;
   subsCount: number;
   compute?: Computation<T>;
-  dependencies?: Set<State<any>>;
+  dependencies?: Set<SignalState<any>>;
   dirtyCount: number;
   queueIndex: number;
   isComputing?: boolean;
@@ -23,7 +23,7 @@ export interface State<T> {
   isCatcher?: boolean;
   hasCycle?: boolean;
   oldDepsCount: number;
-  children?: ((() => any) | State<any>)[];
+  children?: ((() => any) | SignalState<any>)[];
   lcUnsubs?: (() => any)[];
   name?: string;
 
@@ -36,10 +36,13 @@ export interface State<T> {
   onException?: ((e: unknown) => any)[];
 }
 
-export function createState<T>(value: T, compute?: Computation<T>): State<T> {
+export function createSignalState<T>(
+  value: T,
+  compute?: Computation<T>
+): SignalState<T> {
   const parent = tracking || scope;
 
-  const state: State<T> = {
+  const state: SignalState<T> = {
     value,
     compute,
     observers: new Set(),

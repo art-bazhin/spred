@@ -1,5 +1,5 @@
 import { computed } from '../computed/computed';
-import { Computation, State } from '../state/state';
+import { Computation, SignalState } from '../signal-state/signal-state';
 import { isSignal } from '../guards/guards';
 
 /**
@@ -16,7 +16,7 @@ export function catcher<T>(
 
   const comp = computed((prevValue: any) => {
     const value = getValue();
-    const state = (getValue as any)._state as State<T>;
+    const state = (getValue as any)._state as SignalState<T>;
 
     if (state.hasException) {
       return handle(state.exception, prevValue);

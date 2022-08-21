@@ -5,7 +5,7 @@ import {
   tracking,
   scope,
 } from '../core/core';
-import { State } from '../state/state';
+import { SignalState } from '../signal-state/signal-state';
 import { Subscriber } from '../subscriber/subscriber';
 
 /**
@@ -47,7 +47,7 @@ export interface Signal<T> {
 }
 
 export interface _Signal<T> extends Signal<T> {
-  _state: State<T>;
+  _state: SignalState<T>;
 }
 
 export const signalProto = {

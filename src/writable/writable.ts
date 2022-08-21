@@ -1,6 +1,6 @@
 import { Signal, signalProto, _Signal } from '../signal/signal';
 import { getStateValue, update } from '../core/core';
-import { createState } from '../state/state';
+import { createSignalState } from '../signal-state/signal-state';
 
 const writableSignalProto = {
   ...signalProto,
@@ -69,7 +69,7 @@ export function writable<T>(): WritableSignal<T | undefined>;
 export function writable<T>(value: T): WritableSignal<T>;
 
 export function writable(value?: any) {
-  const state = createState(value, undefined);
+  const state = createSignalState(value, undefined);
   const writable: any = writableSelf.bind(state);
 
   writable._state = state;

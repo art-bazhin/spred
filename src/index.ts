@@ -35,6 +35,7 @@ import { collect } from './collect/collect';
 import { catcher } from './catcher/catcher';
 import { named } from './named/named';
 import { createLogger } from './logger/logger';
+import { Computation } from './signal-state/signal-state';
 
 export {
   Signal,
@@ -47,6 +48,7 @@ export {
   StoreOptions,
   Config,
   Subscriber,
+  Computation,
   writable,
   computed,
   memo,
