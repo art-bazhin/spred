@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.20.2](https://github.com/art-bazhin/spred/compare/v0.20.1...v0.20.2) (2022-08-21)
+
+
+### Features
+
+* **writable:** allow to pass an update function to calculate a new value ([c1ffd11](https://github.com/art-bazhin/spred/commit/c1ffd11df859894f37627743331e966f79186edc))
+
+
+### Docs
+
+* update docs ([7d6f4ca](https://github.com/art-bazhin/spred/commit/7d6f4caecf58d599c55fffdf751fecea4340e9e5))
+
 ### [0.20.1](https://github.com/art-bazhin/spred/compare/v0.20.0...v0.20.1) (2022-08-20)
 
 
