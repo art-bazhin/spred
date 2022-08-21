@@ -51,6 +51,7 @@ export function createState<T>(value: T, compute?: Computation<T>): State<T> {
   };
 
   if (compute) state.dependencies = new Set();
+  else state.nextValue = value;
 
   if (parent) {
     if (!parent.children) parent.children = [];

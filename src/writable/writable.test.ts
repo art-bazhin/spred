@@ -44,6 +44,13 @@ describe('writable', () => {
     expect(counter()).toBe(8);
   });
 
+  it('updates value using passed update fn right after init', () => {
+    const value = writable(0);
+
+    value((v) => v + 1);
+    expect(value()).toBe(1);
+  });
+
   it('has Signal methods', () => {
     expect(counter.get).toBeDefined;
     expect(counter.subscribe).toBeDefined;
