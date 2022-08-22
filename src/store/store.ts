@@ -1,209 +1,126 @@
-import { writable, WritableSignal } from '../writable/writable';
-import { Signal, _Signal } from '../signal/signal';
-import { computed } from '../computed/computed';
-import { batch, update } from '../core/core';
+import { StateTypeError } from '../errors/errors';
+import { onDeactivate, onUpdate } from '../lifecycle/lifecycle';
+import { memo } from '../memo/memo';
+import { Signal } from '../signal/signal';
+import { writable } from '../writable/writable';
 
-export interface StoreOptions<T> {
-  getItemId: (item: T) => string;
-}
+type Keys<T> = keyof T & (string | number);
 
-export interface StoreData<T> {
-  [id: string]: T | null;
-}
+type Select<T, K extends Keys<T>> = undefined extends T[K]
+  ? Exclude<T[K], undefined> | null
+  : T[K];
 
-/**
- * Reactive object store.
- */
 export interface Store<T> {
-  /**
-   * Returnes the item signal by id. Returns the same signal for the same id.
-   * @param id Unique item id.
-   */
-  getSignal(id: string): Signal<T | null>;
-
-  /**
-   * Returnes the item by id. The returned value will be tracked when used in computed signals.
-   * @param id Unique item id.
-   */
-  get(id: string): T | null;
-
-  /**
-   * Updates the item in the store.
-   * @param item Item.
-   */
-  set(item: T): void;
-
-  /**
-   * Updates items in the store.
-   * @param items Array of items.
-   */
-  set(items: T[]): void;
-
-  /**
-   * Deletes item from the store.
-   * @param id  Unique item id.
-   */
-  delete(id: string): void;
-
-  /**
-   * Deletes items from the store.
-   * @param ids  Array of unique item ids.
-   */
-  delete(ids: string[]): void;
-
-  /**
-   * Clears the store.
-   */
-  clear(): void;
-
-  /**
-   * signal that receives the store data every time it is updated. Useful for synchronizing with external storage.
-   */
-  data: Signal<StoreData<T>>;
+  state: Signal<T>;
+  update(updateFn: (state: T) => T | void): void;
+  select<K extends Keys<T>>(key: K): Store<Select<T, K>>;
 }
 
-interface _Store<T> extends Store<T> {
-  _options: Partial<StoreOptions<T>>;
-  _idFn: (item: T) => string;
-  _data: WritableSignal<StoreData<T>>;
-  _force: WritableSignal<null>;
-  _signals: {
-    [id: string]: Signal<T | null> | undefined;
+const STOP: any = {};
+const STORES_CACHE: any = {};
+let VALUES_CACHE: any = {};
+
+let counter = 1;
+
+function isPlainObject(obj: any) {
+  const proto = Object.getPrototypeOf(obj);
+  return proto && proto.constructor === Object;
+}
+
+function isArray(obj: any) {
+  return Array.isArray(obj);
+}
+
+function copy<T>(obj: T): T {
+  if (isArray(obj)) return (obj as any).slice();
+
+  if (obj && typeof obj === 'object') {
+    if (isPlainObject(obj)) return Object.assign({}, obj);
+    throw new StateTypeError();
+  }
+
+  return obj;
+}
+
+function getClone<T>(id: string, state: Signal<T>, value?: T): T {
+  const cached = VALUES_CACHE[id];
+
+  if (cached !== undefined) return cached;
+  return copy(value || state.sample());
+}
+
+export function store<T>(initialState: T): Store<T> {
+  const ID = 'STORE_' + counter++;
+  const _state = writable(initialState);
+  const state = memo(_state);
+
+  onUpdate(_state, () => (VALUES_CACHE = {}));
+
+  function update(updateFn: (current: T) => T | void) {
+    _state((current) => {
+      const clone = getClone(ID, state, current);
+      const next = updateFn(clone);
+      const value = next === undefined ? clone : next;
+
+      VALUES_CACHE[ID] = value;
+
+      return value;
+    });
+  }
+
+  const select = createSelect(ID, state, update);
+
+  return {
+    state,
+    update,
+    select,
   };
 }
 
-const DEFAULT_STORE_OPTIONS = {
-  getItemId: (item: any) => item.id,
-};
+function createSelect<T>(
+  parentId: string,
+  parentData: Signal<T>,
+  parentUpdate: (updateFn: (state: T) => T | void) => void
+) {
+  return function <K extends Keys<T>>(key: K): Store<Select<T, K>> {
+    const ID = parentId + '.' + key;
+    const cached = STORES_CACHE[ID];
 
-function createData<T>(items: T[], getItemId: (item: T) => string) {
-  const data: StoreData<T> = {};
+    if (cached) return cached;
 
-  for (let item of items) {
-    data[getItemId(item)] = item;
-  }
+    const state = memo(() => {
+      const parentValue = parentData() as T;
+      const value = parentValue && parentValue[key];
 
-  return data;
-}
+      if (value === undefined) return null;
+      return value;
+    }) as Signal<Select<T, K>>;
 
-function getSignal<T>(this: _Store<T>, id: string) {
-  if (!this._signals[id]) {
-    this._signals[id] = computed<T | null>(
-      () => this._data()[id] || this._force()
-    ) as any;
-  }
+    onDeactivate(state, () => delete STORES_CACHE[ID]);
 
-  return this._signals[id]!;
-}
+    function update(updateFn: (state: Select<T, K>) => Select<T, K> | void) {
+      const clone = getClone(ID, state);
+      const next = updateFn(clone);
+      const value = next === undefined ? clone : next;
 
-function get<T>(this: _Store<T>, id: string) {
-  return this.getSignal(id)();
-}
+      if (next === STOP) return;
 
-function set<T>(this: _Store<T>, item: T): void;
-function set<T>(this: _Store<T>, items: T[]): void;
-function set<T>(this: _Store<T>, items: any) {
-  const itemArr = Array.isArray(items) ? items : [items];
-  const data = this._data.sample();
+      VALUES_CACHE[ID] = value;
 
-  batch(() => {
-    for (let item of itemArr) {
-      const id = this._idFn(item);
-      data[id] = item;
-
-      const signal = this._signals[id];
-      if (signal) update((signal as any)._state);
+      parentUpdate((parentValue: any) => {
+        if (!parentValue) return STOP;
+        parentValue[key] = value;
+      });
     }
 
-    update((this.data as any)._state);
-    update((this._force as any)._state);
-  });
-}
+    const derivedStore: Store<Select<T, K>> = {
+      state,
+      update,
+      select: createSelect(ID, state, update),
+    };
 
-function remove<T>(this: _Store<T>, id: string): void;
-function remove<T>(this: _Store<T>, ids: string[]): void;
-function remove<T>(this: _Store<T>, ids: any) {
-  const idArr = Array.isArray(ids) ? ids : [ids];
-  const data = this._data.sample();
+    STORES_CACHE[ID] = derivedStore;
 
-  batch(() => {
-    for (let id of idArr) {
-      const signal = this._signals[id];
-
-      delete this._signals[id];
-      delete data[id];
-
-      if (signal) update((signal as any)._state);
-    }
-
-    update((this.data as any)._state);
-  });
-}
-
-function clear<T>(this: _Store<T>) {
-  this._data({});
-  this._signals = {};
-}
-
-/**
- * Creates a store.
- * @param data Oject storing items by their id.
- * @param options Store options.
- * @returns Store.
- */
-export function store<T extends { id: string }>(
-  data?: StoreData<T>,
-  options?: Partial<StoreOptions<T>>
-): Store<T>;
-
-/**
- * Creates a store.
- * @param items Array of items.
- * @param options Store options.
- */
-export function store<T extends { id: string }>(
-  items?: T[],
-  options?: Partial<StoreOptions<T>>
-): Store<T>;
-
-/**
- * Creates a store.
- * @param data Oject storing items by their id.
- * @param options Store options.
- * @returns Store.
- */
-export function store<T>(
-  items: StoreData<T>,
-  options: StoreOptions<T>
-): Store<T>;
-
-/**
- * Creates a store.
- * @param items Array of items.
- * @param options Store options.
- */
-export function store<T>(items: T[], options: StoreOptions<T>): Store<T>;
-
-export function store<T>(items?: any, options?: any) {
-  const opts = Object.assign({}, DEFAULT_STORE_OPTIONS, options || {});
-  const storeMap =
-    (Array.isArray(items) ? createData(items, opts.getItemId) : items) || {};
-  const _data = writable(storeMap);
-  const data = computed(_data);
-
-  const res: _Store<T> = {
-    _options: opts,
-    _idFn: opts.getItemId,
-    _signals: {},
-    _force: writable(null),
-    _data,
-    data,
-    getSignal,
-    get,
-    set,
-    clear,
-    delete: remove,
+    return derivedStore;
   };
-
-  return res as Store<T>;
 }

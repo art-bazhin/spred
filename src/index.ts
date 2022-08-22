@@ -9,7 +9,7 @@ import {
 } from './lifecycle/lifecycle';
 import { computed } from './computed/computed';
 import { memo } from './memo/memo';
-import { store, Store, StoreData, StoreOptions } from './store/store';
+import { store, Store } from './store/store';
 import { configure, Config } from './config/config';
 import { Signal } from './signal/signal';
 import { watch } from './watch/watch';
@@ -44,8 +44,6 @@ export {
   EffectStatus,
   EffectStatusObject,
   Store,
-  StoreData,
-  StoreOptions,
   Config,
   Subscriber,
   Computation,
