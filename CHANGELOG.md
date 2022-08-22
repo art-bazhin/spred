@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.21.0](https://github.com/art-bazhin/spred/compare/v0.20.3...v0.21.0) (2022-08-22)
+
+
+### ⚠ BREAKING CHANGES
+
+* **store:** store API completely changed
+
+### Features
+
+* **store:** brand new store ([a5b4f80](https://github.com/art-bazhin/spred/commit/a5b4f8076e8e16a4eafecb147e6ee404cd532b24))
+
+
+### Code Refactoring
+
+* rename internal entities ([d4e4cdb](https://github.com/art-bazhin/spred/commit/d4e4cdb13dd50a34d89c7f327040ee3a96cb01bf))
+
 ### [0.20.3](https://github.com/art-bazhin/spred/compare/v0.20.2...v0.20.3) (2022-08-21)
 
 
