@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.22.0](https://github.com/art-bazhin/spred/compare/v0.21.1...v0.22.0) (2022-08-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* **lifecycle:** Lifecycle methods does not subscribe listeners. Instead of that it works as a
+listener setter.
+
+### Bug Fixes
+
+* **lifecycle:** turn lifecycle subs into setters ([2c659bc](https://github.com/art-bazhin/spred/commit/2c659bc38d56feb24bcde6189a6fde478b33710d))
+* **named:** fix typing ([ecb6bb1](https://github.com/art-bazhin/spred/commit/ecb6bb139b8df791b91b7b86743ceb846ac1362d))
+
+
+### Tests
+
+* **computed:** add cleanup order test ([8298d39](https://github.com/art-bazhin/spred/commit/8298d397879e08e457f852d969c734549456ca0a))
+* **writable:** add return value test ([1ca9d12](https://github.com/art-bazhin/spred/commit/1ca9d126b254c79027c0c3e8c830c60aa2478b11))
+
 ### [0.21.1](https://github.com/art-bazhin/spred/compare/v0.21.0...v0.21.1) (2022-08-23)
 
 
