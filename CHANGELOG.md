@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.21.1](https://github.com/art-bazhin/spred/compare/v0.21.0...v0.21.1) (2022-08-23)
+
+
+### Bug Fixes
+
+* **computed:** fix redundant recalc bug ([42e6142](https://github.com/art-bazhin/spred/commit/42e614255391fb814294b024f7a56ff032def5c2))
+
 ## [0.21.0](https://github.com/art-bazhin/spred/compare/v0.20.3...v0.21.0) (2022-08-22)
 
 
