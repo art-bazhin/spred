@@ -117,50 +117,6 @@ describe('writable', () => {
     expect(spy).toBeCalledTimes(6);
   });
 
-  it('keeps lifecycle subscriptions made inside a subscriber', () => {
-    const a = writable(0);
-
-    const onActivateSpy = jest.fn();
-    const onDeactivateSpy = jest.fn();
-    const onUpdateSpy = jest.fn();
-    const onNotifyStartSpy = jest.fn();
-    const onNotifyEndSpy = jest.fn();
-
-    const ext = writable(0);
-
-    a.subscribe(() => {
-      onActivate(ext, () => onActivateSpy());
-      onDeactivate(ext, () => onDeactivateSpy());
-      onUpdate(ext, () => onUpdateSpy());
-      onNotifyStart(ext, () => onNotifyStartSpy());
-      onNotifyEnd(ext, () => onNotifyEndSpy());
-    });
-
-    expect(onActivateSpy).toBeCalledTimes(0);
-    expect(onDeactivateSpy).toBeCalledTimes(0);
-    expect(onUpdateSpy).toBeCalledTimes(0);
-    expect(onNotifyStartSpy).toBeCalledTimes(0);
-    expect(onNotifyEndSpy).toBeCalledTimes(0);
-
-    a(1);
-    expect(onActivateSpy).toBeCalledTimes(0);
-    expect(onDeactivateSpy).toBeCalledTimes(0);
-    expect(onUpdateSpy).toBeCalledTimes(0);
-    expect(onNotifyStartSpy).toBeCalledTimes(0);
-    expect(onNotifyEndSpy).toBeCalledTimes(0);
-
-    const extUnsub = ext.subscribe(() => {});
-    expect(onActivateSpy).toBeCalledTimes(2);
-
-    ext(1);
-    expect(onUpdateSpy).toBeCalledTimes(2);
-    expect(onNotifyStartSpy).toBeCalledTimes(2);
-    expect(onNotifyEndSpy).toBeCalledTimes(2);
-
-    extUnsub();
-    expect(onDeactivateSpy).toBeCalledTimes(2);
-  });
-
   it('does not update the value when undefined passed', () => {
     const counter = writable<any>(0);
 

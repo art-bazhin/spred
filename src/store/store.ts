@@ -1,3 +1,4 @@
+import { computed } from '../computed/computed';
 import { StateTypeError } from '../errors/errors';
 import { onDeactivate, onUpdate } from '../lifecycle/lifecycle';
 import { memo } from '../memo/memo';
@@ -88,7 +89,7 @@ function createSelect<T>(
 
     if (cached) return cached;
 
-    const state = memo(() => {
+    const _state = memo(() => {
       const parentValue = parentData() as T;
       const value = parentValue && parentValue[key];
 
@@ -96,10 +97,10 @@ function createSelect<T>(
       return value;
     }) as Signal<Select<T, K>>;
 
-    onDeactivate(state, () => delete STORES_CACHE[ID]);
+    onDeactivate(_state, () => delete STORES_CACHE[ID]);
 
     function update(updateFn: (state: Select<T, K>) => Select<T, K> | void) {
-      const clone = getClone(ID, state);
+      const clone = getClone(ID, _state);
       const next = updateFn(clone);
       const value = next === undefined ? clone : next;
 
@@ -113,10 +114,12 @@ function createSelect<T>(
       });
     }
 
+    const state = computed(_state);
+    const select = createSelect(ID, _state, update);
     const derivedStore: Store<Select<T, K>> = {
       state,
       update,
-      select: createSelect(ID, state, update),
+      select,
     };
 
     STORES_CACHE[ID] = derivedStore;

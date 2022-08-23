@@ -73,7 +73,7 @@ export function collect(fn: () => any) {
   tracking = prevTracking;
   scope = prevScope;
 
-  return () => clearChildren(fakeState);
+  return () => cleanupChildren(fakeState);
 }
 
 /**
@@ -153,12 +153,10 @@ function emitUpdateLifecycle(state: SignalState<any>, value: any) {
 
   if (!state.onUpdate) return;
 
-  state.onUpdate.forEach((fn) =>
-    fn({
-      value: value,
-      prevValue: state.value,
-    })
-  );
+  state.onUpdate({
+    value: value,
+    prevValue: state.value,
+  });
 }
 
 /**
@@ -199,7 +197,6 @@ export function recalc() {
       const shouldUpdate = value !== undefined;
 
       if (shouldUpdate) {
-        clearChildren(state);
         emitUpdateLifecycle(state, value);
         state.value = value;
         notificationQueue.push(state);
@@ -221,7 +218,7 @@ export function recalc() {
       logHook(state, 'EXCEPTION');
 
       if (state.onException) {
-        state.onException.forEach((fn) => fn(state.exception));
+        state.onException(state.exception);
       }
 
       if (state.subsCount) {
@@ -297,7 +294,7 @@ function runSubscribers<T>(state: SignalState<T>) {
   logHook(state, 'NOTIFY_START');
 
   if (state.onNotifyStart) {
-    state.onNotifyStart.forEach((fn) => fn(state.value));
+    state.onNotifyStart(state.value);
   }
 
   for (let subscriber of state.observers) {
@@ -310,7 +307,7 @@ function runSubscribers<T>(state: SignalState<T>) {
   logHook(state, 'NOTIFY_END');
 
   if (state.onNotifyEnd) {
-    state.onNotifyEnd.forEach((fn) => fn(state.value));
+    state.onNotifyEnd(state.value);
   }
 }
 
@@ -389,7 +386,7 @@ function calcComputed<T>(
     logHook(state, 'EXCEPTION');
 
     if (state.onException) {
-      state.onException.forEach((fn) => fn(state.exception));
+      state.onException(state.exception);
     }
 
     if (
@@ -410,7 +407,7 @@ function activateDependencies<T>(state: SignalState<T>) {
   logHook(state, 'ACTIVATE');
 
   if (state.onActivate) {
-    state.onActivate.forEach((fn) => fn(state.value));
+    state.onActivate(state.value);
   }
 
   if (!state.dependencies) return;
@@ -427,7 +424,7 @@ function deactivateDependencies<T>(state: SignalState<T>) {
   logHook(state, 'DEACTIVATE');
 
   if (state.onDeactivate) {
-    state.onDeactivate.forEach((fn) => fn(state.value));
+    state.onDeactivate(state.value);
   }
 
   if (!state.dependencies) return;
@@ -439,7 +436,7 @@ function deactivateDependencies<T>(state: SignalState<T>) {
 }
 
 function push(state: SignalState<any>) {
-  clearChildren(state);
+  cleanupChildren(state);
 
   if (!state.observers.size) {
     if (!depth) cacheStatus = { status: true };
@@ -467,19 +464,14 @@ function pop(state: SignalState<any> | null) {
   return tracking;
 }
 
-function clearChildren(state: SignalState<any>) {
+function cleanupChildren(state: SignalState<any>) {
   if (state.children && state.children.length) {
     for (let child of state.children) {
       if (typeof child === 'function') child();
-      else clearChildren(child);
+      else cleanupChildren(child);
     }
 
     state.children = [];
-  }
-
-  if (state.lcUnsubs && state.lcUnsubs.length) {
-    for (let unsub of state.lcUnsubs) unsub();
-    state.lcUnsubs = [];
   }
 }
 

@@ -1,4 +1,5 @@
 import { scope, tracking } from '../core/core';
+import { Signal } from '../signal/signal';
 import { Subscriber } from '../subscriber/subscriber';
 import { FALSE_STATUS } from '../utils/constants';
 
@@ -24,16 +25,15 @@ export interface SignalState<T> {
   hasCycle?: boolean;
   oldDepsCount: number;
   children?: ((() => any) | SignalState<any>)[];
-  lcUnsubs?: (() => any)[];
   name?: string;
 
   // lifecycle:
-  onActivate?: ((value: T) => any)[];
-  onDeactivate?: ((value: T) => any)[];
-  onUpdate?: ((change: { value: T; prevValue: T | undefined }) => any)[];
-  onNotifyStart?: ((value: T) => any)[];
-  onNotifyEnd?: ((value: T) => any)[];
-  onException?: ((e: unknown) => any)[];
+  onActivate?: ((value: T) => any) | null;
+  onDeactivate?: ((value: T) => any) | null;
+  onUpdate?: ((change: { value: T; prevValue: T | undefined }) => any) | null;
+  onNotifyStart?: ((value: T) => any) | null;
+  onNotifyEnd?: ((value: T) => any) | null;
+  onException?: ((e: unknown) => any) | null;
 }
 
 export function createSignalState<T>(
@@ -62,4 +62,8 @@ export function createSignalState<T>(
   }
 
   return state;
+}
+
+export function getSignalState<T>(s: Signal<T>): SignalState<T> {
+  return (s as any)._state;
 }

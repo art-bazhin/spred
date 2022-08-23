@@ -1,6 +1,5 @@
-import { scope, tracking } from '../core/core';
+import { getSignalState } from '../signal-state/signal-state';
 import { Signal, _Signal } from '../signal/signal';
-import { removeFromArray } from '../utils/removeFromArray';
 
 export type LifecycleHookName =
   | 'ACTIVATE'
@@ -10,101 +9,74 @@ export type LifecycleHookName =
   | 'UPDATE'
   | 'EXCEPTION';
 
-function addListener<T>(
-  signal: Signal<any>,
-  lifecycleKey: string,
-  listener: (value: T) => any
-) {
-  const state = (signal as any)._state;
-
-  if (!state[lifecycleKey]) {
-    state[lifecycleKey] = [];
-  }
-
-  const arr = state[lifecycleKey];
-
-  if (arr.indexOf(listener) > -1) return;
-  arr.push(listener);
-
-  const unsub = () => removeFromArray(arr, listener);
-  const parent = tracking || scope;
-
-  if (parent) {
-    if (!parent.lcUnsubs) parent.lcUnsubs = [];
-    parent.lcUnsubs.push(unsub);
-  }
-
-  return unsub;
-}
-
 /**
- * Subscribes the function to the signal activation signal. The signal is triggered at the first subscription or at the first activation of a dependent signal.
- * @param signal Signal.
- * @param listener Function that listens to the signal activation signal.
- * @returns Unsubscribe function.
+ * Sets the activate event listener. The event is emitted at the first subscription or at the first activation of a dependent signal.
+ * @param signal Target signal.
+ * @param listener Function that listens to the signal activation event.
  */
-export function onActivate<T>(signal: Signal<T>, listener: (value: T) => any) {
-  return addListener<T>(signal, 'onActivate', listener);
+export function onActivate<T>(
+  signal: Signal<T>,
+  listener: ((value: T) => any) | null
+) {
+  getSignalState(signal).onActivate = listener;
 }
 
 /**
- * Subscribes the function to the signal deactivation signal. The signal is triggered when there are no subscribers or active dependent signals left.
- * @param signal Signal.
- * @param listener Function that listens to the signal deactivation signal.
- * @returns Unsubscribe function.
+ * Sets the deactivate event listener. The event is emitted when there are no subscribers or active dependent signals left.
+ * @param signal Target signal.
+ * @param listener Function that listens to the signal deactivation event.
  */
 export function onDeactivate<T>(
   signal: Signal<T>,
-  listener: (value: T) => any
+  listener: ((value: T) => any) | null
 ) {
-  return addListener<T>(signal, 'onDeactivate', listener);
+  getSignalState(signal).onDeactivate = listener;
 }
 
 /**
- * Subscribes the function to the signal update signal. The signal is triggered every time the signal value is updated.
- * @param signal Signal.
- * @param listener Function that listens to the signal update signal.
- * @returns Unsubscribe function.
+ * Sets the update event listener. The event is emitted every time the signal value is updated.
+ * @param signal Target signal.
+ * @param listener Function that listens to the signal update event.
  */
 export function onUpdate<T>(
   signal: Signal<T>,
-  listener: (change: { value: T; prevValue: T }) => any
+  listener: ((change: { value: T; prevValue: T | undefined }) => any) | null
 ) {
-  return addListener<{ value: T; prevValue: T }>(signal, 'onUpdate', listener);
+  getSignalState(signal).onUpdate = listener;
 }
 
 /**
- * Subscribes the function to the signal exception signal. The signal is triggered for every unhandled exception in the calculation of the signal value.
- * @param signal Signal.
- * @param listener Function that listens to the signal exception signal.
- * @returns Unsubscribe function.
+ * Sets the update exception handler. The event is emitted for every unhandled exception in the calculation of the signal value.
+ * @param signal Target signal.
+ * @param listener Function that listens to the signal exception event.
  */
 export function onException<T>(
   signal: Signal<T>,
-  listener: (e: unknown) => any
+  listener: ((e: unknown) => any) | null
 ) {
-  return addListener<T>(signal, 'onException', listener);
+  getSignalState(signal).onException = listener;
 }
 
 /**
- * Subscribes the function to the signal notification start signal. The signal is triggered before signal subscribers are notified.
- * @param signal Signal.
- * @param listener Function that listens to the signal notification start signal.
- * @returns Unsubscribe function.
+ * Sets the notify start event listener. The event is emitted before signal subscribers are notified.
+ * @param signal Target signal.
+ * @param listener Function that listens to the signal notification start event.
  */
 export function onNotifyStart<T>(
   signal: Signal<T>,
-  listener: (value: T) => any
+  listener: ((value: T) => any) | null
 ) {
-  return addListener<T>(signal, 'onNotifyStart', listener);
+  getSignalState(signal).onNotifyStart = listener;
 }
 
 /**
- * Subscribes the function to the signal notification end signal. The signal is triggered after signal subscribers are notified.
- * @param signal Signal.
- * @param listener Function that listens to the signal notification start signal.
- * @returns Unsubscribe function.
+ * Sets the notify start event listener. The event is emitted after signal subscribers are notified.
+ * @param signal Target signal.
+ * @param listener Function that listens to the signal notification start event.
  */
-export function onNotifyEnd<T>(signal: Signal<T>, listener: (value: T) => any) {
-  return addListener<T>(signal, 'onNotifyEnd', listener);
+export function onNotifyEnd<T>(
+  signal: Signal<T>,
+  listener: ((value: T) => any) | null
+) {
+  getSignalState(signal).onNotifyEnd = listener;
 }
