@@ -210,6 +210,11 @@ export function recalc() {
       continue;
     }
 
+    if (!state.observers.size) {
+      resetStateQueueParams(state);
+      continue;
+    }
+
     if (state.hasException) {
       state.dirtyCount = 0;
 

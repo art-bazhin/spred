@@ -534,4 +534,36 @@ describe('computed', () => {
     result();
     expect(lastScheduled).toBe(false);
   });
+
+  it('does not recalculates if became inactive during previous calculations', () => {
+    const spy = jest.fn();
+
+    const source = writable(0);
+    let unsub: any;
+
+    const a = computed(() => {
+      const v = source();
+
+      if (v > 10 && unsub) unsub();
+      return v;
+    });
+
+    a.subscribe(() => {});
+
+    const b = computed(() => {
+      spy();
+      return source();
+    });
+
+    const c = computed(() => b());
+
+    unsub = c.subscribe(() => {});
+    expect(spy).toBeCalledTimes(1);
+
+    source(1);
+    expect(spy).toBeCalledTimes(2);
+
+    source(11);
+    expect(spy).toBeCalledTimes(2);
+  });
 });
