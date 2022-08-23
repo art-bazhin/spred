@@ -34,14 +34,17 @@ describe('writable', () => {
     counter((value) => value + 1);
     expect(counter()).toBe(4);
 
+    let newValue: any;
+
     batch(() => {
-      counter((value) => value + 1);
-      counter((value) => value + 1);
-      counter((value) => value + 1);
-      counter((value) => value + 1);
+      newValue = counter((value) => value + 1);
+      newValue = counter((value) => value + 1);
+      newValue = counter((value) => value + 1);
+      newValue = counter((value) => value + 1);
     });
 
     expect(counter()).toBe(8);
+    expect(newValue).toBe(8);
   });
 
   it('updates value using passed update fn right after init', () => {
