@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.23.1](https://github.com/art-bazhin/spred/compare/v0.23.0...v0.23.1) (2022-08-24)
+
+
+### Features
+
+* **lifecycle:** add internal lifecycle hooks ([4a27d29](https://github.com/art-bazhin/spred/commit/4a27d29068078bc6e17758dc0c405532e994b52c))
+
 ## [0.23.0](https://github.com/art-bazhin/spred/compare/v0.22.0...v0.23.0) (2022-08-24)
 
 
