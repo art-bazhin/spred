@@ -426,8 +426,8 @@ function testLib(testFn, layers, iterations, newValues) {
     name = report.name;
   }
 
-  initArr.sort();
-  recalcArr.sort();
+  initArr.sort((a, b) => a - b);
+  recalcArr.sort((a, b) => a - b);
 
   const middle = Math.floor(iterations / 2);
 
