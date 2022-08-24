@@ -20,6 +20,9 @@ interface TestState {
     custom: Custom;
   };
   empty: any;
+  parent: {
+    empty: any;
+  };
 }
 
 const INITIAL_STATE: TestState = {
@@ -36,10 +39,13 @@ const INITIAL_STATE: TestState = {
     custom: new Custom(),
   },
   empty: undefined,
+  parent: {
+    empty: undefined,
+  },
 };
 
 describe('store', () => {
-  const { state, update, select } = store(INITIAL_STATE);
+  const state = store(INITIAL_STATE);
 
   const stateSpy = jest.fn();
   state.subscribe(stateSpy);
@@ -49,7 +55,7 @@ describe('store', () => {
       expect(stateSpy).toBeCalledTimes(1);
       expect(state().users['1']!.name).toBe('John');
 
-      update((state) => {
+      state.update((state) => {
         state.users = {
           ...state.users,
           '1': {
@@ -62,7 +68,7 @@ describe('store', () => {
       expect(stateSpy).toBeCalledTimes(2);
       expect(state().users['1']!.name).toBe('Paul');
 
-      update(() => {
+      state.update(() => {
         const newState = {
           ...INITIAL_STATE,
           nested: {
@@ -80,14 +86,14 @@ describe('store', () => {
     });
 
     describe('select function', () => {
-      const users = select('users');
-      const nested = select('nested');
-      const userArr = select('userArr');
+      const users = state.select('users');
+      const nested = state.select('nested');
+      const userArr = state.select('userArr');
 
       let usersUnsub: any;
 
       it('creates a derived store from the field of the parent', () => {
-        expect(users.state).toBeDefined();
+        expect(users).toBeDefined();
         expect(users.select).toBeDefined();
         expect(users.update).toBeDefined();
       });
@@ -95,7 +101,7 @@ describe('store', () => {
       describe('derived store', () => {
         it('can update itself and the root store', () => {
           const usersSpy = jest.fn();
-          usersUnsub = users.state.subscribe(usersSpy);
+          usersUnsub = users.subscribe(usersSpy);
 
           expect(usersSpy).toBeCalledTimes(1);
 
@@ -122,7 +128,7 @@ describe('store', () => {
 
         it('can handle array stores', () => {
           const userArrSpy = jest.fn();
-          userArr.state.subscribe(userArrSpy);
+          userArr.subscribe(userArrSpy);
 
           expect(userArrSpy).toBeCalledTimes(1);
 
@@ -141,7 +147,7 @@ describe('store', () => {
 
         it('can handle deep nested stores', () => {
           const countStore = nested.select('count');
-          expect(countStore.state()).toBe(1);
+          expect(countStore()).toBe(1);
 
           countStore.update((state) => state + 1);
 
@@ -162,12 +168,15 @@ describe('store', () => {
         });
 
         it('does not update the state if the parent state is absent', () => {
-          const childOfEmpty = select('empty').select('foo').select('bar');
+          const childOfEmpty = state
+            .select('empty')
+            .select('foo')
+            .select('bar');
 
-          expect(childOfEmpty.state()).toBeNull();
+          expect(childOfEmpty()).toBeNull();
 
           childOfEmpty.update(() => 'test');
-          expect(childOfEmpty.state()).toBeNull();
+          expect(childOfEmpty()).toBeNull();
           expect(stateSpy).toBeCalledTimes(7);
         });
 
@@ -181,7 +190,7 @@ describe('store', () => {
               count: state.count + 1,
             }));
 
-            update((state) => ({
+            state.update((state) => ({
               ...state,
               nested: {
                 ...state.nested,
@@ -189,7 +198,7 @@ describe('store', () => {
               },
             }));
 
-            select('empty').update(() => 'test');
+            state.select('empty').update(() => 'test');
           });
 
           expect(stateSpy).toBeCalledTimes(8);
@@ -198,12 +207,25 @@ describe('store', () => {
         });
 
         it('returns same instance on every select before deactivation', () => {
-          expect(users).toBe(select('users'));
+          expect(users).toBe(state.select('users'));
 
           usersUnsub();
 
-          expect(users).not.toBe(select('users'));
-          expect(select('users')).toBe(select('users'));
+          expect(users).not.toBe(state.select('users'));
+          expect(state.select('users')).toBe(state.select('users'));
+        });
+
+        it('can take a new state as an argument of the update method', () => {
+          users.update({
+            '1': {
+              name: 'Freddy',
+              id: '1',
+            },
+          });
+          expect(users.select('1')()!.name).toBe('Freddy');
+
+          state.update(INITIAL_STATE);
+          expect(users.select('1')()!.name).toBe('John');
         });
       });
     });

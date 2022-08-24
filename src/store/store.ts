@@ -3,7 +3,7 @@ import { StateTypeError } from '../errors/errors';
 import { onDeactivate, onUpdate } from '../lifecycle/lifecycle';
 import { memo } from '../memo/memo';
 import { Signal } from '../signal/signal';
-import { writable } from '../writable/writable';
+import { writable, WritableSignal } from '../writable/writable';
 
 type Keys<T> = keyof T & (string | number);
 
@@ -11,8 +11,8 @@ type Select<T, K extends Keys<T>> = undefined extends T[K]
   ? Exclude<T[K], undefined> | null
   : T[K];
 
-export interface Store<T> {
-  state: Signal<T>;
+export interface Store<T> extends Signal<T> {
+  update(nextState: T): void;
   update(updateFn: (state: T) => T | void): void;
   select<K extends Keys<T>>(key: K): Store<Select<T, K>>;
 }
@@ -50,80 +50,99 @@ function getClone<T>(id: string, state: Signal<T>, value?: T): T {
   return copy(value || state.sample());
 }
 
-export function store<T>(initialState: T): Store<T> {
-  const ID = 'STORE_' + counter++;
-  const _state = writable(initialState);
-  const state = memo(_state);
-
-  onUpdate(_state, () => (VALUES_CACHE = {}));
-
-  function update(updateFn: (current: T) => T | void) {
-    _state((current) => {
-      const clone = getClone(ID, state, current);
-      const next = updateFn(clone);
-      const value = next === undefined ? clone : next;
-
-      VALUES_CACHE[ID] = value;
-
-      return value;
-    });
-  }
-
-  const select = createSelect(ID, state, update);
-
-  return {
-    state,
-    update,
-    select,
-  };
+function clearValuesCache() {
+  VALUES_CACHE = {};
 }
 
-function createSelect<T>(
-  parentId: string,
-  parentData: Signal<T>,
-  parentUpdate: (updateFn: (state: T) => T | void) => void
-) {
-  return function <K extends Keys<T>>(key: K): Store<Select<T, K>> {
-    const ID = parentId + '.' + key;
-    const cached = STORES_CACHE[ID];
+function update<T>(this: Store<T>, arg: any) {
+  const setter = (this as any)._setter as WritableSignal<T>;
+  const id = (this as any)._id as string;
 
-    if (cached) return cached;
+  if (typeof arg !== 'function') {
+    setter(arg);
+    return;
+  }
 
-    const _state = memo(() => {
-      const parentValue = parentData() as T;
-      const value = parentValue && parentValue[key];
+  setter((current) => {
+    const clone = getClone(id, this, current);
+    const next = arg(clone);
+    const value = next === undefined ? clone : next;
 
-      if (value === undefined) return null;
-      return value;
-    }) as Signal<Select<T, K>>;
+    VALUES_CACHE[id] = value;
 
-    onDeactivate(_state, () => delete STORES_CACHE[ID]);
+    return value;
+  });
+}
 
-    function update(updateFn: (state: Select<T, K>) => Select<T, K> | void) {
-      const clone = getClone(ID, _state);
-      const next = updateFn(clone);
-      const value = next === undefined ? clone : next;
+function updateSelect<T>(this: Store<T>, arg: any) {
+  const id = (this as any)._id;
+  const key = (this as any)._key;
+  const parent = (this as any)._parent;
 
-      if (next === STOP) return;
+  if (typeof arg !== 'function') {
+    parent.update((parentValue: any) => {
+      parentValue[key] = arg;
+    });
 
-      VALUES_CACHE[ID] = value;
+    return;
+  }
 
-      parentUpdate((parentValue: any) => {
-        if (!parentValue) return STOP;
-        parentValue[key] = value;
-      });
-    }
+  const clone = getClone(id, this);
+  const next = arg(clone);
+  const value = next === undefined ? clone : next;
 
-    const state = computed(_state);
-    const select = createSelect(ID, _state, update);
-    const derivedStore: Store<Select<T, K>> = {
-      state,
-      update,
-      select,
-    };
+  if (next === STOP) return;
 
-    STORES_CACHE[ID] = derivedStore;
+  VALUES_CACHE[id] = value;
 
-    return derivedStore;
-  };
+  parent.update((parentValue: any) => {
+    if (!parentValue) return STOP;
+    parentValue[key] = value;
+  });
+}
+
+function select<T, K extends Keys<T>>(
+  this: Store<T>,
+  key: K
+): Store<Select<T, K>> {
+  const id = (this as any)._id + '.' + key;
+  const cached = STORES_CACHE[id];
+
+  if (cached) return cached;
+
+  const _store = memo(() => {
+    const parentValue = this();
+    const value = parentValue && parentValue[key];
+
+    if (value === undefined) return null;
+    return value;
+  });
+
+  const store = computed(_store) as any;
+
+  store._id = id;
+  store._key = key;
+  store._parent = this;
+  store.select = select;
+  store.update = updateSelect;
+
+  STORES_CACHE[id] = store;
+  onDeactivate(_store, () => delete STORES_CACHE[id]);
+
+  return store;
+}
+
+export function store<T>(initialState: T): Store<T> {
+  const id = 'store' + counter++;
+  const setter = writable(initialState);
+  const store = memo(setter) as any;
+
+  store._setter = setter;
+  store._id = id;
+  store.select = select;
+  store.update = update;
+
+  onUpdate(setter, clearValuesCache);
+
+  return store as Store<T>;
 }
