@@ -1,5 +1,4 @@
 import { scope, tracking } from '../core/core';
-import { Signal } from '../signal/signal';
 import { Subscriber } from '../subscriber/subscriber';
 import { FALSE_STATUS } from '../utils/constants';
 
@@ -26,6 +25,9 @@ export interface SignalState<T> {
   oldDepsCount: number;
   children?: ((() => any) | SignalState<any>)[];
   name?: string;
+
+  // internal lifecycle
+  $d?: ((value: T) => any) | null; // deactivate
 
   // lifecycle:
   onActivate?: ((value: T) => any) | null;
@@ -62,8 +64,4 @@ export function createSignalState<T>(
   }
 
   return state;
-}
-
-export function getSignalState<T>(s: Signal<T>): SignalState<T> {
-  return (s as any)._state;
 }

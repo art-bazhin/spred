@@ -420,6 +420,8 @@ function deactivateDependencies<T>(state: SignalState<T>) {
 
   logHook(state, 'DEACTIVATE');
 
+  if (state.$d) state.$d(state.value);
+
   if (state.onDeactivate) {
     state.onDeactivate(state.value);
   }

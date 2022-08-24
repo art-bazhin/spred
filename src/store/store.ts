@@ -1,6 +1,5 @@
-import { computed } from '../computed/computed';
 import { StateTypeError } from '../errors/errors';
-import { onDeactivate, onUpdate } from '../lifecycle/lifecycle';
+import { onUpdate } from '../lifecycle/lifecycle';
 import { memo } from '../memo/memo';
 import { Signal } from '../signal/signal';
 import { writable, WritableSignal } from '../writable/writable';
@@ -110,15 +109,13 @@ function select<T, K extends Keys<T>>(
 
   if (cached) return cached;
 
-  const _store = memo(() => {
+  const store = memo(() => {
     const parentValue = this();
     const value = parentValue && parentValue[key];
 
     if (value === undefined) return null;
     return value;
-  });
-
-  const store = computed(_store) as any;
+  }) as any;
 
   store._id = id;
   store._key = key;
@@ -127,7 +124,7 @@ function select<T, K extends Keys<T>>(
   store.update = updateSelect;
 
   STORES_CACHE[id] = store;
-  onDeactivate(_store, () => delete STORES_CACHE[id]);
+  store._state.$d = () => delete STORES_CACHE[id];
 
   return store;
 }

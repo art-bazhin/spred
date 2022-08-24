@@ -1,4 +1,3 @@
-import { getSignalState } from '../signal-state/signal-state';
 import { Signal, _Signal } from '../signal/signal';
 
 export type LifecycleHookName =
@@ -18,7 +17,7 @@ export function onActivate<T>(
   signal: Signal<T>,
   listener: ((value: T) => any) | null
 ) {
-  getSignalState(signal).onActivate = listener;
+  (signal as any)._state.onActivate = listener;
 }
 
 /**
@@ -30,7 +29,7 @@ export function onDeactivate<T>(
   signal: Signal<T>,
   listener: ((value: T) => any) | null
 ) {
-  getSignalState(signal).onDeactivate = listener;
+  (signal as any)._state.onDeactivate = listener;
 }
 
 /**
@@ -42,7 +41,7 @@ export function onUpdate<T>(
   signal: Signal<T>,
   listener: ((change: { value: T; prevValue: T | undefined }) => any) | null
 ) {
-  getSignalState(signal).onUpdate = listener;
+  (signal as any)._state.onUpdate = listener;
 }
 
 /**
@@ -54,7 +53,7 @@ export function onException<T>(
   signal: Signal<T>,
   listener: ((e: unknown) => any) | null
 ) {
-  getSignalState(signal).onException = listener;
+  (signal as any)._state.onException = listener;
 }
 
 /**
@@ -66,7 +65,7 @@ export function onNotifyStart<T>(
   signal: Signal<T>,
   listener: ((value: T) => any) | null
 ) {
-  getSignalState(signal).onNotifyStart = listener;
+  (signal as any)._state.onNotifyStart = listener;
 }
 
 /**
@@ -78,5 +77,5 @@ export function onNotifyEnd<T>(
   signal: Signal<T>,
   listener: ((value: T) => any) | null
 ) {
-  getSignalState(signal).onNotifyEnd = listener;
+  (signal as any)._state.onNotifyEnd = listener;
 }
