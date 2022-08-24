@@ -6,11 +6,11 @@ const writableSignalProto = {
   ...signalProto,
 
   set(this: _Signal<any>, value: any) {
-    update(this._state, value);
+    return update(this._state, value);
   },
 
   notify(this: _Signal<any>) {
-    update(this._state);
+    return update(this._state);
   },
 };
 

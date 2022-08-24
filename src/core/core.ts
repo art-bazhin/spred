@@ -95,12 +95,9 @@ export function update<T>(
 export function update<T>(state: SignalState<T>, value: T | undefined): T;
 export function update<T>(state: SignalState<T>): void;
 export function update<T>(state: SignalState<T>, value?: any) {
-  let nextValue: any;
-
   if (arguments.length === 2) {
     if (typeof value === 'function') state.nextValue = value(state.nextValue);
     else state.nextValue = value;
-    nextValue = state.nextValue;
   } else if (state.compute) state.dirtyCount++;
 
   state.queueIndex = queueLength - fullQueueLength;
@@ -108,7 +105,7 @@ export function update<T>(state: SignalState<T>, value?: any) {
 
   recalc();
 
-  return nextValue;
+  return state.nextValue;
 }
 
 export function addSubscriber<T>(

@@ -28,6 +28,14 @@ describe('writable', () => {
   it('returns new value after set', () => {
     const newValue = counter(3);
     expect(newValue).toBe(3);
+
+    const newSetValue = counter.set(3);
+    expect(newSetValue).toBe(3);
+  });
+
+  it('returns current value after notify', () => {
+    const value = counter.notify();
+    expect(value).toBe(3);
   });
 
   it('updates value using passed update fn', () => {
