@@ -1,6 +1,6 @@
 import { Signal } from './signal';
 import { computed } from '../computed/computed';
-import { writable } from '../writable/writable';
+import { update } from '../core/core';
 
 export function signal(): [Signal<unknown>, () => void];
 export function signal<T>(): [Signal<T | undefined>, (payload: T) => void];
@@ -12,12 +12,15 @@ export function signal<T>(initialValue: T): [Signal<T>, (payload: T) => void];
  * @returns A tuple of signal and setter function
  */
 export function signal(initialValue?: any) {
-  const source = writable(initialValue);
+  let value = initialValue;
+  const signal = computed(() => value);
 
   function set(payload: any) {
-    if (payload === undefined) source({});
-    else source(payload);
+    if (!arguments.length) value = {};
+    else value = payload;
+
+    update((signal as any)._state);
   }
 
-  return [computed(source), set];
+  return [signal, set];
 }
