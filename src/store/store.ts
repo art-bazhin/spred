@@ -13,6 +13,11 @@ type Select<T, K extends Keys<T>> = undefined extends T[K]
 export interface Store<T> extends Signal<T> {
   update(nextState: T): void;
   update(updateFn: (state: T) => T | void): void;
+  updateChild<K extends Keys<T>>(key: K, nextState: Select<T, K>): void;
+  updateChild<K extends Keys<T>>(
+    key: K,
+    updateFn: (state: Select<T, K>) => Select<T, K> | void
+  ): void;
   select<K extends Keys<T>>(key: K): Store<Select<T, K>>;
 }
 
@@ -42,11 +47,11 @@ function copy<T>(obj: T): T {
   return obj;
 }
 
-function getClone<T>(id: string, state: Signal<T>, value?: T): T {
+function getClone<T>(id: string, state?: Signal<T>, value?: T): T {
   const cached = VALUES_CACHE[id];
 
   if (cached !== undefined) return cached;
-  return copy(value || state.sample());
+  return copy(value || state!.sample());
 }
 
 function clearValuesCache() {
@@ -65,8 +70,10 @@ function update<T>(this: Store<T>, arg: any) {
   setter((current) => {
     const clone = getClone(id, this, current);
     const next = arg(clone);
-    const value = next === undefined ? clone : next;
 
+    if (next === STOP) return;
+
+    const value = next === undefined ? clone : next;
     VALUES_CACHE[id] = value;
 
     return value;
@@ -88,15 +95,34 @@ function updateSelect<T>(this: Store<T>, arg: any) {
 
   const clone = getClone(id, this);
   const next = arg(clone);
-  const value = next === undefined ? clone : next;
 
   if (next === STOP) return;
 
+  const value = next === undefined ? clone : next;
   VALUES_CACHE[id] = value;
 
   parent.update((parentValue: any) => {
     if (!parentValue) return STOP;
     parentValue[key] = value;
+  });
+}
+
+function updateChild<T, K extends Keys<T>>(this: Store<T>, key: K, arg: any) {
+  this.update((state) => {
+    if (!state) return STOP;
+
+    if (typeof arg !== 'function') {
+      state[key] = arg;
+      return;
+    }
+
+    const id = (this as any)._id + '.' + key;
+    const clone = getClone(id, undefined, state[key]);
+    const next = arg(clone);
+    const value = next === undefined ? clone : next;
+
+    VALUES_CACHE[id] = value;
+    state[key] = value;
   });
 }
 
@@ -122,6 +148,7 @@ function select<T, K extends Keys<T>>(
   store._parent = this;
   store.select = select;
   store.update = updateSelect;
+  store.updateChild = updateChild;
 
   STORES_CACHE[id] = store;
   store._state.$d = () => delete STORES_CACHE[id];
@@ -138,6 +165,7 @@ export function store<T>(initialState: T): Store<T> {
   store._id = id;
   store.select = select;
   store.update = update;
+  store.updateChild = updateChild;
 
   onUpdate(setter, clearValuesCache);
 

@@ -23,6 +23,10 @@ interface TestState {
   parent: {
     empty: any;
   };
+  child: number;
+  childObj: {
+    value: number;
+  };
 }
 
 const INITIAL_STATE: TestState = {
@@ -41,6 +45,10 @@ const INITIAL_STATE: TestState = {
   empty: undefined,
   parent: {
     empty: undefined,
+  },
+  child: 1,
+  childObj: {
+    value: 1,
   },
 };
 
@@ -228,6 +236,28 @@ describe('store', () => {
           expect(users.select('1')()!.name).toBe('John');
         });
       });
+    });
+  });
+
+  describe('updateChild function', () => {
+    it('updates the state field by the key', () => {
+      state.updateChild('child', 2);
+      expect(state().child).toBe(2);
+
+      state.updateChild('child', (state) => state * 2);
+      expect(state().child).toBe(4);
+
+      state.updateChild('childObj', (state) => {
+        state.value = 10;
+      });
+      expect(state().childObj.value).toBe(10);
+    });
+
+    it('does nothing if the store is empty', () => {
+      const emptyState = store(null as any);
+
+      emptyState.updateChild('child', 2);
+      expect(emptyState()).toBe(null);
     });
   });
 });
