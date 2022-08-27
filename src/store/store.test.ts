@@ -214,6 +214,15 @@ describe('store', () => {
           expect(state().empty).toBe('test');
         });
 
+        it('can use batching (case 2)', () => {
+          batch(() => {
+            nested.select('count').update(1);
+            nested.select('count').update((state) => state + 1);
+          });
+
+          expect(state().nested.count).toBe(2);
+        });
+
         it('returns same instance on every select before deactivation', () => {
           expect(users).toBe(state.select('users'));
 
@@ -259,5 +268,17 @@ describe('store', () => {
       emptyState.updateChild('child', 2);
       expect(emptyState()).toBe(null);
     });
+  });
+
+  it('can use batching', () => {
+    const state = store(1);
+
+    batch(() => {
+      state.update((state) => state + 1);
+      state.update(10);
+      state.update((state) => state + 1);
+    });
+
+    expect(state()).toBe(11);
   });
 });

@@ -63,6 +63,7 @@ function update<T>(this: Store<T>, arg: any) {
   const id = (this as any)._id as string;
 
   if (typeof arg !== 'function') {
+    VALUES_CACHE[id] = arg;
     setter(arg);
     return;
   }
@@ -86,6 +87,8 @@ function updateSelect<T>(this: Store<T>, arg: any) {
   const parent = (this as any)._parent;
 
   if (typeof arg !== 'function') {
+    VALUES_CACHE[id] = arg;
+
     parent.update((parentValue: any) => {
       parentValue[key] = arg;
     });
