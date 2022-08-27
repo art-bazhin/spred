@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.23.2](https://github.com/art-bazhin/spred/compare/v0.23.1...v0.23.2) (2022-08-27)
+
+
+### Features
+
+* **store:** add updateChild method ([55af1c2](https://github.com/art-bazhin/spred/commit/55af1c2c73863213a94466934ae31f9978e648e8))
+
+
+### Bug Fixes
+
+* **store:** fix updates batching ([dcc7cb5](https://github.com/art-bazhin/spred/commit/dcc7cb5398ae77e123ef5038e8881981ce408ddc))
+
+
+### Performance Improvements
+
+* **signal:** remove redundant writable signal creation ([43e9100](https://github.com/art-bazhin/spred/commit/43e9100c990d41bbf33377ea1d026a33b231b378))
+
 ### [0.23.1](https://github.com/art-bazhin/spred/compare/v0.23.0...v0.23.1) (2022-08-24)
 
 
