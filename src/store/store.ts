@@ -11,10 +11,10 @@ type Select<T, K extends Keys<T>> = undefined extends T[K]
   : T[K];
 
 export interface Store<T> extends Signal<T> {
-  replace(nextState: T): void;
-  replace<K extends Keys<T>>(key: K, nextState: Select<T, K>): void;
-  produce(updateFn: (state: T) => T | void): void;
-  produce<K extends Keys<T>>(
+  set(nextState: T): void;
+  set<K extends Keys<T>>(key: K, nextState: Select<T, K>): void;
+  update(updateFn: (state: T) => T | void): void;
+  update<K extends Keys<T>>(
     key: K,
     updateFn: (state: Select<T, K>) => Select<T, K> | void
   ): void;
@@ -58,11 +58,11 @@ function clearValuesCache() {
   VALUES_CACHE = {};
 }
 
-function replace<T>(this: Store<T>, arg1: any, arg2: any) {
+function set<T>(this: Store<T>, arg1: any, arg2: any) {
   let nextState: T;
 
   if (arguments.length === 2) {
-    replaceChild(this, arg1, arg2);
+    setChild(this, arg1, arg2);
     return;
   } else {
     nextState = arg1;
@@ -77,16 +77,16 @@ function replace<T>(this: Store<T>, arg1: any, arg2: any) {
     return;
   }
 
-  (this as any)._parent.produce((parentValue: any) => {
+  (this as any)._parent.update((parentValue: any) => {
     parentValue[(this as any)._key] = nextState;
   });
 }
 
-function produce<T>(this: Store<T>, arg1: any, arg2: any) {
+function update<T>(this: Store<T>, arg1: any, arg2: any) {
   let updateFn: (state: T) => T | void;
 
   if (arguments.length === 2) {
-    produceChild(this, arg1, arg2);
+    updateChild(this, arg1, arg2);
     return;
   } else {
     updateFn = arg1;
@@ -110,21 +110,21 @@ function produce<T>(this: Store<T>, arg1: any, arg2: any) {
     return;
   }
 
-  parent.produce((parentValue: any) => {
+  parent.update((parentValue: any) => {
     if (!parentValue) return STOP;
     parentValue[key] = value;
   });
 }
 
-function replaceChild<T, K extends Keys<T>>(self: Store<T>, key: K, arg: any) {
-  self.produce((state) => {
+function setChild<T, K extends Keys<T>>(self: Store<T>, key: K, arg: any) {
+  self.update((state) => {
     if (!state) return STOP;
     state[key] = arg;
   });
 }
 
-function produceChild<T, K extends Keys<T>>(self: Store<T>, key: K, arg: any) {
-  self.produce((state) => {
+function updateChild<T, K extends Keys<T>>(self: Store<T>, key: K, arg: any) {
+  self.update((state) => {
     if (!state) return STOP;
 
     const id = (self as any)._id + '.' + key;
@@ -158,8 +158,8 @@ function select<T, K extends Keys<T>>(
   store._key = key;
   store._parent = this;
   store.select = select;
-  store.replace = replace;
-  store.produce = produce;
+  store.set = set;
+  store.update = update;
 
   STORES_CACHE[id] = store;
   store._state.$d = () => delete STORES_CACHE[id];
@@ -175,8 +175,8 @@ export function store<T>(initialState: T): Store<T> {
   store._setter = setter;
   store._id = id;
   store.select = select;
-  store.replace = replace;
-  store.produce = produce;
+  store.set = set;
+  store.update = update;
 
   onUpdate(setter, clearValuesCache);
 

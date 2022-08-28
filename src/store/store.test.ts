@@ -63,7 +63,7 @@ describe('store', () => {
       expect(stateSpy).toBeCalledTimes(1);
       expect(state().users['1']!.name).toBe('John');
 
-      state.produce((state) => {
+      state.update((state) => {
         state.users = {
           ...state.users,
           '1': {
@@ -76,7 +76,7 @@ describe('store', () => {
       expect(stateSpy).toBeCalledTimes(2);
       expect(state().users['1']!.name).toBe('Paul');
 
-      state.produce(() => {
+      state.update(() => {
         const newState = {
           ...INITIAL_STATE,
           nested: {
@@ -103,7 +103,7 @@ describe('store', () => {
       it('creates a derived store from the field of the parent', () => {
         expect(users).toBeDefined();
         expect(users.select).toBeDefined();
-        expect(users.produce).toBeDefined();
+        expect(users.update).toBeDefined();
       });
 
       describe('derived store', () => {
@@ -113,7 +113,7 @@ describe('store', () => {
 
           expect(usersSpy).toBeCalledTimes(1);
 
-          users.produce((state) => {
+          users.update((state) => {
             state['1'] = {
               id: '1',
               name: 'George',
@@ -124,7 +124,7 @@ describe('store', () => {
           expect(usersSpy).toBeCalledTimes(2);
           expect(state().users['1']!.name).toBe('George');
 
-          users.select('2').produce(() => ({
+          users.select('2').update(() => ({
             id: '2',
             name: 'Ringo',
           }));
@@ -140,7 +140,7 @@ describe('store', () => {
 
           expect(userArrSpy).toBeCalledTimes(1);
 
-          userArr.produce((state) => {
+          userArr.update((state) => {
             state.push({
               id: '123',
               name: 'Foo',
@@ -157,7 +157,7 @@ describe('store', () => {
           const countStore = nested.select('count');
           expect(countStore()).toBe(1);
 
-          countStore.produce((state) => state + 1);
+          countStore.update((state) => state + 1);
 
           expect(stateSpy).toBeCalledTimes(7);
           expect(state().nested.count).toBe(2);
@@ -167,7 +167,7 @@ describe('store', () => {
           const custom = nested.select('custom');
 
           const upd = () => {
-            custom.produce((state) => {
+            custom.update((state) => {
               state.value = 5;
             });
           };
@@ -183,22 +183,22 @@ describe('store', () => {
 
           expect(childOfEmpty()).toBeNull();
 
-          childOfEmpty.produce(() => 'test');
+          childOfEmpty.update(() => 'test');
           expect(childOfEmpty()).toBeNull();
           expect(stateSpy).toBeCalledTimes(7);
         });
 
         it('can use batching', () => {
           batch(() => {
-            nested.select('count').produce((state) => state + 1);
-            nested.select('count').produce((state) => state + 1);
+            nested.select('count').update((state) => state + 1);
+            nested.select('count').update((state) => state + 1);
 
-            nested.produce((state) => ({
+            nested.update((state) => ({
               ...state,
               count: state.count + 1,
             }));
 
-            state.produce((state) => ({
+            state.update((state) => ({
               ...state,
               nested: {
                 ...state.nested,
@@ -206,7 +206,7 @@ describe('store', () => {
               },
             }));
 
-            state.select('empty').produce(() => 'test');
+            state.select('empty').update(() => 'test');
           });
 
           expect(stateSpy).toBeCalledTimes(8);
@@ -216,8 +216,8 @@ describe('store', () => {
 
         it('can use batching (case 2)', () => {
           batch(() => {
-            nested.select('count').replace(1);
-            nested.select('count').produce((state) => state + 1);
+            nested.select('count').set(1);
+            nested.select('count').update((state) => state + 1);
           });
 
           expect(state().nested.count).toBe(2);
@@ -232,8 +232,8 @@ describe('store', () => {
           expect(state.select('users')).toBe(state.select('users'));
         });
 
-        it('can take a new state as an argument of the replace method', () => {
-          users.replace({
+        it('can take a new state as an argument of the set method', () => {
+          users.set({
             '1': {
               name: 'Freddy',
               id: '1',
@@ -241,22 +241,22 @@ describe('store', () => {
           });
           expect(users.select('1')()!.name).toBe('Freddy');
 
-          state.replace(INITIAL_STATE);
+          state.set(INITIAL_STATE);
           expect(users.select('1')()!.name).toBe('John');
         });
       });
     });
   });
 
-  describe('produce and replace methods with the key argument', () => {
+  describe('update and set methods with the key argument', () => {
     it('update the state field by the key', () => {
-      state.replace('child', 2);
+      state.set('child', 2);
       expect(state().child).toBe(2);
 
-      state.produce('child', (state) => state * 2);
+      state.update('child', (state) => state * 2);
       expect(state().child).toBe(4);
 
-      state.produce('childObj', (state) => {
+      state.update('childObj', (state) => {
         state.value = 10;
       });
       expect(state().childObj.value).toBe(10);
@@ -265,7 +265,17 @@ describe('store', () => {
     it('do nothing if the store is empty', () => {
       const emptyState = store(null as any);
 
-      emptyState.replace('child', 2);
+      emptyState.set('child', 2);
+      expect(emptyState()).toBe(null);
+    });
+
+    it('do nothing if the store is empty', () => {
+      const emptyState = store(null as any);
+
+      emptyState.set('child', 2);
+      expect(emptyState()).toBe(null);
+
+      emptyState.update('child', (state: any) => state + 1);
       expect(emptyState()).toBe(null);
     });
   });
@@ -274,9 +284,9 @@ describe('store', () => {
     const state = store(1);
 
     batch(() => {
-      state.produce((state) => state + 1);
-      state.replace(10);
-      state.produce((state) => state + 1);
+      state.update((state) => state + 1);
+      state.set(10);
+      state.update((state) => state + 1);
     });
 
     expect(state()).toBe(11);
