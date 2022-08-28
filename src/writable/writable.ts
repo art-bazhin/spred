@@ -43,14 +43,12 @@ export interface WritableSignal<T> extends Signal<T> {
    * Calculate and set a new value of the signal from the current value
    * @param getValue Function that calculates a new value from the current value.
    */
-  update(getValue: (currentValue: T) => T): T;
+  update(getValue: (currentValue: T) => T | undefined | void): T;
 
   /**
    * Notify subscribers without setting a new value.
    */
   notify(): T;
-
-  sample(): T;
 }
 
 /**

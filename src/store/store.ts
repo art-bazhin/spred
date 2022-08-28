@@ -11,10 +11,10 @@ type Select<T, K extends Keys<T>> = undefined extends T[K]
   : T[K];
 
 export interface Store<T> extends Signal<T> {
-  update(nextState: T): void;
-  update(updateFn: (state: T) => T | void): void;
-  updateChild<K extends Keys<T>>(key: K, nextState: Select<T, K>): void;
-  updateChild<K extends Keys<T>>(
+  replace(nextState: T): void;
+  replace<K extends Keys<T>>(key: K, nextState: Select<T, K>): void;
+  produce(updateFn: (state: T) => T | void): void;
+  produce<K extends Keys<T>>(
     key: K,
     updateFn: (state: Select<T, K>) => Select<T, K> | void
   ): void;
@@ -58,68 +58,76 @@ function clearValuesCache() {
   VALUES_CACHE = {};
 }
 
-function update<T>(this: Store<T>, arg: any) {
-  const setter = (this as any)._setter as WritableSignal<T>;
-  const id = (this as any)._id as string;
+function replace<T>(this: Store<T>, arg1: any, arg2: any) {
+  let nextState: T;
 
-  if (typeof arg !== 'function') {
-    VALUES_CACHE[id] = arg;
-    setter(arg);
+  if (arguments.length === 2) {
+    replaceChild(this, arg1, arg2);
+    return;
+  } else {
+    nextState = arg1;
+  }
+
+  VALUES_CACHE[(this as any)._id] = nextState;
+
+  const setter = (this as any)._setter;
+
+  if (setter) {
+    setter(nextState);
     return;
   }
 
-  setter.update((current) => {
-    const clone = getClone(id, this, current);
-    const next = arg(clone);
-
-    if (next === STOP) return;
-
-    const value = next === undefined ? clone : next;
-    VALUES_CACHE[id] = value;
-
-    return value;
+  (this as any)._parent.produce((parentValue: any) => {
+    parentValue[(this as any)._key] = nextState;
   });
 }
 
-function updateSelect<T>(this: Store<T>, arg: any) {
+function produce<T>(this: Store<T>, arg1: any, arg2: any) {
+  let updateFn: (state: T) => T | void;
+
+  if (arguments.length === 2) {
+    produceChild(this, arg1, arg2);
+    return;
+  } else {
+    updateFn = arg1;
+  }
+
+  const setter = (this as any)._setter as WritableSignal<T> | undefined;
   const id = (this as any)._id;
   const key = (this as any)._key;
   const parent = (this as any)._parent;
 
-  if (typeof arg !== 'function') {
-    VALUES_CACHE[id] = arg;
-
-    parent.update((parentValue: any) => {
-      parentValue[key] = arg;
-    });
-
-    return;
-  }
-
   const clone = getClone(id, this);
-  const next = arg(clone);
+  const next = updateFn(clone);
 
   if (next === STOP) return;
 
   const value = next === undefined ? clone : next;
   VALUES_CACHE[id] = value;
 
-  parent.update((parentValue: any) => {
+  if (setter) {
+    setter(value);
+    return;
+  }
+
+  parent.produce((parentValue: any) => {
     if (!parentValue) return STOP;
     parentValue[key] = value;
   });
 }
 
-function updateChild<T, K extends Keys<T>>(this: Store<T>, key: K, arg: any) {
-  this.update((state) => {
+function replaceChild<T, K extends Keys<T>>(self: Store<T>, key: K, arg: any) {
+  self.produce((state) => {
+    if (!state) return STOP;
+    state[key] = arg;
+  });
+}
+
+function produceChild<T, K extends Keys<T>>(self: Store<T>, key: K, arg: any) {
+  self.produce((state) => {
     if (!state) return STOP;
 
-    if (typeof arg !== 'function') {
-      state[key] = arg;
-      return;
-    }
-
-    const id = (this as any)._id + '.' + key;
+    const id = (self as any)._id + '.' + key;
     const clone = getClone(id, undefined, state[key]);
     const next = arg(clone);
     const value = next === undefined ? clone : next;
@@ -150,8 +158,8 @@ function select<T, K extends Keys<T>>(
   store._key = key;
   store._parent = this;
   store.select = select;
-  store.update = updateSelect;
-  store.updateChild = updateChild;
+  store.replace = replace;
+  store.produce = produce;
 
   STORES_CACHE[id] = store;
   store._state.$d = () => delete STORES_CACHE[id];
@@ -167,8 +175,8 @@ export function store<T>(initialState: T): Store<T> {
   store._setter = setter;
   store._id = id;
   store.select = select;
-  store.update = update;
-  store.updateChild = updateChild;
+  store.replace = replace;
+  store.produce = produce;
 
   onUpdate(setter, clearValuesCache);
 
