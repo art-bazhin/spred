@@ -68,7 +68,7 @@ function update<T>(this: Store<T>, arg: any) {
     return;
   }
 
-  setter((current) => {
+  setter.update((current) => {
     const clone = getClone(id, this, current);
     const next = arg(clone);
 

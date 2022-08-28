@@ -38,27 +38,27 @@ describe('writable', () => {
     expect(value).toBe(3);
   });
 
-  it('updates value using passed update fn', () => {
-    counter((value) => value + 1);
+  it('updates value using update method', () => {
+    counter.update((value) => value + 1);
     expect(counter()).toBe(4);
 
     let newValue: any;
 
     batch(() => {
-      newValue = counter((value) => value + 1);
-      newValue = counter((value) => value + 1);
-      newValue = counter((value) => value + 1);
-      newValue = counter((value) => value + 1);
+      newValue = counter.update((value) => value + 1);
+      newValue = counter.update((value) => value + 1);
+      newValue = counter.update((value) => value + 1);
+      newValue = counter.update((value) => value + 1);
     });
 
     expect(counter()).toBe(8);
     expect(newValue).toBe(8);
   });
 
-  it('updates value using passed update fn right after init', () => {
+  it('updates value using update method right after init', () => {
     const value = writable(0);
 
-    value((v) => v + 1);
+    value.update((v) => v + 1);
     expect(value()).toBe(1);
   });
 
@@ -132,5 +132,16 @@ describe('writable', () => {
 
     counter(undefined);
     expect(counter()).toBe(0);
+  });
+
+  it('can have fn value', () => {
+    const a = () => {};
+    const b = () => {};
+    const fn = writable(a);
+
+    expect(fn()).toBe(a);
+
+    fn(b);
+    expect(fn()).toBe(b);
   });
 });

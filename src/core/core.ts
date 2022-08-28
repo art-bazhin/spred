@@ -90,13 +90,18 @@ export function batch(fn: (...args: any) => any) {
 
 export function update<T>(
   state: SignalState<T>,
-  value: (currentValue: T) => T
+  value: (currentValue: T) => T,
+  isFnUpdate: true
 ): T;
 export function update<T>(state: SignalState<T>, value: T | undefined): T;
 export function update<T>(state: SignalState<T>): void;
-export function update<T>(state: SignalState<T>, value?: any) {
-  if (arguments.length === 2) {
-    if (typeof value === 'function') state.nextValue = value(state.nextValue);
+export function update<T>(
+  state: SignalState<T>,
+  value?: any,
+  isFnUpdate?: boolean
+) {
+  if (arguments.length > 1) {
+    if (isFnUpdate) state.nextValue = value(state.nextValue);
     else state.nextValue = value;
   } else if (state.compute) state.dirtyCount++;
 

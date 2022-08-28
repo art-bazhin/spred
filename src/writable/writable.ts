@@ -9,6 +9,10 @@ const writableSignalProto = {
     return update(this._state, value);
   },
 
+  update(this: _Signal<any>, value: any) {
+    return update(this._state, value, true);
+  },
+
   notify(this: _Signal<any>) {
     return update(this._state);
   },
@@ -24,28 +28,22 @@ function writableSelf(this: any, value: any) {
  */
 export interface WritableSignal<T> extends Signal<T> {
   /**
-   * Sets the value of the signal
+   * Set the value of the signal
    * @param value New value of the signal.
    */
   (value: T): T;
 
   /**
-   * Sets the value of the signal
-   * @param updateFn Function that calculates a new value from the current value.
-   */
-  (updateFn: (currentValue: T) => T): T;
-
-  /**
-   * Sets the value of the signal
+   * Set the value of the signal
    * @param value New value of the signal.
    */
   set(value: T): T;
 
   /**
-   * Sets the value of the signal
-   * @param updateFn Function that calculates a new value from the current value.
+   * Calculate and set a new value of the signal from the current value
+   * @param getValue Function that calculates a new value from the current value.
    */
-  set(updateFn: (currentValue: T) => T): T;
+  update(getValue: (currentValue: T) => T): T;
 
   /**
    * Notify subscribers without setting a new value.
@@ -79,6 +77,7 @@ export function writable(value?: any) {
   writable.notify = writableSignalProto.notify;
   writable.subscribe = writableSignalProto.subscribe;
   writable.sample = writableSignalProto.sample;
+  writable.update = writableSignalProto.update;
 
   return writable;
 }
