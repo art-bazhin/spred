@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.24.0](https://github.com/art-bazhin/spred/compare/v0.23.2...v0.24.0) (2022-08-28)
+
+
+### ⚠ BREAKING CHANGES
+
+* **writable:** use update method to calc a new value from the current  value
+
+### Features
+
+* **store:** rename update method to produce ([274fa0f](https://github.com/art-bazhin/spred/commit/274fa0fc22f5817f7a295ff5eeb6bf32e2a467db))
+* **writable:** remove set method overloading ([2fa020d](https://github.com/art-bazhin/spred/commit/2fa020d96eb4ae944489ced944f5850ae229e3d5))
+
+
+### Docs
+
+* update docs ([9aa75b5](https://github.com/art-bazhin/spred/commit/9aa75b59211a7ef2f3afbc663692b24486189d84))
+
 ### [0.23.2](https://github.com/art-bazhin/spred/compare/v0.23.1...v0.23.2) (2022-08-27)
 
 
