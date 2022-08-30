@@ -216,7 +216,7 @@ describe('store', () => {
 
         it('can use batching (case 2)', () => {
           batch(() => {
-            nested.select('count').set(1);
+            nested.select('count').update(1);
             nested.select('count').update((state) => state + 1);
           });
 
@@ -232,8 +232,8 @@ describe('store', () => {
           expect(state.select('users')).toBe(state.select('users'));
         });
 
-        it('can take a new state as an argument of the set method', () => {
-          users.set({
+        it('can take a new state as an argument of the update method', () => {
+          users.update({
             '1': {
               name: 'Freddy',
               id: '1',
@@ -241,16 +241,16 @@ describe('store', () => {
           });
           expect(users.select('1')()!.name).toBe('Freddy');
 
-          state.set(INITIAL_STATE);
+          state.update(INITIAL_STATE);
           expect(users.select('1')()!.name).toBe('John');
         });
       });
     });
   });
 
-  describe('update and set methods with the key argument', () => {
+  describe('update method with the key argument', () => {
     it('update the state field by the key', () => {
-      state.set('child', 2);
+      state.update('child', 2);
       expect(state().child).toBe(2);
 
       state.update('child', (state) => state * 2);
@@ -265,14 +265,14 @@ describe('store', () => {
     it('do nothing if the store is empty', () => {
       const emptyState = store(null as any);
 
-      emptyState.set('child', 2);
+      emptyState.update('child', 2);
       expect(emptyState()).toBe(null);
     });
 
     it('do nothing if the store is empty', () => {
       const emptyState = store(null as any);
 
-      emptyState.set('child', 2);
+      emptyState.update('child', 2);
       expect(emptyState()).toBe(null);
 
       emptyState.update('child', (state: any) => state + 1);
@@ -285,7 +285,7 @@ describe('store', () => {
 
     batch(() => {
       state.update((state) => state + 1);
-      state.set(10);
+      state.update(10);
       state.update((state) => state + 1);
     });
 

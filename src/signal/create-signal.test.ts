@@ -11,8 +11,13 @@ describe('signal function', () => {
     expect(typeof setCount).toBe('function');
     expect(count()).toBe(0);
 
-    setCount(1);
+    let v1 = setCount(1);
     expect(count()).toBe(1);
+    expect(v1).toBe(1);
+
+    let v2 = setCount((v) => v + 1);
+    expect(count()).toBe(2);
+    expect(v2).toBe(2);
   });
 
   it('emits unique value each time setter called without arguments', () => {

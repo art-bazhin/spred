@@ -177,7 +177,7 @@ export function effect<T, A extends unknown[]>(
       _aborted({});
     }
 
-    _args(args);
+    _args(args as any);
     _status('pending');
 
     return exec(++counter, ...args)
@@ -185,7 +185,7 @@ export function effect<T, A extends unknown[]>(
         if (current !== counter) return v;
 
         batch(() => {
-          _data(v);
+          _data(v as any);
           _status('fulfilled');
         });
 

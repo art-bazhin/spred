@@ -1,11 +1,4 @@
 import { batch } from '../core/core';
-import {
-  onActivate,
-  onDeactivate,
-  onNotifyEnd,
-  onNotifyStart,
-  onUpdate,
-} from '../lifecycle/lifecycle';
 import { writable } from './writable';
 
 describe('writable', () => {
@@ -38,27 +31,27 @@ describe('writable', () => {
     expect(value).toBe(3);
   });
 
-  it('updates value using update method', () => {
-    counter.update((value) => value + 1);
+  it('updates value using update fn', () => {
+    counter((value) => value + 1);
     expect(counter()).toBe(4);
 
     let newValue: any;
 
     batch(() => {
-      newValue = counter.update((value) => value + 1);
-      newValue = counter.update((value) => value + 1);
-      newValue = counter.update((value) => value + 1);
-      newValue = counter.update((value) => value + 1);
+      newValue = counter((value) => value + 1);
+      newValue = counter((value) => value + 1);
+      newValue = counter((value) => value + 1);
+      newValue = counter((value) => value + 1);
     });
 
     expect(counter()).toBe(8);
     expect(newValue).toBe(8);
   });
 
-  it('updates value using update method right after init', () => {
+  it('updates value using update fn right after init', () => {
     const value = writable(0);
 
-    value.update((v) => v + 1);
+    value((v) => v + 1);
     expect(value()).toBe(1);
   });
 
@@ -141,7 +134,7 @@ describe('writable', () => {
 
     expect(fn()).toBe(a);
 
-    fn(b);
+    fn(() => b);
     expect(fn()).toBe(b);
   });
 });
