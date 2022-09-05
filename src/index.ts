@@ -26,6 +26,7 @@ import { Subscriber } from './subscriber/subscriber';
 import {
   isSignal,
   isWritableSignal,
+  isStore,
   getValue,
   sampleValue,
 } from './guards/guards';
@@ -65,6 +66,7 @@ export {
   configure,
   isSignal,
   isWritableSignal,
+  isStore,
   getValue,
   sampleValue,
   check,

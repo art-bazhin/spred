@@ -8,7 +8,7 @@ export function isSignal<T>(
 ): value is Signal<T>;
 export function isSignal(value: unknown): value is Signal<unknown>;
 export function isSignal(value: any) {
-  return value._state && value.subscribe;
+  return value._state && value.get;
 }
 
 export function isWritableSignal<T>(
@@ -25,6 +25,18 @@ export function isWritableSignal(
 
 export function isWritableSignal(value: any) {
   return isSignal(value) && (value as any).set;
+}
+
+export function isStore<T>(
+  value: (...args: unknown[]) => T
+): value is WritableSignal<T>;
+
+export function isStore<T>(value: Computation<T>): value is WritableSignal<T>;
+
+export function isStore(value: unknown): value is WritableSignal<unknown>;
+
+export function isStore(value: any) {
+  return isSignal(value) && (value as any).update;
 }
 
 export function getValue<T>(value: T | Signal<T>) {
