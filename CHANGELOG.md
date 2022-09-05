@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.26.0](https://github.com/art-bazhin/spred/compare/v0.25.1...v0.26.0) (2022-09-05)
+
+
+### ⚠ BREAKING CHANGES
+
+* **guards:** force version update
+
+### Features
+
+* **guards:** add isStore guard ([213c631](https://github.com/art-bazhin/spred/commit/213c6314d6b98a12b999f305045ae656ce64b96e))
+
 ### [0.25.1](https://github.com/art-bazhin/spred/compare/v0.25.0...v0.25.1) (2022-08-30)
 
 
