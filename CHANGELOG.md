@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.27.0](https://github.com/art-bazhin/spred/compare/v0.26.0...v0.27.0) (2022-09-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove check fn
+
+### Features
+
+* freeze signals with no dependencies ([1ed0121](https://github.com/art-bazhin/spred/commit/1ed01211b76ddd7945fa5609344686a55dca70b0))
+
+
+### Code Refactoring
+
+* remove check fn ([c9d9c7a](https://github.com/art-bazhin/spred/commit/c9d9c7a41e0fa79b895651ed9cf68975053164e6))
+
 ## [0.26.0](https://github.com/art-bazhin/spred/compare/v0.25.1...v0.26.0) (2022-09-05)
 
 
