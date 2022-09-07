@@ -15,17 +15,8 @@ let calcLevel = 0;
 let queue: SignalState<any>[] = [];
 let queueLength = 0;
 let fullQueueLength = 0;
-
-let checked = false;
-
 let depth = 0;
 let cacheStatus = { status: true };
-
-export function check(fn: () => any) {
-  checked = false;
-  isolate(fn);
-  return checked;
-}
 
 export function isolate<T>(fn: () => T): T;
 export function isolate<T, A extends unknown[]>(
@@ -317,8 +308,6 @@ export function getStateValue<T>(
   state: SignalState<T>,
   notTrackDeps?: boolean
 ): T {
-  if (!notTrackDeps) checked = true;
-
   if (state.isComputing || state.hasCycle) {
     state.hasCycle = true;
     config.logException(new CircularDependencyError());

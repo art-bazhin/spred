@@ -30,7 +30,6 @@ import {
   getValue,
   sampleValue,
 } from './guards/guards';
-import { check } from './check/check';
 import { isolate } from './isolate/isolate';
 import { collect } from './collect/collect';
 import { catcher } from './catcher/catcher';
@@ -69,7 +68,6 @@ export {
   isStore,
   getValue,
   sampleValue,
-  check,
   isolate,
   collect,
   catcher,
