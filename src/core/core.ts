@@ -1,5 +1,5 @@
 import { _Signal } from '../signal/signal';
-import { SignalState } from '../signal-state/signal-state';
+import { freeze, SignalState } from '../signal-state/signal-state';
 import { Subscriber } from '../subscriber/subscriber';
 import { config } from '../config/config';
 import { CircularDependencyError } from '../errors/errors';
@@ -115,8 +115,13 @@ export function addSubscriber<T>(
 ) {
   const state = signal._state;
 
-  if (state.observers.has(subscriber)) return;
+  if (state.observers && state.observers.has(subscriber)) return;
   const value = getStateValue(state, true);
+
+  if (!state.observers) {
+    if (exec) subscriber(value, true);
+    return;
+  }
 
   activateDependencies(state);
 
@@ -169,7 +174,7 @@ export function recalc() {
   for (let i = 0; i < queueLength; i++) {
     const state = queue[i];
 
-    if (state.queueIndex !== i) continue;
+    if (state.queueIndex !== i || !state.observers) continue;
 
     state.hasException = false;
 
@@ -329,7 +334,7 @@ export function getStateValue<T>(
     }
   }
 
-  if (tracking && !notTrackDeps) {
+  if (tracking && !notTrackDeps && state.observers) {
     if (state.hasException && !tracking.hasException && !tracking.isCatcher) {
       tracking.exception = state.exception;
       tracking.hasException = true;
@@ -346,6 +351,8 @@ export function getStateValue<T>(
       }
     }
   }
+
+  if (state.compute && !state.dependencies!.size) freeze(state);
 
   return state.value;
 }
@@ -399,7 +406,7 @@ function calcComputed<T>(
 }
 
 function activateDependencies<T>(state: SignalState<T>) {
-  if (state.observers.size) return;
+  if (!state.observers || state.observers.size) return;
 
   logHook(state, 'ACTIVATE');
 
@@ -416,7 +423,7 @@ function activateDependencies<T>(state: SignalState<T>) {
 }
 
 function deactivateDependencies<T>(state: SignalState<T>) {
-  if (state.observers.size) return;
+  if (!state.observers || state.observers.size) return;
 
   logHook(state, 'DEACTIVATE');
 

@@ -7,6 +7,7 @@ import {
 } from '../core/core';
 import { SignalState } from '../signal-state/signal-state';
 import { Subscriber } from '../subscriber/subscriber';
+import { NOOP_FN } from '../utils/constants';
 
 /**
  * Basic reactive primitive.
@@ -57,6 +58,8 @@ export const signalProto = {
 
   subscribe(subscriber: any, exec = true) {
     addSubscriber(this as any, subscriber, exec);
+
+    if (!(this as any)._state.observers) return NOOP_FN;
 
     const unsub = () => removeSubscriber(this as any, subscriber);
     const parent = tracking || scope;

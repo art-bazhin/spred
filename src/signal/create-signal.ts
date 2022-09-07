@@ -1,6 +1,6 @@
 import { Signal } from './signal';
 import { computed } from '../computed/computed';
-import { update } from '../core/core';
+import { writable } from '../writable/writable';
 
 type Setter<T> = (
   payload: Exclude<T, Function> | ((currentValue: T) => T)
@@ -16,17 +16,12 @@ export function signal<T>(initialValue: T): [Signal<T>, Setter<T>];
  * @returns A tuple of signal and setter function
  */
 export function signal(initialValue?: any) {
-  let value = initialValue;
-  const signal = computed(() => value);
+  const source = writable(initialValue);
+  const signal = computed(source);
 
   function set(payload: any) {
-    if (!arguments.length) value = {};
-    else if (typeof payload === 'function') value = payload(value);
-    else value = payload;
-
-    update((signal as any)._state);
-
-    return value;
+    if (!arguments.length) return source({});
+    return source(payload);
   }
 
   return [signal, set];

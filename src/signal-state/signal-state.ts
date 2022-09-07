@@ -65,3 +65,16 @@ export function createSignalState<T>(
 
   return state;
 }
+
+export function freeze(state: any) {
+  delete state.compute;
+  delete state.observers;
+  delete state.dependencies;
+  delete state.dirtyCount;
+  delete state.isCached;
+  delete state.queueIndex;
+  delete state.oldDepsCount;
+  delete state.hasException;
+  delete state.subsCount;
+  delete state.isComputing;
+}
