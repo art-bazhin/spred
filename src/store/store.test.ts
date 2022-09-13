@@ -26,6 +26,7 @@ interface TestState {
   child: number;
   childObj: {
     value: number;
+    nullable?: User;
   };
 }
 
@@ -260,6 +261,20 @@ describe('store', () => {
         state.value = 10;
       });
       expect(state().childObj.value).toBe(10);
+    });
+
+    it('update the state field by the key (null case)', () => {
+      const childObj = state.select('childObj');
+
+      childObj.update('nullable', (state) => {
+        if (!state)
+          return {
+            id: 'test-id',
+            name: 'John Doe',
+          };
+      });
+
+      expect(childObj().nullable?.id).toBe('test-id');
     });
 
     it('do nothing if the store is empty', () => {

@@ -54,7 +54,7 @@ function getClone<T>(id: string, state?: Signal<T>, value?: T): T {
   const cached = VALUES_CACHE[id];
 
   if (cached !== undefined) return cached;
-  return copy(value || state!.sample());
+  return copy(arguments.length === 3 ? value! : state!.sample());
 }
 
 function clearValuesCache() {
@@ -117,7 +117,7 @@ function updateChild<T, K extends Keys<T>>(self: Store<T>, key: K, arg: any) {
     }
 
     VALUES_CACHE[id] = value;
-    state[key] = value;
+    (state as any)[key] = value;
   });
 }
 
