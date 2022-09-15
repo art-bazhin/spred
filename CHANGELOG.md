@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.28.0](https://github.com/art-bazhin/spred/compare/v0.27.1...v0.28.0) (2022-09-15)
+
+
+### ⚠ BREAKING CHANGES
+
+* **store:** same key selects do not return same stores
+
+### Features
+
+* **store:** remove store caching ([896916d](https://github.com/art-bazhin/spred/commit/896916d15c1718b08476ae1bab7f1dd96ccdb09d))
+
 ### [0.27.1](https://github.com/art-bazhin/spred/compare/v0.27.0...v0.27.1) (2022-09-13)
 
 
