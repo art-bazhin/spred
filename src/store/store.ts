@@ -25,7 +25,6 @@ export interface Store<T> extends Signal<T> {
 }
 
 const STOP: any = {};
-const STORES_CACHE: any = {};
 let VALUES_CACHE: any = {};
 
 let counter = 1;
@@ -126,9 +125,6 @@ function select<T, K extends Keys<T>>(
   key: K
 ): Store<Select<T, K>> {
   const id = (this as any)._id + '.' + key;
-  const cached = STORES_CACHE[id];
-
-  if (cached) return cached;
 
   const store = memo(() => {
     const parentValue = this();
@@ -143,9 +139,6 @@ function select<T, K extends Keys<T>>(
   store._parent = this;
   store.select = select;
   store.update = update;
-
-  STORES_CACHE[id] = store;
-  store._state.$d = () => delete STORES_CACHE[id];
 
   return store;
 }

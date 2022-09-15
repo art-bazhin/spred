@@ -224,15 +224,6 @@ describe('store', () => {
           expect(state().nested.count).toBe(2);
         });
 
-        it('returns same instance on every select before deactivation', () => {
-          expect(users).toBe(state.select('users'));
-
-          usersUnsub();
-
-          expect(users).not.toBe(state.select('users'));
-          expect(state.select('users')).toBe(state.select('users'));
-        });
-
         it('can take a new state as an argument of the update method', () => {
           users.update({
             '1': {
