@@ -161,6 +161,39 @@ describe('signal', () => {
     expect(subscriber).toHaveBeenCalledTimes(1);
   });
 
+  it('handles diamond problem (case 2)', () => {
+    /*
+     *            ┌─────┐
+     *            │  a  │
+     *            └──┬──┘
+     *            ┌──▼──┐
+     *            │  b  │
+     *            └──┬──┘
+     *     ┌─────────┴────────┐
+     *  ┌──▼──┐               │
+     *  │  c  │               │
+     *  └──┬──┘               │
+     *     └─────────┬────────┘
+     *            ┌──▼──┐
+     *            │  d  │
+     *            └─────┘
+     */
+
+    const a = writable(0);
+    const b = computed(() => a() * 2);
+    const c = computed(() => b() * 2);
+    const d = computed(() => c() + b());
+
+    const subscriber = jest.fn();
+
+    d.subscribe(subscriber, false);
+
+    a(1);
+
+    expect(d()).toBe(6);
+    expect(subscriber).toHaveBeenCalledTimes(1);
+  });
+
   it('dynamically updates dependencies', () => {
     const counter = writable(0);
     const tumbler = writable(false);
