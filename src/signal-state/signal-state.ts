@@ -14,7 +14,7 @@ export interface SignalState<T> {
   observers: Set<Subscriber<T> | SignalState<any>>;
   subsCount: number;
   compute?: Computation<T>;
-  dependencies?: Array<SignalState<any>>;
+  dependencies: Array<SignalState<any>>;
   depIndex: number;
   dirtyCount: number;
   queueIndex: number;
@@ -39,6 +39,8 @@ export interface SignalState<T> {
   onException?: ((e: unknown) => any) | null;
 }
 
+const EMPTY: any = [];
+
 export function createSignalState<T>(
   value: T,
   compute?: Computation<T>
@@ -47,8 +49,10 @@ export function createSignalState<T>(
 
   const state: SignalState<T> = {
     value,
+    nextValue: value,
     compute,
     observers: new Set(),
+    dependencies: compute ? [] : EMPTY,
     dirtyCount: 0,
     queueIndex: -1,
     subsCount: 0,
@@ -56,9 +60,6 @@ export function createSignalState<T>(
     version: -1,
     depIndex: -1,
   };
-
-  if (compute) state.dependencies = [];
-  else state.nextValue = value;
 
   if (parent) {
     if (!parent.children) parent.children = [];
