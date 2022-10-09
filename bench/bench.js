@@ -16,7 +16,14 @@ import {
   batch as solidBatch,
 } from 'https://unpkg.com/solid-js@1.3.13/dist/solid.js';
 
-import { memo, writable, batch } from '/dist/index.mjs';
+import {
+  signal as preactSignal,
+  computed as preactComputed,
+  batch as preactBatch,
+  effect as preactEffect,
+} from '../node_modules/@preact/signals-core/dist/signals-core.mjs';
+
+import { memo, computed, writable, batch } from '/dist/index.mjs';
 
 window.process = {
   env: {
@@ -122,6 +129,89 @@ function testCellx(layerCount, newValues) {
   return report;
 }
 
+window.testPreactSignals = () => {
+  const a = preactSignal(1);
+  const b = preactComputed(() => {
+    console.log('b');
+    return a.value * 2;
+  });
+
+  return b;
+};
+
+function testPreact(layerCount, newValues) {
+  const report = { name: 'preact' };
+  const initTimestamp = performance.now();
+
+  const start = {
+    prop1: preactSignal(1),
+    prop2: preactSignal(2),
+    prop3: preactSignal(3),
+    prop4: preactSignal(4),
+  };
+
+  let layer = start;
+
+  for (let i = layerCount; i--; ) {
+    layer = (function (m) {
+      const s = {
+        prop1: preactComputed(function () {
+          return m.prop2.value;
+        }),
+        prop2: preactComputed(function () {
+          return m.prop1.value - m.prop3.value;
+        }),
+        prop3: preactComputed(function () {
+          return m.prop2.value + m.prop4.value;
+        }),
+        prop4: preactComputed(function () {
+          return m.prop3.value;
+        }),
+      };
+
+      if (!i) {
+        preactEffect(() => s.prop1.value);
+        preactEffect(() => s.prop2.value);
+        preactEffect(() => s.prop3.value);
+        preactEffect(() => s.prop4.value);
+      }
+
+      return s;
+    })(layer);
+  }
+
+  report.initTime = performance.now() - initTimestamp;
+
+  const end = layer;
+
+  report.beforeChange = [
+    end.prop1.value,
+    end.prop2.value,
+    end.prop3.value,
+    end.prop4.value,
+  ];
+
+  const st = performance.now();
+
+  preactBatch(() => {
+    start.prop1.value = newValues[0];
+    start.prop2.value = newValues[1];
+    start.prop3.value = newValues[2];
+    start.prop4.value = newValues[3];
+  });
+
+  report.afterChange = [
+    end.prop1.value,
+    end.prop2.value,
+    end.prop3.value,
+    end.prop4.value,
+  ];
+
+  report.recalcTime = performance.now() - st;
+
+  return report;
+}
+
 function testSpred(layerCount, newValues) {
   const report = { name: 'spred' };
   const initTimestamp = performance.now();
@@ -152,10 +242,12 @@ function testSpred(layerCount, newValues) {
         }),
       };
 
+      // if (!i) {
       s.prop1.subscribe(subscriber);
       s.prop2.subscribe(subscriber);
       s.prop3.subscribe(subscriber);
       s.prop4.subscribe(subscriber);
+      //}
 
       return s;
     })(layer);
@@ -517,6 +609,7 @@ function runBenchmark() {
   setTimeout(() => {
     const testFn = {
       spred: testSpred,
+      preact: testPreact,
       cellx: testCellx,
       solid: testSolid,
       nanostores: testNanostores,
