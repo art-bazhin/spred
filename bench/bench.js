@@ -169,12 +169,12 @@ function testPreact(layerCount, newValues) {
         }),
       };
 
-      if (!i) {
-        preactEffect(() => s.prop1.value);
-        preactEffect(() => s.prop2.value);
-        preactEffect(() => s.prop3.value);
-        preactEffect(() => s.prop4.value);
-      }
+      // if (!i) {
+      preactEffect(() => s.prop1.value);
+      preactEffect(() => s.prop2.value);
+      preactEffect(() => s.prop3.value);
+      preactEffect(() => s.prop4.value);
+      // }
 
       return s;
     })(layer);

@@ -14,7 +14,8 @@ export interface SignalState<T> {
   observers: Set<Subscriber<T> | SignalState<any>>;
   subsCount: number;
   compute?: Computation<T>;
-  dependencies?: Set<SignalState<any>>;
+  dependencies?: Array<SignalState<any>>;
+  depIndex: number;
   dirtyCount: number;
   queueIndex: number;
   isComputing?: boolean;
@@ -53,9 +54,10 @@ export function createSignalState<T>(
     subsCount: 0,
     oldDepsCount: 0,
     version: -1,
+    depIndex: -1,
   };
 
-  if (compute) state.dependencies = new Set();
+  if (compute) state.dependencies = [];
   else state.nextValue = value;
 
   if (parent) {

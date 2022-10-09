@@ -320,19 +320,19 @@ export function getStateValue<T>(
       tracking.hasException = true;
     }
 
-    const isNewDep = !tracking.dependencies!.delete(state);
-    tracking.dependencies!.add(state);
-    --tracking.oldDepsCount;
+    if (state.depIndex === -1) {
+      tracking.dependencies!.push(state);
 
-    if (isNewDep) {
       if (tracking.observers.size) {
         activateDependencies(state);
         state.observers.add(tracking);
       }
+    } else {
+      state.depIndex = -1;
     }
   }
 
-  if (state.compute && !state.dependencies!.size) freeze(state);
+  if (state.compute && !state.dependencies!.length) freeze(state);
 
   return state.value;
 }
@@ -347,10 +347,16 @@ function calcComputed<T>(
 
   cleanupChildren(state);
 
+  let length = state.dependencies!.length;
+
   tracking = state;
   tracking.isComputing = true;
-  tracking.oldDepsCount = state.dependencies!.size;
+  tracking.oldDepsCount = length;
   tracking.hasException = false;
+
+  for (let i = 0; i < length; i++) {
+    state.dependencies![i].depIndex = i;
+  }
 
   try {
     value = state.compute!(state.value, scheduled);
@@ -359,15 +365,17 @@ function calcComputed<T>(
     state.hasException = true;
   }
 
-  let i = state.oldDepsCount;
+  state.dependencies = state.dependencies!.filter((dep) => {
+    if (dep.depIndex < 0) {
+      return true;
+    }
 
-  for (let dependency of state.dependencies!) {
-    if (i <= 0) break;
-    state.dependencies!.delete(dependency);
-    dependency.observers.delete(state);
-    deactivateDependencies(dependency);
-    --i;
-  }
+    dep.depIndex = -1;
+    dep.observers.delete(state);
+    deactivateDependencies(dep);
+
+    return false;
+  });
 
   tracking.isComputing = false;
   tracking = prevTracking;
