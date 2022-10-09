@@ -1,6 +1,5 @@
 import { scope, tracking } from '../core/core';
 import { Subscriber } from '../subscriber/subscriber';
-import { FALSE_STATUS } from '../utils/constants';
 
 export type Computation<T> =
   | (() => T)
@@ -19,12 +18,13 @@ export interface SignalState<T> {
   dirtyCount: number;
   queueIndex: number;
   isComputing?: boolean;
-  isCached: { status?: boolean };
   isCatcher?: boolean;
   hasCycle?: boolean;
   oldDepsCount: number;
+  version: number;
   children?: ((() => any) | SignalState<any>)[];
   name?: string;
+  freezed?: boolean;
 
   // internal lifecycle
   $d?: ((value: T) => any) | null; // deactivate
@@ -52,7 +52,7 @@ export function createSignalState<T>(
     queueIndex: -1,
     subsCount: 0,
     oldDepsCount: 0,
-    isCached: FALSE_STATUS,
+    version: -1,
   };
 
   if (compute) state.dependencies = new Set();
@@ -77,4 +77,6 @@ export function freeze(state: any) {
   delete state.hasException;
   delete state.subsCount;
   delete state.isComputing;
+
+  state.freezed = true;
 }

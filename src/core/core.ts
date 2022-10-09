@@ -3,7 +3,6 @@ import { freeze, SignalState } from '../signal-state/signal-state';
 import { Subscriber } from '../subscriber/subscriber';
 import { config } from '../config/config';
 import { CircularDependencyError } from '../errors/errors';
-import { FALSE_STATUS } from '../utils/constants';
 import { LifecycleHookName } from '../lifecycle/lifecycle';
 
 export let tracking: SignalState<any> | null = null;
@@ -15,8 +14,8 @@ let calcLevel = 0;
 let queue: SignalState<any>[] = [];
 let queueLength = 0;
 let fullQueueLength = 0;
-let depth = 0;
-let cacheStatus = { status: true };
+
+let version = 0;
 
 export function isolate<T>(fn: () => T): T;
 export function isolate<T, A extends unknown[]>(
@@ -24,8 +23,6 @@ export function isolate<T, A extends unknown[]>(
   args: A
 ): T;
 export function isolate(fn: any, args?: any) {
-  const prevCacheStatus = cacheStatus;
-  const prevDepth = depth;
   const prevTracking = tracking;
   const prevScope = scope;
 
@@ -33,13 +30,9 @@ export function isolate(fn: any, args?: any) {
 
   if (tracking) scope = tracking;
   tracking = null;
-  depth = 0;
 
   if (args) result = fn(...args);
   else result = fn();
-
-  cacheStatus = prevCacheStatus;
-  depth = prevDepth;
   tracking = prevTracking;
   scope = prevScope;
 
@@ -47,20 +40,15 @@ export function isolate(fn: any, args?: any) {
 }
 
 export function collect(fn: () => any) {
-  const prevCacheStatus = cacheStatus;
-  const prevDepth = depth;
   const prevTracking = tracking;
   const prevScope = scope;
   const fakeState = {} as any as SignalState<any>;
 
   scope = fakeState;
   tracking = null;
-  depth = 0;
 
   fn();
 
-  cacheStatus = prevCacheStatus;
-  depth = prevDepth;
   tracking = prevTracking;
   scope = prevScope;
 
@@ -109,7 +97,7 @@ export function addSubscriber<T>(
   if (state.observers && state.observers.has(subscriber)) return;
   const value = getStateValue(state, true);
 
-  if (!state.observers) {
+  if (state.freezed) {
     if (exec) subscriber(value, true);
     return;
   }
@@ -156,6 +144,7 @@ function emitUpdateLifecycle(state: SignalState<any>, value: any) {
  * Immediately calculates the updated values of the signals and notifies their subscribers.
  */
 export function recalc() {
+  ++version;
   if (!queueLength || calcLevel || batchLevel) return;
 
   const notificationQueue: SignalState<any>[] = [];
@@ -165,7 +154,7 @@ export function recalc() {
   for (let i = 0; i < queueLength; i++) {
     const state = queue[i];
 
-    if (state.queueIndex !== i || !state.observers) continue;
+    if (state.queueIndex !== i || state.freezed) continue;
 
     state.hasException = false;
 
@@ -315,8 +304,10 @@ export function getStateValue<T>(
     return state.value;
   }
 
-  if (state.compute && !state.observers.size && !state.isCached.status) {
+  if (state.compute && !state.observers.size && version !== state.version) {
     const value = calcComputed(state, false, notTrackDeps);
+
+    state.version = version;
 
     if (value !== undefined) {
       state.value = value;
@@ -354,7 +345,12 @@ function calcComputed<T>(
   const prevTracking = tracking;
   let value;
 
-  push(state);
+  cleanupChildren(state);
+
+  tracking = state;
+  tracking.isComputing = true;
+  tracking.oldDepsCount = state.dependencies!.size;
+  tracking.hasException = false;
 
   try {
     value = state.compute!(state.value, scheduled);
@@ -373,7 +369,8 @@ function calcComputed<T>(
     --i;
   }
 
-  pop(prevTracking);
+  tracking.isComputing = false;
+  tracking = prevTracking;
 
   if (state.hasException) {
     logHook(state, 'EXCEPTION');
@@ -395,7 +392,7 @@ function calcComputed<T>(
 }
 
 function activateDependencies<T>(state: SignalState<T>) {
-  if (!state.observers || state.observers.size) return;
+  if (state.freezed || state.observers.size) return;
 
   logHook(state, 'ACTIVATE');
 
@@ -412,7 +409,7 @@ function activateDependencies<T>(state: SignalState<T>) {
 }
 
 function deactivateDependencies<T>(state: SignalState<T>) {
-  if (!state.observers || state.observers.size) return;
+  if (state.freezed || state.observers.size) return;
 
   logHook(state, 'DEACTIVATE');
 
@@ -428,35 +425,6 @@ function deactivateDependencies<T>(state: SignalState<T>) {
     dependency.observers.delete(state);
     deactivateDependencies(dependency);
   }
-}
-
-function push(state: SignalState<any>) {
-  cleanupChildren(state);
-
-  if (!state.observers.size) {
-    if (!depth) cacheStatus = { status: true };
-    ++depth;
-  }
-
-  tracking = state;
-  tracking.isComputing = true;
-  tracking.isCached = FALSE_STATUS;
-  tracking.oldDepsCount = state.dependencies!.size;
-  tracking.hasException = false;
-
-  return tracking;
-}
-
-function pop(state: SignalState<any> | null) {
-  tracking!.isComputing = false;
-  tracking!.isCached = cacheStatus;
-
-  if (depth) --depth;
-  if (!depth) cacheStatus.status = false;
-
-  tracking = state;
-
-  return tracking;
 }
 
 function cleanupChildren(state: SignalState<any>) {
