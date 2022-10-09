@@ -19,6 +19,7 @@
   "devDependencies": {
     "@babel/preset-env": "^7.16.11",
     "@babel/preset-typescript": "^7.16.7",
+    "@preact/signals-core": "^1.2.1",
     "@size-limit/preset-small-lib": "^7.0.8",
     "@types/jest": "^27.4.1",
     "babel-jest": "^27.5.1",
