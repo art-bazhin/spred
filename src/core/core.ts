@@ -144,12 +144,12 @@ function emitUpdateLifecycle(state: SignalState<any>, value: any) {
  * Immediately calculates the updated values of the signals and notifies their subscribers.
  */
 export function recalc() {
-  ++version;
   if (!queueLength || calcLevel || batchLevel) return;
 
   const notificationQueue: SignalState<any>[] = [];
 
   calcLevel++;
+  version++;
 
   for (let i = 0; i < queueLength; i++) {
     const state = queue[i];
@@ -215,6 +215,8 @@ export function recalc() {
     }
 
     const value = calcComputed(state, true);
+
+    state.version = version;
 
     if (value !== undefined) {
       emitUpdateLifecycle(state, value);
