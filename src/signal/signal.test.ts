@@ -241,23 +241,6 @@ describe('signal', () => {
   });
 
   it('dynamically updates dependencies (case 2)', () => {
-    const count = writable(0);
-    const x2Count = computed(() => count() * 2);
-    const sum = computed(() => count() + x2Count());
-
-    const subSum = jest.fn();
-    const subX2Xount = jest.fn();
-
-    sum.subscribe(subSum);
-    x2Count.subscribe(subX2Xount);
-
-    expect(subX2Xount).toBeCalledTimes(1);
-
-    count(1);
-    expect(subX2Xount).toBeCalledTimes(2);
-  });
-
-  it('dynamically updates dependencies (case 3)', () => {
     const tumbler = writable(true);
     const a = writable('a');
     const b = writable('b');
@@ -278,6 +261,23 @@ describe('signal', () => {
 
     tumbler(true);
     expect(subSum).toBeCalledTimes(3);
+  });
+
+  it('notifies intermidiate computed subscribers', () => {
+    const count = writable(0);
+    const x2Count = computed(() => count() * 2);
+    const sum = computed(() => count() + x2Count());
+
+    const subSum = jest.fn();
+    const subX2Xount = jest.fn();
+
+    sum.subscribe(subSum);
+    x2Count.subscribe(subX2Xount);
+
+    expect(subX2Xount).toBeCalledTimes(1);
+
+    count(1);
+    expect(subX2Xount).toBeCalledTimes(2);
   });
 
   it('passes exceptions down to dependants', () => {

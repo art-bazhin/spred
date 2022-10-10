@@ -365,12 +365,12 @@ describe('computed', () => {
   });
 
   it('passes true as second compute fn argument if computation was scheduled', () => {
-    let lastScheduled = false;
+    let lastScheduled: boolean | undefined;
 
     const spy = jest.fn();
 
     const source = writable(0);
-    const result = computed((_: any, scheduled: boolean) => {
+    const result = computed((_: any, scheduled?: boolean) => {
       lastScheduled = scheduled;
       spy();
       return source();
@@ -378,7 +378,7 @@ describe('computed', () => {
 
     const unsub = result.subscribe(() => {});
 
-    expect(lastScheduled).toBe(false);
+    expect(lastScheduled).toBeFalsy();
     expect(spy).toBeCalledTimes(1);
 
     source(1);
@@ -395,7 +395,7 @@ describe('computed', () => {
 
     source(3);
     result();
-    expect(lastScheduled).toBe(false);
+    expect(lastScheduled).toBeFalsy();
     expect(spy).toBeCalledTimes(4);
   });
 

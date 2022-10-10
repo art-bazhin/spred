@@ -6,7 +6,7 @@ configure({
 });
 
 describe('catcher', () => {
-  it('allows to handle inactive writable exceptions', () => {
+  it('allows to handle inactive signal exceptions', () => {
     const count = writable(0);
 
     const withError = computed(() => {
@@ -25,7 +25,7 @@ describe('catcher', () => {
     expect(handledError()).toBe(42);
   });
 
-  it('allows to handle active writable exceptions', () => {
+  it('allows to handle active signal exceptions', () => {
     const errorSpy = jest.fn();
 
     configure({

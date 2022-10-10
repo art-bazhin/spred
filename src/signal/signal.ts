@@ -59,7 +59,7 @@ export const signalProto = {
   subscribe(subscriber: any, exec = true) {
     addSubscriber(this as any, subscriber, exec);
 
-    if (!(this as any)._state.observers) return NOOP_FN;
+    if ((this as any)._state.freezed) return NOOP_FN;
 
     const unsub = () => removeSubscriber(this as any, subscriber);
     const parent = tracking || scope;

@@ -4,7 +4,7 @@ import { Subscriber } from '../subscriber/subscriber';
 export type Computation<T> =
   | (() => T)
   | ((prevValue: T | undefined) => T)
-  | ((prevValue: T | undefined, scheduled: boolean) => T);
+  | ((prevValue: T | undefined, scheduled?: boolean) => T);
 
 export interface SignalState<T> {
   value: T;
@@ -21,7 +21,6 @@ export interface SignalState<T> {
   isComputing?: boolean;
   isCatcher?: boolean;
   hasCycle?: boolean;
-  oldDepsCount: number;
   version: number;
   children?: ((() => any) | SignalState<any>)[];
   name?: string;
@@ -56,7 +55,6 @@ export function createSignalState<T>(
     dirtyCount: 0,
     queueIndex: -1,
     subsCount: 0,
-    oldDepsCount: 0,
     version: -1,
     depIndex: -1,
   };
@@ -74,12 +72,10 @@ export function freeze(state: any) {
   delete state.observers;
   delete state.dependencies;
   delete state.dirtyCount;
-  delete state.isCached;
-  delete state.queueIndex;
-  delete state.oldDepsCount;
   delete state.hasException;
   delete state.subsCount;
   delete state.isComputing;
+  delete state.version;
 
   state.freezed = true;
 }

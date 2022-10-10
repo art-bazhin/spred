@@ -15,7 +15,7 @@ export function memo<T>(
   const check = equals || Object.is;
   const getValue = isWritableSignal(compute) ? () => compute() : compute;
 
-  const comp = computed((prevValue: T | undefined, scheduled: boolean) => {
+  const comp = computed((prevValue: T | undefined, scheduled?: boolean) => {
     const value = getValue(prevValue, scheduled);
 
     if (prevValue === undefined || !check(value, prevValue)) return value;

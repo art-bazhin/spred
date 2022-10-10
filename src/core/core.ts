@@ -13,7 +13,7 @@ let calcLevel = 0;
 
 let queue: SignalState<any>[] = [];
 let queueLength = 0;
-let fullQueueLength = 0;
+let notificationQueue: SignalState<any>[] = [];
 
 let version = 0;
 
@@ -77,9 +77,9 @@ export function update<T>(state: SignalState<T>, value?: any) {
   if (arguments.length > 1) {
     if (typeof value === 'function') state.nextValue = value(state.nextValue);
     else state.nextValue = value;
-  } else if (state.compute) state.dirtyCount++;
+  }
 
-  state.queueIndex = queueLength - fullQueueLength;
+  state.queueIndex = queueLength;
   queueLength = queue.push(state);
 
   recalc();
@@ -124,11 +124,6 @@ export function removeSubscriber<T>(
   }
 }
 
-function resetStateQueueParams(state: SignalState<any>) {
-  state.dirtyCount = 0;
-  state.queueIndex = -1;
-}
-
 function emitUpdateLifecycle(state: SignalState<any>, value: any) {
   logHook(state, 'UPDATE', value);
 
@@ -146,100 +141,48 @@ function emitUpdateLifecycle(state: SignalState<any>, value: any) {
 export function recalc() {
   if (!queueLength || calcLevel || batchLevel) return;
 
-  const notificationQueue: SignalState<any>[] = [];
-
   calcLevel++;
   version++;
 
   for (let i = 0; i < queueLength; i++) {
     const state = queue[i];
-
-    if (state.queueIndex !== i || state.freezed) continue;
-
-    state.hasException = false;
-
-    for (let dependant of state.observers) {
-      if (typeof dependant === 'function') continue;
-      dependant.queueIndex = queueLength;
-      dependant.dirtyCount++;
-
-      queueLength = queue.push(dependant);
-    }
-  }
-
-  fullQueueLength = queueLength;
-
-  for (let i = 0; i < fullQueueLength; i++) {
-    const state = queue[i];
-
-    if (state.queueIndex !== i) continue;
+    let value: any;
 
     if (!state.compute) {
-      const value = state.nextValue;
-      const shouldUpdate = value !== undefined;
+      if (state.queueIndex !== i) continue;
+      value = state.nextValue;
+    } else if (state.version !== version && state.observers.size) {
+      value = calcComputed(state, true);
+      state.version = version;
+    }
 
-      if (shouldUpdate) {
+    const err = state.hasException;
+
+    if (value !== undefined || err) {
+      if (!err) {
         emitUpdateLifecycle(state, value);
         state.value = value;
         notificationQueue.push(state);
       }
 
-      resetStateQueueParams(state);
-
-      continue;
-    }
-
-    if (!state.observers.size) {
-      resetStateQueueParams(state);
-      continue;
-    }
-
-    if (state.hasException) {
-      state.dirtyCount = 0;
-
-      logHook(state, 'EXCEPTION');
-
-      if (state.onException) {
-        state.onException(state.exception);
-      }
-
-      if (state.subsCount) {
-        config.logException(state.exception);
+      for (let observer of state.observers) {
+        if (typeof observer !== 'function') {
+          queueLength = queue.push(observer);
+        }
       }
     }
-
-    if (!state.dirtyCount) {
-      decreaseDirtyCount(state);
-      resetStateQueueParams(state);
-      continue;
-    }
-
-    const value = calcComputed(state, true);
-
-    state.version = version;
-
-    if (value !== undefined) {
-      emitUpdateLifecycle(state, value);
-      state.value = value;
-      notificationQueue.push(state);
-    } else {
-      decreaseDirtyCount(state);
-    }
-
-    resetStateQueueParams(state);
   }
 
   calcLevel--;
 
-  queue = queue.slice(fullQueueLength);
-  queueLength = queue.length;
-  fullQueueLength = queueLength;
+  queue = [];
+  queueLength = 0;
 
-  notify(notificationQueue);
+  notify();
   recalc();
 }
 
-function notify(notificationQueue: SignalState<any>[]) {
+function notify() {
   const wrapper = (config as any)._notificationWrapper;
 
   batchLevel++;
@@ -254,21 +197,9 @@ function notify(notificationQueue: SignalState<any>[]) {
     }
   });
 
+  notificationQueue = [];
+
   batchLevel--;
-}
-
-function decreaseDirtyCount(state: SignalState<any>) {
-  for (let dependant of state.observers) {
-    if (typeof dependant === 'function') continue;
-    if (state.hasException && dependant.isCatcher) continue;
-
-    dependant.dirtyCount--;
-
-    if (state.hasException && !dependant.hasException) {
-      dependant.hasException = true;
-      dependant.exception = state.exception;
-    }
-  }
 }
 
 function runSubscribers<T>(state: SignalState<T>) {
@@ -306,17 +237,19 @@ export function getStateValue<T>(
     return state.value;
   }
 
-  if (state.compute && !state.observers.size && version !== state.version) {
-    const value = calcComputed(state, false, notTrackDeps);
-
-    state.version = version;
+  if (state.compute && version !== state.version) {
+    const scheduled = calcLevel > 0;
+    const value = calcComputed(state, scheduled, notTrackDeps);
 
     if (value !== undefined) {
       state.value = value;
+      if (scheduled && state.observers.size) notificationQueue.push(state);
     }
+
+    state.version = version;
   }
 
-  if (tracking && !notTrackDeps && state.observers) {
+  if (tracking && !notTrackDeps && !state.freezed) {
     if (state.hasException && !tracking.hasException && !tracking.isCatcher) {
       tracking.exception = state.exception;
       tracking.hasException = true;
@@ -341,7 +274,7 @@ export function getStateValue<T>(
 
 function calcComputed<T>(
   state: SignalState<T>,
-  scheduled: boolean,
+  scheduled?: boolean,
   logException?: boolean
 ) {
   const prevTracking = tracking;
@@ -354,7 +287,6 @@ function calcComputed<T>(
 
   tracking = state;
   tracking.isComputing = true;
-  tracking.oldDepsCount = length;
   tracking.hasException = false;
 
   for (let i = 0; i < length; i++) {
