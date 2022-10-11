@@ -10,7 +10,7 @@ describe('signal', () => {
   });
 
   const counter = writable(0);
-  let unsub: () => any;
+  let unsubs: (() => any)[] = [];
   let num: number;
   let x2Num: number;
 
@@ -21,7 +21,7 @@ describe('signal', () => {
   const altSubscriber = jest.fn((value: number) => (x2Num = value * 2));
 
   it('runs subscribers on subscribe', () => {
-    unsub = counter.subscribe(subscriber);
+    unsubs.push(counter.subscribe(subscriber));
     counter.subscribe(altSubscriber);
 
     expect(subscriber).toBeCalled();
@@ -43,18 +43,18 @@ describe('signal', () => {
     expect(x2Num).toBe(2);
   });
 
-  it("doesn't subscribe one subscriber more than 1 time", () => {
-    counter.subscribe(subscriber);
+  it('allows to subscribe the fn more than once', () => {
+    unsubs.push(counter.subscribe(subscriber));
 
-    expect(subscriber).toHaveBeenCalledTimes(3);
+    expect(subscriber).toHaveBeenCalledTimes(4);
     expect(num).toBe(1);
   });
 
   it('stops to trigger subscribers after unsubscribe', () => {
-    unsub();
+    unsubs.forEach((fn) => fn());
     counter(2);
 
-    expect(subscriber).toHaveBeenCalledTimes(3);
+    expect(subscriber).toHaveBeenCalledTimes(4);
     expect(num).toBe(1);
   });
 

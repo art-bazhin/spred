@@ -11,13 +11,12 @@ export interface SignalState<T> {
   nextValue?: T;
   hasException?: boolean;
   exception?: unknown;
-  observers: Array<Subscriber<T> | SignalState<any>>;
+  observers?: Array<Subscriber<T> | SignalState<any>>;
   subsCount: number;
   compute?: Computation<T>;
-  dependencies: Array<SignalState<any>>;
+  dependencies?: Array<SignalState<any>>;
   depIndex: number;
-  dirtyCount: number;
-  queueIndex: number;
+  queueIndex?: number;
   isComputing?: boolean;
   isCatcher?: boolean;
   hasCycle?: boolean;
@@ -38,8 +37,6 @@ export interface SignalState<T> {
   onException?: ((e: unknown) => any) | null;
 }
 
-const EMPTY: any = [];
-
 export function createSignalState<T>(
   value: T,
   compute?: Computation<T>
@@ -50,18 +47,14 @@ export function createSignalState<T>(
     value,
     nextValue: value,
     compute,
-    observers: [],
-    dependencies: compute ? [] : EMPTY,
-    dirtyCount: 0,
-    queueIndex: -1,
     subsCount: 0,
     version: -1,
     depIndex: -1,
   };
 
   if (parent) {
-    if (!parent.children) parent.children = [];
-    parent.children.push(state);
+    if (!parent.children) parent.children = [state];
+    else parent.children.push(state);
   }
 
   return state;

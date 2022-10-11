@@ -1,9 +1,10 @@
-import { _Signal } from '../signal/signal';
+import { Signal, _Signal } from '../signal/signal';
 import { freeze, SignalState } from '../signal-state/signal-state';
 import { Subscriber } from '../subscriber/subscriber';
 import { config } from '../config/config';
 import { CircularDependencyError } from '../errors/errors';
 import { LifecycleHookName } from '../lifecycle/lifecycle';
+import { NOOP_FN } from '../utils/constants';
 
 export let tracking: SignalState<any> | null = null;
 export let scope: SignalState<any> | null = null;
@@ -87,44 +88,63 @@ export function update<T>(state: SignalState<T>, value?: any) {
   return state.nextValue;
 }
 
-export function addSubscriber<T>(
-  signal: _Signal<T>,
+export function subscribe<T>(
+  this: Signal<T>,
   subscriber: Subscriber<T>,
-  exec: boolean
+  exec = true
 ) {
-  const state = signal._state;
-
-  if (state.observers && state.observers.indexOf(subscriber) >= 0) return;
+  const state = (this as any)._state as SignalState<T>;
   const value = getStateValue(state, true);
 
   if (state.freezed) {
-    if (exec) subscriber(value, true);
-    return;
+    if (exec) isolate(() => subscriber(value, true));
+    return NOOP_FN;
   }
 
   activateDependencies(state);
 
-  state.observers.unshift(subscriber);
-  state.subsCount++;
+  if (state.observers) {
+    state.observers.unshift(subscriber);
+  } else {
+    state.observers = [subscriber];
+  }
+
+  let num = ++state.subsCount;
 
   if (exec) {
     isolate(() => subscriber(value, true));
   }
-}
 
-export function removeSubscriber<T>(
-  signal: _Signal<T>,
-  subscriber: Subscriber<T>
-) {
-  const state = signal._state;
-  const index = state.observers.indexOf(subscriber);
+  const dispose = () => {
+    if (!num) return;
 
-  if (index >= 0) {
-    state.observers.splice(index, 1);
-    state.subsCount--;
-    deactivateDependencies(state);
+    const length = state.subsCount;
+    const index = length - num;
+
+    for (let i = index; i < length; i++) {
+      if (state.observers![i] === subscriber) {
+        state.observers!.splice(i, 1);
+        state.subsCount--;
+        num = 0;
+
+        deactivateDependencies(state);
+
+        return;
+      }
+    }
+  };
+
+  const parent = tracking || scope;
+
+  if (parent) {
+    if (!parent.children) parent.children = [dispose];
+    else parent.children.push(dispose);
   }
+
+  return dispose;
 }
+
+// function unsubscribe()
 
 function emitUpdateLifecycle(state: SignalState<any>, value: any) {
   logHook(state, 'UPDATE', value);
@@ -153,7 +173,11 @@ export function recalc() {
     if (!state.compute) {
       if (state.queueIndex !== i) continue;
       value = state.nextValue;
-    } else if (state.version !== version && state.observers.length) {
+    } else if (
+      state.version !== version &&
+      state.observers &&
+      state.observers.length
+    ) {
       value = calcComputed(state, true);
       state.version = version;
     }
@@ -167,9 +191,11 @@ export function recalc() {
         if (state.subsCount) notificationQueue.push(state);
       }
 
-      for (let observer of state.observers) {
-        if (typeof observer !== 'function') {
-          queueLength = queue.push(observer);
+      if (state.observers) {
+        for (let observer of state.observers) {
+          if (typeof observer !== 'function') {
+            queueLength = queue.push(observer);
+          }
         }
       }
     }
@@ -218,7 +244,7 @@ function runSubscribers<T>(state: SignalState<T>) {
   }
 
   for (let i = length - 1; i >= 0; --i) {
-    (subscribers[i] as any)(value);
+    (subscribers![i] as any)(value);
   }
 
   logHook(state, 'NOTIFY_END');
@@ -258,18 +284,28 @@ export function getStateValue<T>(
     }
 
     if (state.depIndex === -1) {
-      tracking.dependencies.push(state);
+      if (tracking.dependencies) {
+        tracking.dependencies.push(state);
+      } else {
+        tracking.dependencies = [state];
+      }
 
-      if (tracking.observers.length) {
+      if (tracking.observers && tracking.observers.length) {
         activateDependencies(state);
-        state.observers.push(tracking);
+
+        if (state.observers) {
+          state.observers.push(tracking);
+        } else {
+          state.observers = [tracking];
+        }
       }
     } else {
       state.depIndex = -1;
     }
   }
 
-  if (state.compute && !state.dependencies.length) freeze(state);
+  if (state.compute && !(state.dependencies && state.dependencies.length))
+    freeze(state);
 
   return state.value;
 }
@@ -283,6 +319,8 @@ function calcComputed<T>(
   let value;
 
   cleanupChildren(state);
+
+  if (!state.dependencies) state.dependencies = [];
 
   const dependencies = state.dependencies;
   let length = dependencies.length;
@@ -310,7 +348,7 @@ function calcComputed<T>(
       dependencies[newLength++] = dep;
     } else {
       dep.depIndex = -1;
-      dep.observers.splice(dep.observers.indexOf(state));
+      dep.observers!.splice(dep.observers!.indexOf(state));
       deactivateDependencies(dep);
     }
   }
@@ -330,7 +368,7 @@ function calcComputed<T>(
     if (
       logException ||
       state.subsCount ||
-      (!state.observers.length && !tracking)
+      (!(state.observers && state.observers.length) && !tracking)
     ) {
       config.logException(state.exception);
     }
@@ -340,7 +378,7 @@ function calcComputed<T>(
 }
 
 function activateDependencies<T>(state: SignalState<T>) {
-  if (state.freezed || state.observers.length) return;
+  if (state.freezed || (state.observers && state.observers.length)) return;
 
   logHook(state, 'ACTIVATE');
 
@@ -352,12 +390,17 @@ function activateDependencies<T>(state: SignalState<T>) {
 
   for (let dependency of state.dependencies) {
     activateDependencies(dependency);
-    dependency.observers.push(state);
+
+    if (dependency.observers) {
+      dependency.observers.push(state);
+    } else {
+      dependency.observers = [state];
+    }
   }
 }
 
 function deactivateDependencies<T>(state: SignalState<T>) {
-  if (state.freezed || state.observers.length) return;
+  if (state.freezed || (state.observers && state.observers.length)) return;
 
   logHook(state, 'DEACTIVATE');
 
@@ -370,7 +413,7 @@ function deactivateDependencies<T>(state: SignalState<T>) {
   if (!state.dependencies) return;
 
   for (let dependency of state.dependencies) {
-    dependency.observers.splice(dependency.observers.indexOf(state));
+    dependency.observers!.splice(dependency.observers!.indexOf(state));
     deactivateDependencies(dependency);
   }
 }
