@@ -11,7 +11,7 @@ export interface SignalState<T> {
   nextValue?: T;
   hasException?: boolean;
   exception?: unknown;
-  observers: Set<Subscriber<T> | SignalState<any>>;
+  observers: Array<Subscriber<T> | SignalState<any>>;
   subsCount: number;
   compute?: Computation<T>;
   dependencies: Array<SignalState<any>>;
@@ -50,7 +50,7 @@ export function createSignalState<T>(
     value,
     nextValue: value,
     compute,
-    observers: new Set(),
+    observers: [],
     dependencies: compute ? [] : EMPTY,
     dirtyCount: 0,
     queueIndex: -1,
