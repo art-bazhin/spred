@@ -178,7 +178,7 @@ export function recalc() {
       state.observers &&
       state.observers.length
     ) {
-      value = calcComputed(state, true);
+      value = calcComputed(state);
       state.version = version;
     }
 
@@ -266,12 +266,11 @@ export function getStateValue<T>(
   }
 
   if (state.compute && version !== state.version) {
-    const scheduled = calcLevel > 0;
-    const value = calcComputed(state, scheduled, notTrackDeps);
+    const value = calcComputed(state, notTrackDeps);
 
     if (value !== undefined) {
       state.value = value;
-      if (scheduled && state.subsCount) notificationQueue.push(state);
+      if (calcLevel && state.subsCount) notificationQueue.push(state);
     }
 
     state.version = version;
@@ -310,11 +309,7 @@ export function getStateValue<T>(
   return state.value;
 }
 
-function calcComputed<T>(
-  state: SignalState<T>,
-  scheduled?: boolean,
-  logException?: boolean
-) {
+function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
   const prevTracking = tracking;
   let value;
 
@@ -334,7 +329,7 @@ function calcComputed<T>(
   }
 
   try {
-    value = state.compute!(state.value, scheduled);
+    value = state.compute!(state.value, calcLevel > 0);
   } catch (e: any) {
     state.exception = e;
     state.hasException = true;
