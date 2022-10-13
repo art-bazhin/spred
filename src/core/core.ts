@@ -95,6 +95,7 @@ export function subscribe<T>(
 ) {
   const state = (this as any)._state as SignalState<T>;
   const value = getStateValue(state, true);
+  let index = 0;
 
   if (state.freezed) {
     if (exec) isolate(() => subscriber(value, true));
@@ -104,28 +105,31 @@ export function subscribe<T>(
   activateDependencies(state);
 
   if (state.observers) {
-    state.observers.unshift(subscriber);
+    index = state.observers.push(subscriber) - 1;
   } else {
     state.observers = [subscriber];
   }
 
-  let num = ++state.subsCount;
+  const subsCount = ++state.subsCount;
 
   if (exec) {
     isolate(() => subscriber(value, true));
   }
 
   const dispose = () => {
-    if (!num) return;
+    if (index < 0) return;
 
-    const length = state.subsCount;
-    const index = length - num;
+    const dif = state.subsCount - subsCount;
+    if (dif < 0) index += dif;
 
-    for (let i = index; i < length; i++) {
+    // const lastIndex = state.observers!.length - 1;
+    // if (lastIndex < index) index = lastIndex;
+
+    for (let i = index; i >= 0; i--) {
       if (state.observers![i] === subscriber) {
         state.observers!.splice(i, 1);
         state.subsCount--;
-        num = 0;
+        index = -1;
 
         deactivateDependencies(state);
 
@@ -143,8 +147,6 @@ export function subscribe<T>(
 
   return dispose;
 }
-
-// function unsubscribe()
 
 function emitUpdateLifecycle(state: SignalState<any>, value: any) {
   logHook(state, 'UPDATE', value);
@@ -231,10 +233,11 @@ function notify() {
 }
 
 function runSubscribers<T>(state: SignalState<T>) {
-  const length = state.subsCount;
-  if (!length) return;
+  let subsCount = state.subsCount;
+  if (!subsCount) return;
 
-  const subscribers = state.observers;
+  const observers = state.observers!;
+  const obsCount = observers.length;
   const value = state.value;
 
   logHook(state, 'NOTIFY_START');
@@ -243,8 +246,13 @@ function runSubscribers<T>(state: SignalState<T>) {
     state.onNotifyStart(value);
   }
 
-  for (let i = length - 1; i >= 0; --i) {
-    (subscribers![i] as any)(value);
+  for (let i = 0; subsCount && i < obsCount; i++) {
+    const subscriber = observers[i];
+
+    if (typeof subscriber === 'function') {
+      subscriber(value);
+      --subsCount;
+    }
   }
 
   logHook(state, 'NOTIFY_END');
