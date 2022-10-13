@@ -13,6 +13,7 @@ export interface SignalState<T> {
   exception?: unknown;
   observers?: Array<Subscriber<T> | SignalState<any>>;
   subsCount: number;
+  obsCount: number;
   compute?: Computation<T>;
   dependencies?: Array<SignalState<any>>;
   depIndex: number;
@@ -48,6 +49,7 @@ export function createSignalState<T>(
     nextValue: value,
     compute,
     subsCount: 0,
+    obsCount: 0,
     version: -1,
     depIndex: -1,
   };
