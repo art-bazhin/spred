@@ -263,10 +263,8 @@ export function getStateValue<T>(
   state: SignalState<T>,
   notTrackDeps?: boolean
 ): T {
-  if (state.isComputing || state.hasCycle) {
-    state.hasCycle = true;
+  if (state.isComputing) {
     config.logException(new CircularDependencyError());
-
     return state.value;
   }
 

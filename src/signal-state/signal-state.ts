@@ -20,7 +20,6 @@ export interface SignalState<T> {
   queueIndex?: number;
   isComputing?: boolean;
   isCatcher?: boolean;
-  hasCycle?: boolean;
   version: number;
   children?: ((() => any) | SignalState<any>)[];
   name?: string;
