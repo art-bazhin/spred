@@ -122,9 +122,6 @@ export function subscribe<T>(
     const dif = state.subsCount - subsCount;
     if (dif < 0) index += dif;
 
-    // const lastIndex = state.observers!.length - 1;
-    // if (lastIndex < index) index = lastIndex;
-
     for (let i = index; i >= 0; i--) {
       if (state.observers![i] === subscriber) {
         state.observers!.splice(i, 1);
@@ -316,6 +313,15 @@ export function getStateValue<T>(
   return state.value;
 }
 
+function removeIndex<T>(arr: T[], i: number) {
+  const el = arr[i];
+
+  arr[i] = arr[arr.length - 1];
+  arr.pop();
+
+  return el;
+}
+
 function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
   const prevTracking = tracking;
   let value;
@@ -324,15 +330,15 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
 
   if (!state.dependencies) state.dependencies = [];
 
-  const dependencies = state.dependencies;
-  let length = dependencies.length;
+  const deps = state.dependencies;
+  let length = deps.length;
 
   tracking = state;
   tracking.isComputing = true;
   tracking.hasException = false;
 
   for (let i = 0; i < length; i++) {
-    dependencies[i].depIndex = i;
+    deps[i].depIndex = i;
   }
 
   try {
@@ -342,20 +348,14 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
     state.hasException = true;
   }
 
-  let newLength = 0;
-  length = dependencies.length;
-
-  for (let dep of dependencies) {
-    if (dep.depIndex < 0) {
-      dependencies[newLength++] = dep;
-    } else {
+  for (let i = 0; i < deps.length; i++) {
+    if (deps[i].depIndex >= 0) {
+      const dep = removeIndex(deps, i);
       dep.depIndex = -1;
-      dep.observers!.splice(dep.observers!.indexOf(state));
+      removeIndex(dep.observers!, dep.observers!.indexOf(state));
       deactivateDependencies(dep);
     }
   }
-
-  dependencies.splice(newLength);
 
   tracking.isComputing = false;
   tracking = prevTracking;
@@ -413,7 +413,7 @@ function deactivateDependencies<T>(state: SignalState<T>) {
   if (!state.dependencies) return;
 
   for (let dependency of state.dependencies) {
-    dependency.observers!.splice(dependency.observers!.indexOf(state));
+    removeIndex(dependency.observers!, dependency.observers!.indexOf(state));
     --dependency.obsCount;
     deactivateDependencies(dependency);
   }
