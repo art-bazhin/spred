@@ -313,15 +313,6 @@ export function getStateValue<T>(
   return state.value;
 }
 
-function removeIndex<T>(arr: T[], i: number) {
-  const el = arr[i];
-
-  arr[i] = arr[arr.length - 1];
-  arr.pop();
-
-  return el;
-}
-
 function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
   const prevTracking = tracking;
   let value;
@@ -350,9 +341,13 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
 
   for (let i = 0; i < deps.length; i++) {
     if (deps[i].depIndex >= 0) {
-      const dep = removeIndex(deps, i);
+      const dep = deps[i];
+
+      deps[i] = deps[deps.length - 1];
+      deps.pop();
       dep.depIndex = -1;
-      removeIndex(dep.observers!, dep.observers!.indexOf(state));
+      dep.observers!.splice(dep.observers!.indexOf(state), 1);
+
       deactivateDependencies(dep);
     }
   }
@@ -413,7 +408,7 @@ function deactivateDependencies<T>(state: SignalState<T>) {
   if (!state.dependencies) return;
 
   for (let dependency of state.dependencies) {
-    removeIndex(dependency.observers!, dependency.observers!.indexOf(state));
+    dependency.observers!.splice(dependency.observers!.indexOf(state));
     --dependency.obsCount;
     deactivateDependencies(dependency);
   }

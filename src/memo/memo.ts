@@ -10,15 +10,14 @@ import { Computation } from '../signal-state/signal-state';
  */
 export function memo<T>(
   compute: Computation<T>,
-  equals?: (value: T, prevValue: T) => boolean
+  equals: (value: T, prevValue: T) => boolean = Object.is
 ) {
-  const check = equals || Object.is;
   const getValue = isWritableSignal(compute) ? () => compute() : compute;
 
   return computed((prevValue: T | undefined, scheduled?: boolean) => {
     const value = getValue(prevValue, scheduled);
 
-    if (prevValue === undefined || !check(value, prevValue)) return value;
+    if (prevValue === undefined || !equals(value, prevValue)) return value;
     return undefined as unknown as T;
   });
 }
