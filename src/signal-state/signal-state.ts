@@ -11,23 +11,20 @@ export interface SignalState<T> {
   nextValue?: T;
   hasException?: boolean;
   exception?: unknown;
-  observers?: Array<Subscriber<T> | SignalState<any>>;
-  subsCount: number;
-  obsCount: number;
+  observers: Array<Subscriber<T> | SignalState<any>>;
+  subs: number;
+  active: number;
   compute?: Computation<T>;
-  dependencies?: Array<SignalState<any>>;
+  dependencies: Array<SignalState<any>>;
   depIndex: number;
   queueIndex?: number;
   isComputing?: boolean;
   isCatcher?: boolean;
-  version: number;
+  version?: number;
   children?: ((() => any) | SignalState<any>)[];
   name?: string;
   freezed?: boolean;
-  activating?: boolean;
-
-  // internal lifecycle
-  $d?: ((value: T) => any) | null; // deactivate
+  filter?: (value: T, prevValue: T | undefined) => any;
 
   // lifecycle:
   onActivate?: ((value: T) => any) | null;
@@ -48,10 +45,11 @@ export function createSignalState<T>(
     value,
     nextValue: value,
     compute,
-    subsCount: 0,
-    obsCount: 0,
-    version: -1,
+    subs: 0,
+    active: 0,
     depIndex: -1,
+    observers: [],
+    dependencies: compute ? [] : (undefined as any),
   };
 
   if (parent) {
@@ -63,14 +61,11 @@ export function createSignalState<T>(
 }
 
 export function freeze(state: any) {
-  delete state.compute;
-  delete state.observers;
-  delete state.dependencies;
-  delete state.dirtyCount;
-  delete state.hasException;
-  delete state.subsCount;
-  delete state.isComputing;
-  delete state.version;
+  const children = state.children;
+  const value = state.value;
 
+  for (let key in state) delete state[key];
+  if (children) state.children = children;
   state.freezed = true;
+  state.value = value;
 }

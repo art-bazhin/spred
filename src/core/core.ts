@@ -103,11 +103,11 @@ export function subscribe<T>(
 ) {
   const state = (this as any)._state as SignalState<T>;
 
-  if (!state.obsCount) ++activateLevel;
+  if (!state.active) ++activateLevel;
 
   const value = getStateValue(state, true);
 
-  if (!state.obsCount) {
+  if (!state.active) {
     --activateLevel;
     emitActivateLifecycle(state);
   }
@@ -117,14 +117,10 @@ export function subscribe<T>(
     return NOOP_FN;
   }
 
-  if (state.observers) {
-    state.observers.push(subscriber);
-  } else {
-    state.observers = [subscriber];
-  }
+  state.observers.push(subscriber);
 
-  const subsCount = ++state.subsCount;
-  let index = state.obsCount++;
+  const subsCount = ++state.subs;
+  let index = state.active++;
 
   if (exec) {
     isolate(() => subscriber(value, true));
@@ -133,14 +129,14 @@ export function subscribe<T>(
   const dispose = () => {
     if (index < 0) return;
 
-    const dif = state.subsCount - subsCount;
+    const dif = state.subs - subsCount;
     if (dif < 0) index += dif;
 
     for (let i = index; i >= 0; i--) {
-      if (state.observers![i] === subscriber) {
-        state.observers!.splice(i, 1);
-        --state.subsCount;
-        --state.obsCount;
+      if (state.observers[i] === subscriber) {
+        state.observers.splice(i, 1);
+        --state.subs;
+        --state.active;
         index = -1;
 
         deactivateDependencies(state);
@@ -196,7 +192,7 @@ export function recalc() {
       if (state.queueIndex !== i) continue;
       value = state.nextValue;
     } else {
-      if (!state.obsCount) continue;
+      if (!state.active) continue;
       if (state.version !== version) {
         value = calcComputed(state);
         state.version = version;
@@ -209,14 +205,12 @@ export function recalc() {
       if (!err) {
         emitUpdateLifecycle(state, value);
         state.value = value;
-        if (state.subsCount) notificationQueue.push(state);
+        if (state.subs) notificationQueue.push(state);
       }
 
-      if (state.observers) {
-        for (let observer of state.observers) {
-          if (typeof observer !== 'function') {
-            queueLength = queue.push(observer);
-          }
+      for (let observer of state.observers) {
+        if (typeof observer !== 'function') {
+          queueLength = queue.push(observer);
         }
       }
     }
@@ -252,11 +246,9 @@ function notify() {
 }
 
 function runSubscribers<T>(state: SignalState<T>) {
-  let subsCount = state.subsCount;
+  let subsCount = state.subs;
   if (!subsCount) return;
 
-  const observers = state.observers!;
-  const obsCount = state.obsCount;
   const value = state.value;
 
   logHook(state, 'NOTIFY_START');
@@ -265,11 +257,11 @@ function runSubscribers<T>(state: SignalState<T>) {
     state.onNotifyStart(value);
   }
 
-  for (let i = 0; subsCount && i < obsCount; i++) {
-    const subscriber = observers[i];
+  for (let i = 0; subsCount && i < state.active; i++) {
+    const subscriber = state.observers[i];
 
     if (typeof subscriber === 'function') {
-      subscriber(value);
+      subscriber(state.value);
       --subsCount;
     }
   }
@@ -300,7 +292,7 @@ export function getStateValue<T>(
 
       if (value !== undefined) {
         state.value = value;
-        if (calcLevel && state.subsCount) notificationQueue.push(state);
+        if (calcLevel && state.subs) notificationQueue.push(state);
       }
 
       state.version = version;
@@ -325,17 +317,11 @@ export function getStateValue<T>(
     }
 
     if (activateLevel || (calcLevel && shouldUpdate)) {
-      if (!state.obsCount) {
+      if (!state.active) {
         emitActivateLifecycle(state);
       }
 
-      if (state.observers) {
-        state.observers.push(tracking);
-      } else {
-        state.observers = [tracking];
-      }
-
-      ++state.obsCount;
+      state.active = state.observers.push(tracking);
     }
   }
 
@@ -347,8 +333,6 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
   let value;
 
   cleanupChildren(state);
-
-  if (!state.dependencies) state.dependencies = [];
 
   const deps = state.dependencies;
   let length = deps.length;
@@ -375,8 +359,8 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
       deps[i] = deps[deps.length - 1];
       deps.pop();
       dep.depIndex = -1;
-      dep.obsCount--;
-      dep.observers!.splice(dep.observers!.indexOf(state), 1);
+      dep.active--;
+      dep.observers.splice(dep.observers.indexOf(state), 1);
 
       deactivateDependencies(dep);
     }
@@ -392,7 +376,7 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
       state.onException(state.exception);
     }
 
-    if (logException || state.subsCount || (!state.obsCount && !tracking)) {
+    if (logException || state.subs || (!state.active && !tracking)) {
       config.logException(state.exception);
     }
   }
@@ -401,11 +385,9 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
 }
 
 function deactivateDependencies<T>(state: SignalState<T>) {
-  if (state.freezed || state.obsCount) return;
+  if (state.freezed || state.active) return;
 
   logHook(state, 'DEACTIVATE');
-
-  if (state.$d) state.$d(state.value);
 
   if (state.onDeactivate) {
     state.onDeactivate(state.value);
@@ -414,8 +396,8 @@ function deactivateDependencies<T>(state: SignalState<T>) {
   if (!state.dependencies) return;
 
   for (let dependency of state.dependencies) {
-    dependency.observers!.splice(dependency.observers!.indexOf(state), 1);
-    --dependency.obsCount;
+    dependency.observers.splice(dependency.observers.indexOf(state), 1);
+    --dependency.active;
     deactivateDependencies(dependency);
   }
 }
