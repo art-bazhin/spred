@@ -3,6 +3,7 @@ import { signalProto } from '../signal/signal';
 import { Computation, createSignalState } from '../signal-state/signal-state';
 import { isWritableSignal } from '../guards/guards';
 import { getStateValue } from '../core/core';
+import { Filter } from '../filter/filter';
 
 function computedSelf(this: any) {
   return getStateValue(this);
@@ -13,11 +14,16 @@ function computedSelf(this: any) {
  * @param compute The function that calculates the signal value and returns it.
  * @returns Computed signal.
  */
-export function computed<T>(compute: Computation<T>): Signal<T> {
+export function computed<T>(
+  compute: Computation<T>,
+  filter?: Filter<T>
+): Signal<T> {
   const getValue = isWritableSignal(compute) ? () => compute() : compute;
 
   const state = createSignalState(undefined as any, getValue);
   const computed: any = computedSelf.bind(state);
+
+  if (filter !== undefined) state.filter = filter;
 
   computed._state = state;
   computed.constructor = computed;

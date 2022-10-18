@@ -2,7 +2,6 @@ import { computed } from '../computed/computed';
 import { writable, WritableSignal } from '../writable/writable';
 import { configure } from '../config/config';
 import { batch } from '../core/core';
-import { memo } from '..';
 
 describe('signal', () => {
   configure({
@@ -14,7 +13,7 @@ describe('signal', () => {
   let num: number;
   let x2Num: number;
 
-  const subscriber = jest.fn((value: number, prevValue) => {
+  const subscriber = jest.fn((value: number) => {
     num = value;
   });
 
@@ -29,52 +28,53 @@ describe('signal', () => {
     expect(x2Num).toBe(0);
   });
 
-  it('runs subscribers on every incoming value', () => {
+  it('runs subscribers on every incoming value that differs from the previous', () => {
     counter(0);
-
-    expect(subscriber).toHaveBeenCalledTimes(2);
-    expect(num).toBe(0);
-    expect(x2Num).toBe(0);
-
     counter(1);
 
-    expect(subscriber).toHaveBeenCalledTimes(3);
+    expect(subscriber).toHaveBeenCalledTimes(2);
     expect(num).toBe(1);
     expect(x2Num).toBe(2);
+
+    counter(2);
+
+    expect(subscriber).toHaveBeenCalledTimes(3);
+    expect(num).toBe(2);
+    expect(x2Num).toBe(4);
   });
 
   it('allows to subscribe the fn more than once', () => {
     unsubs.push(counter.subscribe(subscriber));
 
     expect(subscriber).toHaveBeenCalledTimes(4);
-    expect(num).toBe(1);
+    expect(num).toBe(2);
   });
 
   it('stops to trigger subscribers after unsubscribe', () => {
     unsubs.forEach((fn) => fn());
-    counter(2);
+    counter(3);
 
     expect(subscriber).toHaveBeenCalledTimes(4);
-    expect(num).toBe(1);
+    expect(num).toBe(2);
   });
 
   it('correctly handles multiple unsubscribing', () => {
     const x2Counter = computed(() => 2 * counter());
     const x2Unsub = x2Counter.subscribe(() => {});
 
-    expect(x2Counter()).toBe(4);
-
-    x2Unsub();
-    x2Unsub();
-
-    counter(3);
     expect(x2Counter()).toBe(6);
+
+    x2Unsub();
+    x2Unsub();
+
+    counter(4);
+    expect(x2Counter()).toBe(8);
   });
 
   it('does not track itself on subscribing', () => {
     const counter = writable(0);
-    const gt5 = memo(() => counter() > 5);
-    const res = memo(() => {
+    const gt5 = computed(() => counter() > 5);
+    const res = computed(() => {
       if (gt5()) {
         const obj: any = {};
 
@@ -101,8 +101,8 @@ describe('signal', () => {
 
   it('does not track dependencies inside subscriber function', () => {
     const counter = writable(0);
-    const gt5 = memo(() => counter() > 5);
-    const res = memo(() => {
+    const gt5 = computed(() => counter() > 5);
+    const res = computed(() => {
       if (gt5()) {
         const obj: any = {};
 
@@ -245,7 +245,7 @@ describe('signal', () => {
     const a = writable('a');
     const b = writable('b');
 
-    const sum = memo(() => {
+    const sum = computed(() => {
       if (tumbler()) return a() + b();
       return b() + a();
     });

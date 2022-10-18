@@ -3,7 +3,6 @@ import { computed } from '../computed/computed';
 import { Signal } from '../signal/signal';
 import { batch } from '../core/core';
 import { NOOP_FN } from '../utils/constants';
-import { memo } from '../memo/memo';
 import { named } from '../named/named';
 import { config } from '../config/config';
 
@@ -82,19 +81,16 @@ export function effect<T, A extends unknown[]>(
   let current = -1;
 
   const _status = writable<EffectStatus>('pristine');
-  const _exception = writable();
-  const _data = writable<T>();
+  const _exception = writable(undefined as unknown, false);
+  const _data = writable<T>(undefined as any, false);
   const _aborted = writable();
-  const _args = writable<A>();
+  const _args = writable<A>(undefined as any, false);
 
-  const lastStatus = memo(() => {
-    const status = _status();
-    return status === 'pending' ? undefined : status;
-  });
+  const lastStatus = computed(_status, (status) => status !== 'pending');
 
   lastStatus.subscribe(NOOP_FN);
 
-  const status = memo(
+  const status = computed(
     () => {
       const value = _status();
 
@@ -108,11 +104,12 @@ export function effect<T, A extends unknown[]>(
       };
     },
     (status, prevStatus) => {
-      return status.value === prevStatus.value;
+      if (!prevStatus) return true;
+      return status.value !== prevStatus.value;
     }
   );
 
-  const exception = computed(_exception);
+  const exception = computed(_exception, false);
 
   const done = computed(() => {
     const data = _data();
@@ -126,11 +123,11 @@ export function effect<T, A extends unknown[]>(
       case 'rejected':
         return exception;
     }
-  });
+  }, false);
 
-  const data = computed(_data);
-  const aborted = computed(_aborted);
-  const args = computed(_args);
+  const data = computed(_data, false);
+  const aborted = computed(_aborted, false);
+  const args = computed(_args, false);
 
   const abort = () => {
     if (!status.sample().pending) return;
@@ -177,8 +174,10 @@ export function effect<T, A extends unknown[]>(
       _aborted({});
     }
 
-    _args(args as any);
-    _status('pending');
+    batch(() => {
+      _args(args as any);
+      _status('pending');
+    });
 
     return exec(++counter, ...args)
       .then((v) => {

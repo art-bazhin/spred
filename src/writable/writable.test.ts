@@ -55,15 +55,15 @@ describe('writable', () => {
     expect(value()).toBe(1);
   });
 
-  it('does not trigger subscribers if undefined value was passed', () => {
-    const value = writable<any>();
+  it('triggers subscribers if undefined value was passed', () => {
+    const value = writable<any>(null);
     const spy = jest.fn();
 
     value.subscribe(spy);
     expect(spy).toBeCalledTimes(1);
 
     value(undefined);
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toBeCalledTimes(2);
   });
 
   it('has Signal methods', () => {
@@ -116,15 +116,6 @@ describe('writable', () => {
 
     b(2);
     expect(spy).toBeCalledTimes(6);
-  });
-
-  it('does not update the value when undefined passed', () => {
-    const counter = writable<any>(0);
-
-    expect(counter()).toBe(0);
-
-    counter(undefined);
-    expect(counter()).toBe(0);
   });
 
   it('can have fn value', () => {

@@ -1,4 +1,5 @@
 import { scope, tracking } from '../core/core';
+import { Filter } from '../filter/filter';
 import { Subscriber } from '../subscriber/subscriber';
 
 export type Computation<T> =
@@ -15,6 +16,7 @@ export interface SignalState<T> {
   subs: number;
   active: number;
   compute?: Computation<T>;
+  filter?: Filter<T>;
   dependencies: Array<SignalState<any>>;
   depIndex: number;
   queueIndex?: number;
@@ -24,7 +26,7 @@ export interface SignalState<T> {
   children?: ((() => any) | SignalState<any>)[];
   name?: string;
   freezed?: boolean;
-  filter?: (value: T, prevValue: T | undefined) => any;
+  forced?: boolean;
 
   // lifecycle:
   onActivate?: ((value: T) => any) | null;
@@ -42,9 +44,9 @@ export function createSignalState<T>(
   const parent = tracking || scope;
 
   const state: SignalState<T> = {
+    compute,
     value,
     nextValue: value,
-    compute,
     subs: 0,
     active: 0,
     depIndex: -1,

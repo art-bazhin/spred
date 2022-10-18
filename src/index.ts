@@ -8,7 +8,6 @@ import {
   onException,
 } from './lifecycle/lifecycle';
 import { computed } from './computed/computed';
-import { memo } from './memo/memo';
 import { store, Store } from './store/store';
 import { configure, Config } from './config/config';
 import { Signal } from './signal/signal';
@@ -49,7 +48,6 @@ export {
   Computation,
   writable,
   computed,
-  memo,
   watch,
   batch,
   signal,

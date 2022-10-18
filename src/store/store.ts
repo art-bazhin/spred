@@ -1,6 +1,6 @@
 import { StateTypeError } from '../errors/errors';
 import { onUpdate } from '../lifecycle/lifecycle';
-import { memo } from '../memo/memo';
+import { computed } from '../computed/computed';
 import { Signal } from '../signal/signal';
 import { writable, WritableSignal } from '../writable/writable';
 
@@ -126,7 +126,7 @@ function select<T, K extends Keys<T>>(
 ): Store<Select<T, K>> {
   const id = (this as any)._id + '.' + key;
 
-  const store = memo(() => {
+  const store = computed(() => {
     const parentValue = this();
     const value = parentValue && parentValue[key];
 
@@ -146,7 +146,7 @@ function select<T, K extends Keys<T>>(
 export function store<T>(initialState: T): Store<T> {
   const id = 'store' + counter++;
   const setter = writable(initialState);
-  const store = memo(setter) as any;
+  const store = computed(setter) as any;
 
   store._setter = setter;
   store._id = id;

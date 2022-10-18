@@ -86,6 +86,8 @@ export function update<T>(state: SignalState<T>, value?: any) {
   if (arguments.length > 1) {
     if (typeof value === 'function') state.nextValue = value(state.nextValue);
     else state.nextValue = value;
+  } else {
+    state.forced = true;
   }
 
   state.queueIndex = queueLength;
@@ -186,7 +188,8 @@ export function recalc() {
 
   for (let i = 0; i < queueLength; i++) {
     const state = queue[i];
-    let value: any;
+
+    let value = state.value;
 
     if (!state.compute) {
       if (state.queueIndex !== i) continue;
@@ -196,12 +199,19 @@ export function recalc() {
       if (state.version !== version) {
         value = calcComputed(state);
         state.version = version;
-      }
+      } else continue;
     }
 
     const err = state.hasException;
+    const forced = state.forced;
+    const filter = state.filter;
+    let filtered = false;
 
-    if (value !== undefined || err) {
+    if (filter) filtered = filter(value, state.value);
+    else if (filter === false) filtered = true;
+    else filtered = !Object.is(value, state.value);
+
+    if (forced || filtered || err) {
       if (!err) {
         emitUpdateLifecycle(state, value);
         state.value = value;
@@ -213,6 +223,8 @@ export function recalc() {
           queueLength = queue.push(observer);
         }
       }
+
+      if (forced) delete state.forced;
     }
   }
 
@@ -289,8 +301,12 @@ export function getStateValue<T>(
 
     if (shouldUpdate) {
       const value = calcComputed(state, notTrackDeps);
+      let filtered = false;
 
-      if (value !== undefined) {
+      if (state.filter) filtered = state.filter(value, state.value);
+      else filtered = !Object.is(value, state.value);
+
+      if (filtered) {
         state.value = value;
         if (calcLevel && state.subs) notificationQueue.push(state);
       }
@@ -330,7 +346,7 @@ export function getStateValue<T>(
 
 function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
   const prevTracking = tracking;
-  let value;
+  let value = state.value;
 
   cleanupChildren(state);
 

@@ -51,59 +51,6 @@ describe('computed', () => {
     expect(a.subscribe).toBeDefined;
   });
 
-  it('filters undefined values', () => {
-    const counter = writable(0);
-    let test: any;
-    let unsub: any;
-
-    const x2Counter = computed(() => {
-      const c = counter() * 2;
-      if (c > 25) return c;
-      return undefined;
-    });
-
-    expect(x2Counter()).toBe(undefined);
-
-    counter(11);
-    expect(x2Counter()).toBe(undefined);
-
-    counter(15);
-    expect(x2Counter()).toBe(30);
-
-    counter(12);
-    expect(x2Counter()).toBe(30);
-
-    counter(11);
-    unsub = x2Counter.subscribe((v) => (test = v));
-    expect(test).toBe(30);
-    expect(x2Counter()).toBe(30);
-
-    counter(20);
-    counter(11);
-    expect(x2Counter()).toBe(40);
-    expect(test).toBe(40);
-
-    counter(1);
-    expect(x2Counter()).toBe(40);
-    expect(test).toBe(40);
-
-    counter(16);
-    expect(x2Counter()).toBe(32);
-    expect(test).toBe(32);
-
-    counter(15);
-    expect(x2Counter()).toBe(30);
-    expect(test).toBe(30);
-
-    unsub();
-    expect(x2Counter()).toBe(30);
-    expect(test).toBe(30);
-
-    counter(20);
-    counter(11);
-    expect(x2Counter()).toBe(30);
-  });
-
   it('can pass values to writable signals during computing', () => {
     const counter = writable(0);
     const stringCounter = writable('0');
@@ -428,6 +375,38 @@ describe('computed', () => {
     expect(spy).toBeCalledTimes(2);
 
     source(11);
+    expect(spy).toBeCalledTimes(2);
+  });
+
+  it('does not trigger dependants until its value is changed by default', () => {
+    const counter = writable(0);
+    const x2Counter = computed(() => counter() * 2);
+    const spy = jest.fn();
+
+    x2Counter.subscribe(spy, false);
+
+    expect(counter()).toBe(0);
+    expect(x2Counter()).toBe(0);
+    expect(spy).toBeCalledTimes(0);
+
+    counter(0);
+    expect(counter()).toBe(0);
+    expect(x2Counter()).toBe(0);
+    expect(spy).toBeCalledTimes(0);
+
+    counter(1);
+    expect(counter()).toBe(1);
+    expect(x2Counter()).toBe(2);
+    expect(spy).toBeCalledTimes(1);
+
+    counter(2);
+    expect(counter()).toBe(2);
+    expect(x2Counter()).toBe(4);
+    expect(spy).toBeCalledTimes(2);
+
+    counter(2);
+    expect(counter()).toBe(2);
+    expect(x2Counter()).toBe(4);
     expect(spy).toBeCalledTimes(2);
   });
 });
