@@ -24,6 +24,7 @@ export interface SignalState<T> {
   children?: ((() => any) | SignalState<any>)[];
   name?: string;
   freezed?: boolean;
+  activating?: boolean;
 
   // internal lifecycle
   $d?: ((value: T) => any) | null; // deactivate
