@@ -1,25 +1,21 @@
-import { memo, signal, batch } from '/dist/index.mjs';
+import { computed, writable } from '/dist/index.mjs';
 
 const COUNT = 20000;
 
 const button = document.getElementById('run');
 const resultEl = document.getElementById('result');
 
-// const layer1 = [];
-// const layer2 = [];
-
 const signals = [];
 const unsubs = [];
 
 const subscriber = () => {};
 
-const [value, getValue] = signal(0);
+const value = writable(0);
 
 for (let i = 0; i < COUNT; i++) {
-  // const [value, getValue] = signal(0);
-  const x2Value = memo(() => value() * 2);
-  const x4Value = memo(() => x2Value() * 2);
-  const x8Value = memo(() => x4Value() * 2);
+  const x2Value = computed(() => value() * 2);
+  const x4Value = computed(() => x2Value() * 2);
+  const x8Value = computed(() => x4Value() * 2);
 
   signals.push(x8Value);
 }
