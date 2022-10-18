@@ -304,8 +304,6 @@ export function getStateValue<T>(
       }
 
       state.version = version;
-    } else {
-      activateDependencies(state);
     }
 
     if (!state.dependencies || !state.dependencies.length) {
@@ -377,8 +375,8 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
       deps[i] = deps[deps.length - 1];
       deps.pop();
       dep.depIndex = -1;
-      dep.observers!.splice(dep.observers!.indexOf(state), 1);
       dep.obsCount--;
+      dep.observers!.splice(dep.observers!.indexOf(state), 1);
 
       deactivateDependencies(dep);
     }
@@ -400,30 +398,6 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
   }
 
   return value;
-}
-
-function activateDependencies<T>(state: SignalState<T>) {
-  if (state.freezed || state.obsCount) return;
-
-  logHook(state, 'ACTIVATE');
-
-  if (state.onActivate) {
-    state.onActivate(state.value);
-  }
-
-  if (!state.dependencies) return;
-
-  for (let dependency of state.dependencies) {
-    activateDependencies(dependency);
-
-    if (dependency.observers) {
-      dependency.observers.push(state);
-    } else {
-      dependency.observers = [state];
-    }
-
-    ++dependency.obsCount;
-  }
 }
 
 function deactivateDependencies<T>(state: SignalState<T>) {
