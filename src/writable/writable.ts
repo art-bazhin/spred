@@ -65,7 +65,16 @@ export function writable<T>(): WritableSignal<T | undefined>;
  * @param value Initial value of the signal.
  * @returns Writable signal.
  */
-export function writable<T>(value: T, filter?: Filter<T>): WritableSignal<T>;
+
+export function writable<T>(
+  value: T,
+  filter?: Filter<T> | false
+): WritableSignal<T>;
+
+export function writable<T>(
+  value: undefined,
+  filter?: Filter<T> | false
+): WritableSignal<T | undefined>;
 
 export function writable(value?: any, filter?: any) {
   const state = createSignalState(value, undefined);

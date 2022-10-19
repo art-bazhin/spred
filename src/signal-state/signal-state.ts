@@ -16,7 +16,7 @@ export interface SignalState<T> {
   subs: number;
   active: number;
   compute?: Computation<T>;
-  filter?: Filter<T>;
+  filter?: Filter<T> | false;
   dependencies: Array<SignalState<any>>;
   depIndex: number;
   queueIndex?: number;

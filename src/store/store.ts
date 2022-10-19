@@ -6,22 +6,15 @@ import { writable, WritableSignal } from '../writable/writable';
 
 type Keys<T> = keyof T & (string | number);
 
-type Select<T, K extends Keys<T>> = undefined extends T[K]
-  ? Exclude<T[K], undefined> | null
-  : T[K];
-
 export interface Store<T> extends Signal<T> {
   update(nextState: Exclude<T, Function>): void;
-  update<K extends Keys<T>>(
-    key: K,
-    nextState: Exclude<Select<T, K>, Function>
-  ): void;
+  update<K extends Keys<T>>(key: K, nextState: Exclude<T[K], Function>): void;
   update(updateFn: (state: T) => T | void): void;
   update<K extends Keys<T>>(
     key: K,
-    updateFn: (state: Select<T, K>) => Select<T, K> | void
+    updateFn: (state: T[K]) => T[K] | void
   ): void;
-  select<K extends Keys<T>>(key: K): Store<Select<T, K>>;
+  select<K extends Keys<T>>(key: K): Store<T[K]>;
 }
 
 const STOP: any = {};
@@ -120,10 +113,7 @@ function updateChild<T, K extends Keys<T>>(self: Store<T>, key: K, arg: any) {
   });
 }
 
-function select<T, K extends Keys<T>>(
-  this: Store<T>,
-  key: K
-): Store<Select<T, K>> {
+function select<T, K extends Keys<T>>(this: Store<T>, key: K): Store<T[K]> {
   const id = (this as any)._id + '.' + key;
 
   const store = computed(() => {

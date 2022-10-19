@@ -130,7 +130,7 @@ export function effect<T, A extends unknown[]>(
   const args = computed(_args, false);
 
   const abort = () => {
-    if (!status.sample().pending) return;
+    if (!status.sample()!.pending) return;
 
     logEvent(name, 'ABORT');
 
@@ -143,12 +143,12 @@ export function effect<T, A extends unknown[]>(
   };
 
   const reset = () => {
-    if (status.sample().pristine) return;
+    if (status.sample()!.pristine) return;
 
     logEvent(name, 'RESET');
 
     batch(() => {
-      if (status().pending) _aborted({});
+      if (status()!.pending) _aborted({});
       _status('pristine');
     });
 

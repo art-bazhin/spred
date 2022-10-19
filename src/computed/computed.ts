@@ -14,10 +14,15 @@ function computedSelf(this: any) {
  * @param compute The function that calculates the signal value and returns it.
  * @returns Computed signal.
  */
+
+export function computed<T>(compute: Computation<T>): Signal<T>;
+export function computed<T>(compute: Computation<T>, filter: false): Signal<T>;
 export function computed<T>(
   compute: Computation<T>,
-  filter?: Filter<T>
-): Signal<T> {
+  filter: Filter<T>
+): Signal<T | undefined>;
+
+export function computed<T>(compute: Computation<T>, filter?: any): Signal<T> {
   const getValue = isWritableSignal(compute) ? () => compute() : compute;
 
   const state = createSignalState(undefined as any, getValue);
