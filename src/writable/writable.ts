@@ -63,6 +63,7 @@ export function writable<T>(): WritableSignal<T | undefined>;
 /**
  * Сreates a writable signal.
  * @param value Initial value of the signal.
+ * @param filter The function that returns a falsy value if the new signal value should be ignored. Use undefined arg value to emit signal values that are not equal to previous vaslue. Use false arg value to emit all signal values.
  * @returns Writable signal.
  */
 

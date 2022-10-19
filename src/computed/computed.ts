@@ -12,6 +12,7 @@ function computedSelf(this: any) {
 /**
  * Creates a signal that automatically calculates its value from other signals.
  * @param compute The function that calculates the signal value and returns it.
+ * @param filter The function that returns a falsy value if the new signal value should be ignored. Use undefined arg value to emit signal values that are not equal to previous vaslue. Use false arg value to emit all signal values.
  * @returns Computed signal.
  */
 
