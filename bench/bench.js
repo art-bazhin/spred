@@ -16,6 +16,8 @@ import {
   batch as solidBatch,
 } from 'https://unpkg.com/solid-js@1.3.13/dist/solid.js';
 
+// const cellx = {};
+
 import {
   signal as preactSignal,
   computed as preactComputed,
@@ -23,7 +25,7 @@ import {
   effect as preactEffect,
 } from '../node_modules/@preact/signals-core/dist/signals-core.mjs';
 
-import { memo, computed, writable, batch } from '/dist/index.mjs';
+import { computed, writable, batch } from '/dist/index.mjs';
 
 window.process = {
   env: {
@@ -34,25 +36,7 @@ window.process = {
 const subscriber = function () {};
 
 const createCell = cellx.cellx;
-
-window.testAct = (n) => {
-  const arr = [];
-
-  for (let i = 0; i < n; i++) {
-    arr.push(writable(0));
-  }
-
-  const res = memo(() => arr.map((v) => v()));
-
-  res.subscribe(() => {});
-  // res._state.xxx = 1;
-
-  const ts = performance.now();
-
-  arr[0](arr[0]() + 1);
-
-  return performance.now() - ts;
-};
+const Cell = cellx.Cell;
 
 const resultDiv = document.getElementById('result');
 const runButton = document.getElementById('run');
@@ -75,10 +59,10 @@ function testCellx(layerCount, newValues) {
   const initTimestamp = performance.now();
 
   const start = {
-    prop1: createCell(1),
-    prop2: createCell(2),
-    prop3: createCell(3),
-    prop4: createCell(4),
+    prop1: new Cell(1),
+    prop2: new Cell(2),
+    prop3: new Cell(3),
+    prop4: new Cell(4),
   };
 
   let layer = start;
@@ -86,17 +70,17 @@ function testCellx(layerCount, newValues) {
   for (let i = layerCount; i--; ) {
     layer = (function (m) {
       const s = {
-        prop1: createCell(function () {
-          return m.prop2();
+        prop1: new Cell(function () {
+          return m.prop2.get();
         }),
-        prop2: createCell(function () {
-          return m.prop1() - m.prop3();
+        prop2: new Cell(function () {
+          return m.prop1.get() - m.prop3.get();
         }),
-        prop3: createCell(function () {
-          return m.prop2() + m.prop4();
+        prop3: new Cell(function () {
+          return m.prop2.get() + m.prop4.get();
         }),
-        prop4: createCell(function () {
-          return m.prop3();
+        prop4: new Cell(function () {
+          return m.prop3.get();
         }),
       };
 
@@ -113,31 +97,31 @@ function testCellx(layerCount, newValues) {
 
   const end = layer;
 
-  report.beforeChange = [end.prop1(), end.prop2(), end.prop3(), end.prop4()];
+  report.beforeChange = [
+    end.prop1.get(),
+    end.prop2.get(),
+    end.prop3.get(),
+    end.prop4.get(),
+  ];
 
   const st = performance.now();
 
-  start.prop1(newValues[0]);
-  start.prop2(newValues[1]);
-  start.prop3(newValues[2]);
-  start.prop4(newValues[3]);
+  start.prop1.set(newValues[0]);
+  start.prop2.set(newValues[1]);
+  start.prop3.set(newValues[2]);
+  start.prop4.set(newValues[3]);
 
-  report.afterChange = [end.prop1(), end.prop2(), end.prop3(), end.prop4()];
+  report.afterChange = [
+    end.prop1.get(),
+    end.prop2.get(),
+    end.prop3.get(),
+    end.prop4.get(),
+  ];
 
   report.recalcTime = performance.now() - st;
 
   return report;
 }
-
-window.testPreactSignals = () => {
-  const a = preactSignal(1);
-  const b = preactComputed(() => {
-    console.log('b');
-    return a.value * 2;
-  });
-
-  return b;
-};
 
 function testPreact(layerCount, newValues) {
   const report = { name: 'preact' };
@@ -169,12 +153,12 @@ function testPreact(layerCount, newValues) {
         }),
       };
 
-      // if (!i) {
-      preactEffect(() => s.prop1.value);
-      preactEffect(() => s.prop2.value);
-      preactEffect(() => s.prop3.value);
-      preactEffect(() => s.prop4.value);
-      // }
+      if (!i) {
+        preactEffect(() => s.prop1.value);
+        preactEffect(() => s.prop2.value);
+        preactEffect(() => s.prop3.value);
+        preactEffect(() => s.prop4.value);
+      }
 
       return s;
     })(layer);
@@ -228,26 +212,26 @@ function testSpred(layerCount, newValues) {
   for (let i = layerCount; i--; ) {
     layer = (function (m) {
       const s = {
-        prop1: memo(function () {
+        prop1: computed(function () {
           return m.prop2();
         }),
-        prop2: memo(function () {
+        prop2: computed(function () {
           return m.prop1() - m.prop3();
         }),
-        prop3: memo(function () {
+        prop3: computed(function () {
           return m.prop2() + m.prop4();
         }),
-        prop4: memo(function () {
+        prop4: computed(function () {
           return m.prop3();
         }),
       };
 
-      // if (!i) {
-      s.prop1.subscribe(subscriber);
-      s.prop2.subscribe(subscriber);
-      s.prop3.subscribe(subscriber);
-      s.prop4.subscribe(subscriber);
-      //}
+      if (!i) {
+        s.prop1.subscribe(subscriber);
+        s.prop2.subscribe(subscriber);
+        s.prop3.subscribe(subscriber);
+        s.prop4.subscribe(subscriber);
+      }
 
       return s;
     })(layer);
@@ -310,10 +294,12 @@ function testEffector(layerCount, newValues) {
         }),
       };
 
-      s.prop1.watch(subscriber);
-      s.prop2.watch(subscriber);
-      s.prop3.watch(subscriber);
-      s.prop4.watch(subscriber);
+      if (!i) {
+        s.prop1.watch(subscriber);
+        s.prop2.watch(subscriber);
+        s.prop3.watch(subscriber);
+        s.prop4.watch(subscriber);
+      }
 
       return s;
     })(layer);
@@ -379,10 +365,12 @@ function testNanostores(layerCount, newValues) {
         }),
       };
 
-      s.prop1.subscribe(subscriber);
-      s.prop2.subscribe(subscriber);
-      s.prop3.subscribe(subscriber);
-      s.prop4.subscribe(subscriber);
+      if (!i) {
+        s.prop1.subscribe(subscriber);
+        s.prop2.subscribe(subscriber);
+        s.prop3.subscribe(subscriber);
+        s.prop4.subscribe(subscriber);
+      }
 
       return s;
     })(layer);
@@ -455,10 +443,12 @@ function testSolid(layerCount, newValues) {
         }),
       };
 
-      solidCreateComputed(s.prop1);
-      solidCreateComputed(s.prop2);
-      solidCreateComputed(s.prop3);
-      solidCreateComputed(s.prop4);
+      // if (!i) {
+      // solidCreateComputed(s.prop1);
+      // solidCreateComputed(s.prop2);
+      // solidCreateComputed(s.prop3);
+      // solidCreateComputed(s.prop4);
+      // }
 
       return s;
     })(layer);
@@ -488,13 +478,9 @@ function testSolid(layerCount, newValues) {
 
 function testLib(testFn, layers, iterations, newValues) {
   let totalTimeRecalc = 0;
-  let minRecalc = Infinity;
-  let maxRecalc = 0;
   let resultRecalc = null;
 
   let totalTimeInit = 0;
-  let minInit = Infinity;
-  let maxInit = 0;
   let resultInit = null;
   let name;
 
