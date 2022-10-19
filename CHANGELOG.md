@@ -2,6 +2,63 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.29.0](https://github.com/art-bazhin/spred/compare/v0.28.0...v0.29.0) (2022-10-19)
+
+
+### ⚠ BREAKING CHANGES
+
+* Removed memo. Use computeds instead.
+* allow to subscribe fn twice
+
+### Features
+
+* **signal:** add filter arg to signal fn ([771a721](https://github.com/art-bazhin/spred/commit/771a7213675effff61bc298d3de4a71136311374))
+
+
+### Bug Fixes
+
+* fix redundant computation when version is not changed ([93ae5d9](https://github.com/art-bazhin/spred/commit/93ae5d9f18e557f35953d0e9737d76fb1527dd04))
+
+
+### Performance Improvements
+
+* improve dependency tracking performance using pop instead of splice ([6aef91d](https://github.com/art-bazhin/spred/commit/6aef91d5dd8ae68c9663c4847ed98e96d6b55f70))
+* improve unsubscribing performance ([d717cc7](https://github.com/art-bazhin/spred/commit/d717cc708a0bcc8184f10ce4bce30750043c0772))
+* refactor dependency tracking ([9455d06](https://github.com/art-bazhin/spred/commit/9455d06fd12bb0bd7fce5640eee04d57fd91dc64))
+* remove redundant activation code ([4cf6546](https://github.com/art-bazhin/spred/commit/4cf6546d71d21ec3d5332db552946137b7f0a878))
+
+
+### Code Refactoring
+
+* add obdervers counter ([281d3bf](https://github.com/art-bazhin/spred/commit/281d3bf3e82cc2ee2f60704d930c633eff72fa19))
+* improve typings ([7e8a12d](https://github.com/art-bazhin/spred/commit/7e8a12d5845107a89833ba2ce4fbf57e1d5a38a2))
+* refactor caching ([47ba954](https://github.com/art-bazhin/spred/commit/47ba954796eaff78f4c39f2a77e44f8834a05192))
+* refactor dependency activation ([415f53b](https://github.com/art-bazhin/spred/commit/415f53b0eea600c4e450fb0877ffb23122b24525))
+* refactor dependency filtering ([e8d44fb](https://github.com/art-bazhin/spred/commit/e8d44fb1a3735c12ddaa726f8b1f5732c15223c8))
+* refactor recalc function ([c19cdf4](https://github.com/art-bazhin/spred/commit/c19cdf481ae95d56e1a59d6218a708d58b1bc660))
+* refactor subscribers queue ([3aabf52](https://github.com/art-bazhin/spred/commit/3aabf52b476223d5196def159334f87689e88dfd))
+* refactor subscribing ([733b008](https://github.com/art-bazhin/spred/commit/733b008c8540e4a08e6b9ce2ad3fffddf11204e2))
+* remove lazy arr init ([4008903](https://github.com/art-bazhin/spred/commit/400890311882937624bfc4f715674b016b488c3a))
+* remove memo ([b21e9ea](https://github.com/art-bazhin/spred/commit/b21e9ea8a9320a5b21c5cf14e699d97011a61ec1))
+* remove scheduled arg from calc fn ([9996fab](https://github.com/art-bazhin/spred/commit/9996fabfa04a203db35beed4c6557f8f184a2ef7))
+* rmove redundant signal state field ([7c61dd3](https://github.com/art-bazhin/spred/commit/7c61dd377f130701f4ead78ea4a87ed0b3322df6))
+* use observer array instead of set ([3969b08](https://github.com/art-bazhin/spred/commit/3969b08b30e3a9f3f716e4c2f03bec8757d52ebb))
+
+
+### Tests
+
+* add one more diamond problem test ([407d15c](https://github.com/art-bazhin/spred/commit/407d15ce658dfece9284e92ddaebee18c0b21d0a))
+* add preact bench ([29d22e6](https://github.com/art-bazhin/spred/commit/29d22e622c055af498ba88a853bbf7628e019ed8))
+* add signal filtering tests ([644e296](https://github.com/art-bazhin/spred/commit/644e296cdcfce516b5821fa4a401d8a813255c64))
+* **bench:** update benchmark ([32cd7ab](https://github.com/art-bazhin/spred/commit/32cd7abcc9c43d33b13d9afa35fc4ce6803e76e0))
+* update bench page ([d6f2629](https://github.com/art-bazhin/spred/commit/d6f262938d8da7a68b3f1b3f087c419f2fed1261))
+* update unsub benchmark ([f698a5f](https://github.com/art-bazhin/spred/commit/f698a5f2945a702e4a58f1ec2523b8b7c24b367c))
+
+
+### Docs
+
+* update docs ([8935fe5](https://github.com/art-bazhin/spred/commit/8935fe5b969f5455f2d37fc5e25740cd400e941d))
+
 ## [0.28.0](https://github.com/art-bazhin/spred/compare/v0.27.1...v0.28.0) (2022-09-15)
 
 
