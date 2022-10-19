@@ -409,4 +409,67 @@ describe('computed', () => {
     expect(x2Counter()).toBe(4);
     expect(spy).toBeCalledTimes(2);
   });
+
+  it('ignores a new value if it is equal to the current value', () => {
+    const a = writable(0, false);
+    const b = computed(a);
+    const spy = jest.fn();
+
+    b.subscribe(spy);
+    expect(spy).toBeCalledTimes(1);
+
+    a(0);
+    expect(spy).toBeCalledTimes(1);
+
+    a(1);
+    expect(spy).toBeCalledTimes(2);
+
+    a(2);
+    expect(spy).toBeCalledTimes(3);
+
+    a(2);
+    expect(spy).toBeCalledTimes(3);
+  });
+
+  it('does not ignore any new value if the second arg is false', () => {
+    const a = writable(0, false);
+    const b = computed(a, false);
+    const spy = jest.fn();
+
+    b.subscribe(spy);
+    expect(spy).toBeCalledTimes(1);
+
+    a(0);
+    expect(spy).toBeCalledTimes(2);
+
+    a(1);
+    expect(spy).toBeCalledTimes(3);
+
+    a(2);
+    expect(spy).toBeCalledTimes(4);
+
+    a(2);
+    expect(spy).toBeCalledTimes(5);
+  });
+
+  it('can use custom filter function', () => {
+    const a = writable(0, false);
+    const b = computed(a, (value) => value < 5);
+    const spy = jest.fn();
+
+    b.subscribe(spy);
+    expect(spy).toBeCalledTimes(1);
+
+    a(0);
+    expect(spy).toBeCalledTimes(2);
+
+    a(1);
+    expect(spy).toBeCalledTimes(3);
+
+    a(5);
+    expect(spy).toBeCalledTimes(3);
+
+    a(2);
+    expect(spy).toBeCalledTimes(4);
+  });
 });
