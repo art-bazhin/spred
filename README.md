@@ -50,6 +50,8 @@ batch(() => {
 npm install spred --save
 ```
 
+# v0.28.0 Docs
+
 ## Signals
 
 [Signal](https://art-bazhin.github.io/spred/interfaces/Signal.html) is the basic reactive primitive of the library. A signal stores a value and notifies its subscribers when it changes. There are two kinds of signals - writable and computed.

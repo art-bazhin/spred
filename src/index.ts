@@ -22,6 +22,7 @@ import {
   EffectStatusObject,
 } from './effect/effect';
 import { Subscriber } from './subscriber/subscriber';
+import { Filter } from './filter/filter';
 import {
   isSignal,
   isWritableSignal,
@@ -45,6 +46,7 @@ export {
   Store,
   Config,
   Subscriber,
+  Filter,
   Computation,
   writable,
   computed,
