@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.29.1](https://github.com/art-bazhin/spred/compare/v0.29.0...v0.29.1) (2022-10-22)
+
+
+### Code Refactoring
+
+* cache observer indexes ([2637d62](https://github.com/art-bazhin/spred/commit/2637d621b9190bebaea1bd50198b441146e76571))
+
 ## [0.29.0](https://github.com/art-bazhin/spred/compare/v0.28.0...v0.29.0) (2022-10-19)
 
 
