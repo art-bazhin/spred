@@ -1,5 +1,5 @@
 import { Signal, _Signal } from '../signal/signal';
-import { freeze, SignalState } from '../signal-state/signal-state';
+import { SignalState } from '../signal-state/signal-state';
 import { Subscriber } from '../subscriber/subscriber';
 import { config } from '../config/config';
 import { CircularDependencyError } from '../errors/errors';
@@ -10,8 +10,10 @@ export let tracking: SignalState<any> | null = null;
 export let scope: SignalState<any> | null = null;
 
 let batchLevel = 0;
-let calcLevel = 0;
 let activateLevel = 0;
+let trackingId = -1;
+let lastTrackingId = -1;
+let calcActive = false;
 
 let queue: SignalState<any>[] = [];
 let queueLength = 0;
@@ -28,6 +30,7 @@ export function isolate(fn: any, args?: any) {
   const prevTracking = tracking;
   const prevScope = scope;
   const prevActivateLevel = activateLevel;
+  const prevTrackingId = trackingId;
 
   let result: true;
 
@@ -41,6 +44,7 @@ export function isolate(fn: any, args?: any) {
   tracking = prevTracking;
   scope = prevScope;
   activateLevel = prevActivateLevel;
+  trackingId = prevTrackingId;
 
   return result;
 }
@@ -49,6 +53,7 @@ export function collect(fn: () => any) {
   const prevTracking = tracking;
   const prevScope = scope;
   const prevActivateLevel = activateLevel;
+  const prevTrackingId = trackingId;
   const fakeState = {} as any as SignalState<any>;
 
   activateLevel = 0;
@@ -60,6 +65,7 @@ export function collect(fn: () => any) {
   tracking = prevTracking;
   scope = prevScope;
   activateLevel = prevActivateLevel;
+  trackingId = prevTrackingId;
 
   return () => cleanupChildren(fakeState);
 }
@@ -119,33 +125,23 @@ export function subscribe<T>(
     return NOOP_FN;
   }
 
-  state.observers.push(subscriber);
+  const index = state.observers.push(subscriber) - 1;
 
-  const subsCount = ++state.subs;
-  let index = state.active++;
+  ++state.subs;
+  ++state.active;
 
   if (exec) {
     isolate(() => subscriber(value, true));
   }
 
   const dispose = () => {
-    if (index < 0) return;
+    if (!state.observers[index]) return;
 
-    const dif = state.subs - subsCount;
-    if (dif < 0) index += dif;
+    state.observers[index] = undefined as any;
+    --state.subs;
+    --state.active;
 
-    for (let i = index; i >= 0; i--) {
-      if (state.observers[i] === subscriber) {
-        state.observers.splice(i, 1);
-        --state.subs;
-        --state.active;
-        index = -1;
-
-        deactivateDependencies(state);
-
-        return;
-      }
-    }
+    deactivateDependencies(state);
   };
 
   const parent = tracking || scope;
@@ -181,10 +177,10 @@ function emitUpdateLifecycle(state: SignalState<any>, value: any) {
  * Immediately calculates the updated values of the signals and notifies their subscribers.
  */
 export function recalc() {
-  if (!queueLength || calcLevel || batchLevel) return;
+  if (!queueLength || calcActive || batchLevel) return;
 
-  calcLevel++;
-  version++;
+  calcActive = true;
+  ++version;
 
   for (let i = 0; i < queueLength; i++) {
     const state = queue[i];
@@ -194,6 +190,7 @@ export function recalc() {
     if (!state.compute) {
       if (state.queueIndex !== i) continue;
       value = state.nextValue;
+      state.version = version;
     } else {
       if (!state.active) continue;
       if (state.version !== version) {
@@ -219,16 +216,16 @@ export function recalc() {
       }
 
       for (let observer of state.observers) {
-        if (typeof observer !== 'function') {
+        if (observer && typeof observer === 'object') {
           queueLength = queue.push(observer);
         }
       }
 
-      if (forced) delete state.forced;
+      if (forced) state.forced = false;
     }
   }
 
-  calcLevel--;
+  calcActive = false;
 
   queue = [];
   queueLength = 0;
@@ -242,15 +239,13 @@ function notify() {
 
   batchLevel++;
 
-  isolate(() => {
-    if (wrapper) {
-      wrapper(() => {
-        for (let state of notificationQueue) runSubscribers(state);
-      });
-    } else {
+  if (wrapper) {
+    wrapper(() => {
       for (let state of notificationQueue) runSubscribers(state);
-    }
-  });
+    });
+  } else {
+    for (let state of notificationQueue) runSubscribers(state);
+  }
 
   notificationQueue = [];
 
@@ -269,10 +264,10 @@ function runSubscribers<T>(state: SignalState<T>) {
     state.onNotifyStart(value);
   }
 
-  for (let i = 0; subsCount && i < state.active; i++) {
-    const subscriber = state.observers[i];
+  for (let subscriber of state.observers) {
+    if (!subsCount) break;
 
-    if (typeof subscriber === 'function') {
+    if (subscriber && typeof subscriber === 'function') {
       subscriber(state.value);
       --subsCount;
     }
@@ -289,6 +284,11 @@ export function getStateValue<T>(
   state: SignalState<T>,
   notTrackDeps?: boolean
 ): T {
+  if (!tracking) {
+    trackingId = -1;
+    lastTrackingId = -1;
+  }
+
   const shouldUpdate = version !== state.version;
 
   if (state.isComputing) {
@@ -308,82 +308,95 @@ export function getStateValue<T>(
 
       if (filtered) {
         state.value = value;
-        if (calcLevel && state.subs) notificationQueue.push(state);
+        if (calcActive && state.subs) notificationQueue.push(state);
       }
 
       state.version = version;
     }
 
-    if (!state.dependencies || !state.dependencies.length) {
-      freeze(state);
+    if (!state.dependencies.length) {
+      state.freezed = true;
       return state.value;
     }
   }
 
-  if (tracking && !notTrackDeps) {
+  if (tracking && !notTrackDeps && state.depIndex !== trackingId) {
     if (state.hasException && !tracking.hasException && !tracking.isCatcher) {
       tracking.exception = state.exception;
       tracking.hasException = true;
     }
 
-    if (state.depIndex === -1) {
-      tracking.dependencies!.push(state);
-    } else {
-      state.depIndex = -1;
+    const lookup = tracking.lookup;
+    let depIndex = state.depIndex;
+
+    if (depIndex < 0) {
+      depIndex = tracking.dependencies.push(state) - 1;
     }
 
-    if (activateLevel || (calcLevel && shouldUpdate)) {
+    if ((activateLevel || shouldUpdate) && lookup[depIndex] === undefined) {
       if (!state.active) {
         emitActivateLifecycle(state);
       }
 
-      state.active = state.observers.push(tracking);
+      const obsIndex = state.observers.push(tracking) - 1;
+      lookup[depIndex] = obsIndex;
+      state.active++;
     }
+
+    state.depIndex = trackingId;
   }
 
   return state.value;
 }
 
 function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
+  const prevTrackingId = trackingId;
   const prevTracking = tracking;
   let value = state.value;
 
   cleanupChildren(state);
 
   const deps = state.dependencies;
+  const lookup = state.lookup;
   let length = deps.length;
 
   tracking = state;
   tracking.isComputing = true;
   tracking.hasException = false;
+  trackingId = --lastTrackingId;
 
   for (let i = 0; i < length; i++) {
     deps[i].depIndex = i;
   }
 
   try {
-    value = state.compute!(state.value, calcLevel > 0);
+    value = state.compute!(state.value, calcActive);
   } catch (e: any) {
     state.exception = e;
     state.hasException = true;
   }
 
   for (let i = 0; i < deps.length; i++) {
-    if (deps[i].depIndex >= 0) {
-      const dep = deps[i];
+    const dep = deps[i];
 
+    if (deps[i].depIndex >= 0) {
       deps[i] = deps[deps.length - 1];
       deps.pop();
-      dep.depIndex = -1;
       dep.active--;
-      dep.observers.splice(dep.observers.indexOf(state), 1);
+
+      dep.observers[lookup[i]] = undefined as any;
+      lookup[i] = lookup[lookup.length - 1];
+      lookup.pop();
 
       deactivateDependencies(dep);
     }
+
+    dep.depIndex = -1;
   }
 
   tracking.isComputing = false;
   tracking = prevTracking;
+  trackingId = prevTrackingId;
 
   if (state.hasException) {
     logHook(state, 'EXCEPTION');
@@ -403,18 +416,24 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
 function deactivateDependencies<T>(state: SignalState<T>) {
   if (state.freezed || state.active) return;
 
+  state.observers = [];
+
   logHook(state, 'DEACTIVATE');
 
   if (state.onDeactivate) {
     state.onDeactivate(state.value);
   }
 
-  if (!state.dependencies) return;
+  const deps = state.dependencies;
+  const lookup = state.lookup;
 
-  for (let dependency of state.dependencies) {
-    dependency.observers.splice(dependency.observers.indexOf(state), 1);
-    --dependency.active;
-    deactivateDependencies(dependency);
+  for (let i = 0; i < deps.length; i++) {
+    const dep = deps[i];
+    const index = lookup[i];
+
+    dep.observers[index] = undefined as any;
+    --dep.active;
+    deactivateDependencies(dep);
   }
 }
 

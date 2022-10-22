@@ -18,6 +18,7 @@ export interface SignalState<T> {
   compute?: Computation<T>;
   filter?: Filter<T> | false;
   dependencies: Array<SignalState<any>>;
+  lookup: number[];
   depIndex: number;
   queueIndex?: number;
   isComputing?: boolean;
@@ -27,6 +28,7 @@ export interface SignalState<T> {
   name?: string;
   freezed?: boolean;
   forced?: boolean;
+  checked?: boolean;
 
   // lifecycle:
   onActivate?: ((value: T) => any) | null;
@@ -51,7 +53,8 @@ export function createSignalState<T>(
     active: 0,
     depIndex: -1,
     observers: [],
-    dependencies: compute ? [] : (undefined as any),
+    dependencies: [],
+    lookup: [],
   };
 
   if (parent) {
@@ -60,14 +63,4 @@ export function createSignalState<T>(
   }
 
   return state;
-}
-
-export function freeze(state: any) {
-  const children = state.children;
-  const value = state.value;
-
-  for (let key in state) delete state[key];
-  if (children) state.children = children;
-  state.freezed = true;
-  state.value = value;
 }

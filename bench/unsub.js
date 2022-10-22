@@ -17,6 +17,8 @@ for (let i = 0; i < COUNT; i++) {
   const x4Value = computed(() => x2Value() * 2);
   const x8Value = computed(() => x4Value() * 2);
 
+  x8Value();
+
   signals.push(x8Value);
 }
 

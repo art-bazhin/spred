@@ -263,6 +263,33 @@ describe('signal', () => {
     expect(subSum).toBeCalledTimes(3);
   });
 
+  it('dynamically updates dependencies (case 3)', () => {
+    const spy = jest.fn();
+    const a = writable(11);
+    const b = writable(2);
+    const bComp = computed(() => {
+      spy();
+      return b();
+    });
+
+    const value = computed(() => {
+      if (a() > 10) return bComp() + bComp() + bComp();
+      return a();
+    });
+
+    value.subscribe(() => {});
+    expect(spy).toBeCalledTimes(1);
+
+    a(1);
+    expect(spy).toBeCalledTimes(1);
+
+    b(2);
+    b(3);
+    b(4);
+    b(5);
+    expect(spy).toBeCalledTimes(1);
+  });
+
   it('notifies intermidiate computed subscribers', () => {
     const count = writable(0);
     const x2Count = computed(() => count() * 2);
