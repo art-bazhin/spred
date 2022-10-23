@@ -79,17 +79,16 @@ export function writable<T>(
 
 export function writable(value?: any, filter?: any) {
   const state = createSignalState(value, undefined);
-  const writable: any = writableSelf.bind(state);
+  const self: any = writableSelf.bind(state);
 
   if (filter !== undefined) state.filter = filter;
 
-  writable._state = state;
-  writable.constructor = writable;
-  writable.set = writableSignalProto.set;
-  writable.get = writableSignalProto.get;
-  writable.notify = writableSignalProto.notify;
-  writable.subscribe = writableSignalProto.subscribe;
-  writable.sample = writableSignalProto.sample;
+  self._state = state;
+  self.set = writableSignalProto.set;
+  self.get = writableSignalProto.get;
+  self.notify = writableSignalProto.notify;
+  self.subscribe = writableSignalProto.subscribe;
+  self.sample = writableSignalProto.sample;
 
-  return writable;
+  return self;
 }

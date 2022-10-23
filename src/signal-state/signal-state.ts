@@ -12,23 +12,20 @@ export interface SignalState<T> {
   nextValue?: T;
   hasException?: boolean;
   exception?: unknown;
-  observers: Array<Subscriber<T> | SignalState<any>>;
+  observers: Set<Subscriber<T> | SignalState<any>>;
   subs: number;
-  active: number;
   compute?: Computation<T>;
   filter?: Filter<T> | false;
-  dependencies: Array<SignalState<any>>;
-  lookup: number[];
-  depIndex: number;
+  dependencies: Set<SignalState<any>>;
   queueIndex?: number;
-  isComputing?: boolean;
+  tracking: boolean;
+  stale: boolean;
   isCatcher?: boolean;
   version?: number;
   children?: ((() => any) | SignalState<any>)[];
   name?: string;
   freezed?: boolean;
   forced?: boolean;
-  checked?: boolean;
 
   // lifecycle:
   onActivate?: ((value: T) => any) | null;
@@ -46,16 +43,20 @@ export function createSignalState<T>(
   const parent = tracking || scope;
 
   const state: SignalState<T> = {
-    compute,
     value,
-    nextValue: value,
     subs: 0,
-    active: 0,
-    depIndex: -1,
-    observers: [],
-    dependencies: [],
-    lookup: [],
-  };
+    observers: new Set(),
+    stale: true,
+    tracking: false,
+    freezed: false,
+  } as any;
+
+  if (compute) {
+    state.compute = compute;
+    state.dependencies = new Set();
+  } else {
+    state.nextValue = value;
+  }
 
   if (parent) {
     if (!parent.children) parent.children = [state];

@@ -27,15 +27,14 @@ export function computed<T>(compute: Computation<T>, filter?: any): Signal<T> {
   const getValue = isWritableSignal(compute) ? () => compute() : compute;
 
   const state = createSignalState(undefined as any, getValue);
-  const computed: any = computedSelf.bind(state);
+  const self: any = computedSelf.bind(state);
 
   if (filter !== undefined) state.filter = filter;
 
-  computed._state = state;
-  computed.constructor = computed;
-  computed.get = signalProto.get;
-  computed.subscribe = signalProto.subscribe;
-  computed.sample = signalProto.sample;
+  self._state = state;
+  self.get = signalProto.get;
+  self.subscribe = signalProto.subscribe;
+  self.sample = signalProto.sample;
 
-  return computed;
+  return self;
 }
