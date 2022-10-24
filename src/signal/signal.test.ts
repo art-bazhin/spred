@@ -290,6 +290,39 @@ describe('signal', () => {
     expect(spy).toBeCalledTimes(1);
   });
 
+  it('does not recalc a dependant if it is not active', () => {
+    const bSpy = jest.fn();
+    const cSpy = jest.fn();
+
+    const a = writable(1);
+
+    const b = computed(() => {
+      bSpy();
+      return a() * 2;
+    });
+
+    const c = computed(() => {
+      cSpy();
+      return b() * 2;
+    });
+
+    c();
+    expect(bSpy).toBeCalledTimes(1);
+    expect(cSpy).toBeCalledTimes(1);
+
+    a(2);
+    expect(bSpy).toBeCalledTimes(1);
+    expect(cSpy).toBeCalledTimes(1);
+
+    b.subscribe(() => {});
+    expect(bSpy).toBeCalledTimes(2);
+    expect(cSpy).toBeCalledTimes(1);
+
+    a(3);
+    expect(bSpy).toBeCalledTimes(3);
+    expect(cSpy).toBeCalledTimes(1);
+  });
+
   it('notifies intermidiate computed subscribers', () => {
     const count = writable(0);
     const x2Count = computed(() => count() * 2);

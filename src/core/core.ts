@@ -1,5 +1,5 @@
 import { Signal, _Signal } from '../signal/signal';
-import { SignalState } from '../signal-state/signal-state';
+import { ListNode, SignalState } from '../signal-state/signal-state';
 import { Subscriber } from '../subscriber/subscriber';
 import { config } from '../config/config';
 import { CircularDependencyError } from '../errors/errors';
@@ -16,8 +16,9 @@ let calcActive = false;
 let queue: SignalState<any>[] = [];
 let queueLength = 0;
 let notificationQueue: SignalState<any>[] = [];
+let nodeCache: ListNode[] = [];
 
-let version = 0;
+let version = 1;
 
 export function isolate<T>(fn: () => T): T;
 export function isolate<T, A extends unknown[]>(
@@ -90,7 +91,7 @@ export function update<T>(state: SignalState<T>, value?: any) {
     state.forced = true;
   }
 
-  state.queueIndex = queueLength;
+  state.i = queueLength;
   queueLength = queue.push(state);
 
   recalc();
@@ -104,8 +105,7 @@ export function subscribe<T>(
   exec = true
 ) {
   const state = (this as any)._state as SignalState<T>;
-  const observers = state.observers;
-  const activating = !state.freezed && !observers.size;
+  const activating = !state.freezed && !state.ft;
 
   if (activating) ++activateLevel;
 
@@ -121,17 +121,18 @@ export function subscribe<T>(
     return NOOP_FN;
   }
 
-  state.subs += observers.size - observers.add(subscriber).size;
+  let node = createSubscriberNode(state, subscriber);
+  ++state.subs;
 
   if (exec) {
     isolate(() => subscriber(value, true));
   }
 
   const dispose = () => {
-    if (observers.delete(subscriber)) {
-      --state.subs;
-      deactivateDependencies(state);
-    }
+    if (!node) return;
+    removeNode(node);
+    --state.subs;
+    node = null as any;
   };
 
   const parent = tracking || scope;
@@ -177,16 +178,16 @@ export function recalc() {
 
     let value = state.value;
 
-    if (!state.compute) {
-      if (state.queueIndex !== i) continue;
-      value = state.nextValue;
-      state.version = version;
-    } else {
-      if (!state.observers.size) continue;
+    if (state.compute) {
+      if (!state.ft) continue;
       if (state.version !== version) {
         value = calcComputed(state);
         state.version = version;
       } else continue;
+    } else {
+      if (state.i !== i) continue;
+      value = state.nextValue;
+      state.version = version;
     }
 
     const err = state.hasException;
@@ -205,10 +206,13 @@ export function recalc() {
         if (state.subs) notificationQueue.push(state);
       }
 
-      for (let observer of state.observers) {
-        if (typeof observer === 'object') {
-          queueLength = queue.push(observer);
+      let node = state.ft;
+
+      while (node) {
+        if (typeof node.t === 'object') {
+          queueLength = queue.push(node.t);
         }
+        node = node.nt;
       }
 
       if (forced) state.forced = false;
@@ -254,11 +258,9 @@ function runSubscribers<T>(state: SignalState<T>) {
     state.onNotifyStart(value);
   }
 
-  for (let subscriber of state.observers) {
-    if (!subsCount) break;
-
-    if (subscriber && typeof subscriber === 'function') {
-      subscriber(state.value);
+  for (let node = state.ft; subsCount && node !== null; node = node.nt) {
+    if (typeof node.t === 'function') {
+      node.t(state.value);
       --subsCount;
     }
   }
@@ -295,17 +297,15 @@ export function getStateValue<T>(
         state.value = value;
         if (calcActive && state.subs) notificationQueue.push(state);
       }
-
-      state.version = version;
     }
 
-    if (!state.dependencies.size) {
+    if (!state.fs) {
       state.freezed = true;
-      state.dependencies = null as any;
-      state.observers = null as any;
       return state.value;
     }
   }
+
+  state.version = version;
 
   if (tracking && !notTrackDeps) {
     if (state.hasException && !tracking.hasException && !tracking.isCatcher) {
@@ -313,16 +313,37 @@ export function getStateValue<T>(
       tracking.hasException = true;
     }
 
-    tracking.dependencies.add(state);
-    state.stale = false;
+    const activating = activateLevel || calcActive;
+    let node = state.node;
 
-    if (activateLevel || shouldUpdate) {
-      if (!state.observers.size) {
-        emitActivateLifecycle(state);
-      }
-
-      state.observers.add(tracking);
+    if (activating && !state.ft) {
+      emitActivateLifecycle(state);
     }
+
+    if (node === null) {
+      node = createNode(state, tracking, activating);
+      state.node = node;
+    } else if (node.t !== tracking) {
+      nodeCache.push(node);
+      node = createNode(state, tracking, activating);
+      ++node.cached;
+      state.node = node;
+    } else if (activating && !(node.pt || node.nt || node.s.lt === node)) {
+      activateNode(node);
+    }
+
+    node.stale = false;
+
+    // tracking.dependencies.add(state);
+    // state.stale = false;
+
+    // if (activateLevel || shouldUpdate) {
+    //   if (!state.observers.size) {
+    //     emitActivateLifecycle(state);
+    //   }
+
+    //   state.observers.add(tracking);
+    // }
   }
 
   return state.value;
@@ -338,6 +359,13 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
 
   state.tracking = true;
   state.hasException = false;
+  let node = state.fs;
+
+  while (node) {
+    node.s.node = node;
+    node.stale = true;
+    node = node.ns;
+  }
 
   try {
     value = state.compute!(state.value, calcActive);
@@ -346,14 +374,21 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
     state.hasException = true;
   }
 
-  for (let dep of state.dependencies) {
-    if (dep.stale) {
-      state.dependencies.delete(dep);
-      dep.observers.delete(state);
-      deactivateDependencies(dep);
+  node = state.ls;
+
+  while (node) {
+    const ps = node.ps;
+
+    if (node.cached) {
+      node.s.node = nodeCache.pop()!;
+      --node.cached;
+    } else {
+      node.s.node = null;
     }
 
-    dep.stale = true;
+    if (node.stale) removeNode(node, true);
+
+    node = ps;
   }
 
   state.tracking = false;
@@ -366,29 +401,12 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
       state.onException(state.exception);
     }
 
-    if (logException || state.subs || (!state.observers.size && !tracking)) {
+    if (logException || state.subs || (!state.ft && !tracking)) {
       config.logException(state.exception);
     }
   }
 
   return value;
-}
-
-function deactivateDependencies<T>(state: SignalState<T>) {
-  if (state.freezed || state.observers.size) return;
-
-  logHook(state, 'DEACTIVATE');
-
-  if (state.onDeactivate) {
-    state.onDeactivate(state.value);
-  }
-
-  if (!state.compute) return;
-
-  for (let dep of state.dependencies) {
-    dep.observers.delete(state);
-    deactivateDependencies(dep);
-  }
 }
 
 function cleanupChildren(state: SignalState<any>) {
@@ -415,4 +433,125 @@ function logHook<T>(state: SignalState<T>, hook: LifecycleHookName, value?: T) {
     };
 
   (config as any)._log(state.name, hook, payload);
+}
+
+function createSubscriberNode(
+  source: SignalState<any>,
+  target: Subscriber<any>
+) {
+  const node: ListNode = {
+    s: source,
+    t: target,
+    pt: source.lt,
+    nt: null,
+  } as any;
+
+  if (source.lt) {
+    source.lt.nt = node;
+  } else {
+    source.ft = node;
+  }
+
+  source.lt = node;
+
+  return node;
+}
+
+function createNode(
+  source: SignalState<any>,
+  target: SignalState<any>,
+  activating?: any
+) {
+  const node: ListNode = {
+    s: source,
+    t: target,
+
+    ps: target.ls,
+    ns: null,
+
+    pt: null,
+    nt: null,
+
+    stale: false,
+    cached: 0,
+  };
+
+  if (target.ls) {
+    target.ls.ns = node;
+  } else {
+    target.fs = node;
+  }
+
+  target.ls = node;
+
+  if (activating) {
+    node.pt = source.lt;
+
+    if (source.lt) {
+      source.lt.nt = node;
+    } else {
+      source.ft = node;
+    }
+
+    source.lt = node;
+  }
+
+  return node;
+}
+
+function activateNode(node: ListNode) {
+  const lastTarget = node.s.lt;
+
+  if (lastTarget) {
+    lastTarget.nt = node;
+    node.pt = lastTarget;
+  } else {
+    node.s.ft = node;
+    node.s.lt = node;
+  }
+
+  return node;
+}
+
+function removeNode(node: ListNode, unlinkSources?: boolean) {
+  if (unlinkSources) {
+    if ((node.t as SignalState<any>).fs === node)
+      (node.t as SignalState<any>).fs = node.ns;
+
+    if ((node.t as SignalState<any>).ls === node)
+      (node.t as SignalState<any>).ls = node.ps;
+
+    if (node.ps) node.ps.ns = node.ns;
+    if (node.ns) node.ns.ps = node.ps;
+
+    node.ps = null;
+    node.ns = null;
+  }
+
+  if (node.s.ft === node) node.s.ft = node.nt;
+  if (node.s.lt === node) node.s.lt = node.pt;
+
+  if (node.pt) node.pt.nt = node.nt;
+  if (node.nt) node.nt.pt = node.pt;
+
+  node.pt = null;
+  node.nt = null;
+
+  if (!node.s.ft) {
+    const state = node.s;
+
+    logHook(state, 'DEACTIVATE');
+
+    if (state.onDeactivate) {
+      state.onDeactivate(state.value);
+    }
+
+    let n = state.fs;
+
+    while (n) {
+      const ns = n.ns;
+      removeNode(n);
+      n = ns;
+    }
+  }
 }
