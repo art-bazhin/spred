@@ -5,10 +5,6 @@ import { isWritableSignal } from '../guards/guards';
 import { getStateValue } from '../core/core';
 import { Filter } from '../filter/filter';
 
-function computedSelf(this: any) {
-  return getStateValue(this);
-}
-
 /**
  * Creates a signal that automatically calculates its value from other signals.
  * @param compute The function that calculates the signal value and returns it.
@@ -27,7 +23,7 @@ export function computed<T>(compute: Computation<T>, filter?: any): Signal<T> {
   const getValue = isWritableSignal(compute) ? () => compute() : compute;
 
   const state = createSignalState(undefined as any, getValue);
-  const self: any = computedSelf.bind(state);
+  const self: any = () => getStateValue(state);
 
   if (filter !== undefined) state.filter = filter;
 

@@ -15,11 +15,6 @@ const writableSignalProto = {
   },
 };
 
-function writableSelf(this: any, value: any) {
-  if (!arguments.length) return getStateValue(this);
-  return update(this, value);
-}
-
 /**
  * A signal whose value can be set.
  */
@@ -79,7 +74,11 @@ export function writable<T>(
 
 export function writable(value?: any, filter?: any) {
   const state = createSignalState(value, undefined);
-  const self: any = writableSelf.bind(state);
+
+  const self: any = function (value?: any) {
+    if (!arguments.length) return getStateValue(state);
+    return update(state, value);
+  };
 
   if (filter !== undefined) state.filter = filter;
 
