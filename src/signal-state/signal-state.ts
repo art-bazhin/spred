@@ -29,7 +29,7 @@ export interface SignalState<T> {
   i?: number;
   tracking: boolean;
   isCatcher?: boolean;
-  version?: number;
+  version?: any;
   children?: ((() => any) | SignalState<any>)[];
   name?: string;
   freezed?: boolean;
@@ -61,9 +61,9 @@ export function createSignalState<T>(
     compute,
     nextValue: value,
     subs: 0,
-    version: 0,
     i: 0,
     tracking: false,
+    version: null,
     node: null,
     fs: null,
     ls: null,

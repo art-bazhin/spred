@@ -14,11 +14,10 @@ let activateLevel = 0;
 let calcActive = false;
 
 let queue: SignalState<any>[] = [];
-let queueLength = 0;
 let notificationQueue: SignalState<any>[] = [];
 let nodeCache: ListNode[] = [];
 
-let version = 1;
+let version = {};
 
 export function isolate<T>(fn: () => T): T;
 export function isolate<T, A extends unknown[]>(
@@ -91,8 +90,7 @@ export function update<T>(state: SignalState<T>, value?: any) {
     state.forced = true;
   }
 
-  state.i = queueLength;
-  queueLength = queue.push(state);
+  state.i = queue.push(state) - 1;
 
   recalc();
 
@@ -111,10 +109,7 @@ export function subscribe<T>(
 
   const value = getStateValue(state, true);
 
-  if (activating) {
-    --activateLevel;
-    emitActivateLifecycle(state);
-  }
+  if (activating) --activateLevel;
 
   if (state.freezed) {
     if (exec) isolate(() => subscriber(value, true));
@@ -168,12 +163,12 @@ function emitUpdateLifecycle(state: SignalState<any>, value: any) {
  * Immediately calculates the updated values of the signals and notifies their subscribers.
  */
 export function recalc() {
-  if (!queueLength || calcActive || batchLevel) return;
+  if (!queue.length || calcActive || batchLevel) return;
 
   calcActive = true;
-  ++version;
+  version = {};
 
-  for (let i = 0; i < queueLength; i++) {
+  for (let i = 0; i < queue.length; i++) {
     const state = queue[i];
 
     let value = state.value;
@@ -209,9 +204,7 @@ export function recalc() {
       let node = state.ft;
 
       while (node) {
-        if (typeof node.t === 'object') {
-          queueLength = queue.push(node.t);
-        }
+        if (typeof node.t === 'object') queue.push(node.t);
         node = node.nt;
       }
 
@@ -220,9 +213,7 @@ export function recalc() {
   }
 
   calcActive = false;
-
   queue = [];
-  queueLength = 0;
 
   notify();
   recalc();
@@ -297,6 +288,13 @@ export function getStateValue<T>(
         state.value = value;
         if (calcActive && state.subs) notificationQueue.push(state);
       }
+    } else if (activateLevel) {
+      let n = state.fs;
+
+      while (n) {
+        activateNode(n);
+        n = n.ns;
+      }
     }
 
     if (!state.fs) {
@@ -308,17 +306,14 @@ export function getStateValue<T>(
   state.version = version;
 
   if (tracking && !notTrackDeps) {
+    const activating = activateLevel || calcActive;
+
     if (state.hasException && !tracking.hasException && !tracking.isCatcher) {
       tracking.exception = state.exception;
       tracking.hasException = true;
     }
 
-    const activating = activateLevel || calcActive;
     let node = state.node;
-
-    if (activating && !state.ft) {
-      emitActivateLifecycle(state);
-    }
 
     if (node === null) {
       node = createNode(state, tracking, activating);
@@ -333,17 +328,6 @@ export function getStateValue<T>(
     }
 
     node.stale = false;
-
-    // tracking.dependencies.add(state);
-    // state.stale = false;
-
-    // if (activateLevel || shouldUpdate) {
-    //   if (!state.observers.size) {
-    //     emitActivateLifecycle(state);
-    //   }
-
-    //   state.observers.add(tracking);
-    // }
   }
 
   return state.value;
@@ -450,6 +434,7 @@ function createSubscriberNode(
     source.lt.nt = node;
   } else {
     source.ft = node;
+    emitActivateLifecycle(node.s);
   }
 
   source.lt = node;
@@ -491,6 +476,7 @@ function createNode(
       source.lt.nt = node;
     } else {
       source.ft = node;
+      emitActivateLifecycle(node.s);
     }
 
     source.lt = node;
@@ -500,14 +486,24 @@ function createNode(
 }
 
 function activateNode(node: ListNode) {
-  const lastTarget = node.s.lt;
+  if (node.pt || node.nt || node.s.lt === node) return;
 
-  if (lastTarget) {
-    lastTarget.nt = node;
-    node.pt = lastTarget;
+  if (activateLevel) {
+    let n = node.s.fs;
+
+    while (n) {
+      activateNode(n);
+      n = n.ns;
+    }
+  }
+
+  if (node.s.lt) {
+    node.s.lt.nt = node;
+    node.pt = node.s.lt;
   } else {
     node.s.ft = node;
     node.s.lt = node;
+    emitActivateLifecycle(node.s);
   }
 
   return node;
