@@ -46,7 +46,7 @@ describe('lifecycle signals', () => {
 });
 
 describe('onActivate function', () => {
-  it('subscribes the listener to the writable activate writable', () => {
+  it('sets signal activation listener', () => {
     let value: any;
     let unsub: any;
 
@@ -69,10 +69,43 @@ describe('onActivate function', () => {
     expect(value).toBe(0);
     expect(listener).toBeCalledTimes(1);
   });
+
+  it('correctly reacts to activation of previously calculated signal', () => {
+    const spy = jest.fn();
+
+    const a = writable(0);
+    const b = computed(() => a() * 2);
+    const c = computed(() => b() * 2);
+    const d = computed(() => c() * 2);
+
+    d();
+    onActivate(b, spy);
+    d.subscribe(() => {});
+
+    expect(spy).toBeCalledTimes(1);
+  });
+
+  it('correctly reacts to activation of new dependency', () => {
+    const spy = jest.fn();
+
+    const a = writable(0);
+    const b = writable(1);
+    const c = computed(() => a() && b());
+    const d = computed(() => c());
+
+    onActivate(b, spy);
+    d.subscribe(() => {});
+
+    expect(spy).toBeCalledTimes(0);
+
+    a(1);
+
+    expect(spy).toBeCalledTimes(1);
+  });
 });
 
 describe('onDeactivate function', () => {
-  it('subscribes the listener to the writable deactivate writable', () => {
+  it('sets signal deactivation listener', () => {
     let value: any;
     let unsub: any;
 
@@ -95,10 +128,27 @@ describe('onDeactivate function', () => {
     expect(value).toBe(1);
     expect(listener).toBeCalledTimes(1);
   });
+
+  it('correctly reacts to deactivation of dependency', () => {
+    const spy = jest.fn();
+
+    const a = writable(1);
+    const b = writable(1);
+    const c = computed(() => a() && b());
+    const d = computed(() => c());
+
+    onDeactivate(b, spy);
+    d.subscribe(() => {});
+
+    expect(spy).toBeCalledTimes(0);
+
+    a(0);
+    expect(spy).toBeCalledTimes(1);
+  });
 });
 
 describe('onUpdate function', () => {
-  it('subscribes the listener to the writable writable update writable', () => {
+  it('sets signal update listener', () => {
     let value: any = {};
     let unsub: any;
 
@@ -125,39 +175,10 @@ describe('onUpdate function', () => {
     expect(value.prevValue).toBe(0);
     expect(listener).toBeCalledTimes(1);
   });
-
-  it('subscribes the listener to the writable change writable', () => {
-    let value: any = {};
-    let unsub: any;
-
-    const counter = writable(0);
-    const computedCounter = computed(() => counter());
-    const listener = jest.fn((v) => (value = v));
-
-    onUpdate(computedCounter, listener);
-    expect(value.value).toBeUndefined();
-    expect(value.prevValue).toBeUndefined();
-    expect(listener).toBeCalledTimes(0);
-
-    unsub = computedCounter.subscribe(() => {});
-    expect(value.value).toBeUndefined();
-    expect(value.prevValue).toBeUndefined();
-    expect(listener).toBeCalledTimes(0);
-
-    counter(1);
-    expect(value.value).toBe(1);
-    expect(value.prevValue).toBe(0);
-    expect(listener).toBeCalledTimes(1);
-
-    unsub();
-    expect(value.value).toBe(1);
-    expect(value.prevValue).toBe(0);
-    expect(listener).toBeCalledTimes(1);
-  });
 });
 
 describe('onNotifyStart function', () => {
-  it('subscribes the listener to the writable notifyStart writable', () => {
+  it('sets signal notification start listener', () => {
     let value: any;
     let unsub: any;
 
@@ -183,7 +204,7 @@ describe('onNotifyStart function', () => {
 });
 
 describe('onNotifyEnd function', () => {
-  it('subscribes the listener to the writable notifyEnd writable', () => {
+  it('sets signal notification end listener', () => {
     let value: any;
     let unsub: any;
 
@@ -209,7 +230,7 @@ describe('onNotifyEnd function', () => {
 });
 
 describe('onException function', () => {
-  it('subscribes the listener to the writable exception writable', () => {
+  it('sets signal exception listener', () => {
     configure({
       logException: () => {},
     });
@@ -255,7 +276,7 @@ describe('onException function', () => {
     configure();
   });
 
-  it('correctly reacts to exceptions in intermideate computed writables', () => {
+  it('correctly reacts to exceptions in intermideate signals', () => {
     configure({
       logException: () => {},
     });
