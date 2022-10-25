@@ -25,7 +25,9 @@ import {
   effect as preactEffect,
 } from '../node_modules/@preact/signals-core/dist/signals-core.mjs';
 
-import { computed, writable, batch } from '/dist/index.mjs';
+// import { computed, writable, batch } from '/dist/index.mjs';
+
+const { computed, writable, batch } = spred;
 
 window.process = {
   env: {
