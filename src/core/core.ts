@@ -10,8 +10,9 @@ export let tracking: SignalState<any> | null = null;
 export let scope: SignalState<any> | null = null;
 
 let batchLevel = 0;
-let activateLevel = 0;
-let calcActive = false;
+
+let activating = false;
+let calculating = false;
 
 let queue: SignalState<any>[] = [];
 let notificationQueue: SignalState<any>[] = [];
@@ -27,12 +28,12 @@ export function isolate<T, A extends unknown[]>(
 export function isolate(fn: any, args?: any) {
   const prevTracking = tracking;
   const prevScope = scope;
-  const prevActivateLevel = activateLevel;
+  const prevActivating = activating;
 
   let result: any;
 
-  activateLevel = 0;
   if (tracking) scope = tracking;
+  activating = false;
   tracking = null;
 
   if (args) result = fn(...args);
@@ -40,7 +41,7 @@ export function isolate(fn: any, args?: any) {
 
   tracking = prevTracking;
   scope = prevScope;
-  activateLevel = prevActivateLevel;
+  activating = prevActivating;
 
   return result;
 }
@@ -48,10 +49,10 @@ export function isolate(fn: any, args?: any) {
 export function collect(fn: () => any) {
   const prevTracking = tracking;
   const prevScope = scope;
-  const prevActivateLevel = activateLevel;
+  const prevActivating = activating;
   const fakeState = {} as any as SignalState<any>;
 
-  activateLevel = 0;
+  activating = false;
   scope = fakeState;
   tracking = null;
 
@@ -59,7 +60,7 @@ export function collect(fn: () => any) {
 
   tracking = prevTracking;
   scope = prevScope;
-  activateLevel = prevActivateLevel;
+  activating = prevActivating;
 
   return () => cleanupChildren(fakeState);
 }
@@ -103,13 +104,13 @@ export function subscribe<T>(
   exec = true
 ) {
   const state = (this as any)._state as SignalState<T>;
-  const activating = !state.freezed && !state.ft;
+  const prevActivating = activating;
 
-  if (activating) ++activateLevel;
+  if (!state.freezed && !state.ft) activating = true;
 
   const value = getStateValue(state, true);
 
-  if (activating) --activateLevel;
+  activating = prevActivating;
 
   if (state.freezed) {
     if (exec) isolate(() => subscriber(value, true));
@@ -163,9 +164,9 @@ function emitUpdateLifecycle(state: SignalState<any>, value: any) {
  * Immediately calculates the updated values of the signals and notifies their subscribers.
  */
 export function recalc() {
-  if (!queue.length || calcActive || batchLevel) return;
+  if (!queue.length || calculating || batchLevel) return;
 
-  calcActive = true;
+  calculating = true;
   version = {};
 
   for (let i = 0; i < queue.length; i++) {
@@ -212,7 +213,7 @@ export function recalc() {
     }
   }
 
-  calcActive = false;
+  calculating = false;
   queue = [];
 
   notify();
@@ -267,17 +268,17 @@ export function getStateValue<T>(
   state: SignalState<T>,
   notTrackDeps?: boolean
 ): T {
-  const shouldUpdate = version !== state.version;
-
-  if (state.tracking) {
-    config.logException(new CircularDependencyError());
-    return state.value;
-  }
+  const shouldCompute = version !== state.version;
 
   if (state.compute) {
     if (state.freezed) return state.value;
 
-    if (shouldUpdate) {
+    if (state.tracking) {
+      config.logException(new CircularDependencyError());
+      return state.value;
+    }
+
+    if (shouldCompute) {
       const value = calcComputed(state, notTrackDeps);
       let filtered = false;
 
@@ -286,16 +287,9 @@ export function getStateValue<T>(
 
       if (filtered) {
         state.value = value;
-        if (calcActive && state.subs) notificationQueue.push(state);
+        if (calculating && state.subs) notificationQueue.push(state);
       }
-    } else if (activateLevel) {
-      let n = state.fs;
-
-      while (n) {
-        activateNode(n);
-        n = n.ns;
-      }
-    }
+    } else if (activating) activate(state);
 
     if (!state.fs) {
       state.freezed = true;
@@ -306,28 +300,26 @@ export function getStateValue<T>(
   state.version = version;
 
   if (tracking && !notTrackDeps) {
-    const activating = activateLevel || calcActive;
+    const shouldActivate = activating || calculating;
 
     if (state.hasException && !tracking.hasException && !tracking.isCatcher) {
       tracking.exception = state.exception;
       tracking.hasException = true;
     }
 
-    let node = state.node;
+    const node = state.node;
 
-    if (node === null) {
-      node = createNode(state, tracking, activating);
-      state.node = node;
-    } else if (node.t !== tracking) {
-      nodeCache.push(node);
-      node = createNode(state, tracking, activating);
-      ++node.cached;
-      state.node = node;
-    } else if (activating && !(node.pt || node.nt || node.s.lt === node)) {
-      activateNode(node);
+    if (node && node.t === tracking) {
+      if (shouldActivate) activateNode(node);
+      node.stale = false;
+    } else {
+      if (node) {
+        nodeCache.push(node);
+        ++node.cached;
+      }
+
+      state.node = createNode(state, tracking, shouldActivate);
     }
-
-    node.stale = false;
   }
 
   return state.value;
@@ -343,6 +335,7 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
 
   state.tracking = true;
   state.hasException = false;
+
   let node = state.fs;
 
   while (node) {
@@ -352,7 +345,7 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
   }
 
   try {
-    value = state.compute!(state.value, calcActive);
+    value = state.compute!(state.value, calculating);
   } catch (e: any) {
     state.exception = e;
     state.hasException = true;
@@ -361,8 +354,6 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
   node = state.ls;
 
   while (node) {
-    const ps = node.ps;
-
     if (node.cached) {
       node.s.node = nodeCache.pop()!;
       --node.cached;
@@ -372,7 +363,7 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
 
     if (node.stale) removeNode(node, true);
 
-    node = ps;
+    node = node.ps;
   }
 
   state.tracking = false;
@@ -445,7 +436,7 @@ function createSubscriberNode(
 function createNode(
   source: SignalState<any>,
   target: SignalState<any>,
-  activating?: any
+  shouldActivate?: any
 ) {
   const node: ListNode = {
     s: source,
@@ -469,7 +460,7 @@ function createNode(
 
   target.ls = node;
 
-  if (activating) {
+  if (shouldActivate) {
     node.pt = source.lt;
 
     if (source.lt) {
@@ -485,17 +476,18 @@ function createNode(
   return node;
 }
 
+function activate(state: SignalState<any>) {
+  let n = state.fs;
+
+  while (n) {
+    activateNode(n);
+    n = n.ns;
+  }
+}
+
 function activateNode(node: ListNode) {
   if (node.pt || node.nt || node.s.lt === node) return;
-
-  if (activateLevel) {
-    let n = node.s.fs;
-
-    while (n) {
-      activateNode(n);
-      n = n.ns;
-    }
-  }
+  if (activating) activate(node.s);
 
   if (node.s.lt) {
     node.s.lt.nt = node;
@@ -519,9 +511,6 @@ function removeNode(node: ListNode, unlinkSources?: boolean) {
 
     if (node.ps) node.ps.ns = node.ns;
     if (node.ns) node.ns.ps = node.ps;
-
-    node.ps = null;
-    node.ns = null;
   }
 
   if (node.s.ft === node) node.s.ft = node.nt;
@@ -529,9 +518,6 @@ function removeNode(node: ListNode, unlinkSources?: boolean) {
 
   if (node.pt) node.pt.nt = node.nt;
   if (node.nt) node.nt.pt = node.pt;
-
-  node.pt = null;
-  node.nt = null;
 
   if (!node.s.ft) {
     const state = node.s;
@@ -545,9 +531,8 @@ function removeNode(node: ListNode, unlinkSources?: boolean) {
     let n = state.fs;
 
     while (n) {
-      const ns = n.ns;
       removeNode(n);
-      n = ns;
+      n = n.ns;
     }
   }
 }
