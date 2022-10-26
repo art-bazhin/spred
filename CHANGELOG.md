@@ -2,6 +2,39 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.30.0](https://github.com/art-bazhin/spred/compare/v0.29.1...v0.30.0) (2022-10-26)
+
+
+### ⚠ BREAKING CHANGES
+
+* Removed catcher fn. Use computed catchException arg.
+* use falsy filter arg values for default filtration
+
+### Features
+
+* use falsy filter arg values for default filtration ([4ab9b14](https://github.com/art-bazhin/spred/commit/4ab9b1439b06aefb7d2a8322ed257b6b95d9c2c7))
+
+
+### Bug Fixes
+
+* fix activation missing bug ([d69a53b](https://github.com/art-bazhin/spred/commit/d69a53bdc847ef8f8b46930ac45fcfb3128197bb))
+
+
+### Tests
+
+* **bench:** use minified version in benchmark ([37b2cfd](https://github.com/art-bazhin/spred/commit/37b2cfd3d81110659c6a0f10da8045c52a507d9d))
+* **lifecycle:** add missing activation and deactivation tests ([cc99ec0](https://github.com/art-bazhin/spred/commit/cc99ec0eb088676b97b45bce0eb588971af742a2))
+
+
+### Code Refactoring
+
+* **core:** refactor dependency tracking using linked lists ([c5ad333](https://github.com/art-bazhin/spred/commit/c5ad333343005d797ebf46e6b247281d58d0cee9))
+* minor refactoring ([c1a2735](https://github.com/art-bazhin/spred/commit/c1a2735c3d6a2200cf9556b147c76a623fd83c7f))
+* minor refactoring ([3628166](https://github.com/art-bazhin/spred/commit/362816666228d1b05c874543afa4c81353c34904))
+* refactor error handling ([045c734](https://github.com/art-bazhin/spred/commit/045c734bcb1754ecb431908e3ee44ceb3766ba29))
+* rollback to using sets ([20bc269](https://github.com/art-bazhin/spred/commit/20bc2696f5f3accbeda3a6a4c23670bdce9ba75c))
+* use closure instead of binding in signal constructors ([0707086](https://github.com/art-bazhin/spred/commit/07070862dad6189059a9943bf6ad46dbbd8614c1))
+
 ### [0.29.1](https://github.com/art-bazhin/spred/compare/v0.29.0...v0.29.1) (2022-10-22)
 
 
