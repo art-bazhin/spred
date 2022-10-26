@@ -207,11 +207,8 @@ export function recalc() {
         if (state.subs) notificationQueue.push(state);
       }
 
-      let node = state.ft;
-
-      while (node) {
+      for (let node = state.ft; node !== null; node = node.nt) {
         if (typeof node.t === 'object') queue.push(node.t);
-        node = node.nt;
       }
 
       if (forced) state.forced = false;
@@ -337,12 +334,9 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
   state.tracking = true;
   state.hasException = false;
 
-  let node = state.fs;
-
-  while (node) {
+  for (let node = state.fs; node !== null; node = node.ns) {
     node.s.node = node;
     node.stale = true;
-    node = node.ns;
   }
 
   try {
@@ -376,9 +370,7 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
     }
   }
 
-  node = state.ls;
-
-  while (node) {
+  for (let node = state.ls; node !== null; node = node.ps) {
     if (node.cached) {
       node.s.node = nodeCache.pop()!;
       --node.cached;
@@ -387,8 +379,6 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
     }
 
     if (node.stale) removeNode(node, true);
-
-    node = node.ps;
   }
 
   state.tracking = false;
@@ -490,11 +480,8 @@ function createNode(
 }
 
 function activate(state: SignalState<any>) {
-  let n = state.fs;
-
-  while (n) {
-    activateNode(n);
-    n = n.ns;
+  for (let node = state.fs; node !== null; node = node.ns) {
+    activateNode(node);
   }
 }
 
@@ -541,11 +528,8 @@ function removeNode(node: ListNode, unlinkSources?: boolean) {
       state.onDeactivate(state.value);
     }
 
-    let n = state.fs;
-
-    while (n) {
-      removeNode(n);
-      n = n.ns;
+    for (let node = state.fs; node !== null; node = node.ns) {
+      removeNode(node);
     }
   }
 }
