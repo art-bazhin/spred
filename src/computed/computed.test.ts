@@ -1,15 +1,7 @@
 import { computed } from './computed';
 import { writable } from '../writable/writable';
 import { configure } from '../config/config';
-import {
-  onActivate,
-  onDeactivate,
-  onException,
-  onNotifyEnd,
-  onNotifyStart,
-  onUpdate,
-} from '../lifecycle/lifecycle';
-import { on } from '../on/on';
+import { onDeactivate } from '../lifecycle/lifecycle';
 
 describe('computed', () => {
   const a = writable(1);
@@ -431,9 +423,9 @@ describe('computed', () => {
     expect(spy).toBeCalledTimes(3);
   });
 
-  it('does not ignore any new value if the second arg is false', () => {
-    const a = writable(0, false);
-    const b = computed(a, false);
+  it('does not ignore any new value if the second arg is true', () => {
+    const a = writable(0, true);
+    const b = computed(a, true);
     const spy = jest.fn();
 
     b.subscribe(spy);
@@ -453,7 +445,7 @@ describe('computed', () => {
   });
 
   it('can use custom filter function', () => {
-    const a = writable(0, false);
+    const a = writable(0, true);
     const b = computed(a, (value) => value < 5);
     const spy = jest.fn();
 

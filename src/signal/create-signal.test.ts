@@ -56,8 +56,8 @@ describe('signal function', () => {
     expect(spy).toBeCalledTimes(3);
   });
 
-  it('does not ignore any new value if the second arg is false', () => {
-    const [value, set] = signal(0, false);
+  it('does not ignore any new value if the second arg is true', () => {
+    const [value, set] = signal(0, true);
     const spy = jest.fn();
 
     value.subscribe(spy);

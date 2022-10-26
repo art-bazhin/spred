@@ -149,8 +149,8 @@ describe('writable', () => {
     expect(spy).toBeCalledTimes(3);
   });
 
-  it('does not ignore any new value if the second arg is false', () => {
-    const a = writable(0, false);
+  it('does not ignore any new value if the second arg is true', () => {
+    const a = writable(0, true);
     const spy = jest.fn();
 
     a.subscribe(spy);

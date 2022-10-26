@@ -81,10 +81,10 @@ export function effect<T, A extends unknown[]>(
   let current = -1;
 
   const _status = writable<EffectStatus>('pristine');
-  const _exception = writable(undefined as unknown, false);
-  const _data = writable<T>(undefined as any, false);
+  const _exception = writable(undefined as unknown, true);
+  const _data = writable<T>(undefined as any, true);
   const _aborted = writable();
-  const _args = writable<A>(undefined as any, false);
+  const _args = writable<A>(undefined as any, true);
 
   const lastStatus = computed(_status, (status) => status !== 'pending');
 
@@ -109,7 +109,7 @@ export function effect<T, A extends unknown[]>(
     }
   );
 
-  const exception = computed(_exception, false);
+  const exception = computed(_exception, true);
 
   const done = computed(() => {
     const data = _data();
@@ -123,11 +123,11 @@ export function effect<T, A extends unknown[]>(
       case 'rejected':
         return exception;
     }
-  }, false);
+  }, true);
 
-  const data = computed(_data, false);
-  const aborted = computed(_aborted, false);
-  const args = computed(_args, false);
+  const data = computed(_data, true);
+  const aborted = computed(_aborted, true);
+  const args = computed(_args, true);
 
   const abort = () => {
     if (!status.sample()!.pending) return;

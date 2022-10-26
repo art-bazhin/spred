@@ -58,21 +58,21 @@ export function writable<T>(): WritableSignal<T | undefined>;
 /**
  * Сreates a writable signal.
  * @param value Initial value of the signal.
- * @param filter The function that returns a falsy value if the new signal value should be ignored. Use undefined arg value to emit signal values that are not equal to previous vaslue. Use false arg value to emit all signal values.
+ * @param shouldUpdate The function that returns a falsy value if the new signal value should be ignored. Use falsy arg value to emit signal values that are not equal to previous vaslue. Use truthy arg value to emit all signal values.
  * @returns Writable signal.
  */
 
 export function writable<T>(
   value: T,
-  filter?: Filter<T> | false
+  shouldUpdate?: Filter<T> | boolean | null
 ): WritableSignal<T>;
 
 export function writable<T>(
   value: undefined,
-  filter?: Filter<T> | false
+  shouldUpdate?: Filter<T> | boolean | null
 ): WritableSignal<T | undefined>;
 
-export function writable(value?: any, filter?: any) {
+export function writable(value?: any, shouldUpdate?: any) {
   const state = createSignalState(value, undefined);
 
   const self: any = function (value?: any) {
@@ -80,7 +80,7 @@ export function writable(value?: any, filter?: any) {
     return update(state, value);
   };
 
-  if (filter !== undefined) state.filter = filter;
+  if (shouldUpdate !== undefined) state.filter = shouldUpdate;
 
   self._state = state;
   self.set = writableSignalProto.set;

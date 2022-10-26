@@ -160,6 +160,16 @@ function emitUpdateLifecycle(state: SignalState<any>, value: any) {
   }
 }
 
+function getFiltered<T>(value: T, state: SignalState<T>) {
+  const filter = state.filter;
+  const prevValue = state.value;
+
+  if (filter)
+    return typeof filter === 'function' ? filter(value, prevValue) : true;
+
+  return !Object.is(value, prevValue);
+}
+
 /**
  * Immediately calculates the updated values of the signals and notifies their subscribers.
  */
@@ -188,12 +198,7 @@ export function recalc() {
 
     const err = state.hasException;
     const forced = state.forced;
-    const filter = state.filter;
-    let filtered = false;
-
-    if (filter) filtered = filter(value, state.value);
-    else if (filter === false) filtered = true;
-    else filtered = !Object.is(value, state.value);
+    const filtered = getFiltered(value, state);
 
     if (forced || filtered || err) {
       if (!err) {
@@ -280,12 +285,8 @@ export function getStateValue<T>(
 
     if (shouldCompute) {
       const value = calcComputed(state, notTrackDeps);
-      let filtered = false;
 
-      if (state.filter) filtered = state.filter(value, state.value);
-      else filtered = !Object.is(value, state.value);
-
-      if (filtered) {
+      if (getFiltered(value, state)) {
         state.value = value;
         if (calculating && state.subs) notificationQueue.push(state);
       }
