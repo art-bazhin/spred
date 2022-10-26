@@ -32,7 +32,6 @@ import {
 } from './guards/guards';
 import { isolate } from './isolate/isolate';
 import { collect } from './collect/collect';
-import { catcher } from './catcher/catcher';
 import { named } from './named/named';
 import { createLogger } from './logger/logger';
 import { Computation } from './signal-state/signal-state';
@@ -70,7 +69,6 @@ export {
   sampleValue,
   isolate,
   collect,
-  catcher,
   named,
   createLogger,
 };

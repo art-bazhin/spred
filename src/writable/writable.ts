@@ -64,12 +64,12 @@ export function writable<T>(): WritableSignal<T | undefined>;
 
 export function writable<T>(
   value: T,
-  shouldUpdate?: Filter<T> | boolean | null
+  shouldUpdate?: Filter<T> | boolean | null | undefined
 ): WritableSignal<T>;
 
 export function writable<T>(
   value: undefined,
-  shouldUpdate?: Filter<T> | boolean | null
+  shouldUpdate?: Filter<T> | boolean | null | undefined
 ): WritableSignal<T | undefined>;
 
 export function writable(value?: any, shouldUpdate?: any) {
@@ -80,7 +80,7 @@ export function writable(value?: any, shouldUpdate?: any) {
     return update(state, value);
   };
 
-  if (shouldUpdate !== undefined) state.filter = shouldUpdate;
+  if (shouldUpdate) state.filter = shouldUpdate;
 
   self._state = state;
   self.set = writableSignalProto.set;

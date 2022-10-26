@@ -25,10 +25,10 @@ export interface SignalState<T> {
   exception?: unknown;
   subs: number;
   compute?: Computation<T>;
+  catch?: (err: unknown, prevValue?: T) => T;
   filter?: Filter<T> | false;
   i?: number;
   tracking: boolean;
-  isCatcher?: boolean;
   version?: any;
   children?: ((() => any) | SignalState<any>)[];
   name?: string;

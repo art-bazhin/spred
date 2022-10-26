@@ -303,7 +303,7 @@ export function getStateValue<T>(
   if (tracking && !notTrackDeps) {
     const shouldActivate = activating || calculating;
 
-    if (state.hasException && !tracking.hasException && !tracking.isCatcher) {
+    if (state.hasException && !tracking.hasException) {
       tracking.exception = state.exception;
       tracking.hasException = true;
     }
@@ -352,6 +352,30 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
     state.hasException = true;
   }
 
+  if (state.hasException) {
+    if (state.catch) {
+      try {
+        value = state.catch(state.exception, state.value);
+        state.hasException = false;
+        state.exception = undefined;
+      } catch (e) {
+        state.exception = e;
+      }
+    }
+
+    if (state.hasException) {
+      logHook(state, 'EXCEPTION');
+
+      if (state.onException) {
+        state.onException(state.exception);
+      }
+
+      if (logException || state.subs || (!state.ft && !tracking)) {
+        config.logException(state.exception);
+      }
+    }
+  }
+
   node = state.ls;
 
   while (node) {
@@ -369,18 +393,6 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
 
   state.tracking = false;
   tracking = prevTracking;
-
-  if (state.hasException) {
-    logHook(state, 'EXCEPTION');
-
-    if (state.onException) {
-      state.onException(state.exception);
-    }
-
-    if (logException || state.subs || (!state.ft && !tracking)) {
-      config.logException(state.exception);
-    }
-  }
 
   return value;
 }

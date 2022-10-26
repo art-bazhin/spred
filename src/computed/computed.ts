@@ -15,23 +15,27 @@ import { Filter } from '../filter/filter';
 export function computed<T>(compute: Computation<T>): Signal<T>;
 export function computed<T>(
   compute: Computation<T>,
-  shouldUpdate: boolean | null
+  shouldUpdate: boolean | null | undefined,
+  catchException?: (e: unknown, prevValue?: T) => T
 ): Signal<T>;
 export function computed<T>(
   compute: Computation<T>,
-  shouldUpdate: Filter<T>
+  shouldUpdate: Filter<T>,
+  catchException?: (e: unknown, prevValue?: T) => T
 ): Signal<T | undefined>;
 
 export function computed<T>(
   compute: Computation<T>,
-  shouldUpdate?: any
+  shouldUpdate?: any,
+  catchException?: (e: unknown, prevValue?: T) => T
 ): Signal<T> {
   const getValue = isWritableSignal(compute) ? () => compute() : compute;
 
   const state = createSignalState(undefined as any, getValue);
   const self: any = () => getStateValue(state);
 
-  if (shouldUpdate !== undefined) state.filter = shouldUpdate;
+  if (shouldUpdate) state.filter = shouldUpdate;
+  if (catchException) state.catch = catchException;
 
   self._state = state;
   self.get = signalProto.get;

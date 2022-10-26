@@ -15,7 +15,7 @@ export function signal<T>(initialValue: T): [Signal<T>, Setter<T>];
 
 export function signal<T>(
   initialValue: T,
-  shouldUpdate: boolean | null
+  shouldUpdate: boolean | null | undefined
 ): [Signal<T>, Setter<T>];
 
 export function signal<T>(
@@ -29,7 +29,7 @@ export function signal<T>(
 
 export function signal<T>(
   initialValue: undefined,
-  shouldUpdate: boolean | null
+  shouldUpdate: boolean | null | undefined
 ): [Signal<T | undefined>, Setter<T | undefined>];
 
 export function signal<T>(
