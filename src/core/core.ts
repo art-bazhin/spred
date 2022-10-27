@@ -183,24 +183,21 @@ export function recalc() {
     const state = queue[i];
 
     let value = state.value;
+    let forced: boolean | undefined;
 
     if (state.compute) {
-      if (!state.ft) continue;
-      if (state.version !== version) {
-        value = calcComputed(state);
-        state.version = version;
-      } else continue;
+      if (state.version === version || !state.ft) continue;
+      value = calcComputed(state);
+      state.version = version;
     } else {
       if (state.i !== i) continue;
+      forced = state.forced;
       value = state.nextValue;
-      state.version = version;
     }
 
     const err = state.hasException;
-    const forced = state.forced;
-    const filtered = getFiltered(value, state);
 
-    if (forced || filtered || err) {
+    if (getFiltered(value, state) || err || forced) {
       if (!err) {
         emitUpdateLifecycle(state, value);
         state.value = value;
@@ -270,8 +267,6 @@ export function getStateValue<T>(
   state: SignalState<T>,
   notTrackDeps?: boolean
 ): T {
-  const shouldCompute = version !== state.version;
-
   if (state.compute) {
     if (state.freezed) return state.value;
 
@@ -280,13 +275,15 @@ export function getStateValue<T>(
       return state.value;
     }
 
-    if (shouldCompute) {
+    if (state.version !== version) {
       const value = calcComputed(state, notTrackDeps);
 
       if (getFiltered(value, state)) {
         state.value = value;
         if (calculating && state.subs) notificationQueue.push(state);
       }
+
+      state.version = version;
     } else if (activating) activate(state);
 
     if (!state.fs) {
@@ -294,8 +291,6 @@ export function getStateValue<T>(
       return state.value;
     }
   }
-
-  state.version = version;
 
   if (tracking && !notTrackDeps) {
     const shouldActivate = activating || calculating;
@@ -487,7 +482,6 @@ function activate(state: SignalState<any>) {
 
 function activateNode(node: ListNode) {
   if (node.pt || node.nt || node.s.lt === node) return;
-  if (activating) activate(node.s);
 
   if (node.s.lt) {
     node.s.lt.nt = node;
@@ -495,6 +489,7 @@ function activateNode(node: ListNode) {
   } else {
     node.s.ft = node;
     node.s.lt = node;
+    activate(node.s);
     emitActivateLifecycle(node.s);
   }
 
