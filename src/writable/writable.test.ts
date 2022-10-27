@@ -184,6 +184,7 @@ describe('writable', () => {
 
     a(5);
     expect(spy).toBeCalledTimes(3);
+    expect(a()).toBe(1);
 
     a(2);
     expect(spy).toBeCalledTimes(4);

@@ -2,8 +2,6 @@ import { writable, WritableSignal } from './writable/writable';
 import {
   onActivate,
   onDeactivate,
-  onNotifyStart,
-  onNotifyEnd,
   onUpdate,
   onException,
 } from './lifecycle/lifecycle';
@@ -55,8 +53,6 @@ export {
   on,
   onActivate,
   onDeactivate,
-  onNotifyStart,
-  onNotifyEnd,
   onUpdate,
   onException,
   effect,

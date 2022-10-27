@@ -65,12 +65,12 @@ describe('isolate', () => {
     external(1);
     expect(innerSpy).toBeCalledTimes(4);
     expect(externalSpy).toBeCalledTimes(4);
-    expect(deepSpy).toBeCalledTimes(4);
+    expect(deepSpy).toBeCalledTimes(5); // because of subscription order
 
     external(2);
     expect(innerSpy).toBeCalledTimes(5);
     expect(externalSpy).toBeCalledTimes(5);
-    expect(deepSpy).toBeCalledTimes(5);
+    expect(deepSpy).toBeCalledTimes(7);
   });
 
   it('unsubscribes all inner subscriptions on parent calculation (case 2)', () => {

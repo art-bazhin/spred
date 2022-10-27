@@ -191,6 +191,54 @@ describe('computed', () => {
     expect(spy).toBeCalledTimes(5);
   });
 
+  it('unsubscribes all inner subscriptions on parent calculation', () => {
+    const innerSpy = jest.fn();
+    const externalSpy = jest.fn();
+    const deepSpy = jest.fn();
+
+    const source = writable(0);
+    const external = writable(0);
+
+    const comp = computed(() => {
+      const inner = computed(() => {
+        const deep = computed(external);
+        deep.subscribe(() => deepSpy());
+
+        return external();
+      });
+
+      external.subscribe(() => externalSpy());
+      inner.subscribe(() => innerSpy());
+
+      return source();
+    });
+
+    comp.subscribe(() => {});
+    expect(innerSpy).toBeCalledTimes(1);
+    expect(externalSpy).toBeCalledTimes(1);
+    expect(deepSpy).toBeCalledTimes(1);
+
+    source(1);
+    expect(innerSpy).toBeCalledTimes(2);
+    expect(externalSpy).toBeCalledTimes(2);
+    expect(deepSpy).toBeCalledTimes(2);
+
+    source(2);
+    expect(innerSpy).toBeCalledTimes(3);
+    expect(externalSpy).toBeCalledTimes(3);
+    expect(deepSpy).toBeCalledTimes(3);
+
+    external(1);
+    expect(innerSpy).toBeCalledTimes(4);
+    expect(externalSpy).toBeCalledTimes(4);
+    expect(deepSpy).toBeCalledTimes(5); // because of subscription order
+
+    external(2);
+    expect(innerSpy).toBeCalledTimes(5);
+    expect(externalSpy).toBeCalledTimes(5);
+    expect(deepSpy).toBeCalledTimes(7);
+  });
+
   it('handles automatic unsubscribing in the right order', () => {
     const onDeactivateSpy = jest.fn();
 

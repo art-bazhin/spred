@@ -1,12 +1,5 @@
 import { writable, computed, configure } from '..';
-import {
-  onActivate,
-  onUpdate,
-  onDeactivate,
-  onException,
-  onNotifyEnd,
-  onNotifyStart,
-} from './lifecycle';
+import { onActivate, onUpdate, onDeactivate, onException } from './lifecycle';
 
 describe('lifecycle signals', () => {
   it('emits in right order', () => {
@@ -15,12 +8,9 @@ describe('lifecycle signals', () => {
     const result: any = {};
     let order = 0;
 
-    onActivate(counter, () => {});
     onActivate(counter, () => (result.activate = ++order));
     onDeactivate(counter, () => (result.deactivate = ++order));
     onUpdate(counter, () => (result.update = ++order));
-    onNotifyStart(counter, () => (result.notifyStart = ++order));
-    onNotifyEnd(counter, () => (result.notifyEnd = ++order));
 
     const unsub = counter.subscribe(() => {});
     counter(1);
@@ -28,9 +18,7 @@ describe('lifecycle signals', () => {
 
     expect(result.activate).toBe(1);
     expect(result.update).toBe(2);
-    expect(result.notifyStart).toBe(3);
-    expect(result.notifyEnd).toBe(4);
-    expect(result.deactivate).toBe(5);
+    expect(result.deactivate).toBe(3);
   });
 
   it('does not subscribe same listenr twice', () => {
@@ -173,58 +161,6 @@ describe('onUpdate function', () => {
     unsub();
     expect(value.value).toBe(1);
     expect(value.prevValue).toBe(0);
-    expect(listener).toBeCalledTimes(1);
-  });
-});
-
-describe('onNotifyStart function', () => {
-  it('sets signal notification start listener', () => {
-    let value: any;
-    let unsub: any;
-
-    const counter = writable(0);
-    const listener = jest.fn((v) => (value = v));
-
-    onNotifyStart(counter, listener);
-    expect(value).toBeUndefined();
-    expect(listener).toBeCalledTimes(0);
-
-    unsub = counter.subscribe(() => {});
-    expect(value).toBeUndefined();
-    expect(listener).toBeCalledTimes(0);
-
-    counter(1);
-    expect(value).toBe(1);
-    expect(listener).toBeCalledTimes(1);
-
-    unsub();
-    expect(value).toBe(1);
-    expect(listener).toBeCalledTimes(1);
-  });
-});
-
-describe('onNotifyEnd function', () => {
-  it('sets signal notification end listener', () => {
-    let value: any;
-    let unsub: any;
-
-    const counter = writable(0);
-    const listener = jest.fn((v) => (value = v));
-
-    onNotifyEnd(counter, listener);
-    expect(value).toBeUndefined();
-    expect(listener).toBeCalledTimes(0);
-
-    unsub = counter.subscribe(() => {});
-    expect(value).toBeUndefined();
-    expect(listener).toBeCalledTimes(0);
-
-    counter(1);
-    expect(value).toBe(1);
-    expect(listener).toBeCalledTimes(1);
-
-    unsub();
-    expect(value).toBe(1);
     expect(listener).toBeCalledTimes(1);
   });
 });

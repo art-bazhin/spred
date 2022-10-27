@@ -55,27 +55,3 @@ export function onException<T>(
 ) {
   (signal as any)._state.onException = listener;
 }
-
-/**
- * Sets the notify start event listener. The event is emitted before signal subscribers are notified.
- * @param signal Target signal.
- * @param listener Function that listens to the signal notification start event.
- */
-export function onNotifyStart<T>(
-  signal: Signal<T>,
-  listener: ((value: T) => any) | null
-) {
-  (signal as any)._state.onNotifyStart = listener;
-}
-
-/**
- * Sets the notify start event listener. The event is emitted after signal subscribers are notified.
- * @param signal Target signal.
- * @param listener Function that listens to the signal notification start event.
- */
-export function onNotifyEnd<T>(
-  signal: Signal<T>,
-  listener: ((value: T) => any) | null
-) {
-  (signal as any)._state.onNotifyEnd = listener;
-}

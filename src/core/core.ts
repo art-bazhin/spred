@@ -15,7 +15,6 @@ let activating = false;
 let calculating = false;
 
 let queue: SignalState<any>[] = [];
-let notificationQueue: SignalState<any>[] = [];
 let nodeCache: ListNode[] = [];
 
 let version = {};
@@ -70,11 +69,14 @@ export function collect(fn: () => any) {
  * @param fn The function with updates.
  */
 export function batch(fn: (...args: any) => any) {
+  const wrapper = (config as any)._notificationWrapper;
+
   batchLevel++;
   fn();
   batchLevel--;
 
-  recalc();
+  if (wrapper) wrapper(recalc);
+  else recalc();
 }
 
 export function update<T>(
@@ -84,6 +86,8 @@ export function update<T>(
 export function update<T>(state: SignalState<T>, value: T | undefined): T;
 export function update<T>(state: SignalState<T>): void;
 export function update<T>(state: SignalState<T>, value?: any) {
+  const wrapper = (config as any)._notificationWrapper;
+
   if (arguments.length > 1) {
     if (typeof value === 'function') state.nextValue = value(state.nextValue);
     else state.nextValue = value;
@@ -93,7 +97,8 @@ export function update<T>(state: SignalState<T>, value?: any) {
 
   state.i = queue.push(state) - 1;
 
-  recalc();
+  if (wrapper) wrapper(recalc);
+  else recalc();
 
   return state.nextValue;
 }
@@ -174,8 +179,9 @@ function getFiltered<T>(value: T, state: SignalState<T>) {
  * Immediately calculates the updated values of the signals and notifies their subscribers.
  */
 export function recalc() {
-  if (!queue.length || calculating || batchLevel) return;
+  if (!queue.length || batchLevel) return;
 
+  ++batchLevel;
   calculating = true;
   version = {};
 
@@ -201,11 +207,11 @@ export function recalc() {
       if (!err) {
         emitUpdateLifecycle(state, value);
         state.value = value;
-        if (state.subs) notificationQueue.push(state);
       }
 
       for (let node = state.ft; node !== null; node = node.nt) {
         if (typeof node.t === 'object') queue.push(node.t);
+        else if (!err) node.t(node.s.value);
       }
 
       if (forced) state.forced = false;
@@ -214,52 +220,17 @@ export function recalc() {
 
   calculating = false;
   queue = [];
-
-  notify();
-  recalc();
-}
-
-function notify() {
-  const wrapper = (config as any)._notificationWrapper;
-
-  batchLevel++;
-
-  if (wrapper) {
-    wrapper(() => {
-      for (let state of notificationQueue) runSubscribers(state);
-    });
-  } else {
-    for (let state of notificationQueue) runSubscribers(state);
-  }
-
-  notificationQueue = [];
-
-  batchLevel--;
+  --batchLevel;
 }
 
 function runSubscribers<T>(state: SignalState<T>) {
   let subsCount = state.subs;
-  if (!subsCount) return;
-
-  const value = state.value;
-
-  logHook(state, 'NOTIFY_START');
-
-  if (state.onNotifyStart) {
-    state.onNotifyStart(value);
-  }
 
   for (let node = state.ft; subsCount && node !== null; node = node.nt) {
     if (typeof node.t === 'function') {
       node.t(state.value);
       --subsCount;
     }
-  }
-
-  logHook(state, 'NOTIFY_END');
-
-  if (state.onNotifyEnd) {
-    state.onNotifyEnd(value);
   }
 }
 
@@ -280,7 +251,7 @@ export function getStateValue<T>(
 
       if (getFiltered(value, state)) {
         state.value = value;
-        if (calculating && state.subs) notificationQueue.push(state);
+        if (calculating && state.subs) runSubscribers(state);
       }
 
       state.version = version;
