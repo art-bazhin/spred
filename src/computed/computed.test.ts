@@ -66,6 +66,27 @@ describe('computed', () => {
     expect(value).toBe('2');
   });
 
+  it('can pass values to writable signals during computing (case 2)', () => {
+    const a = writable(0);
+    const b = writable(0);
+    const c = computed(() => {
+      if (a() > 5) b(10);
+      return a() + b();
+    });
+
+    c.subscribe(() => {});
+    expect(c()).toBe(0);
+
+    a(1);
+    expect(c()).toBe(1);
+
+    a(6);
+    expect(c()).toBe(16);
+
+    b(5);
+    expect(c()).toBe(16);
+  });
+
   it('logs unhandled exceptions', () => {
     const spy = jest.fn();
 

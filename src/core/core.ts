@@ -16,6 +16,7 @@ let activateLevel = 0;
 let calculating = false;
 
 let queue: SignalState<any>[] = [];
+let nextQueue: SignalState<any>[] = [];
 
 let version = 0;
 
@@ -87,6 +88,7 @@ export function update<T>(state: SignalState<T>, value: T | undefined): T;
 export function update<T>(state: SignalState<T>): void;
 export function update<T>(state: SignalState<T>, value?: any) {
   const wrapper = (config as any)._notificationWrapper;
+  const q = calculating ? nextQueue : queue;
 
   if (arguments.length > 1) {
     if (typeof value === 'function') state.nextValue = value(state.nextValue);
@@ -95,7 +97,7 @@ export function update<T>(state: SignalState<T>, value?: any) {
     state.forced = true;
   }
 
-  state.i = queue.push(state) - 1;
+  state.i = q.push(state) - 1;
 
   if (wrapper) wrapper(recalc);
   else recalc();
@@ -195,7 +197,6 @@ export function recalc() {
     if (state.compute) {
       if (state.version === version || !state.ft) continue;
       ++activateLevel;
-      //console.log('COMP', state);
       value = calcComputed(state);
       --activateLevel;
       state.version = version;
@@ -223,8 +224,12 @@ export function recalc() {
   }
 
   calculating = false;
-  queue = [];
   --batchLevel;
+
+  queue = nextQueue;
+  nextQueue = [];
+
+  recalc();
 }
 
 function runSubscribers<T>(state: SignalState<T>) {
