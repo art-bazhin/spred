@@ -9,15 +9,15 @@ import { NOOP_FN } from '../utils/constants';
 export let tracking: SignalState<any> | null = null;
 export let scope: SignalState<any> | null = null;
 
-let batchLevel = 0;
+let node: ListNode | null = null;
 
-let activating = false;
+let batchLevel = 0;
+let activateLevel = 0;
 let calculating = false;
 
 let queue: SignalState<any>[] = [];
-let nodeCache: ListNode[] = [];
 
-let version = {};
+let version = 0;
 
 export function isolate<T>(fn: () => T): T;
 export function isolate<T, A extends unknown[]>(
@@ -27,12 +27,12 @@ export function isolate<T, A extends unknown[]>(
 export function isolate(fn: any, args?: any) {
   const prevTracking = tracking;
   const prevScope = scope;
-  const prevActivating = activating;
+  const prevActivating = activateLevel;
 
   let result: any;
 
   if (tracking) scope = tracking;
-  activating = false;
+  activateLevel = 0;
   tracking = null;
 
   if (args) result = fn(...args);
@@ -40,7 +40,7 @@ export function isolate(fn: any, args?: any) {
 
   tracking = prevTracking;
   scope = prevScope;
-  activating = prevActivating;
+  activateLevel = prevActivating;
 
   return result;
 }
@@ -48,10 +48,10 @@ export function isolate(fn: any, args?: any) {
 export function collect(fn: () => any) {
   const prevTracking = tracking;
   const prevScope = scope;
-  const prevActivating = activating;
+  const prevActivating = activateLevel;
   const fakeState = {} as any as SignalState<any>;
 
-  activating = false;
+  activateLevel = 0;
   scope = fakeState;
   tracking = null;
 
@@ -59,7 +59,7 @@ export function collect(fn: () => any) {
 
   tracking = prevTracking;
   scope = prevScope;
-  activating = prevActivating;
+  activateLevel = prevActivating;
 
   return () => cleanupChildren(fakeState);
 }
@@ -109,13 +109,14 @@ export function subscribe<T>(
   exec = true
 ) {
   const state = (this as any)._state as SignalState<T>;
-  const prevActivating = activating;
 
-  if (!state.freezed && !state.ft) activating = true;
+  // if (!state.freezed && !state.ft)
+
+  ++activateLevel;
 
   const value = getStateValue(state, true);
 
-  activating = prevActivating;
+  --activateLevel;
 
   if (state.freezed) {
     if (exec) isolate(() => subscriber(value, true));
@@ -183,7 +184,7 @@ export function recalc() {
 
   ++batchLevel;
   calculating = true;
-  version = {};
+  ++version;
 
   for (let i = 0; i < queue.length; i++) {
     const state = queue[i];
@@ -193,7 +194,10 @@ export function recalc() {
 
     if (state.compute) {
       if (state.version === version || !state.ft) continue;
+      ++activateLevel;
+      //console.log('COMP', state);
       value = calcComputed(state);
+      --activateLevel;
       state.version = version;
     } else {
       if (state.i !== i) continue;
@@ -239,14 +243,16 @@ export function getStateValue<T>(
   notTrackDeps?: boolean
 ): T {
   if (state.compute) {
-    if (state.freezed) return state.value;
+    // if (state.freezed) return state.value;
 
     if (state.tracking) {
-      config.logException(new CircularDependencyError());
-      return state.value;
+      throw new CircularDependencyError();
     }
 
-    if (state.version !== version) {
+    let shouldCompute = state.version !== version;
+    if (activateLevel) shouldCompute = shouldCompute || !state.ft;
+
+    if (shouldCompute) {
       const value = calcComputed(state, notTrackDeps);
 
       if (getFiltered(value, state)) {
@@ -255,34 +261,40 @@ export function getStateValue<T>(
       }
 
       state.version = version;
-    } else if (activating) activate(state);
-
-    if (!state.fs) {
-      state.freezed = true;
-      return state.value;
     }
   }
 
   if (tracking && !notTrackDeps) {
-    const shouldActivate = activating || calculating;
-
     if (state.hasException && !tracking.hasException) {
       tracking.exception = state.exception;
       tracking.hasException = true;
     }
 
-    const node = state.node;
-
-    if (node && node.t === tracking) {
-      if (shouldActivate) activateNode(node);
-      node.stale = false;
-    } else {
+    if (activateLevel) {
       if (node) {
-        nodeCache.push(node);
-        ++node.cached;
-      }
+        if (node.s !== state) {
+          if (node.s.ft === node) node.s.ft = node.nt;
+          if (node.s.lt === node) node.s.lt = node.pt;
+          if (node.pt) node.pt.nt = node.nt;
+          if (node.nt) node.nt.pt = node.pt;
 
-      state.node = createNode(state, tracking, shouldActivate);
+          node.nt = null;
+          node.pt = state.lt;
+          node.s = state;
+
+          if (state.lt) {
+            state.lt.nt = node;
+          } else {
+            state.ft = node;
+          }
+
+          state.lt = node;
+        }
+
+        node = node.ns;
+      } else {
+        createNode(state, tracking);
+      }
     }
   }
 
@@ -291,19 +303,22 @@ export function getStateValue<T>(
 
 function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
   const prevTracking = tracking;
+  const prevNode = node;
+
   let value = state.value;
 
   if (state.children) cleanupChildren(state);
 
   tracking = state;
+  node = state.fs;
 
   state.tracking = true;
   state.hasException = false;
 
-  for (let node = state.fs; node !== null; node = node.ns) {
-    node.s.node = node;
-    node.stale = true;
-  }
+  // for (let node = state.fs; node !== null; node = node.ns) {
+  //   node.s.node = node;
+  //   node.stale = true;
+  // }
 
   try {
     value = state.compute!(state.value, calculating);
@@ -336,19 +351,16 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
     }
   }
 
-  for (let node = state.ls; node !== null; node = node.ps) {
-    if (node.cached) {
-      node.s.node = nodeCache.pop()!;
-      --node.cached;
-    } else {
-      node.s.node = null;
+  if (activateLevel) {
+    while (node) {
+      removeNode(node);
+      node = node.nt;
     }
-
-    if (node.stale) removeNode(node, true);
   }
 
   state.tracking = false;
   tracking = prevTracking;
+  node = prevNode;
 
   return value;
 }
@@ -429,7 +441,7 @@ function createNode(
 
   target.ls = node;
 
-  if (shouldActivate) {
+  if (true) {
     node.pt = source.lt;
 
     if (source.lt) {
@@ -445,30 +457,8 @@ function createNode(
   return node;
 }
 
-function activate(state: SignalState<any>) {
-  for (let node = state.fs; node !== null; node = node.ns) {
-    activateNode(node);
-  }
-}
-
-function activateNode(node: ListNode) {
-  if (node.pt || node.nt || node.s.lt === node) return;
-
-  if (node.s.lt) {
-    node.s.lt.nt = node;
-    node.pt = node.s.lt;
-  } else {
-    node.s.ft = node;
-    node.s.lt = node;
-    activate(node.s);
-    emitActivateLifecycle(node.s);
-  }
-
-  return node;
-}
-
 function removeNode(node: ListNode, unlinkSources?: boolean) {
-  if (unlinkSources) {
+  if (true) {
     if ((node.t as SignalState<any>).fs === node)
       (node.t as SignalState<any>).fs = node.ns;
 

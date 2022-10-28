@@ -70,6 +70,11 @@ describe('isolate', () => {
     external(2);
     expect(innerSpy).toBeCalledTimes(5);
     expect(externalSpy).toBeCalledTimes(5);
+    expect(deepSpy).toBeCalledTimes(6);
+
+    external(3);
+    expect(innerSpy).toBeCalledTimes(6);
+    expect(externalSpy).toBeCalledTimes(6);
     expect(deepSpy).toBeCalledTimes(7);
   });
 
