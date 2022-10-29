@@ -12,14 +12,15 @@ export let scope: SignalState<any> | null = null;
 let node: ListNode | null = null;
 
 let batchLevel = 0;
+let status = 0;
 
-let activating = false;
-let scheduled = false;
+const ACTIVATING = 1;
+const SCHEDULED = 2;
 
 let queue: SignalState<any>[] = [];
 let notifications: any[] = [];
 
-let version = 0;
+let version = {};
 
 export function isolate<T>(fn: () => T): T;
 export function isolate<T, A extends unknown[]>(
@@ -29,12 +30,12 @@ export function isolate<T, A extends unknown[]>(
 export function isolate(fn: any, args?: any) {
   const prevTracking = tracking;
   const prevScope = scope;
-  const prevActivating = activating;
+  const prevStatus = status;
 
   let result: any;
 
   if (tracking) scope = tracking;
-  activating = false;
+  status = 0;
   tracking = null;
 
   if (args) result = fn(...args);
@@ -42,7 +43,7 @@ export function isolate(fn: any, args?: any) {
 
   tracking = prevTracking;
   scope = prevScope;
-  activating = prevActivating;
+  status = prevStatus;
 
   return result;
 }
@@ -50,10 +51,10 @@ export function isolate(fn: any, args?: any) {
 export function collect(fn: () => any) {
   const prevTracking = tracking;
   const prevScope = scope;
-  const prevActivating = activating;
+  const prevStatus = status;
   const fakeState = {} as any as SignalState<any>;
 
-  activating = false;
+  status = 0;
   scope = fakeState;
   tracking = null;
 
@@ -61,7 +62,7 @@ export function collect(fn: () => any) {
 
   tracking = prevTracking;
   scope = prevScope;
-  activating = prevActivating;
+  status = prevStatus;
 
   return () => cleanupChildren(fakeState);
 }
@@ -111,13 +112,13 @@ export function subscribe<T>(
   exec = true
 ) {
   const state = (this as any)._state as SignalState<T>;
-  const prevActivating = activating;
+  const prevStatus = status;
 
-  if (!state.freezed && !state.ft) activating = true;
+  if (!state.freezed && !state.ft) status = ACTIVATING;
 
   const value = getStateValue(state, true);
 
-  activating = prevActivating;
+  status = prevStatus;
 
   if (state.freezed) {
     if (exec) isolate(() => subscriber(value, true));
@@ -185,12 +186,13 @@ export function recalc() {
 
   const q = queue;
   const firstIndex = queue.length;
+  const prevStatus = status;
+
   queue = [];
+  version = {};
+  status = SCHEDULED;
 
   ++batchLevel;
-  ++version;
-
-  scheduled = true;
 
   for (let i = 0; i < q.length; i++) {
     const state = q[i];
@@ -240,7 +242,16 @@ export function recalc() {
       if (!state.hasException) {
         emitUpdateLifecycle(state, value);
         state.value = value;
-        scheduleSubscribers(state);
+
+        let subsCount = state.subs;
+
+        for (let node = state.ft; subsCount && node !== null; node = node.nt!) {
+          if (typeof node.t === 'function') {
+            notifications.push(node.t);
+            notifications.push(state.value);
+            --subsCount;
+          }
+        }
       }
     } else {
       for (let node = state.ft; node !== null; node = node.nt!) {
@@ -252,24 +263,12 @@ export function recalc() {
     state.dirty = 0;
   }
 
-  scheduled = false;
+  status = prevStatus;
 
   notify();
   --batchLevel;
 
   recalc();
-}
-
-function scheduleSubscribers<T>(state: SignalState<T>) {
-  let subsCount = state.subs;
-
-  for (let node = state.ft; subsCount && node !== null; node = node.nt) {
-    if (typeof node.t === 'function') {
-      notifications.push(node.t);
-      notifications.push(state.value);
-      --subsCount;
-    }
-  }
 }
 
 function notify() {
@@ -291,8 +290,7 @@ export function getStateValue<T>(
       throw new CircularDependencyError();
     }
 
-    let shouldCompute =
-      !state.ft && (activating || scheduled || state.version !== version);
+    let shouldCompute = !state.ft && (status || state.version !== version);
 
     if (shouldCompute) {
       const value = calcComputed(state, notTrackDeps);
@@ -308,7 +306,7 @@ export function getStateValue<T>(
       tracking.hasException = true;
     }
 
-    if (activating || scheduled) {
+    if (status) {
       if (node) {
         if (node.s !== state) {
           if (node.s.ft === node) node.s.ft = node.nt;
@@ -354,7 +352,7 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
   state.hasException = false;
 
   try {
-    value = state.compute!(state.value, scheduled);
+    value = state.compute!(state.value, status === SCHEDULED);
   } catch (e: any) {
     state.exception = e;
     state.hasException = true;
@@ -384,7 +382,7 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
     }
   }
 
-  if (activating || scheduled) {
+  if (status) {
     while (node) {
       removeNode(node);
       node = node.nt;

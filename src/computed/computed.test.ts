@@ -412,6 +412,32 @@ describe('computed', () => {
     expect(spy).toBeCalledTimes(4);
   });
 
+  it('passes true as second compute fn argument if computation was scheduled (case 2)', () => {
+    let lastScheduled: boolean | undefined;
+
+    const spy = jest.fn();
+
+    const a = writable(0);
+    const b = writable(0);
+
+    const c = computed((_: any, scheduled?: boolean) => {
+      lastScheduled = scheduled;
+      spy();
+      return a();
+    });
+
+    const d = computed(() => {
+      if (b()) c.subscribe(() => {});
+      return b();
+    });
+
+    d.subscribe(() => {});
+    expect(lastScheduled).toBeFalsy();
+
+    b(1);
+    expect(lastScheduled).toBeFalsy();
+  });
+
   it('does not recalculates if became inactive during previous calculations', () => {
     const spy = jest.fn();
 
