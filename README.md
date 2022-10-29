@@ -333,7 +333,7 @@ const userFx = effect(fetchUser);
 
 Every effect has several signal properties.
 
-- `args` - receives argument of the effect call;
+- `args` - receives arguments of the effect call;
 - `data` - receives the result of the fulfilled effect;
 - `exception` - receives the result of the rejected effect;
 - `done` - receives any result of the effect, both fulfilled and rejected;
