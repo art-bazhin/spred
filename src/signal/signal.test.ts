@@ -394,6 +394,24 @@ describe('signal', () => {
     expect(cSpy).toBeCalledTimes(2);
   });
 
+  it('does not make redundant computations on scheduled run', () => {
+    const spy = jest.fn();
+
+    const a = writable(0);
+    const b = writable(0);
+    const c = computed(() => {
+      spy();
+      return a();
+    });
+    const d = computed(() => c() + b());
+
+    d.subscribe(() => {});
+    expect(spy).toBeCalledTimes(1);
+
+    b(1);
+    expect(spy).toBeCalledTimes(1);
+  });
+
   it('notifies intermidiate computed subscribers', () => {
     const count = writable(0);
     const x2Count = computed(() => count() * 2);

@@ -12,11 +12,12 @@ export let scope: SignalState<any> | null = null;
 let node: ListNode | null = null;
 
 let batchLevel = 0;
-let activateLevel = 0;
-let calculating = false;
+
+let activating = false;
+let scheduled = false;
 
 let queue: SignalState<any>[] = [];
-let nextQueue: SignalState<any>[] = [];
+let notifications: any[] = [];
 
 let version = 0;
 
@@ -28,12 +29,12 @@ export function isolate<T, A extends unknown[]>(
 export function isolate(fn: any, args?: any) {
   const prevTracking = tracking;
   const prevScope = scope;
-  const prevActivating = activateLevel;
+  const prevActivating = activating;
 
   let result: any;
 
   if (tracking) scope = tracking;
-  activateLevel = 0;
+  activating = false;
   tracking = null;
 
   if (args) result = fn(...args);
@@ -41,7 +42,7 @@ export function isolate(fn: any, args?: any) {
 
   tracking = prevTracking;
   scope = prevScope;
-  activateLevel = prevActivating;
+  activating = prevActivating;
 
   return result;
 }
@@ -49,10 +50,10 @@ export function isolate(fn: any, args?: any) {
 export function collect(fn: () => any) {
   const prevTracking = tracking;
   const prevScope = scope;
-  const prevActivating = activateLevel;
+  const prevActivating = activating;
   const fakeState = {} as any as SignalState<any>;
 
-  activateLevel = 0;
+  activating = false;
   scope = fakeState;
   tracking = null;
 
@@ -60,7 +61,7 @@ export function collect(fn: () => any) {
 
   tracking = prevTracking;
   scope = prevScope;
-  activateLevel = prevActivating;
+  activating = prevActivating;
 
   return () => cleanupChildren(fakeState);
 }
@@ -88,7 +89,6 @@ export function update<T>(state: SignalState<T>, value: T | undefined): T;
 export function update<T>(state: SignalState<T>): void;
 export function update<T>(state: SignalState<T>, value?: any) {
   const wrapper = (config as any)._notificationWrapper;
-  const q = calculating ? nextQueue : queue;
 
   if (arguments.length > 1) {
     if (typeof value === 'function') state.nextValue = value(state.nextValue);
@@ -97,7 +97,7 @@ export function update<T>(state: SignalState<T>, value?: any) {
     state.forced = true;
   }
 
-  state.i = q.push(state) - 1;
+  state.i = queue.push(state) - 1;
 
   if (wrapper) wrapper(recalc);
   else recalc();
@@ -111,14 +111,13 @@ export function subscribe<T>(
   exec = true
 ) {
   const state = (this as any)._state as SignalState<T>;
+  const prevActivating = activating;
 
-  // if (!state.freezed && !state.ft)
-
-  ++activateLevel;
+  if (!state.freezed && !state.ft) activating = true;
 
   const value = getStateValue(state, true);
 
-  --activateLevel;
+  activating = prevActivating;
 
   if (state.freezed) {
     if (exec) isolate(() => subscriber(value, true));
@@ -184,63 +183,101 @@ function getFiltered<T>(value: T, state: SignalState<T>) {
 export function recalc() {
   if (!queue.length || batchLevel) return;
 
+  const q = queue;
+  const firstIndex = queue.length;
+  queue = [];
+
   ++batchLevel;
-  calculating = true;
   ++version;
 
-  for (let i = 0; i < queue.length; i++) {
-    const state = queue[i];
+  scheduled = true;
 
-    let value = state.value;
-    let forced: boolean | undefined;
+  for (let i = 0; i < q.length; i++) {
+    const state = q[i];
 
-    if (state.compute) {
-      if (state.version === version || !state.ft) continue;
-      ++activateLevel;
-      value = calcComputed(state);
-      --activateLevel;
-      state.version = version;
-    } else {
-      if (state.i !== i) continue;
-      forced = state.forced;
-      value = state.nextValue;
+    if (state.i !== i) continue;
+
+    let filtered = true;
+    let isWritable = !state.compute;
+
+    if (isWritable) {
+      filtered = getFiltered(state.nextValue, state) || state.forced;
+      state.forced = false;
+
+      if (filtered) {
+        emitUpdateLifecycle(state, state.nextValue);
+        state.value = state.nextValue;
+      }
     }
 
-    const err = state.hasException;
-
-    if (getFiltered(value, state) || err || forced) {
-      if (!err) {
-        emitUpdateLifecycle(state, value);
-        state.value = value;
-      }
-
+    if (filtered) {
       for (let node = state.ft; node !== null; node = node.nt) {
-        if (typeof node.t === 'object') queue.push(node.t);
-        else if (!err) node.t(node.s.value);
+        if (typeof node.t === 'object') {
+          ++node.t.dirty;
+          node.t.i = q.push(node.t) - 1;
+        } else if (isWritable) {
+          notifications.push(node.t);
+          notifications.push(state.value);
+        }
       }
-
-      if (forced) state.forced = false;
     }
   }
 
-  calculating = false;
-  --batchLevel;
+  for (let i = firstIndex; i < q.length; i++) {
+    const state = q[i];
 
-  queue = nextQueue;
-  nextQueue = [];
+    if (state.i !== i || state.version === version || !state.ft) continue;
+
+    let value = state.value;
+    let filtered = false;
+
+    if (state.dirty) {
+      value = calcComputed(state);
+      filtered = getFiltered(value, state) || state.hasException;
+    }
+
+    if (filtered) {
+      if (!state.hasException) {
+        emitUpdateLifecycle(state, value);
+        state.value = value;
+        scheduleSubscribers(state);
+      }
+    } else {
+      for (let node = state.ft; node !== null; node = node.nt!) {
+        if (typeof node.t === 'object') --node.t.dirty;
+      }
+    }
+
+    state.version = version;
+    state.dirty = 0;
+  }
+
+  scheduled = false;
+
+  notify();
+  --batchLevel;
 
   recalc();
 }
 
-function runSubscribers<T>(state: SignalState<T>) {
+function scheduleSubscribers<T>(state: SignalState<T>) {
   let subsCount = state.subs;
 
   for (let node = state.ft; subsCount && node !== null; node = node.nt) {
     if (typeof node.t === 'function') {
-      node.t(state.value);
+      notifications.push(node.t);
+      notifications.push(state.value);
       --subsCount;
     }
   }
+}
+
+function notify() {
+  for (let i = 0; i < notifications.length; i += 2) {
+    notifications[i](notifications[i + 1]);
+  }
+
+  notifications = [];
 }
 
 export function getStateValue<T>(
@@ -248,25 +285,21 @@ export function getStateValue<T>(
   notTrackDeps?: boolean
 ): T {
   if (state.compute) {
-    // if (state.freezed) return state.value;
+    if (state.freezed) return state.value;
 
     if (state.tracking) {
       throw new CircularDependencyError();
     }
 
-    let shouldCompute = state.version !== version;
-    if (activateLevel) shouldCompute = shouldCompute || !state.ft;
+    let shouldCompute =
+      !state.ft && (activating || scheduled || state.version !== version);
 
     if (shouldCompute) {
       const value = calcComputed(state, notTrackDeps);
-
-      if (getFiltered(value, state)) {
-        state.value = value;
-        if (calculating && state.subs) runSubscribers(state);
-      }
-
-      state.version = version;
+      if (getFiltered(value, state)) state.value = value;
     }
+
+    state.version = version;
   }
 
   if (tracking && !notTrackDeps) {
@@ -275,7 +308,7 @@ export function getStateValue<T>(
       tracking.hasException = true;
     }
 
-    if (activateLevel) {
+    if (activating || scheduled) {
       if (node) {
         if (node.s !== state) {
           if (node.s.ft === node) node.s.ft = node.nt;
@@ -320,13 +353,8 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
   state.tracking = true;
   state.hasException = false;
 
-  // for (let node = state.fs; node !== null; node = node.ns) {
-  //   node.s.node = node;
-  //   node.stale = true;
-  // }
-
   try {
-    value = state.compute!(state.value, calculating);
+    value = state.compute!(state.value, scheduled);
   } catch (e: any) {
     state.exception = e;
     state.hasException = true;
@@ -356,11 +384,13 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
     }
   }
 
-  if (activateLevel) {
+  if (activating || scheduled) {
     while (node) {
       removeNode(node);
       node = node.nt;
     }
+
+    if (!state.fs) state.freezed = true;
   }
 
   state.tracking = false;

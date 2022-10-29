@@ -34,6 +34,7 @@ export interface SignalState<T> {
   name?: string;
   freezed?: boolean;
   forced?: boolean;
+  dirty: number;
 
   fs: ListNode | null;
   ls: ListNode | null;
@@ -60,6 +61,7 @@ export function createSignalState<T>(
     nextValue: value,
     subs: 0,
     i: 0,
+    dirty: 0,
     tracking: false,
     version: null,
     node: null,
