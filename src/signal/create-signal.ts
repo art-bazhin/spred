@@ -3,7 +3,7 @@ import { computed } from '../computed/computed';
 import { writable } from '../writable/writable';
 import { Filter } from '../filter/filter';
 
-type Setter<T> = (
+export type Setter<T> = (
   payload: Exclude<T, Function> | ((currentValue: T) => T)
 ) => T;
 

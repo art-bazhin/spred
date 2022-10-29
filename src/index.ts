@@ -11,7 +11,7 @@ import { configure, Config } from './config/config';
 import { Signal } from './signal/signal';
 import { watch } from './watch/watch';
 import { batch } from './core/core';
-import { signal } from './signal/create-signal';
+import { signal, Setter } from './signal/create-signal';
 import { on } from './on/on';
 import {
   effect,
@@ -45,6 +45,7 @@ export {
   Subscriber,
   Filter,
   Computation,
+  Setter,
   writable,
   computed,
   watch,

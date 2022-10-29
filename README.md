@@ -50,8 +50,6 @@ batch(() => {
 npm install spred --save
 ```
 
-# v0.28.0 Docs
-
 ## Signals
 
 [Signal](https://art-bazhin.github.io/spred/interfaces/Signal.html) is the basic reactive primitive of the library. A signal stores a value and notifies its subscribers when it changes. There are two kinds of signals - writable and computed.
@@ -74,15 +72,12 @@ To get the value of the signal, you need to call it without arguments.
 console.log(counter()); // 0
 ```
 
-To set a new value of the writable signal, you need to pass the value as an argument. `undefined` values are ignored.
+To set a new value of the writable signal, you need to pass the value as an argument.
 
 ```ts
 /*...*/
 
 counter(1);
-console.log(counter()); // 1
-
-counter(undefined);
 console.log(counter()); // 1
 ```
 
@@ -122,64 +117,34 @@ counter(1);
 // > Double value is 2
 ```
 
-`undefined` values are ignored and can be used to filter signal values.
+### Change detection
+
+By default all signals trigger their dependants and subscribers only if its value changes.
 
 ```ts
-/*...*/
-
-const oddCounter = computed(() => {
-  if (counter() % 2) return counter();
-});
-
-oddCounter.subscribe((value) => console.log('Odd value is ' + value));
-// > Odd value is 1
-
-counter(2);
-// > Double value is 4
-
-counter(3);
-// > Double value is 6
-// > Odd value is 3
-```
-
-### Memo Signals
-
-Memo signal is a computed signal that triggers its dependants and subscribers only if its value changes. It can be created using [memo](https://art-bazhin.github.io/spred/modules.html#memo) function.
-
-```ts
-import { writable, computed, memo } from 'spred';
+import { writable, computed } from 'spred';
 
 const counter = writable(0);
 const doubleCounter = computed(() => counter() * 2);
-const memoDoubleCounter = memo(() => counter() * 2);
 
-doubleCounter.subscribe((value) =>
-  console.log('Computed double value is ' + value)
-);
-
-memoDoubleCounter.subscribe((value) =>
-  console.log('Memo double value is ' + value)
-);
-// > Computed double value is 0
-// > Memo double value is 0
+doubleCounter.subscribe((value) => console.log('Double value is ' + value));
+// > Double value is 0
 
 counter(0);
-// > Computed double value is 0
+// Nothing
 
 counter(1);
-// > Computed double value is 2
-// > Memo double value is 2
+// > Double value is 2
 ```
 
-By default it uses [Object.is](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/is) to compare values. A custom equality function can be passed as a second argument.
+Signals use [Object.is](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/is) to compare values. A custom change detection function can be passed as a second argument of [writable](https://art-bazhin.github.io/spred/modules.html#writable) or [computed](https://art-bazhin.github.io/spred/modules.html#computed).
 
 ```ts
 /*...*/
 
-const obj = writable({ value: 1 });
-const memoObj = memo(obj, (a, b) => a.value === b.value);
+const obj = writable({ value: 1 }, (a, b) => a.value !== b.value);
 
-memoObj.subscribe((obj) => console.log('Object value is ' + obj.value));
+obj.subscribe((obj) => console.log('Object value is ' + obj.value));
 // > Object value is 1
 
 obj({ value: 1 });
@@ -189,12 +154,29 @@ obj({ value: 2 });
 // > Object value is 2
 ```
 
-### Error Handling
-
-By default any signal that have subscribers and an exception ocured during the computation will log the error in the console and will not cause recalculation of its dependants. You can create a computed signal that handles exceptions using the [catcher](https://art-bazhin.github.io/spred/modules.html#catcher) function.
+A signal will be updated on any incoming value if `true` is passed as a second argument.
 
 ```ts
-import { catcher, computed, writable } from 'spred';
+/*...*/
+
+const value = writable(1, true);
+
+value.subscribe((value) => console.log('The value is ' + value));
+// > The value is 1
+
+value(1);
+// > The value is 1
+
+value(1);
+// > The value is 1
+```
+
+### Error Handling
+
+Any signal that have subscribers and an exception ocured during the computation will log the error in the console and will not cause recalculation of its dependants. You can pass an exception handler as a third argument of the [computed](https://art-bazhin.github.io/spred/modules.html#computed).
+
+```ts
+import { computed, writable } from 'spred';
 
 const sub = (value) => console.log('The value is ' + value);
 const source = writable(0);
@@ -211,13 +193,13 @@ source(11);
 // > [X] bigger than 10
 
 unsub();
-const withCatchedError = catcher(result, (e) => e);
+const withCatchedError = computed(result, null, (e) => e);
 
 withCatchedError.subscribe(sub);
 // > The value is bigger than 10
 
 source(20);
-// > The value is bigger than 10
+// Nothing
 
 source(5);
 // > The value is 5
@@ -331,8 +313,6 @@ Every signal has several lifecycle hooks that can be subscribed to using special
 - `onActivate` - emits when the signal becomes active (has at least one subscriber / dependent signal with a subscriber);
 - `onDectivate` - emits when the signal becomes inactive (doesn't have any subscriber / dependent signal with a subscriber);
 - `onUpdate` - emits when the signal updates its value;
-- `onNotifyStart` - emits before notificating signal subscribers;
-- `onNotifyEnd` - emits after notificating signal subscribers;
 - `onException` - emits when an exception is thrown during the signal computation.
 
 [Example on StackBlitz](https://stackblitz.com/edit/spred-lifecycle-hooks?devToolsHeight=33&file=index.ts)
@@ -353,6 +333,7 @@ const userFx = effect(fetchUser);
 
 Every effect has several signal properties.
 
+- `args` - receives argument of the effect call;
 - `data` - receives the result of the fulfilled effect;
 - `exception` - receives the result of the rejected effect;
 - `done` - receives any result of the effect, both fulfilled and rejected;
@@ -410,3 +391,4 @@ Big thanks for inspiration to
 - [Vue 3](https://github.com/vuejs/core)
 - [nanostores](https://github.com/nanostores/nanostores)
 - [$mol](https://github.com/hyoo-ru/mam_mol)
+- [preact](https://github.com/preactjs/signals)
