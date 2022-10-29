@@ -82,32 +82,26 @@ export function effect<T, A extends unknown[]>(
 
   const _status = writable<EffectStatus>('pristine');
   const _exception = writable(undefined as unknown, true);
-  const _data = writable<T>(undefined as any, true);
+  const _data = writable<T>(undefined, true);
   const _aborted = writable();
-  const _args = writable<A>(undefined as any, true);
+  const _args = writable<A>(undefined, true);
 
   const lastStatus = computed(_status, (status) => status !== 'pending');
 
   lastStatus.subscribe(NOOP_FN);
 
-  const status = computed(
-    () => {
-      const value = _status();
+  const status = computed(() => {
+    const value = _status();
 
-      return {
-        value,
-        pristine: value === 'pristine',
-        pending: value === 'pending',
-        fulfilled: value === 'fulfilled',
-        rejected: value === 'rejected',
-        settled: value === 'fulfilled' || value === 'rejected',
-      };
-    },
-    (status, prevStatus) => {
-      if (!prevStatus) return true;
-      return status.value !== prevStatus.value;
-    }
-  );
+    return {
+      value,
+      pristine: value === 'pristine',
+      pending: value === 'pending',
+      fulfilled: value === 'fulfilled',
+      rejected: value === 'rejected',
+      settled: value === 'fulfilled' || value === 'rejected',
+    } as EffectStatusObject;
+  });
 
   const exception = computed(_exception, true);
 

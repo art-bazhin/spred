@@ -7,9 +7,6 @@ import { Subscriber } from '../subscriber/subscriber';
  * @param subscriber Function that listens to the signal updates.
  * @returns Unsubscribe function.
  */
-export function on<T>(
-  signal: Signal<T>,
-  subscriber: Subscriber<Exclude<T, void>>
-) {
+export function on<T>(signal: Signal<T, any>, subscriber: Subscriber<T>) {
   return signal.subscribe(subscriber, false);
 }

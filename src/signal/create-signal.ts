@@ -9,33 +9,22 @@ type Setter<T> = (
 
 export function signal(): [Signal<unknown>, () => unknown];
 
-export function signal<T>(): [Signal<T | undefined>, Setter<T>];
-
-export function signal<T>(initialValue: T): [Signal<T>, Setter<T>];
+export function signal<T>(): [Signal<T, undefined>, Setter<T>];
 
 export function signal<T>(
   initialValue: T,
-  shouldUpdate: boolean | null | undefined
+  shouldUpdate?: boolean | null | undefined
 ): [Signal<T>, Setter<T>];
 
 export function signal<T>(
   initialValue: T,
   shouldUpdate: Filter<T>
-): [Signal<T | undefined>, Setter<T>];
-
-export function signal<T>(
-  initialValue: undefined
-): [Signal<T | undefined>, Setter<T | undefined>];
+): [Signal<T, undefined>, Setter<T>];
 
 export function signal<T>(
   initialValue: undefined,
-  shouldUpdate: boolean | null | undefined
-): [Signal<T | undefined>, Setter<T | undefined>];
-
-export function signal<T>(
-  initialValue: undefined,
-  shouldUpdate: Filter<T | undefined>
-): [Signal<T | undefined>, Setter<T | undefined>];
+  shouldUpdate?: Filter<T> | boolean | null | undefined
+): [Signal<T, undefined>, Setter<T>];
 
 /**
  * Creates a tuple of signal and setter function

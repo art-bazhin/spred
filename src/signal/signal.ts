@@ -5,21 +5,21 @@ import { Subscriber } from '../subscriber/subscriber';
 /**
  * Basic reactive primitive.
  */
-export interface Signal<T> {
+export interface Signal<T, I = T> {
   /**
    * Calculates and returns the current value of the signal.
    */
-  (): T;
+  (): T | I;
 
   /**
    * Calculates and returns the current value of the signal.
    */
-  get(): T;
+  get(): T | I;
 
   /**
    * Returns the current value of the signal without dependency tracking.
    */
-  sample(): T;
+  sample(): T | I;
 
   /**
    * Subscribes the function to updates of the signal value.
@@ -28,7 +28,7 @@ export interface Signal<T> {
    * @returns Unsubscribe function.
    */
   subscribe<E extends boolean>(
-    subscriber: true extends E ? Subscriber<T> : Subscriber<Exclude<T, void>>,
+    subscriber: true extends E ? Subscriber<T | I> : Subscriber<T>,
     exec: E
   ): () => void;
 
@@ -37,11 +37,7 @@ export interface Signal<T> {
    * @param subscriber A function that listens to updates.
    * @returns Unsubscribe function.
    */
-  subscribe(subscriber: Subscriber<T>): () => void;
-}
-
-export interface _Signal<T> extends Signal<T> {
-  _state: SignalState<T>;
+  subscribe(subscriber: Subscriber<T | I>): () => void;
 }
 
 export const signalProto = {
@@ -51,7 +47,7 @@ export const signalProto = {
 
   subscribe,
 
-  sample(this: _Signal<any>) {
+  sample(this: Signal<any>) {
     return getStateValue((this as any)._state, true);
   },
 };

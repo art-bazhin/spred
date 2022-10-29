@@ -1,10 +1,8 @@
-import { Signal, _Signal } from '../signal/signal';
+import { Signal } from '../signal/signal';
 
 export type LifecycleHookName =
   | 'ACTIVATE'
   | 'DEACTIVATE'
-  | 'NOTIFY_START'
-  | 'NOTIFY_END'
   | 'UPDATE'
   | 'EXCEPTION';
 

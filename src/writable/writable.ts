@@ -1,4 +1,4 @@
-import { Signal, signalProto, _Signal } from '../signal/signal';
+import { Signal, signalProto } from '../signal/signal';
 import { getStateValue, update } from '../core/core';
 import { createSignalState } from '../signal-state/signal-state';
 import { Filter } from '../filter/filter';
@@ -6,19 +6,19 @@ import { Filter } from '../filter/filter';
 const writableSignalProto = {
   ...signalProto,
 
-  set(this: _Signal<any>, value: any) {
-    return update(this._state, value);
+  set(this: Signal<any>, value: any) {
+    return update((this as any)._state, value);
   },
 
-  notify(this: _Signal<any>) {
-    return update(this._state);
+  notify(this: Signal<any>) {
+    return update((this as any)._state);
   },
 };
 
 /**
  * A signal whose value can be set.
  */
-export interface WritableSignal<T> extends Signal<T> {
+export interface WritableSignal<T, I = T> extends Signal<T, I> {
   /**
    * Set the value of the signal
    * @param value New value of the signal.
@@ -29,7 +29,7 @@ export interface WritableSignal<T> extends Signal<T> {
    * Calculate and set a new value of the signal from the current value
    * @param getNextValue Function that calculates a new value from the current value.
    */
-  (getNextValue: (currentValue: T) => T): T;
+  (getNextValue: (currentValue: T | I) => T): T;
 
   /**
    * Set the value of the signal
@@ -41,19 +41,19 @@ export interface WritableSignal<T> extends Signal<T> {
    * Calculate and set a new value of the signal from the current value
    * @param getNextValue Function that calculates a new value from the current value.
    */
-  set(getNextValue: (currentValue: T) => T): T;
+  set(getNextValue: (currentValue: T | I) => T): T;
 
   /**
    * Notify subscribers without setting a new value.
    */
-  notify(): T;
+  notify(): T | I;
 }
 
 /**
  * Сreates a writable signal.
  * @returns Writable signal.
  */
-export function writable<T>(): WritableSignal<T | undefined>;
+export function writable<T>(): WritableSignal<T, undefined>;
 
 /**
  * Сreates a writable signal.
@@ -61,16 +61,20 @@ export function writable<T>(): WritableSignal<T | undefined>;
  * @param shouldUpdate The function that returns a falsy value if the new signal value should be ignored. Use falsy arg value to emit signal values that are not equal to previous vaslue. Use truthy arg value to emit all signal values.
  * @returns Writable signal.
  */
+export function writable<T>(
+  value: T,
+  shouldUpdate?: boolean | null | undefined
+): WritableSignal<T>;
 
 export function writable<T>(
   value: T,
-  shouldUpdate?: Filter<T> | boolean | null | undefined
-): WritableSignal<T>;
+  shouldUpdate: Filter<T>
+): WritableSignal<T, undefined>;
 
 export function writable<T>(
   value: undefined,
   shouldUpdate?: Filter<T> | boolean | null | undefined
-): WritableSignal<T | undefined>;
+): WritableSignal<T, undefined>;
 
 export function writable(value?: any, shouldUpdate?: any) {
   const state = createSignalState(value, undefined);

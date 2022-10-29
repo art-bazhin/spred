@@ -1,4 +1,4 @@
-import { Signal, _Signal } from '../signal/signal';
+import { Signal } from '../signal/signal';
 import { ListNode, SignalState } from '../signal-state/signal-state';
 import { Subscriber } from '../subscriber/subscriber';
 import { config } from '../config/config';
