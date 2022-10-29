@@ -137,30 +137,33 @@ describe('onDeactivate function', () => {
 
 describe('onUpdate function', () => {
   it('sets signal update listener', () => {
-    let value: any = {};
+    let res: any = {};
     let unsub: any;
 
     const counter = writable(0);
-    const listener = jest.fn((v) => (value = v));
+    const listener = jest.fn((v, p) => {
+      res.value = v;
+      res.prevValue = p;
+    });
 
     onUpdate(counter, listener);
-    expect(value.value).toBeUndefined();
-    expect(value.prevValue).toBeUndefined();
+    expect(res.value).toBeUndefined();
+    expect(res.prevValue).toBeUndefined();
     expect(listener).toBeCalledTimes(0);
 
     unsub = counter.subscribe(() => {});
-    expect(value.value).toBeUndefined();
-    expect(value.prevValue).toBeUndefined();
+    expect(res.value).toBeUndefined();
+    expect(res.prevValue).toBeUndefined();
     expect(listener).toBeCalledTimes(0);
 
     counter(1);
-    expect(value.value).toBe(1);
-    expect(value.prevValue).toBe(0);
+    expect(res.value).toBe(1);
+    expect(res.prevValue).toBe(0);
     expect(listener).toBeCalledTimes(1);
 
     unsub();
-    expect(value.value).toBe(1);
-    expect(value.prevValue).toBe(0);
+    expect(res.value).toBe(1);
+    expect(res.prevValue).toBe(0);
     expect(listener).toBeCalledTimes(1);
   });
 });

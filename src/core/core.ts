@@ -161,10 +161,7 @@ function emitUpdateLifecycle(state: SignalState<any>, value: any) {
   logHook(state, 'UPDATE', value);
 
   if (state.onUpdate) {
-    state.onUpdate({
-      value: value,
-      prevValue: state.value,
-    });
+    state.onUpdate(value, state.value);
   }
 }
 
@@ -265,18 +262,15 @@ export function recalc() {
 
   status = prevStatus;
 
-  notify();
-  --batchLevel;
-
-  recalc();
-}
-
-function notify() {
   for (let i = 0; i < notifications.length; i += 2) {
     notifications[i](notifications[i + 1]);
   }
 
   notifications = [];
+
+  --batchLevel;
+
+  recalc();
 }
 
 export function getStateValue<T>(
@@ -447,11 +441,7 @@ function createSubscriberNode(
   return node;
 }
 
-function createNode(
-  source: SignalState<any>,
-  target: SignalState<any>,
-  shouldActivate?: any
-) {
+function createNode(source: SignalState<any>, target: SignalState<any>) {
   const node: ListNode = {
     s: source,
     t: target,
@@ -474,33 +464,29 @@ function createNode(
 
   target.ls = node;
 
-  if (true) {
-    node.pt = source.lt;
+  node.pt = source.lt;
 
-    if (source.lt) {
-      source.lt.nt = node;
-    } else {
-      source.ft = node;
-      emitActivateLifecycle(node.s);
-    }
-
-    source.lt = node;
+  if (source.lt) {
+    source.lt.nt = node;
+  } else {
+    source.ft = node;
+    emitActivateLifecycle(node.s);
   }
+
+  source.lt = node;
 
   return node;
 }
 
-function removeNode(node: ListNode, unlinkSources?: boolean) {
-  if (true) {
-    if ((node.t as SignalState<any>).fs === node)
-      (node.t as SignalState<any>).fs = node.ns;
+function removeNode(node: ListNode) {
+  if ((node.t as SignalState<any>).fs === node)
+    (node.t as SignalState<any>).fs = node.ns;
 
-    if ((node.t as SignalState<any>).ls === node)
-      (node.t as SignalState<any>).ls = node.ps;
+  if ((node.t as SignalState<any>).ls === node)
+    (node.t as SignalState<any>).ls = node.ps;
 
-    if (node.ps) node.ps.ns = node.ns;
-    if (node.ns) node.ns.ps = node.ps;
-  }
+  if (node.ps) node.ps.ns = node.ns;
+  if (node.ns) node.ns.ps = node.ps;
 
   if (node.s.ft === node) node.s.ft = node.nt;
   if (node.s.lt === node) node.s.lt = node.pt;

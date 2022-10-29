@@ -45,7 +45,7 @@ export interface SignalState<T> {
   // lifecycle:
   onActivate?: ((value: T) => any) | null;
   onDeactivate?: ((value: T) => any) | null;
-  onUpdate?: ((change: { value: T; prevValue: T | undefined }) => any) | null;
+  onUpdate?: ((value: T, prevValue?: T) => any) | null;
   onException?: ((e: unknown) => any) | null;
 }
 

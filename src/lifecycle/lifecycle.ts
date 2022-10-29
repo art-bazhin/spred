@@ -37,7 +37,7 @@ export function onDeactivate<T>(
  */
 export function onUpdate<T>(
   signal: Signal<T>,
-  listener: ((change: { value: T; prevValue: T | undefined }) => any) | null
+  listener: ((value: T, prevValue?: T) => any) | null
 ) {
   (signal as any)._state.onUpdate = listener;
 }
