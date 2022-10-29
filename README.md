@@ -220,7 +220,7 @@ counter.subscribe((value) => console.log('The value is ' + value));
 
 setCounter(1);
 
-// > The value is 2
+// > The value is 1
 ```
 
 ### Signal As Event Emitter
