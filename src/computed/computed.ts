@@ -20,7 +20,7 @@ export function computed<T>(
 
 export function computed<T>(
   compute: Computation<T>,
-  shouldUpdate: Filter<T>,
+  shouldUpdate: Filter<T, undefined>,
   handleException?: (e: unknown, prevValue?: T) => T
 ): Signal<T, undefined>;
 

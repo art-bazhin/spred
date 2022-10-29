@@ -1,1 +1,1 @@
-export type Filter<T> = (value: T, prevValue?: T) => any;
+export type Filter<T, I = T> = (value: T, prevValue: T | I) => any;

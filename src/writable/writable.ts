@@ -63,17 +63,12 @@ export function writable<T>(): WritableSignal<T, undefined>;
  */
 export function writable<T>(
   value: T,
-  shouldUpdate?: boolean | null | undefined
+  shouldUpdate?: Filter<T> | boolean | null | undefined
 ): WritableSignal<T>;
 
 export function writable<T>(
-  value: T,
-  shouldUpdate: Filter<T>
-): WritableSignal<T, undefined>;
-
-export function writable<T>(
   value: undefined,
-  shouldUpdate?: Filter<T> | boolean | null | undefined
+  shouldUpdate?: Filter<T, undefined> | boolean | null | undefined
 ): WritableSignal<T, undefined>;
 
 export function writable(value?: any, shouldUpdate?: any) {

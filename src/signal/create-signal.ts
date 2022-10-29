@@ -13,17 +13,12 @@ export function signal<T>(): [Signal<T, undefined>, Setter<T>];
 
 export function signal<T>(
   initialValue: T,
-  shouldUpdate?: boolean | null | undefined
+  shouldUpdate?: Filter<T> | boolean | null | undefined
 ): [Signal<T>, Setter<T>];
 
 export function signal<T>(
-  initialValue: T,
-  shouldUpdate: Filter<T>
-): [Signal<T, undefined>, Setter<T>];
-
-export function signal<T>(
   initialValue: undefined,
-  shouldUpdate?: Filter<T> | boolean | null | undefined
+  shouldUpdate?: Filter<T, undefined> | boolean | null | undefined
 ): [Signal<T, undefined>, Setter<T>];
 
 /**
