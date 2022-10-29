@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.31.0](https://github.com/art-bazhin/spred/compare/v0.30.0...v0.31.0) (2022-10-29)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove onNotifyStart and onNotifyEnd functions
+
+### Bug Fixes
+
+* fix missing updates when new values pushed from inside computations ([d57ba48](https://github.com/art-bazhin/spred/commit/d57ba488907cce8f3754fa12729eeb55b8ecd7e2))
+* fix typings ([03eb824](https://github.com/art-bazhin/spred/commit/03eb8249e279b08e03a7c869f80044a1a5ef1e67))
+* fix wrong scheduled arg when subscribing inside scheduled computation ([5f8d3b2](https://github.com/art-bazhin/spred/commit/5f8d3b270ce9f26ca94d66d54e1ff1ea40542dbd))
+
+
+### Tests
+
+* add missing tests ([f91d99d](https://github.com/art-bazhin/spred/commit/f91d99df6422411f949205f983681ee7e850af14))
+
+
+### Code Refactoring
+
+* minor refactoring ([8d2531a](https://github.com/art-bazhin/spred/commit/8d2531a6867acfaac3a7e6782630fbf651ca9dca))
+* refactor computation queue ([c89db3c](https://github.com/art-bazhin/spred/commit/c89db3cf88120883a330092836c112e14d65bf5b))
+* refactor dependency tracking ([d6a65fc](https://github.com/art-bazhin/spred/commit/d6a65fc940408ca4ce09c9d06c06879323be5621))
+* remove separate notification queue ([65cd379](https://github.com/art-bazhin/spred/commit/65cd379bdf50a7f060c9c7b85a00174acddd01a4))
+
+
+### Docs
+
+* update docs ([a7f4253](https://github.com/art-bazhin/spred/commit/a7f42538dc15370754ed649f1c02fb6094c9c0cf))
+
 ## [0.30.0](https://github.com/art-bazhin/spred/compare/v0.29.1...v0.30.0) (2022-10-26)
 
 
