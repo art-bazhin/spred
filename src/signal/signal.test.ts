@@ -290,6 +290,47 @@ describe('signal', () => {
     expect(spy).toBeCalledTimes(1);
   });
 
+  it('dynamically updates dependencies (case 4)', () => {
+    let res = '';
+
+    const fib: (n: number) => number = (n: number) =>
+      n < 2 ? 1 : fib(n - 1) + fib(n - 2);
+
+    const hard = (n: number, l: string) => {
+      res += l;
+      return n + fib(16);
+    };
+
+    const A = writable(0);
+    const B = writable(0);
+    const C = computed(() => (A() % 2) + (B() % 2));
+    const D = computed(() => (A() % 2) - (B() % 2));
+    const E = computed(() => hard(C() + A() + D(), 'E'));
+    const F = computed(() => hard(D() && B(), 'F'));
+    const G = computed(() => C() + (C() || E() % 2) + D() + F());
+    const H = G.subscribe((v) => hard(v, 'H'));
+    const I = G.subscribe(() => {});
+    const J = F.subscribe((v) => hard(v, 'J'));
+
+    res = '';
+
+    batch(() => {
+      B(1);
+      A(3);
+    });
+
+    expect(res).toBe('EH');
+
+    res = '';
+
+    batch(() => {
+      A(4);
+      B(2);
+    });
+
+    expect(res).toBe('EH');
+  });
+
   it('does not recalc a dependant if it is not active', () => {
     const bSpy = jest.fn();
     const cSpy = jest.fn();
