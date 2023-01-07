@@ -379,7 +379,7 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
   if (status) {
     while (node) {
       removeNode(node);
-      node = node.nt;
+      node = node.ns;
     }
 
     if (!state.fs) state.freezed = true;
