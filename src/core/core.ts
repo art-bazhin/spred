@@ -194,71 +194,98 @@ export function recalc() {
   for (let i = 0; i < q.length; i++) {
     const state = q[i];
 
-    if (state.i !== i) continue;
+    if (state.version === version) continue;
 
-    let filtered = true;
-    let isWritable = !state.compute;
+    let updated = false;
 
-    if (isWritable) {
-      filtered = getFiltered(state.nextValue, state) || state.forced;
-      state.forced = false;
+    if (state.subs) {
+      const value = state.compute ? calcComputed(state) : state.nextValue;
 
-      if (filtered) {
-        emitUpdateLifecycle(state, state.nextValue);
-        state.value = state.nextValue;
-      }
-    }
-
-    if (filtered) {
-      for (let node = state.ft; node !== null; node = node.nt) {
-        if (typeof node.t === 'object') {
-          ++node.t.dirty;
-          node.t.i = q.push(node.t) - 1;
-        } else if (isWritable) {
-          notifications.push(node.t);
-          notifications.push(state.value);
-        }
-      }
-    }
-  }
-
-  for (let i = firstIndex; i < q.length; i++) {
-    const state = q[i];
-
-    if (state.i !== i || state.version === version || !state.ft) continue;
-
-    let value = state.value;
-    let filtered = false;
-
-    if (state.dirty) {
-      value = calcComputed(state);
-      filtered = getFiltered(value, state) || state.hasException;
-    }
-
-    if (filtered) {
-      if (!state.hasException) {
-        emitUpdateLifecycle(state, value);
+      if (getFiltered(value, state)) {
         state.value = value;
-
-        let subsCount = state.subs;
-
-        for (let node = state.ft; subsCount && node !== null; node = node.nt!) {
-          if (typeof node.t === 'function') {
-            notifications.push(node.t);
-            notifications.push(state.value);
-            --subsCount;
-          }
-        }
+        updated = true;
       }
-    } else {
-      for (let node = state.ft; node !== null; node = node.nt!) {
-        if (typeof node.t === 'object') --node.t.dirty;
-      }
+
+      state.version = version;
     }
 
-    state.version = version;
-    state.dirty = 0;
+    for (let node = state.ft; node !== null; node = node.nt) {
+      if (typeof node.t === 'object') {
+        q.push(node.t);
+      } else if (updated) {
+        notifications.push(node.t, state.value);
+      }
+    }
   }
+
+  // for (let i = 0; i < q.length; i++) {
+  //   const state = q[i];
+
+  //   if (state.i !== i) continue;
+
+  //   let filtered = true;
+  //   let isWritable = !state.compute;
+
+  //   if (isWritable) {
+  //     filtered = getFiltered(state.nextValue, state) || state.forced;
+  //     state.forced = false;
+
+  //     if (filtered) {
+  //       emitUpdateLifecycle(state, state.nextValue);
+  //       state.value = state.nextValue;
+  //     }
+  //   }
+
+  //   if (filtered) {
+  //     for (let node = state.ft; node !== null; node = node.nt) {
+  //       if (typeof node.t === 'object') {
+  //         ++node.t.dirty;
+  //         node.t.i = q.push(node.t) - 1;
+  //       } else if (isWritable) {
+  //         notifications.push(node.t);
+  //         notifications.push(state.value);
+  //       }
+  //     }
+  //   }
+  // }
+
+  // for (let i = firstIndex; i < q.length; i++) {
+  //   const state = q[i];
+
+  //   if (state.i !== i || state.version === version || !state.ft) continue;
+
+  //   let value = state.value;
+  //   let filtered = false;
+
+  //   if (state.dirty) {
+  //     value = calcComputed(state);
+  //     filtered = getFiltered(value, state) || state.hasException;
+  //   }
+
+  //   if (filtered) {
+  //     if (!state.hasException) {
+  //       emitUpdateLifecycle(state, value);
+  //       state.value = value;
+
+  //       let subsCount = state.subs;
+
+  //       for (let node = state.ft; subsCount && node !== null; node = node.nt!) {
+  //         if (typeof node.t === 'function') {
+  //           notifications.push(node.t);
+  //           notifications.push(state.value);
+  //           --subsCount;
+  //         }
+  //       }
+  //     }
+  //   } else {
+  //     for (let node = state.ft; node !== null; node = node.nt!) {
+  //       if (typeof node.t === 'object') --node.t.dirty;
+  //     }
+  //   }
+
+  //   state.version = version;
+  //   state.dirty = 0;
+  // }
 
   status = prevStatus;
 
@@ -284,7 +311,7 @@ export function getStateValue<T>(
       throw new CircularDependencyError();
     }
 
-    let shouldCompute = !state.ft && (status || state.version !== version);
+    let shouldCompute = state.version !== version;
 
     if (shouldCompute) {
       const value = calcComputed(state, notTrackDeps);
@@ -332,6 +359,28 @@ export function getStateValue<T>(
 }
 
 function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
+  let sameDeps = true;
+
+  for (let node = state.fs; node !== null; node = node.ns) {
+    const source = node.s;
+
+    if (source.version !== version) {
+      const value = source.compute ? calcComputed(source) : source.nextValue;
+
+      source.version = version;
+
+      if (getFiltered(value, source)) {
+        source.value = value;
+        sameDeps = false;
+        break;
+      }
+    }
+  }
+
+  if (state.fs && sameDeps) {
+    return state.value;
+  }
+
   const prevTracking = tracking;
   const prevNode = node;
 
