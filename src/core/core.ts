@@ -194,14 +194,18 @@ export function recalc() {
   for (let i = 0; i < q.length; i++) {
     const state = q[i];
 
-    if (state.version === version) continue;
+    // console.log('QUEUE', state.compute, state.version === version);
+
+    if (state.version === version || state.i !== i) continue;
 
     let updated = false;
 
     if (state.subs) {
       const value = state.compute ? calcComputed(state) : state.nextValue;
+      const filtered = getFiltered(value, state);
 
-      if (getFiltered(value, state)) {
+      if (filtered) {
+        emitUpdateLifecycle(state, value);
         state.value = value;
         updated = true;
       }
@@ -211,7 +215,7 @@ export function recalc() {
 
     for (let node = state.ft; node !== null; node = node.nt) {
       if (typeof node.t === 'object') {
-        q.push(node.t);
+        node.t.i = q.push(node.t) - 1;
       } else if (updated) {
         notifications.push(node.t, state.value);
       }
@@ -310,16 +314,18 @@ export function getStateValue<T>(
     if (state.tracking) {
       throw new CircularDependencyError();
     }
-
-    let shouldCompute = state.version !== version;
-
-    if (shouldCompute) {
-      const value = calcComputed(state, notTrackDeps);
-      if (getFiltered(value, state)) state.value = value;
-    }
-
-    state.version = version;
   }
+
+  let shouldCompute = state.version !== version;
+
+  if (shouldCompute) {
+    const value = state.compute
+      ? calcComputed(state, notTrackDeps)
+      : state.nextValue;
+    if (getFiltered(value, state)) state.value = value;
+  }
+
+  state.version = version;
 
   if (tracking && !notTrackDeps) {
     if (state.hasException && !tracking.hasException) {
@@ -348,9 +354,10 @@ export function getStateValue<T>(
           state.lt = node;
         }
 
+        node.cached = state.value;
         node = node.ns;
       } else {
-        createNode(state, tracking);
+        createNode(state, tracking).cached = state.value;
       }
     }
   }
@@ -360,24 +367,25 @@ export function getStateValue<T>(
 
 function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
   let sameDeps = true;
+  let hasException = false;
 
   for (let node = state.fs; node !== null; node = node.ns) {
     const source = node.s;
+    const value = getStateValue(source, true);
 
-    if (source.version !== version) {
-      const value = source.compute ? calcComputed(source) : source.nextValue;
-
-      source.version = version;
-
-      if (getFiltered(value, source)) {
-        source.value = value;
-        sameDeps = false;
-        break;
-      }
+    if (source.hasException) {
+      hasException = true;
+      state.hasException = true;
+      state.exception = source.exception;
+      break;
+    } else if (getFiltered(node.cached, source)) {
+      source.value = value;
+      sameDeps = false;
+      break;
     }
   }
 
-  if (state.fs && sameDeps) {
+  if (state.fs && sameDeps && !hasException) {
     return state.value;
   }
 
@@ -386,19 +394,20 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
 
   let value = state.value;
 
-  if (state.children) cleanupChildren(state);
-
   tracking = state;
   node = state.fs;
 
-  state.tracking = true;
-  state.hasException = false;
+  if (!hasException) {
+    state.tracking = true;
+    state.hasException = false;
 
-  try {
-    value = state.compute!(state.value, status === SCHEDULED);
-  } catch (e: any) {
-    state.exception = e;
-    state.hasException = true;
+    try {
+      if (state.children) cleanupChildren(state);
+      value = state.compute!(state.value, status === SCHEDULED);
+    } catch (e: any) {
+      state.exception = e;
+      state.hasException = true;
+    }
   }
 
   if (state.hasException) {
@@ -502,7 +511,7 @@ function createNode(source: SignalState<any>, target: SignalState<any>) {
     nt: null,
 
     stale: false,
-    cached: 0,
+    cached: undefined,
   };
 
   if (target.ls) {
