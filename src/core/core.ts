@@ -193,16 +193,17 @@ export function recalc() {
 
   for (let i = 0; i < q.length; i++) {
     const state = q[i];
-
-    // console.log('QUEUE', state.compute, state.version === version);
+    const isWritable = !state.compute;
 
     if (state.version === version || state.i !== i) continue;
 
     let updated = false;
 
-    if (state.subs) {
-      const value = state.compute ? calcComputed(state) : state.nextValue;
-      const filtered = getFiltered(value, state);
+    if (isWritable || state.subs) {
+      // console.log('RECALC', state.value, state.compute);
+      const value = isWritable ? state.nextValue : calcComputed(state);
+      const filtered =
+        state.forced || (!state.hasException && getFiltered(value, state));
 
       if (filtered) {
         emitUpdateLifecycle(state, value);
@@ -319,10 +320,24 @@ export function getStateValue<T>(
   let shouldCompute = state.version !== version;
 
   if (shouldCompute) {
+    // console.log('GET_ST_V', state.value, state.compute);
+
     const value = state.compute
       ? calcComputed(state, notTrackDeps)
       : state.nextValue;
-    if (getFiltered(value, state)) state.value = value;
+
+    if (!state.hasException && getFiltered(value, state)) {
+      emitUpdateLifecycle(state, value);
+      state.value = value;
+
+      if (state.subs) {
+        for (let node = state.ft; node !== null; node = node.nt) {
+          if (typeof node.t === 'function') {
+            notifications.push(node.t, state.value);
+          }
+        }
+      }
+    }
   }
 
   state.version = version;
@@ -371,7 +386,8 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
 
   for (let node = state.fs; node !== null; node = node.ns) {
     const source = node.s;
-    const value = getStateValue(source, true);
+    // console.log('CHECK MEMO');
+    getStateValue(source, true);
 
     if (source.hasException) {
       hasException = true;
@@ -379,7 +395,6 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
       state.exception = source.exception;
       break;
     } else if (getFiltered(node.cached, source)) {
-      source.value = value;
       sameDeps = false;
       break;
     }
@@ -397,17 +412,16 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
   tracking = state;
   node = state.fs;
 
-  if (!hasException) {
-    state.tracking = true;
-    state.hasException = false;
+  state.tracking = true;
+  state.hasException = false;
 
-    try {
-      if (state.children) cleanupChildren(state);
-      value = state.compute!(state.value, status === SCHEDULED);
-    } catch (e: any) {
-      state.exception = e;
-      state.hasException = true;
-    }
+  try {
+    if (state.children) cleanupChildren(state);
+    value = state.compute!(state.value, status === SCHEDULED);
+  } catch (e: any) {
+    // console.log('FAIL', state.value, state.compute);
+    state.exception = e;
+    state.hasException = true;
   }
 
   if (state.hasException) {
@@ -428,7 +442,7 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
         state.onException(state.exception);
       }
 
-      if (logException || state.subs || (!state.ft && !tracking)) {
+      if (logException || (!state.ft && !tracking)) {
         config.logException(state.exception);
       }
     }
