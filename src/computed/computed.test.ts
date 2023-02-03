@@ -2,6 +2,7 @@ import { computed } from './computed';
 import { writable } from '../writable/writable';
 import { configure } from '../config/config';
 import { onDeactivate } from '../lifecycle/lifecycle';
+import { batch } from '../core/core';
 
 describe('computed', () => {
   const a = writable(1);
@@ -36,6 +37,59 @@ describe('computed', () => {
     expect(b2()).toBe(-1);
     expect(c2()).toBe(4);
     expect(d2()).toBe(4);
+  });
+
+  it('updates value properly using batching', () => {
+    batch(() => {
+      a(1);
+      b(2);
+      c(3);
+      d(4);
+    });
+
+    expect(a2()).toBe(-2);
+    expect(b2()).toBe(-4);
+    expect(c2()).toBe(1);
+    expect(d2()).toBe(6);
+  });
+
+  it('updates value properly on subscribers run', () => {
+    const a = writable(1);
+    const b = writable(2);
+    const c = writable(3);
+    const d = writable(4);
+
+    const a1 = computed(() => b());
+    const b1 = computed(() => a() - c());
+    const c1 = computed(() => b() + d());
+    const d1 = computed(() => c());
+
+    const a2 = computed(() => b1());
+    const b2 = computed(() => a1() - c1());
+    const c2 = computed(() => b1() + d1());
+    const d2 = computed(() => c1());
+
+    let aSub,
+      bSub,
+      cSub,
+      dSub = 0;
+
+    a2.subscribe((v) => (aSub = v));
+    b2.subscribe((v) => (bSub = v));
+    c2.subscribe((v) => (cSub = v));
+    d2.subscribe((v) => (dSub = v));
+
+    batch(() => {
+      a(4);
+      b(3);
+      c(2);
+      d(1);
+    });
+
+    expect(aSub).toBe(2);
+    expect(bSub).toBe(-1);
+    expect(cSub).toBe(4);
+    expect(dSub).toBe(4);
   });
 
   it('has Signal methods', () => {

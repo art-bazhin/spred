@@ -10,7 +10,7 @@ export interface ListNode {
   s: SignalState<any>;
   t: SignalState<any> | Subscriber<any>;
   stale: boolean;
-  cached: number;
+  memo: any;
 }
 
 export type Computation<T> =
@@ -20,7 +20,7 @@ export type Computation<T> =
 
 export interface SignalState<T> {
   value: T;
-  nextValue?: T;
+  nextValue: T;
   hasException?: boolean;
   exception?: unknown;
   subs: number;
@@ -34,7 +34,6 @@ export interface SignalState<T> {
   name?: string;
   freezed?: boolean;
   forced?: boolean;
-  dirty: number;
 
   fs: ListNode | null;
   ls: ListNode | null;
@@ -61,7 +60,6 @@ export function createSignalState<T>(
     nextValue: value,
     subs: 0,
     i: 0,
-    dirty: 0,
     tracking: false,
     version: null,
     node: null,

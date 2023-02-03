@@ -116,17 +116,19 @@ export function subscribe<T>(
 
   if (!state.freezed && !state.ft) status = ACTIVATING;
 
+  ++state.subs;
+
   const value = getStateValue(state, true);
 
   status = prevStatus;
 
   if (state.freezed) {
+    --state.subs;
     if (exec) isolate(() => subscriber(value, true));
     return NOOP_FN;
   }
 
   let node = createSubscriberNode(state, subscriber);
-  ++state.subs;
 
   if (exec) {
     isolate(() => subscriber(value, true));
@@ -182,7 +184,6 @@ export function recalc() {
   if (!queue.length || batchLevel) return;
 
   const q = queue;
-  const firstIndex = queue.length;
   const prevStatus = status;
 
   queue = [];
@@ -200,7 +201,6 @@ export function recalc() {
     let updated = false;
 
     if (isWritable || state.subs) {
-      // console.log('RECALC', state.value, state.compute);
       const value = isWritable ? state.nextValue : calcComputed(state);
       const filtered =
         state.forced || (!state.hasException && getFiltered(value, state));
@@ -209,6 +209,8 @@ export function recalc() {
         emitUpdateLifecycle(state, value);
         state.value = value;
         updated = true;
+      } else if (state.hasException) {
+        config.logException(state.exception);
       }
 
       state.version = version;
@@ -222,75 +224,6 @@ export function recalc() {
       }
     }
   }
-
-  // for (let i = 0; i < q.length; i++) {
-  //   const state = q[i];
-
-  //   if (state.i !== i) continue;
-
-  //   let filtered = true;
-  //   let isWritable = !state.compute;
-
-  //   if (isWritable) {
-  //     filtered = getFiltered(state.nextValue, state) || state.forced;
-  //     state.forced = false;
-
-  //     if (filtered) {
-  //       emitUpdateLifecycle(state, state.nextValue);
-  //       state.value = state.nextValue;
-  //     }
-  //   }
-
-  //   if (filtered) {
-  //     for (let node = state.ft; node !== null; node = node.nt) {
-  //       if (typeof node.t === 'object') {
-  //         ++node.t.dirty;
-  //         node.t.i = q.push(node.t) - 1;
-  //       } else if (isWritable) {
-  //         notifications.push(node.t);
-  //         notifications.push(state.value);
-  //       }
-  //     }
-  //   }
-  // }
-
-  // for (let i = firstIndex; i < q.length; i++) {
-  //   const state = q[i];
-
-  //   if (state.i !== i || state.version === version || !state.ft) continue;
-
-  //   let value = state.value;
-  //   let filtered = false;
-
-  //   if (state.dirty) {
-  //     value = calcComputed(state);
-  //     filtered = getFiltered(value, state) || state.hasException;
-  //   }
-
-  //   if (filtered) {
-  //     if (!state.hasException) {
-  //       emitUpdateLifecycle(state, value);
-  //       state.value = value;
-
-  //       let subsCount = state.subs;
-
-  //       for (let node = state.ft; subsCount && node !== null; node = node.nt!) {
-  //         if (typeof node.t === 'function') {
-  //           notifications.push(node.t);
-  //           notifications.push(state.value);
-  //           --subsCount;
-  //         }
-  //       }
-  //     }
-  //   } else {
-  //     for (let node = state.ft; node !== null; node = node.nt!) {
-  //       if (typeof node.t === 'object') --node.t.dirty;
-  //     }
-  //   }
-
-  //   state.version = version;
-  //   state.dirty = 0;
-  // }
 
   status = prevStatus;
 
@@ -317,16 +250,15 @@ export function getStateValue<T>(
     }
   }
 
-  let shouldCompute = state.version !== version;
+  let shouldCompute = state.version !== version || status === ACTIVATING;
 
   if (shouldCompute) {
-    // console.log('GET_ST_V', state.value, state.compute);
+    const value = state.compute ? calcComputed(state) : state.nextValue;
 
-    const value = state.compute
-      ? calcComputed(state, notTrackDeps)
-      : state.nextValue;
-
-    if (!state.hasException && getFiltered(value, state)) {
+    if (state.hasException) {
+      if (state.subs && state.version !== version)
+        config.logException(state.exception);
+    } else if (getFiltered(value, state)) {
       emitUpdateLifecycle(state, value);
       state.value = value;
 
@@ -369,10 +301,10 @@ export function getStateValue<T>(
           state.lt = node;
         }
 
-        node.cached = state.value;
+        node.memo = state.value;
         node = node.ns;
       } else {
-        createNode(state, tracking).cached = state.value;
+        createNode(state, tracking).memo = state.value;
       }
     }
   }
@@ -380,13 +312,13 @@ export function getStateValue<T>(
   return state.value;
 }
 
-function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
+function calcComputed<T>(state: SignalState<T>) {
   let sameDeps = true;
   let hasException = false;
 
   for (let node = state.fs; node !== null; node = node.ns) {
     const source = node.s;
-    // console.log('CHECK MEMO');
+
     getStateValue(source, true);
 
     if (source.hasException) {
@@ -394,7 +326,7 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
       state.hasException = true;
       state.exception = source.exception;
       break;
-    } else if (getFiltered(node.cached, source)) {
+    } else if (getFiltered(node.memo, source)) {
       sameDeps = false;
       break;
     }
@@ -419,7 +351,6 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
     if (state.children) cleanupChildren(state);
     value = state.compute!(state.value, status === SCHEDULED);
   } catch (e: any) {
-    // console.log('FAIL', state.value, state.compute);
     state.exception = e;
     state.hasException = true;
   }
@@ -440,10 +371,6 @@ function calcComputed<T>(state: SignalState<T>, logException?: boolean) {
 
       if (state.onException) {
         state.onException(state.exception);
-      }
-
-      if (logException || (!state.ft && !tracking)) {
-        config.logException(state.exception);
       }
     }
   }
@@ -525,7 +452,7 @@ function createNode(source: SignalState<any>, target: SignalState<any>) {
     nt: null,
 
     stale: false,
-    cached: undefined,
+    memo: undefined,
   };
 
   if (target.ls) {

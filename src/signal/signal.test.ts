@@ -319,7 +319,7 @@ describe('signal', () => {
       A(3);
     });
 
-    expect(res).toBe('EH');
+    expect(res).toBe('H');
 
     res = '';
 

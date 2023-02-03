@@ -21,7 +21,7 @@ describe('lifecycle signals', () => {
     expect(result.deactivate).toBe(3);
   });
 
-  it('does not subscribe same listenr twice', () => {
+  it('does not subscribe same listener twice', () => {
     const counter = writable(0);
     const spy = jest.fn();
 
