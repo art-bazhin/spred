@@ -250,7 +250,7 @@ export function getStateValue<T>(
     }
   }
 
-  let shouldCompute = state.version !== version || status === ACTIVATING;
+  let shouldCompute = state.version !== version || (status && !state.fs);
 
   if (shouldCompute) {
     const value = state.compute ? calcComputed(state) : state.nextValue;
