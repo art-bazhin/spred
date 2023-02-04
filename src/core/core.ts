@@ -98,10 +98,12 @@ export function update<T>(state: SignalState<T>, value?: any) {
     state.forced = true;
   }
 
-  state.i = queue.push(state) - 1;
+  if (state.forced || !state.compare(state.nextValue, state.value)) {
+    state.i = queue.push(state) - 1;
 
-  if (wrapper) wrapper(recalc);
-  else recalc();
+    if (wrapper) wrapper(recalc);
+    else recalc();
+  }
 
   return state.nextValue;
 }
@@ -193,7 +195,7 @@ export function recalc() {
     if (isWritable || state.subs) {
       const value = isWritable ? state.nextValue : calcComputed(state);
       const filtered =
-        state.forced ||
+        isWritable ||
         (!state.hasException &&
           value !== VOID &&
           !state.compare(value, state.value));
