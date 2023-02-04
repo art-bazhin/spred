@@ -251,7 +251,10 @@ export function getStateValue<T>(
     if (state.hasException) {
       if (state.subs && state.version !== version)
         config.logException(state.exception);
-    } else if (value !== (VOID as any) && !state.compare(value, state.value)) {
+    } else if (
+      state.forced ||
+      (value !== (VOID as any) && !state.compare(value, state.value))
+    ) {
       emitUpdateLifecycle(state, value);
       state.value = value;
 
@@ -319,7 +322,7 @@ function calcComputed<T>(state: SignalState<T>) {
       state.hasException = true;
       state.exception = source.exception;
       break;
-    } else if (!source.compare(source.value, node.memo)) {
+    } else if (source.forced || !source.compare(source.value, node.memo)) {
       sameDeps = false;
       break;
     }

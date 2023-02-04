@@ -1,3 +1,4 @@
+import { computed } from '../computed/computed';
 import { batch } from '../core/core';
 import { writable } from './writable';
 
@@ -78,6 +79,36 @@ describe('writable', () => {
     const subscriber = jest.fn((v: any) => (value = v.a));
 
     s.subscribe(subscriber);
+
+    s.notify();
+
+    expect(subscriber).toBeCalledTimes(2);
+    expect(value).toBe(undefined);
+
+    s().a = 1;
+    s.notify();
+
+    expect(subscriber).toBeCalledTimes(3);
+    expect(value).toBe(1);
+
+    s().a = 2;
+    s.notify();
+
+    expect(subscriber).toBeCalledTimes(4);
+    expect(value).toBe(2);
+  });
+
+  it('force emits dependant subscribers using notify method', () => {
+    const s = writable({} as any);
+    const comp = computed(
+      () => s().a,
+      () => false
+    );
+
+    let value: any;
+    const subscriber = jest.fn((v: any) => (value = v));
+
+    comp.subscribe(subscriber);
 
     s.notify();
 
