@@ -167,16 +167,6 @@ function emitUpdateLifecycle(state: SignalState<any>, value: any) {
   }
 }
 
-function getFiltered<T>(value: T, state: SignalState<T>) {
-  const filter = state.filter;
-  const prevValue = state.value;
-
-  if (filter)
-    return typeof filter === 'function' ? filter(value, prevValue) : true;
-
-  return !Object.is(value, prevValue);
-}
-
 /**
  * Immediately calculates the updated values of the signals and notifies their subscribers.
  */
@@ -203,7 +193,8 @@ export function recalc() {
     if (isWritable || state.subs) {
       const value = isWritable ? state.nextValue : calcComputed(state);
       const filtered =
-        state.forced || (!state.hasException && getFiltered(value, state));
+        state.forced ||
+        (!state.hasException && !state.compare(value, state.value));
 
       if (filtered) {
         emitUpdateLifecycle(state, value);
@@ -258,7 +249,7 @@ export function getStateValue<T>(
     if (state.hasException) {
       if (state.subs && state.version !== version)
         config.logException(state.exception);
-    } else if (getFiltered(value, state)) {
+    } else if (!state.compare(value, state.value)) {
       emitUpdateLifecycle(state, value);
       state.value = value;
 
@@ -326,7 +317,7 @@ function calcComputed<T>(state: SignalState<T>) {
       state.hasException = true;
       state.exception = source.exception;
       break;
-    } else if (getFiltered(node.memo, source)) {
+    } else if (!source.compare(source.value, node.memo)) {
       sameDeps = false;
       break;
     }

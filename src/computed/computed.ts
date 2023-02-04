@@ -3,39 +3,41 @@ import { signalProto } from '../signal/signal';
 import { Computation, createSignalState } from '../signal-state/signal-state';
 import { isWritableSignal } from '../guards/guards';
 import { getStateValue } from '../core/core';
-import { Filter } from '../filter/filter';
+import { Comparator } from '../compartor/comparator';
 
 /**
  * Creates a signal that automatically calculates its value from other signals.
  * @param compute The function that calculates the signal value and returns it.
- * @param shouldUpdate The function that returns a falsy value if the new signal value should be ignored. Use falsy arg value to emit signal values that are not equal to previous vaslue. Use truthy arg value to emit all signal values.
+ * @param compare Function to check if the new value equals to the previous value.
  * @param handleException Exception handler.
  * @returns Computed signal.
  */
 export function computed<T>(
   compute: Computation<T>,
-  shouldUpdate?: boolean | null | undefined,
+  compare?: null | undefined,
   handleException?: (e: unknown, prevValue?: T) => T
 ): Signal<T>;
 
 export function computed<T>(
   compute: Computation<T>,
-  shouldUpdate: Filter<T, undefined>,
+  compare: Comparator<T, undefined>,
   handleException?: (e: unknown, prevValue?: T) => T
 ): Signal<T, undefined>;
 
 export function computed<T>(
   compute: Computation<T>,
-  shouldUpdate?: any,
+  compare?: any,
   handleException?: (e: unknown, prevValue?: T) => T
 ): Signal<T> {
   const getValue = isWritableSignal(compute) ? () => compute() : compute;
 
-  const state = createSignalState(undefined as any, getValue);
+  const state = createSignalState(
+    undefined as any,
+    getValue,
+    compare,
+    handleException
+  );
   const self: any = () => getStateValue(state);
-
-  if (shouldUpdate) state.filter = shouldUpdate;
-  if (handleException) state.catch = handleException;
 
   self._state = state;
   self.get = signalProto.get;

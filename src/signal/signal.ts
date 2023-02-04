@@ -1,5 +1,4 @@
 import { getStateValue, subscribe } from '../core/core';
-import { SignalState } from '../signal-state/signal-state';
 import { Subscriber } from '../subscriber/subscriber';
 
 /**

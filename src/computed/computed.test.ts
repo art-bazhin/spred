@@ -557,7 +557,7 @@ describe('computed', () => {
   });
 
   it('ignores a new value if it is equal to the current value', () => {
-    const a = writable(0, false);
+    const a = writable(0);
     const b = computed(a);
     const spy = jest.fn();
 
@@ -577,9 +577,9 @@ describe('computed', () => {
     expect(spy).toBeCalledTimes(3);
   });
 
-  it('does not ignore any new value if the second arg is true', () => {
-    const a = writable(0, true);
-    const b = computed(a, true);
+  it('does not ignore any new value if the second arg returns true', () => {
+    const a = writable(0, () => false);
+    const b = computed(a, () => false);
     const spy = jest.fn();
 
     b.subscribe(spy);
@@ -598,9 +598,9 @@ describe('computed', () => {
     expect(spy).toBeCalledTimes(5);
   });
 
-  it('can use custom filter function', () => {
-    const a = writable(0, true);
-    const b = computed(a, (value) => value < 5);
+  it('can use custom compare function', () => {
+    const a = writable(0, () => false);
+    const b = computed(a, (value) => value >= 5);
     const spy = jest.fn();
 
     b.subscribe(spy);

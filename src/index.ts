@@ -20,7 +20,7 @@ import {
   EffectStatusObject,
 } from './effect/effect';
 import { Subscriber } from './subscriber/subscriber';
-import { Filter } from './filter/filter';
+import { Comparator } from './compartor/comparator';
 import {
   isSignal,
   isWritableSignal,
@@ -43,7 +43,7 @@ export {
   Store,
   Config,
   Subscriber,
-  Filter,
+  Comparator as Filter,
   Computation,
   Setter,
   writable,

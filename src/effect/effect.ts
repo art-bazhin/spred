@@ -2,7 +2,7 @@ import { writable } from '../writable/writable';
 import { computed } from '../computed/computed';
 import { Signal } from '../signal/signal';
 import { batch } from '../core/core';
-import { NOOP_FN } from '../utils/constants';
+import { FALSE_FN, NOOP_FN } from '../utils/constants';
 import { named } from '../named/named';
 import { config } from '../config/config';
 
@@ -81,12 +81,12 @@ export function effect<T, A extends unknown[]>(
   let current = -1;
 
   const _status = writable<EffectStatus>('pristine');
-  const _exception = writable(undefined as unknown, true);
-  const _data = writable<T>(undefined, true);
+  const _exception = writable(undefined as unknown, FALSE_FN);
+  const _data = writable<T>(undefined, FALSE_FN);
   const _aborted = writable();
-  const _args = writable<A>(undefined, true);
+  const _args = writable<A>(undefined, FALSE_FN);
 
-  const lastStatus = computed(_status, (status) => status !== 'pending');
+  const lastStatus = computed(_status, (status) => status === 'pending');
 
   lastStatus.subscribe(NOOP_FN);
 
@@ -103,7 +103,7 @@ export function effect<T, A extends unknown[]>(
     } as EffectStatusObject;
   });
 
-  const exception = computed(_exception, true);
+  const exception = computed(_exception, FALSE_FN);
 
   const done = computed(() => {
     const data = _data();
@@ -117,11 +117,11 @@ export function effect<T, A extends unknown[]>(
       case 'rejected':
         return exception;
     }
-  }, true);
+  }, FALSE_FN);
 
-  const data = computed(_data, true);
-  const aborted = computed(_aborted, true);
-  const args = computed(_args, true);
+  const data = computed(_data, FALSE_FN);
+  const aborted = computed(_aborted, FALSE_FN);
+  const args = computed(_args, FALSE_FN);
 
   const abort = () => {
     if (!status.sample()!.pending) return;

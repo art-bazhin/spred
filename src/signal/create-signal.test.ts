@@ -56,8 +56,8 @@ describe('signal function', () => {
     expect(spy).toBeCalledTimes(3);
   });
 
-  it('does not ignore any new value if the second arg is true', () => {
-    const [value, set] = signal(0, true);
+  it('does not ignore any new value if the second arg returns false', () => {
+    const [value, set] = signal(0, () => false);
     const spy = jest.fn();
 
     value.subscribe(spy);
@@ -76,8 +76,8 @@ describe('signal function', () => {
     expect(spy).toBeCalledTimes(5);
   });
 
-  it('can use custom filter function', () => {
-    const [value, set] = signal(0, (value) => value < 5);
+  it('can use custom compare function', () => {
+    const [value, set] = signal(0, (value) => value >= 5);
     const spy = jest.fn();
 
     value.subscribe(spy);

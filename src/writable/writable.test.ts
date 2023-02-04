@@ -149,8 +149,8 @@ describe('writable', () => {
     expect(spy).toBeCalledTimes(3);
   });
 
-  it('does not ignore any new value if the second arg is true', () => {
-    const a = writable(0, true);
+  it('does not ignore any new value if the second arg returns false', () => {
+    const a = writable(0, () => false);
     const spy = jest.fn();
 
     a.subscribe(spy);
@@ -169,8 +169,8 @@ describe('writable', () => {
     expect(spy).toBeCalledTimes(5);
   });
 
-  it('can use custom filter function', () => {
-    const a = writable(0, (value) => value < 5);
+  it('can use custom compare function', () => {
+    const a = writable(0, (value) => value >= 5);
     const spy = jest.fn();
 
     a.subscribe(spy);

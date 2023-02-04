@@ -1,5 +1,5 @@
 import { scope, tracking } from '../core/core';
-import { Filter } from '../filter/filter';
+import { Comparator } from '../compartor/comparator';
 import { Subscriber } from '../subscriber/subscriber';
 
 export interface ListNode {
@@ -26,7 +26,7 @@ export interface SignalState<T> {
   subs: number;
   compute?: Computation<T>;
   catch?: (err: unknown, prevValue?: T) => T;
-  filter?: Filter<T> | false;
+  compare: Comparator<T>;
   i?: number;
   tracking: boolean;
   version?: any;
@@ -50,13 +50,17 @@ export interface SignalState<T> {
 
 export function createSignalState<T>(
   value: T,
-  compute?: Computation<T>
+  compute?: Computation<T>,
+  compare?: Comparator<T>,
+  handleException?: (e: unknown, prevValue?: T) => T
 ): SignalState<T> {
   const parent = tracking || scope;
 
   const state: SignalState<T> = {
     value,
     compute,
+    compare: compare || Object.is,
+    catch: handleException,
     nextValue: value,
     subs: 0,
     i: 0,

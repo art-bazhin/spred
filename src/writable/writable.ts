@@ -1,7 +1,7 @@
 import { Signal, signalProto } from '../signal/signal';
 import { getStateValue, update } from '../core/core';
 import { createSignalState } from '../signal-state/signal-state';
-import { Filter } from '../filter/filter';
+import { Comparator } from '../compartor/comparator';
 
 const writableSignalProto = {
   ...signalProto,
@@ -58,28 +58,26 @@ export function writable<T>(): WritableSignal<T, undefined>;
 /**
  * Сreates a writable signal.
  * @param value Initial value of the signal.
- * @param shouldUpdate The function that returns a falsy value if the new signal value should be ignored. Use falsy arg value to emit signal values that are not equal to previous vaslue. Use truthy arg value to emit all signal values.
+ * @param compare Function to check if the new value equals to the previous value.
  * @returns Writable signal.
  */
 export function writable<T>(
   value: T,
-  shouldUpdate?: Filter<T> | boolean | null | undefined
+  compare?: Comparator<T> | null | undefined
 ): WritableSignal<T>;
 
 export function writable<T>(
   value: undefined,
-  shouldUpdate?: Filter<T, undefined> | boolean | null | undefined
+  compare?: Comparator<T, undefined> | null | undefined
 ): WritableSignal<T, undefined>;
 
-export function writable(value?: any, shouldUpdate?: any) {
-  const state = createSignalState(value, undefined);
+export function writable(value?: any, compare?: any) {
+  const state = createSignalState(value, undefined, compare);
 
   const self: any = function (value?: any) {
     if (!arguments.length) return getStateValue(state);
     return update(state, value);
   };
-
-  if (shouldUpdate) state.filter = shouldUpdate;
 
   self._state = state;
   self.set = writableSignalProto.set;
