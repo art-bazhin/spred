@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.32.2](https://github.com/art-bazhin/spred/compare/v0.32.1...v0.32.2) (2023-02-04)
+
+
+### Performance Improvements
+
+* remove redundant recalculations when the same value passed to writable ([7f78ea0](https://github.com/art-bazhin/spred/commit/7f78ea0ce837650f6bf35215f972b67da5e4553a))
+
+
+### Docs
+
+* update docs ([2824bed](https://github.com/art-bazhin/spred/commit/2824bede05d032156e7b6781d790a55508fb87ec))
+* update readme ([ee1baf0](https://github.com/art-bazhin/spred/commit/ee1baf0fe84624d5fdcb0825637213c4c65199c6))
+
 ### [0.32.1](https://github.com/art-bazhin/spred/compare/v0.32.0...v0.32.1) (2023-02-04)
 
 
