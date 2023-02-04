@@ -137,12 +137,12 @@ counter(1);
 // > Double value is 2
 ```
 
-Signals use [Object.is](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/is) to compare values. A custom change detection function can be passed as a second argument of [writable](https://art-bazhin.github.io/spred/modules.html#writable) or [computed](https://art-bazhin.github.io/spred/modules.html#computed).
+Signals use [Object.is](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/is) to compare values. A custom compare function can be passed as a second argument of [writable](https://art-bazhin.github.io/spred/modules.html#writable) or [computed](https://art-bazhin.github.io/spred/modules.html#computed).
 
 ```ts
 /*...*/
 
-const obj = writable({ value: 1 }, (a, b) => a.value !== b.value);
+const obj = writable({ value: 1 }, (a, b) => a.value === b.value);
 
 obj.subscribe((obj) => console.log('Object value is ' + obj.value));
 // > Object value is 1
