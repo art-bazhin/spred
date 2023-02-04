@@ -154,23 +154,6 @@ obj({ value: 2 });
 // > Object value is 2
 ```
 
-A signal will be updated on any incoming value if `true` is passed as a second argument.
-
-```ts
-/*...*/
-
-const value = writable(1, true);
-
-value.subscribe((value) => console.log('The value is ' + value));
-// > The value is 1
-
-value(1);
-// > The value is 1
-
-value(1);
-// > The value is 1
-```
-
 ### Error Handling
 
 Any signal that have subscribers and an exception ocured during the computation will log the error in the console and will not cause recalculation of its dependants. You can pass an exception handler as a third argument of the [computed](https://art-bazhin.github.io/spred/modules.html#computed).
