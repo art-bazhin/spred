@@ -44,7 +44,7 @@ export {
   Store,
   Config,
   Subscriber,
-  Comparator as Filter,
+  Comparator,
   Computation,
   Setter,
   writable,
