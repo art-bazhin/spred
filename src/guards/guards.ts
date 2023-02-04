@@ -1,11 +1,14 @@
 import { Signal } from '../signal/signal';
 import { Computation } from '../signal-state/signal-state';
 import { WritableSignal } from '../writable/writable';
+import { VOID } from '../utils/constants';
 
-export function isSignal<T>(value: Computation<T>): value is Signal<T>;
+export function isSignal<T>(
+  value: Computation<T>
+): value is Signal<Exclude<T, typeof VOID>>;
 export function isSignal<T>(
   value: (...args: unknown[]) => T
-): value is Signal<T>;
+): value is Signal<Exclude<T, typeof VOID>>;
 export function isSignal(value: unknown): value is Signal<unknown>;
 export function isSignal(value: any) {
   return value._state && value.get;

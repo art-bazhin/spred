@@ -2,7 +2,7 @@ import { Signal } from './signal';
 import { computed } from '../computed/computed';
 import { writable } from '../writable/writable';
 import { Comparator } from '../compartor/comparator';
-import { FALSE_FN } from '../utils/constants';
+import { FALSE_FN, VOID } from '../utils/constants';
 
 export type Setter<T> = (
   payload: Exclude<T, Function> | ((currentValue: T) => T)
@@ -10,17 +10,20 @@ export type Setter<T> = (
 
 export function signal(): [Signal<unknown>, () => unknown];
 
-export function signal<T>(): [Signal<T, undefined>, Setter<T>];
+export function signal<T>(): [
+  Signal<Exclude<T, typeof VOID>, undefined>,
+  Setter<T>
+];
 
 export function signal<T>(
   initialValue: T,
   compare?: Comparator<T> | null | undefined
-): [Signal<T>, Setter<T>];
+): [Signal<Exclude<T, typeof VOID>>, Setter<T>];
 
 export function signal<T>(
   initialValue: undefined,
-  compare?: Comparator<T, undefined> | null | undefined
-): [Signal<T, undefined>, Setter<T>];
+  compare?: Comparator<T> | null | undefined
+): [Signal<Exclude<T, typeof VOID>, undefined>, Setter<T>];
 
 /**
  * Creates a tuple of signal and setter function

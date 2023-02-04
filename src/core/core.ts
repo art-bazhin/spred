@@ -4,7 +4,7 @@ import { Subscriber } from '../subscriber/subscriber';
 import { config } from '../config/config';
 import { CircularDependencyError } from '../errors/errors';
 import { LifecycleHookName } from '../lifecycle/lifecycle';
-import { NOOP_FN } from '../utils/constants';
+import { NOOP_FN, VOID } from '../utils/constants';
 
 export let tracking: SignalState<any> | null = null;
 export let scope: SignalState<any> | null = null;
@@ -194,7 +194,9 @@ export function recalc() {
       const value = isWritable ? state.nextValue : calcComputed(state);
       const filtered =
         state.forced ||
-        (!state.hasException && !state.compare(value, state.value));
+        (!state.hasException &&
+          value !== VOID &&
+          !state.compare(value, state.value));
 
       if (filtered) {
         emitUpdateLifecycle(state, value);
@@ -249,7 +251,7 @@ export function getStateValue<T>(
     if (state.hasException) {
       if (state.subs && state.version !== version)
         config.logException(state.exception);
-    } else if (!state.compare(value, state.value)) {
+    } else if (value !== (VOID as any) && !state.compare(value, state.value)) {
       emitUpdateLifecycle(state, value);
       state.value = value;
 

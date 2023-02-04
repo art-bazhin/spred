@@ -2,6 +2,7 @@ import { Signal, signalProto } from '../signal/signal';
 import { getStateValue, update } from '../core/core';
 import { createSignalState } from '../signal-state/signal-state';
 import { Comparator } from '../compartor/comparator';
+import { VOID } from '../utils/constants';
 
 const writableSignalProto = {
   ...signalProto,
@@ -64,12 +65,12 @@ export function writable<T>(): WritableSignal<T, undefined>;
 export function writable<T>(
   value: T,
   compare?: Comparator<T> | null | undefined
-): WritableSignal<T>;
+): WritableSignal<Exclude<T, typeof VOID>>;
 
 export function writable<T>(
   value: undefined,
-  compare?: Comparator<T, undefined> | null | undefined
-): WritableSignal<T, undefined>;
+  compare?: Comparator<T> | null | undefined
+): WritableSignal<Exclude<T, typeof VOID>, undefined>;
 
 export function writable(value?: any, compare?: any) {
   const state = createSignalState(value, undefined, compare);

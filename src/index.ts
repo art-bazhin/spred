@@ -33,6 +33,7 @@ import { collect } from './collect/collect';
 import { named } from './named/named';
 import { createLogger } from './logger/logger';
 import { Computation } from './signal-state/signal-state';
+import { VOID } from './utils/constants';
 
 export {
   Signal,
@@ -68,4 +69,5 @@ export {
   collect,
   named,
   createLogger,
+  VOID,
 };

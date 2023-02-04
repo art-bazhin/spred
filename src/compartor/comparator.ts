@@ -1,1 +1,1 @@
-export type Comparator<T, I = T> = (value: T, prevValue: T | I) => any;
+export type Comparator<T> = (value: T, prevValue: T | undefined) => unknown;

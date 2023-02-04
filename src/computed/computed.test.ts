@@ -3,6 +3,7 @@ import { writable } from '../writable/writable';
 import { configure } from '../config/config';
 import { onDeactivate } from '../lifecycle/lifecycle';
 import { batch } from '../core/core';
+import { VOID } from '../utils/constants';
 
 describe('computed', () => {
   const a = writable(1);
@@ -601,6 +602,35 @@ describe('computed', () => {
   it('can use custom compare function', () => {
     const a = writable(0, () => false);
     const b = computed(a, (value) => value >= 5);
+    const spy = jest.fn();
+
+    b.subscribe(spy);
+    expect(spy).toBeCalledTimes(1);
+
+    a(0);
+    expect(spy).toBeCalledTimes(2);
+
+    a(1);
+    expect(spy).toBeCalledTimes(3);
+
+    a(5);
+    expect(spy).toBeCalledTimes(3);
+
+    a(2);
+    expect(spy).toBeCalledTimes(4);
+  });
+
+  it('can filter values using VOID constant', () => {
+    const a = writable(0, () => false);
+    const b = computed(
+      () => {
+        const value = a();
+
+        if (value >= 5) return VOID;
+        return value;
+      },
+      () => false
+    );
     const spy = jest.fn();
 
     b.subscribe(spy);

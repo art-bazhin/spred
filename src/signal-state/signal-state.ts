@@ -51,7 +51,7 @@ export interface SignalState<T> {
 export function createSignalState<T>(
   value: T,
   compute?: Computation<T>,
-  compare?: Comparator<T>,
+  compare?: Comparator<T> | null,
   handleException?: (e: unknown, prevValue?: T) => T
 ): SignalState<T> {
   const parent = tracking || scope;

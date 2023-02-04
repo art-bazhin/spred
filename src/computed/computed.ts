@@ -4,6 +4,7 @@ import { Computation, createSignalState } from '../signal-state/signal-state';
 import { isWritableSignal } from '../guards/guards';
 import { getStateValue } from '../core/core';
 import { Comparator } from '../compartor/comparator';
+import { VOID } from '../utils/constants';
 
 /**
  * Creates a signal that automatically calculates its value from other signals.
@@ -14,21 +15,9 @@ import { Comparator } from '../compartor/comparator';
  */
 export function computed<T>(
   compute: Computation<T>,
-  compare?: null | undefined,
+  compare?: Comparator<T> | null | undefined,
   handleException?: (e: unknown, prevValue?: T) => T
-): Signal<T>;
-
-export function computed<T>(
-  compute: Computation<T>,
-  compare: Comparator<T, undefined>,
-  handleException?: (e: unknown, prevValue?: T) => T
-): Signal<T, undefined>;
-
-export function computed<T>(
-  compute: Computation<T>,
-  compare?: any,
-  handleException?: (e: unknown, prevValue?: T) => T
-): Signal<T> {
+): Signal<Exclude<T, typeof VOID>, T extends typeof VOID ? undefined : T> {
   const getValue = isWritableSignal(compute) ? () => compute() : compute;
 
   const state = createSignalState(
