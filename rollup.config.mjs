@@ -1,6 +1,6 @@
-import { terser } from 'rollup-plugin-terser';
+import terser from '@rollup/plugin-terser';
 import ts from 'rollup-plugin-ts';
-import pkg from './package.json';
+import pkg from './package.json' with { type: 'json' };
 
 export default [
   {
