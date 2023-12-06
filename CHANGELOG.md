@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.32.4](https://github.com/art-bazhin/spred/compare/v0.32.3...v0.32.4) (2023-12-06)
+
+
+### CI
+
+* update ci config ([81c8edb](https://github.com/art-bazhin/spred/commit/81c8edb2ba9cfa5e19cb26df4e162a4feba700f0))
+
 ### [0.32.3](https://github.com/art-bazhin/spred/compare/v0.32.2...v0.32.3) (2023-12-06)
 
 
