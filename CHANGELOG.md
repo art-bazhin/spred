@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.32.3](https://github.com/art-bazhin/spred/compare/v0.32.2...v0.32.3) (2023-12-06)
+
+
+### Docs
+
+* update readme ([621be0b](https://github.com/art-bazhin/spred/commit/621be0b9fa1491a37f1d4341cb2fadf5df005338))
+
+
+### Tests
+
+* **bench:** add act to benchmark ([1999a08](https://github.com/art-bazhin/spred/commit/1999a08539411a069e04dce9efefbd0456a7700a))
+* **bench:** fix act benchmark ([9840edc](https://github.com/art-bazhin/spred/commit/9840edc788dd4f7b826b2fbb309ab13948b45296))
+
+
+### Build System
+
+* update dependencies ([8d8fbdc](https://github.com/art-bazhin/spred/commit/8d8fbdc98bee7f0df03af8bb636baf3056e65652))
+
 ### [0.32.2](https://github.com/art-bazhin/spred/compare/v0.32.1...v0.32.2) (2023-02-04)
 
 
