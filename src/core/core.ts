@@ -28,7 +28,7 @@ export interface ListNode {
 export type Computation<T> =
   | (() => T)
   | ((prevValue: T | undefined) => T)
-  | ((prevValue: T | undefined, scheduled?: boolean) => T);
+  | ((prevValue: T | undefined, scheduled: boolean) => T);
 
 export interface SignalState<T> {
   value: T;
@@ -293,7 +293,7 @@ export function recalc() {
 }
 
 export function get<T>(state: SignalState<T>, notTrackDeps?: boolean): T {
-  state.flags &= ~NOTIFIED;
+  if (!status) state.flags &= ~NOTIFIED;
 
   if (state.compute) {
     if (state.flags & FREEZED) return state.value;
@@ -334,6 +334,8 @@ export function get<T>(state: SignalState<T>, notTrackDeps?: boolean): T {
   }
 
   state.version = version;
+
+  state.flags &= ~NOTIFIED;
 
   if (tracking && !notTrackDeps) {
     if (state.flags & HAS_EXCEPTION && !(tracking.flags & HAS_EXCEPTION)) {
@@ -409,7 +411,7 @@ function calcComputed<T>(state: SignalState<T>) {
 
   try {
     if (state.children) cleanupChildren(state);
-    value = state.compute!(state.value, status === SCHEDULED);
+    value = state.compute!(state.value, !!(state.flags & NOTIFIED));
   } catch (e: any) {
     state.exception = e;
     state.flags |= HAS_EXCEPTION;

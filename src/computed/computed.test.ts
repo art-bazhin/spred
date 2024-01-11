@@ -433,20 +433,29 @@ describe('computed', () => {
   });
 
   it('passes true as second compute fn argument if computation was scheduled', () => {
-    let lastScheduled: boolean | undefined;
+    let lastScheduled = false;
+    let lastMedScheduled = false;
 
     const spy = jest.fn();
+    const medSpy = jest.fn();
 
     const source = writable(0);
-    const result = computed((_: any, scheduled?: boolean) => {
-      lastScheduled = scheduled;
-      spy();
-      return source();
+
+    const med = computed((_: any, scheduled: boolean) => {
+      lastMedScheduled = scheduled;
+      medSpy();
+      return source() * 2;
     });
 
-    const unsub = result.subscribe(() => {});
+    const result = computed((_: any, scheduled: boolean) => {
+      lastScheduled = scheduled;
+      spy();
+      return source() < 5 ? source() : med();
+    });
 
-    expect(lastScheduled).toBeFalsy();
+    let unsub = result.subscribe(() => {});
+
+    expect(lastScheduled).toBe(false);
     expect(spy).toBeCalledTimes(1);
 
     source(1);
@@ -463,8 +472,33 @@ describe('computed', () => {
 
     source(3);
     result();
-    expect(lastScheduled).toBeFalsy();
+    expect(lastScheduled).toBe(false);
     expect(spy).toBeCalledTimes(4);
+
+    unsub = result.subscribe(() => {});
+    expect(lastScheduled).toBe(false);
+    expect(spy).toBeCalledTimes(5);
+
+    source(10);
+    expect(lastScheduled).toBe(true);
+    expect(lastMedScheduled).toBe(false);
+    expect(medSpy).toBeCalledTimes(1);
+    expect(spy).toBeCalledTimes(6);
+
+    source(11);
+    expect(lastScheduled).toBe(true);
+    expect(lastMedScheduled).toBe(true);
+    expect(medSpy).toBeCalledTimes(2);
+    expect(spy).toBeCalledTimes(7);
+
+    source(4);
+    expect(lastScheduled).toBe(true);
+    expect(lastMedScheduled).toBe(true);
+    expect(medSpy).toBeCalledTimes(2);
+    expect(spy).toBeCalledTimes(8);
+
+    med();
+    expect(lastMedScheduled).toBe(false);
   });
 
   it('passes true as second compute fn argument if computation was scheduled (case 2)', () => {
@@ -629,7 +663,7 @@ describe('computed', () => {
         if (value >= 5) return VOID;
         return value;
       },
-      () => false
+      () => false,
     );
     const spy = jest.fn();
 
@@ -721,7 +755,7 @@ describe('computed', () => {
       (e: any) => {
         if (e > 5) throw Error();
         return 42;
-      }
+      },
     );
 
     const secondHandledError = computed(handledError, null, () => 999);
