@@ -2,7 +2,17 @@ import { Subscriber } from '../subscriber/subscriber';
 import { config } from '../config/config';
 import { CircularDependencyError } from '../errors/errors';
 import { LifecycleHookName } from '../lifecycle/lifecycle';
-import { NOOP_FN, VOID } from '../utils/constants';
+import {
+  ACTIVATING,
+  FORCED,
+  FREEZED,
+  HAS_EXCEPTION,
+  NOOP_FN,
+  NOTIFIED,
+  SCHEDULED,
+  TRACKING,
+  VOID,
+} from '../utils/constants';
 import { Comparator } from '../compartor/comparator';
 
 export interface ListNode {
@@ -24,21 +34,15 @@ export type Computation<T> =
 export interface SignalState<T> {
   value: T;
   nextValue: T;
+  flags: number;
   exception?: unknown;
   subs: number;
   compute?: Computation<T>;
   catch?: (err: unknown, prevValue?: T) => T;
   compare: Comparator<T>;
-  i?: number;
   version?: any;
   children?: ((() => any) | SignalState<any>)[];
   name?: string;
-
-  hasException?: boolean;
-  freezed?: boolean;
-  forced?: boolean;
-  notified?: boolean;
-  tracking?: boolean;
 
   fs: ListNode | null;
   ls: ListNode | null;
@@ -60,10 +64,7 @@ let node: ListNode | null = null;
 let batchLevel = 0;
 let status = 0;
 
-const ACTIVATING = 1;
-const SCHEDULED = 2;
-
-let queue: SignalState<any>[] = [];
+let providers: SignalState<any>[] = [];
 let consumers: SignalState<any>[] = [];
 let notifications: any[] = [];
 
@@ -83,20 +84,14 @@ export function createSignalState<T>(
     compare: compare || Object.is,
     catch: handleException,
     nextValue: value,
+    flags: 0,
     subs: 0,
-    i: 0,
     version: null,
     node: null,
     fs: null,
     ls: null,
     ft: null,
     lt: null,
-
-    hasException: false,
-    freezed: false,
-    forced: false,
-    notified: false,
-    tracking: false,
   };
 
   if (parent) {
@@ -177,11 +172,11 @@ export function set<T>(state: SignalState<T>, value?: any) {
     if (typeof value === 'function') state.nextValue = value(state.nextValue);
     else state.nextValue = value;
   } else {
-    state.forced = true;
+    state.flags |= FORCED;
   }
 
-  if (state.forced || !state.compare(state.nextValue, state.value)) {
-    state.i = queue.push(state) - 1;
+  if (state.flags & FORCED || !state.compare(state.nextValue, state.value)) {
+    providers.push(state);
 
     if (wrapper) wrapper(recalc);
     else recalc();
@@ -191,9 +186,9 @@ export function set<T>(state: SignalState<T>, value?: any) {
 }
 
 function notify(state: SignalState<any>) {
-  if (state.notified) return;
+  if (state.flags & NOTIFIED) return;
 
-  state.notified = true;
+  state.flags |= NOTIFIED;
 
   if (state.subs || !state.compute) consumers.push(state);
 
@@ -211,7 +206,7 @@ export function subscribe<T>(
 ) {
   const prevStatus = status;
 
-  if (!state.freezed && !state.ft) status = ACTIVATING;
+  if (!(state.flags & FREEZED) && !state.ft) status = ACTIVATING;
 
   ++state.subs;
 
@@ -219,7 +214,7 @@ export function subscribe<T>(
 
   status = prevStatus;
 
-  if (state.freezed) {
+  if (state.flags & FREEZED) {
     --state.subs;
     if (exec) isolate(() => subscriber(value, true));
     return NOOP_FN;
@@ -268,12 +263,12 @@ function emitUpdateLifecycle(state: SignalState<any>, value: any) {
  * Immediately calculates the updated values of the signals and notifies their subscribers.
  */
 export function recalc() {
-  if (!queue.length || batchLevel) return;
+  if (!providers.length || batchLevel) return;
 
-  const q = queue;
+  const q = providers;
   const prevStatus = status;
 
-  queue = [];
+  providers = [];
   consumers = [];
   version = {};
   status = SCHEDULED;
@@ -299,12 +294,12 @@ export function recalc() {
 }
 
 export function get<T>(state: SignalState<T>, notTrackDeps?: boolean): T {
-  state.notified = false;
+  state.flags &= ~NOTIFIED;
 
   if (state.compute) {
-    if (state.freezed) return state.value;
+    if (state.flags & FREEZED) return state.value;
 
-    if (state.tracking) {
+    if (state.flags & TRACKING) {
       throw new CircularDependencyError();
     }
   }
@@ -314,11 +309,11 @@ export function get<T>(state: SignalState<T>, notTrackDeps?: boolean): T {
   if (shouldCompute) {
     const value = state.compute ? calcComputed(state) : state.nextValue;
 
-    if (state.hasException) {
+    if (state.flags & HAS_EXCEPTION) {
       if (state.subs && state.version !== version)
         config.logException(state.exception);
     } else if (
-      state.forced ||
+      state.flags & FORCED ||
       (value !== (VOID as any) && !state.compare(value, state.value))
     ) {
       emitUpdateLifecycle(state, value);
@@ -337,9 +332,9 @@ export function get<T>(state: SignalState<T>, notTrackDeps?: boolean): T {
   state.version = version;
 
   if (tracking && !notTrackDeps) {
-    if (state.hasException && !tracking.hasException) {
+    if (state.flags & HAS_EXCEPTION && !(tracking.flags & HAS_EXCEPTION)) {
       tracking.exception = state.exception;
-      tracking.hasException = true;
+      tracking.flags |= HAS_EXCEPTION;
     }
 
     if (status) {
@@ -383,12 +378,15 @@ function calcComputed<T>(state: SignalState<T>) {
 
     get(source, true);
 
-    if (source.hasException) {
+    if (source.flags & HAS_EXCEPTION) {
       hasException = true;
-      state.hasException = true;
+      state.flags |= HAS_EXCEPTION;
       state.exception = source.exception;
       break;
-    } else if (source.forced || !source.compare(source.value, node.memo)) {
+    } else if (
+      source.flags & FORCED ||
+      !source.compare(source.value, node.memo)
+    ) {
       sameDeps = false;
       break;
     }
@@ -406,29 +404,29 @@ function calcComputed<T>(state: SignalState<T>) {
   tracking = state;
   node = state.fs;
 
-  state.tracking = true;
-  state.hasException = false;
+  state.flags |= TRACKING;
+  state.flags &= ~HAS_EXCEPTION;
 
   try {
     if (state.children) cleanupChildren(state);
     value = state.compute!(state.value, status === SCHEDULED);
   } catch (e: any) {
     state.exception = e;
-    state.hasException = true;
+    state.flags |= HAS_EXCEPTION;
   }
 
-  if (state.hasException) {
+  if (state.flags & HAS_EXCEPTION) {
     if (state.catch) {
       try {
         value = state.catch(state.exception, state.value);
-        state.hasException = false;
+        state.flags &= ~HAS_EXCEPTION;
         state.exception = undefined;
       } catch (e) {
         state.exception = e;
       }
     }
 
-    if (state.hasException) {
+    if (state.flags & HAS_EXCEPTION) {
       logHook(state, 'EXCEPTION');
 
       if (state.onException) {
@@ -443,10 +441,10 @@ function calcComputed<T>(state: SignalState<T>) {
       node = node.ns;
     }
 
-    if (!state.fs) state.freezed = true;
+    if (!state.fs) state.flags |= FREEZED;
   }
 
-  state.tracking = false;
+  state.flags &= ~TRACKING;
   tracking = prevTracking;
   node = prevNode;
 
