@@ -1,8 +1,8 @@
 import { Signal } from '../signal/signal';
 import { signalProto } from '../signal/signal';
-import { Computation, createSignalState } from '../signal-state/signal-state';
+import { Computation, createSignalState } from '../core/core';
 import { isWritableSignal } from '../guards/guards';
-import { getStateValue } from '../core/core';
+import { get } from '../core/core';
 import { Comparator } from '../compartor/comparator';
 import { VOID } from '../utils/constants';
 
@@ -16,7 +16,7 @@ import { VOID } from '../utils/constants';
 export function computed<T>(
   compute: Computation<T>,
   compare?: Comparator<T> | null | undefined,
-  handleException?: (e: unknown, prevValue?: T) => T
+  handleException?: (e: unknown, prevValue?: T) => T,
 ): Signal<Exclude<T, typeof VOID>, T extends typeof VOID ? undefined : T> {
   const getValue = isWritableSignal(compute) ? () => compute() : compute;
 
@@ -24,9 +24,9 @@ export function computed<T>(
     undefined as any,
     getValue,
     compare,
-    handleException
+    handleException,
   );
-  const self: any = () => getStateValue(state);
+  const self: any = () => get(state);
 
   self._state = state;
   self.get = signalProto.get;

@@ -1,14 +1,60 @@
-import { Signal } from '../signal/signal';
-import { ListNode, SignalState } from '../signal-state/signal-state';
 import { Subscriber } from '../subscriber/subscriber';
 import { config } from '../config/config';
 import { CircularDependencyError } from '../errors/errors';
 import { LifecycleHookName } from '../lifecycle/lifecycle';
 import { NOOP_FN, VOID } from '../utils/constants';
+import { Comparator } from '../compartor/comparator';
 
-export let tracking: SignalState<any> | null = null;
-export let scope: SignalState<any> | null = null;
+export interface ListNode {
+  nt: ListNode | null;
+  pt: ListNode | null;
+  ns: ListNode | null;
+  ps: ListNode | null;
+  s: SignalState<any>;
+  t: SignalState<any> | Subscriber<any>;
+  stale: boolean;
+  memo: any;
+}
 
+export type Computation<T> =
+  | (() => T)
+  | ((prevValue: T | undefined) => T)
+  | ((prevValue: T | undefined, scheduled?: boolean) => T);
+
+export interface SignalState<T> {
+  value: T;
+  nextValue: T;
+  exception?: unknown;
+  subs: number;
+  compute?: Computation<T>;
+  catch?: (err: unknown, prevValue?: T) => T;
+  compare: Comparator<T>;
+  i?: number;
+  version?: any;
+  children?: ((() => any) | SignalState<any>)[];
+  name?: string;
+
+  hasException?: boolean;
+  freezed?: boolean;
+  forced?: boolean;
+  notified?: boolean;
+  tracking?: boolean;
+
+  fs: ListNode | null;
+  ls: ListNode | null;
+  ft: ListNode | null;
+  lt: ListNode | null;
+  node: ListNode | null;
+
+  // lifecycle:
+  onActivate?: ((value: T) => any) | null;
+  onDeactivate?: ((value: T) => any) | null;
+  onUpdate?: ((value: T, prevValue?: T) => any) | null;
+  onException?: ((e: unknown) => any) | null;
+}
+
+let tracking: SignalState<any> | null = null;
+let scope: SignalState<any> | null = null;
 let node: ListNode | null = null;
 
 let batchLevel = 0;
@@ -18,14 +64,53 @@ const ACTIVATING = 1;
 const SCHEDULED = 2;
 
 let queue: SignalState<any>[] = [];
+let consumers: SignalState<any>[] = [];
 let notifications: any[] = [];
 
 let version = {};
 
+export function createSignalState<T>(
+  value: T,
+  compute?: Computation<T>,
+  compare?: Comparator<T> | null,
+  handleException?: (e: unknown, prevValue?: T) => T,
+): SignalState<T> {
+  const parent = tracking || scope;
+
+  const state: SignalState<T> = {
+    value,
+    compute,
+    compare: compare || Object.is,
+    catch: handleException,
+    nextValue: value,
+    subs: 0,
+    i: 0,
+    version: null,
+    node: null,
+    fs: null,
+    ls: null,
+    ft: null,
+    lt: null,
+
+    hasException: false,
+    freezed: false,
+    forced: false,
+    notified: false,
+    tracking: false,
+  };
+
+  if (parent) {
+    if (!parent.children) parent.children = [state];
+    else parent.children.push(state);
+  }
+
+  return state;
+}
+
 export function isolate<T>(fn: () => T): T;
 export function isolate<T, A extends unknown[]>(
   fn: (...args: A) => T,
-  args: A
+  args: A,
 ): T;
 export function isolate(fn: any, args?: any) {
   const prevTracking = tracking;
@@ -82,13 +167,10 @@ export function batch(fn: (...args: any) => any) {
   else recalc();
 }
 
-export function update<T>(
-  state: SignalState<T>,
-  value: (currentValue: T) => T
-): T;
-export function update<T>(state: SignalState<T>, value: T | undefined): T;
-export function update<T>(state: SignalState<T>): void;
-export function update<T>(state: SignalState<T>, value?: any) {
+export function set<T>(state: SignalState<T>, value: (currentValue: T) => T): T;
+export function set<T>(state: SignalState<T>, value: T | undefined): T;
+export function set<T>(state: SignalState<T>): void;
+export function set<T>(state: SignalState<T>, value?: any) {
   const wrapper = (config as any)._notificationWrapper;
 
   if (arguments.length > 1) {
@@ -108,19 +190,32 @@ export function update<T>(state: SignalState<T>, value?: any) {
   return state.nextValue;
 }
 
+function notify(state: SignalState<any>) {
+  if (state.notified) return;
+
+  state.notified = true;
+
+  if (state.subs || !state.compute) consumers.push(state);
+
+  for (let node = state.ft; node !== null; node = node.nt) {
+    if (typeof node.t === 'object') {
+      notify(node.t);
+    }
+  }
+}
+
 export function subscribe<T>(
-  this: Signal<T>,
+  state: SignalState<T>,
   subscriber: Subscriber<T>,
-  exec = true
+  exec = true,
 ) {
-  const state = (this as any)._state as SignalState<T>;
   const prevStatus = status;
 
   if (!state.freezed && !state.ft) status = ACTIVATING;
 
   ++state.subs;
 
-  const value = getStateValue(state, true);
+  const value = get(state, true);
 
   status = prevStatus;
 
@@ -179,45 +274,15 @@ export function recalc() {
   const prevStatus = status;
 
   queue = [];
+  consumers = [];
   version = {};
   status = SCHEDULED;
 
   ++batchLevel;
 
-  for (let i = 0; i < q.length; i++) {
-    const state = q[i];
-    const isWritable = !state.compute;
-
-    if (state.version === version || state.i !== i) continue;
-
-    let updated = false;
-
-    if (isWritable || state.subs) {
-      const value = isWritable ? state.nextValue : calcComputed(state);
-      const filtered =
-        isWritable ||
-        (!state.hasException &&
-          value !== VOID &&
-          !state.compare(value, state.value));
-
-      if (filtered) {
-        emitUpdateLifecycle(state, value);
-        state.value = value;
-        updated = true;
-      } else if (state.hasException) {
-        config.logException(state.exception);
-      }
-
-      state.version = version;
-    }
-
-    for (let node = state.ft; node !== null; node = node.nt) {
-      if (typeof node.t === 'object') {
-        node.t.i = q.push(node.t) - 1;
-      } else if (updated) {
-        notifications.push(node.t, state.value);
-      }
-    }
+  for (let state of q) notify(state);
+  for (let state of consumers) {
+    if (state.subs || !state.compute) get(state);
   }
 
   status = prevStatus;
@@ -233,10 +298,9 @@ export function recalc() {
   recalc();
 }
 
-export function getStateValue<T>(
-  state: SignalState<T>,
-  notTrackDeps?: boolean
-): T {
+export function get<T>(state: SignalState<T>, notTrackDeps?: boolean): T {
+  state.notified = false;
+
   if (state.compute) {
     if (state.freezed) return state.value;
 
@@ -317,7 +381,7 @@ function calcComputed<T>(state: SignalState<T>) {
   for (let node = state.fs; node !== null; node = node.ns) {
     const source = node.s;
 
-    getStateValue(source, true);
+    get(source, true);
 
     if (source.hasException) {
       hasException = true;
@@ -417,7 +481,7 @@ function logHook<T>(state: SignalState<T>, hook: LifecycleHookName, value?: T) {
 
 function createSubscriberNode(
   source: SignalState<any>,
-  target: Subscriber<any>
+  target: Subscriber<any>,
 ) {
   const node: ListNode = {
     s: source,

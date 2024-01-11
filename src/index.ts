@@ -10,7 +10,7 @@ import { store, Store } from './store/store';
 import { configure, Config } from './config/config';
 import { Signal } from './signal/signal';
 import { watch } from './watch/watch';
-import { batch } from './core/core';
+import { batch, Computation } from './core/core';
 import { signal, Setter } from './signal/create-signal';
 import { on } from './on/on';
 import {
@@ -32,7 +32,6 @@ import { isolate } from './isolate/isolate';
 import { collect } from './collect/collect';
 import { named } from './named/named';
 import { createLogger } from './logger/logger';
-import { Computation } from './signal-state/signal-state';
 import { VOID } from './utils/constants';
 
 export {

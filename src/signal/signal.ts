@@ -1,4 +1,4 @@
-import { getStateValue, subscribe } from '../core/core';
+import { get, subscribe } from '../core/core';
 import { Subscriber } from '../subscriber/subscriber';
 
 /**
@@ -28,7 +28,7 @@ export interface Signal<T, I = T> {
    */
   subscribe<E extends boolean>(
     subscriber: true extends E ? Subscriber<T | I> : Subscriber<T>,
-    exec: E
+    exec: E,
   ): () => void;
 
   /**
@@ -41,12 +41,14 @@ export interface Signal<T, I = T> {
 
 export const signalProto = {
   get() {
-    return getStateValue((this as any)._state);
+    return get((this as any)._state);
   },
 
-  subscribe,
+  subscribe(subscriber: any, exec: any) {
+    return subscribe((this as any)._state, subscriber, exec);
+  },
 
-  sample(this: Signal<any>) {
-    return getStateValue((this as any)._state, true);
+  sample() {
+    return get((this as any)._state, true);
   },
 };
