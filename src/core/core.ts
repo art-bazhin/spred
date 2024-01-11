@@ -4,6 +4,7 @@ import { CircularDependencyError } from '../errors/errors';
 import { LifecycleHookName } from '../lifecycle/lifecycle';
 import {
   ACTIVATING,
+  CHANGED,
   FORCED,
   FREEZED,
   HAS_EXCEPTION,
@@ -22,8 +23,6 @@ export interface ListNode {
   ps: ListNode | null;
   s: SignalState<any>;
   t: SignalState<any> | Subscriber<any>;
-  stale: boolean;
-  memo: any;
 }
 
 export type Computation<T> =
@@ -304,9 +303,12 @@ export function get<T>(state: SignalState<T>, notTrackDeps?: boolean): T {
     }
   }
 
-  let shouldCompute = state.version !== version || (status && !state.fs);
+  let shouldCompute =
+    state.version !== version || (status && state.compute && !state.fs);
 
   if (shouldCompute) {
+    state.flags &= ~CHANGED;
+
     const value = state.compute ? calcComputed(state) : state.nextValue;
 
     if (state.flags & HAS_EXCEPTION) {
@@ -317,7 +319,9 @@ export function get<T>(state: SignalState<T>, notTrackDeps?: boolean): T {
       (value !== (VOID as any) && !state.compare(value, state.value))
     ) {
       emitUpdateLifecycle(state, value);
+
       state.value = value;
+      state.flags |= CHANGED;
 
       if (state.subs) {
         for (let node = state.ft; node !== null; node = node.nt) {
@@ -358,10 +362,9 @@ export function get<T>(state: SignalState<T>, notTrackDeps?: boolean): T {
           state.lt = node;
         }
 
-        node.memo = state.value;
         node = node.ns;
       } else {
-        createNode(state, tracking).memo = state.value;
+        createNode(state, tracking);
       }
     }
   }
@@ -383,10 +386,7 @@ function calcComputed<T>(state: SignalState<T>) {
       state.flags |= HAS_EXCEPTION;
       state.exception = source.exception;
       break;
-    } else if (
-      source.flags & FORCED ||
-      !source.compare(source.value, node.memo)
-    ) {
+    } else if (source.flags & CHANGED) {
       sameDeps = false;
       break;
     }
@@ -510,9 +510,6 @@ function createNode(source: SignalState<any>, target: SignalState<any>) {
 
     pt: null,
     nt: null,
-
-    stale: false,
-    memo: undefined,
   };
 
   if (target.ls) {
