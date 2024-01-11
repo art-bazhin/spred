@@ -4,25 +4,32 @@ import { CircularDependencyError } from '../errors/errors';
 import { LifecycleHookName } from '../lifecycle/lifecycle';
 import {
   ACTIVATING,
+  ACTIVATING_STATUS,
   CHANGED,
   FORCED,
   FREEZED,
   HAS_EXCEPTION,
   NOOP_FN,
   NOTIFIED,
-  SCHEDULED,
+  SCHEDULED_STATUS,
   TRACKING,
   VOID,
 } from '../utils/constants';
 import { Comparator } from '../compartor/comparator';
 
-export interface ListNode {
-  nt: ListNode | null;
-  pt: ListNode | null;
-  ns: ListNode | null;
-  ps: ListNode | null;
+export interface DepNode {
+  nt: DepNode | null;
+  pt: DepNode | null;
+  ns: DepNode | null;
+  ps: DepNode | null;
   s: SignalState<any>;
-  t: SignalState<any> | Subscriber<any>;
+  t: SignalState<any>;
+}
+
+interface ListNode<T> {
+  value: T;
+  prev: ListNode<T> | null;
+  next: ListNode<T> | null;
 }
 
 export type Computation<T> =
@@ -35,7 +42,6 @@ export interface SignalState<T> {
   nextValue: T;
   flags: number;
   exception?: unknown;
-  subs: number;
   compute?: Computation<T>;
   catch?: (err: unknown, prevValue?: T) => T;
   compare: Comparator<T>;
@@ -43,10 +49,13 @@ export interface SignalState<T> {
   children?: ((() => any) | SignalState<any>)[];
   name?: string;
 
-  fs: ListNode | null;
-  ls: ListNode | null;
-  ft: ListNode | null;
-  lt: ListNode | null;
+  fs: DepNode | null;
+  ls: DepNode | null;
+  ft: DepNode | null;
+  lt: DepNode | null;
+
+  firstSub: ListNode<Subscriber<T>> | null;
+  lastSub: ListNode<Subscriber<T>> | null;
 
   // lifecycle:
   onActivate?: ((value: T) => any) | null;
@@ -57,7 +66,7 @@ export interface SignalState<T> {
 
 let tracking: SignalState<any> | null = null;
 let scope: SignalState<any> | null = null;
-let node: ListNode | null = null;
+let node: DepNode | null = null;
 
 let batchLevel = 0;
 let status = 0;
@@ -83,12 +92,13 @@ export function createSignalState<T>(
     catch: handleException,
     nextValue: value,
     flags: 0,
-    subs: 0,
     version: null,
     fs: null,
     ls: null,
     ft: null,
     lt: null,
+    firstSub: null,
+    lastSub: null,
   };
 
   if (parent) {
@@ -187,12 +197,10 @@ function notify(state: SignalState<any>) {
 
   state.flags |= NOTIFIED;
 
-  if (state.subs || !state.compute) consumers.push(state);
+  if (state.firstSub || !state.compute) consumers.push(state);
 
   for (let node = state.ft; node !== null; node = node.nt) {
-    if (typeof node.t === 'object') {
-      notify(node.t);
-    }
+    notify(node.t);
   }
 }
 
@@ -203,16 +211,17 @@ export function subscribe<T>(
 ) {
   const prevStatus = status;
 
-  if (!(state.flags & FREEZED) && !state.ft) status = ACTIVATING;
-
-  ++state.subs;
+  if (!(state.flags & FREEZED) && !(state.ft || state.firstSub)) {
+    status = ACTIVATING_STATUS;
+    state.flags |= ACTIVATING;
+  }
 
   const value = get(state, true);
 
   status = prevStatus;
+  state.flags &= ~ACTIVATING;
 
   if (state.flags & FREEZED) {
-    --state.subs;
     if (exec) isolate(() => subscriber(value, true));
     return NOOP_FN;
   }
@@ -225,8 +234,7 @@ export function subscribe<T>(
 
   const dispose = () => {
     if (!node) return;
-    removeNode(node);
-    --state.subs;
+    removeSubscriberNode(state, node);
     node = null as any;
   };
 
@@ -268,13 +276,13 @@ export function recalc() {
   providers = [];
   consumers = [];
   version = {};
-  status = SCHEDULED;
+  status = SCHEDULED_STATUS;
 
   ++batchLevel;
 
   for (let state of q) notify(state);
   for (let state of consumers) {
-    if (state.subs || !state.compute) get(state);
+    if (state.firstSub || !state.compute) get(state);
   }
 
   status = prevStatus;
@@ -310,7 +318,10 @@ export function get<T>(state: SignalState<T>, notTrackDeps?: boolean): T {
     const value = state.compute ? calcComputed(state) : state.nextValue;
 
     if (state.flags & HAS_EXCEPTION) {
-      if (state.subs && state.version !== version)
+      if (
+        (state.firstSub || state.flags & ACTIVATING) &&
+        state.version !== version
+      )
         config.logException(state.exception);
     } else if (
       state.flags & FORCED ||
@@ -321,12 +332,8 @@ export function get<T>(state: SignalState<T>, notTrackDeps?: boolean): T {
       state.value = value;
       state.flags |= CHANGED;
 
-      if (state.subs) {
-        for (let node = state.ft; node !== null; node = node.nt) {
-          if (typeof node.t === 'function') {
-            notifications.push(node.t, state.value);
-          }
-        }
+      for (let node = state.firstSub; node !== null; node = node.next) {
+        notifications.push(node.value, state.value);
       }
     }
   }
@@ -481,27 +488,26 @@ function createSubscriberNode(
   source: SignalState<any>,
   target: Subscriber<any>,
 ) {
-  const node: ListNode = {
-    s: source,
-    t: target,
-    pt: source.lt,
-    nt: null,
-  } as any;
+  const node = {
+    value: target,
+    prev: source.lastSub,
+    next: null,
+  };
 
-  if (source.lt) {
-    source.lt.nt = node;
+  if (source.lastSub) {
+    source.lastSub.next = node;
   } else {
-    source.ft = node;
-    emitActivateLifecycle(node.s);
+    source.firstSub = node;
+    emitActivateLifecycle(source);
   }
 
-  source.lt = node;
+  source.lastSub = node;
 
   return node;
 }
 
 function createNode(source: SignalState<any>, target: SignalState<any>) {
-  const node: ListNode = {
+  const node: DepNode = {
     s: source,
     t: target,
 
@@ -534,7 +540,7 @@ function createNode(source: SignalState<any>, target: SignalState<any>) {
   return node;
 }
 
-function removeNode(node: ListNode) {
+function removeNode(node: DepNode) {
   if ((node.t as SignalState<any>).fs === node)
     (node.t as SignalState<any>).fs = node.ns;
 
@@ -550,9 +556,28 @@ function removeNode(node: ListNode) {
   if (node.pt) node.pt.nt = node.nt;
   if (node.nt) node.nt.pt = node.pt;
 
-  if (!node.s.ft) {
+  if (!node.s.ft && !node.s.firstSub) {
     const state = node.s;
 
+    logHook(state, 'DEACTIVATE');
+
+    if (state.onDeactivate) {
+      state.onDeactivate(state.value);
+    }
+
+    for (let node = state.fs; node !== null; node = node.ns) {
+      removeNode(node);
+    }
+  }
+}
+
+function removeSubscriberNode(state: SignalState<any>, node: ListNode<any>) {
+  if (state.firstSub === node) state.firstSub = node.next;
+  if (state.lastSub === node) state.lastSub = node.prev;
+  if (node.prev) node.prev.next = node.next;
+  if (node.next) node.next.prev = node.prev;
+
+  if (!state.firstSub && !state.ft) {
     logHook(state, 'DEACTIVATE');
 
     if (state.onDeactivate) {
