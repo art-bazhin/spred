@@ -47,7 +47,6 @@ export interface SignalState<T> {
   ls: ListNode | null;
   ft: ListNode | null;
   lt: ListNode | null;
-  node: ListNode | null;
 
   // lifecycle:
   onActivate?: ((value: T) => any) | null;
@@ -86,7 +85,6 @@ export function createSignalState<T>(
     flags: 0,
     subs: 0,
     version: null,
-    node: null,
     fs: null,
     ls: null,
     ft: null,
