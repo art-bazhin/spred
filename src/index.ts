@@ -10,7 +10,14 @@ import { store, Store } from './store/store';
 import { configure, Config } from './config/config';
 import { Signal } from './signal/signal';
 import { watch } from './watch/watch';
-import { batch, Computation } from './core/core';
+import {
+  batch,
+  Computation,
+  get,
+  set,
+  subscribe,
+  createSignalState,
+} from './core/core';
 import { signal, Setter } from './signal/create-signal';
 import { on } from './on/on';
 import {
@@ -69,4 +76,8 @@ export {
   named,
   createLogger,
   VOID,
+  get,
+  set,
+  subscribe,
+  createSignalState,
 };

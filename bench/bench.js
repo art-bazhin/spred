@@ -17,7 +17,16 @@ import {
   effect as preactEffect,
 } from '../node_modules/@preact/signals-core/dist/signals-core.mjs';
 
-import { computed, writable, batch } from '/dist/index.mjs';
+import {
+  computed,
+  writable,
+  batch,
+  get,
+  set,
+  subscribe,
+  createSignalState,
+  configure,
+} from '/dist/index.mjs';
 
 window.process = {
   env: {
@@ -225,6 +234,85 @@ function testSpred(width, layerCount, newValues) {
 
   return report;
 }
+
+true;
+
+// function testSpred(width, layerCount, newValues) {
+//   const report = { name: 'spred' };
+//   const initTimestamp = performance.now();
+
+//   const start = {
+//     prop1: createSignalState(1),
+//     prop2: createSignalState(2),
+//     prop3: createSignalState(3),
+//     prop4: createSignalState(4),
+//   };
+
+//   let layer;
+
+//   for (let j = width; j--; ) {
+//     layer = start;
+
+//     for (let i = layerCount; i--; ) {
+//       layer = (function (m) {
+//         const s = {
+//           prop1: createSignalState(undefined, function () {
+//             return get(m.prop2);
+//           }),
+//           prop2: createSignalState(undefined, function () {
+//             return get(m.prop1) - get(m.prop3);
+//           }),
+//           prop3: createSignalState(undefined, function () {
+//             return get(m.prop2) + get(m.prop4);
+//           }),
+//           prop4: createSignalState(undefined, function () {
+//             return get(m.prop3);
+//           }),
+//         };
+
+//         if (!i) {
+//           subscribe(s.prop1, subscriber);
+//           subscribe(s.prop2, subscriber);
+//           subscribe(s.prop3, subscriber);
+//           subscribe(s.prop4, subscriber);
+//         }
+
+//         return s;
+//       })(layer);
+//     }
+//   }
+
+//   report.initTime = performance.now() - initTimestamp;
+
+//   const end = layer;
+
+//   report.beforeChange = [
+//     get(end.prop1),
+//     get(end.prop2),
+//     get(end.prop3),
+//     get(end.prop4),
+//   ];
+
+//   const st = performance.now();
+
+//   batch(() => {
+//     set(start.prop1, newValues[0]);
+//     set(start.prop2, newValues[1]);
+//     set(start.prop3, newValues[2]);
+//     set(start.prop4, newValues[3]);
+//   });
+
+//   report.afterChange = [
+//     get(end.prop1),
+//     get(end.prop2),
+//     get(end.prop3),
+//     get(end.prop4),
+//   ];
+
+//   report.recalcTime = performance.now() - st;
+
+//   return report;
+// }
 
 function testNanostores(width, layerCount, newValues) {
   const report = { name: 'nanostores' };
