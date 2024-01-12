@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.32.5](https://github.com/art-bazhin/spred/compare/v0.32.4...v0.32.5) (2024-01-12)
+
+
+### Bug Fixes
+
+* fix scheduled flag bug ([8cf3382](https://github.com/art-bazhin/spred/commit/8cf33829a5159d92b49be41781241dd9c59baf46))
+
+
+### Tests
+
+* update benchmark ([d83ec31](https://github.com/art-bazhin/spred/commit/d83ec31bf4bb9aa08e8d72f6d7a55ead05fadd81))
+
+
+### Code Refactoring
+
+* refactor subcribers ([0e67ffc](https://github.com/art-bazhin/spred/commit/0e67ffccb42684a07a890376875ecfd09528e605))
+* remove redundant equality check ([94485ed](https://github.com/art-bazhin/spred/commit/94485ed0c83cd8bf105b340b112d2362ba404ebe))
+* remove redundant field ([24c5f92](https://github.com/art-bazhin/spred/commit/24c5f92cf85796de4424b93c4e3e7736b4da30f6))
+* temporarily export internal methods ([748c286](https://github.com/art-bazhin/spred/commit/748c2869a67a0925f96602b9deb8d1ef2d740da7))
+* update recalc algorithm ([92d59ea](https://github.com/art-bazhin/spred/commit/92d59ea8305ebab6d75d7b4e9a5392a233407dfb))
+* use bit flags ([568d3d3](https://github.com/art-bazhin/spred/commit/568d3d3f1f96abbde9a4f633aa2d3a5fb204df69))
+
 ### [0.32.4](https://github.com/art-bazhin/spred/compare/v0.32.3...v0.32.4) (2023-12-06)
 
 
