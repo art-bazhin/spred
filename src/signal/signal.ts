@@ -3,21 +3,21 @@ import { get, subscribe, Subscriber } from '../core/core';
 /**
  * Basic reactive primitive.
  */
-export interface Signal<T, I = T> {
+export interface Signal<T> {
   /**
    * Calculates and returns the current value of the signal.
    */
-  (): T | I;
+  (): T;
 
   /**
    * Calculates and returns the current value of the signal.
    */
-  get(): T | I;
+  get(): T;
 
   /**
    * Calculates and returns the current value of the signal.
    */
-  get(trackDependency: boolean): T | I;
+  get(trackDependency: boolean): T;
 
   /**
    * Subscribes the function to updates of the signal value.
@@ -25,17 +25,14 @@ export interface Signal<T, I = T> {
    * @param exec Determines whether the function should be called immediately after subscription.
    * @returns Unsubscribe function.
    */
-  subscribe<E extends boolean>(
-    subscriber: true extends E ? Subscriber<T | I> : Subscriber<T>,
-    exec: E,
-  ): () => void;
+  subscribe<E extends boolean>(subscriber: Subscriber<T>, exec: E): () => void;
 
   /**
    * Subscribes the function to updates of the signal value and calls it immediately.
    * @param subscriber A function that listens to updates.
    * @returns Unsubscribe function.
    */
-  subscribe(subscriber: Subscriber<T | I>): () => void;
+  subscribe(subscriber: Subscriber<T>): () => void;
 }
 
 export const signalProto = {

@@ -1,8 +1,7 @@
 import { Signal } from '../signal/signal';
 import { signalProto } from '../signal/signal';
 import { Computation, createSignalState } from '../core/core';
-import { isWritableSignal } from '../guards/guards';
-import { get, Comparator } from '../core/core';
+import { get, EqualityFn } from '../core/core';
 import { VOID } from '../utils/constants';
 
 /**
@@ -14,9 +13,9 @@ import { VOID } from '../utils/constants';
  */
 export function computed<T>(
   compute: Computation<T>,
-  compare?: Comparator<T> | null | undefined,
+  compare?: EqualityFn<T> | null | undefined,
   handleException?: (e: unknown, prevValue?: T) => T,
-): Signal<Exclude<T, typeof VOID>, T extends typeof VOID ? undefined : T> {
+): Signal<Exclude<T, typeof VOID>> {
   const state = createSignalState(
     undefined as any,
     compute,

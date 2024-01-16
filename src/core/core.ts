@@ -23,7 +23,7 @@ interface ListNode<T> {
 
 export type Subscriber<T> = (value: T, exec?: boolean) => any;
 
-export type Comparator<T> = (value: T, prevValue: T | undefined) => unknown;
+export type EqualityFn<T> = (value: T, prevValue: T | undefined) => unknown;
 
 export type Computation<T> =
   | (() => T)
@@ -37,7 +37,7 @@ export interface SignalState<T> {
   exception?: unknown;
   compute?: Computation<T>;
   catch?: (err: unknown, prevValue?: T) => T;
-  compare: Comparator<T>;
+  compare: EqualityFn<T>;
   version: any;
   children?: ((() => any) | SignalState<any>)[];
   name?: string;
@@ -71,7 +71,7 @@ let version = {};
 export function createSignalState<T>(
   value: T,
   compute?: Computation<T>,
-  compare?: Comparator<T> | null,
+  compare?: EqualityFn<T> | null,
   handleException?: (e: unknown, prevValue?: T) => T,
 ): SignalState<T> {
   const parent = tracking || scope;

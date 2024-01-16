@@ -75,16 +75,15 @@ export interface Effect<T, A extends unknown[]> {
  */
 export function effect<T, A extends unknown[]>(
   asyncFn: (...args: A) => Promise<T>,
-  name?: string,
 ) {
   let counter = 0;
   let current = -1;
 
   const _status = writable<EffectStatus>('pristine');
   const _exception = writable(undefined as unknown, FALSE_FN);
-  const _data = writable<T>(undefined, FALSE_FN);
+  const _data = writable<T | undefined>(undefined, FALSE_FN);
   const _aborted = writable();
-  const _args = writable<A>(undefined, FALSE_FN);
+  const _args = writable<A | undefined>(undefined, FALSE_FN);
 
   const lastStatus = computed(_status, (status) => status === 'pending');
 
