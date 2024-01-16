@@ -23,21 +23,27 @@ interface ListNode<T> {
 
 export type Subscriber<T> = (value: T, exec?: boolean) => any;
 
-export type EqualityFn<T> = (value: T, prevValue: T | undefined) => unknown;
-
 export type Computation<T> =
   | (() => T)
   | ((prevValue: T | undefined) => T)
   | ((prevValue: T | undefined, scheduled: boolean) => T);
 
+export interface SignalOptions<T> {
+  name?: string;
+  equals?: (value: T, prevValue?: T) => unknown;
+  catch?: (err: unknown, prevValue?: T) => T;
+  onActivate?: (value: T) => any;
+  onDeactivate?: (value: T) => any;
+  onUpdate?: (value: T, prevValue?: T) => any;
+  onException?: (e: unknown) => any;
+}
+
 export interface SignalState<T> {
   value: T;
   nextValue: T;
+  compute?: Computation<T>;
   flags: number;
   exception?: unknown;
-  compute?: Computation<T>;
-  catch?: (err: unknown, prevValue?: T) => T;
-  compare: EqualityFn<T>;
   version: any;
   children?: ((() => any) | SignalState<any>)[];
   name?: string;
@@ -49,10 +55,7 @@ export interface SignalState<T> {
   firstTarget: ListNode<SignalState<any> | Subscriber<any>> | null;
   lastTarget: ListNode<SignalState<any> | Subscriber<any>> | null;
 
-  onActivate?: ((value: T) => any) | null;
-  onDeactivate?: ((value: T) => any) | null;
-  onUpdate?: ((value: T, prevValue?: T) => any) | null;
-  onException?: ((e: unknown) => any) | null;
+  options: SignalOptions<T>;
 }
 
 let tracking: SignalState<any> | null = null;
@@ -68,19 +71,25 @@ let notifications: any[] = [];
 
 let version = {};
 
+const DEFAULT_OPTIONS: SignalOptions<any> = {
+  equals: Object.is,
+  catch: undefined,
+  onActivate: undefined,
+  onDeactivate: undefined,
+  onUpdate: undefined,
+  onException: undefined,
+};
+
 export function createSignalState<T>(
   value: T,
   compute?: Computation<T>,
-  compare?: EqualityFn<T> | null,
-  handleException?: (e: unknown, prevValue?: T) => T,
+  options?: SignalOptions<T>,
 ): SignalState<T> {
   const parent = tracking || scope;
 
   const state: SignalState<T> = {
     value,
     compute,
-    compare: compare || Object.is,
-    catch: handleException,
     nextValue: value,
     flags: 0,
     subs: 0,
@@ -89,7 +98,12 @@ export function createSignalState<T>(
     lastSource: null,
     firstTarget: null,
     lastTarget: null,
+    options: options || DEFAULT_OPTIONS,
   };
+
+  if (options && !options.equals) {
+    options.equals = DEFAULT_OPTIONS.equals;
+  }
 
   if (parent) {
     if (!parent.children) parent.children = [state];
@@ -294,9 +308,9 @@ export function get<T>(state: SignalState<T>, trackDependency = true): T {
         config.logException(state.exception);
     } else if (
       state.flags & FORCED ||
-      (value !== (VOID as any) && !state.compare(value, state.value))
+      (value !== (VOID as any) && !state.options.equals!(value, state.value))
     ) {
-      if (state.onUpdate) state.onUpdate(value, state.value);
+      if (state.options.onUpdate) state.options.onUpdate(value, state.value);
 
       state.value = value;
       state.flags |= CHANGED;
@@ -386,9 +400,9 @@ function calcComputed<T>(state: SignalState<T>) {
   }
 
   if (state.flags & HAS_EXCEPTION) {
-    if (state.catch) {
+    if (state.options.catch) {
       try {
-        value = state.catch(state.exception, state.value);
+        value = state.options.catch(state.exception, state.value);
         state.flags &= ~HAS_EXCEPTION;
         state.exception = undefined;
       } catch (e) {
@@ -396,8 +410,8 @@ function calcComputed<T>(state: SignalState<T>) {
       }
     }
 
-    if (state.flags & HAS_EXCEPTION && state.onException) {
-      state.onException(state.exception);
+    if (state.flags & HAS_EXCEPTION && state.options.onException) {
+      state.options.onException(state.exception);
     }
   }
 
@@ -446,7 +460,7 @@ function removeTargetNode(state: SignalState<any>, node: ListNode<any>) {
 
   if (!state.firstTarget) {
     unlinkDependencies(state);
-    if (state.onDeactivate) state.onDeactivate(state.value);
+    if (state.options.onDeactivate) state.options.onDeactivate(state.value);
   }
 }
 
@@ -486,7 +500,7 @@ function createTargetNode(
   } else {
     source.firstTarget = node;
     linkDependencies(source);
-    if (source.onActivate) source.onActivate(source.value);
+    if (source.options.onActivate) source.options.onActivate(source.value);
   }
 
   source.lastTarget = node;

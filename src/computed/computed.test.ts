@@ -1,7 +1,6 @@
 import { computed } from './computed';
 import { writable } from '../writable/writable';
 import { configure } from '../config/config';
-import { onDeactivate } from '../lifecycle/lifecycle';
 import { batch } from '../core/core';
 import { VOID } from '../utils/constants';
 
@@ -324,12 +323,12 @@ describe('computed', () => {
     const onDeactivateSpy = jest.fn();
 
     const source = writable(0);
-    const ext = writable(0);
+    const ext = writable(0, {
+      onDeactivate: () => onDeactivateSpy(),
+    });
 
     const comp = computed(() => {
-      onDeactivate(ext, onDeactivateSpy);
       ext.subscribe(() => {});
-
       return source();
     });
 
@@ -346,8 +345,10 @@ describe('computed', () => {
     const source = writable(0);
     const comp = computed(() => {
       source();
-      const res = computed(() => source() * 2);
-      onDeactivate(res, onDeactivateSpy);
+
+      const res = computed(() => source() * 2, {
+        onDeactivate: () => onDeactivateSpy(),
+      });
 
       return res;
     });
@@ -613,8 +614,12 @@ describe('computed', () => {
   });
 
   it('does not ignore any new value if the second arg returns true', () => {
-    const a = writable(0, () => false);
-    const b = computed(a, () => false);
+    const a = writable(0, {
+      equals: () => false,
+    });
+    const b = computed(a, {
+      equals: () => false,
+    });
     const spy = jest.fn();
 
     b.subscribe(spy);
@@ -634,8 +639,12 @@ describe('computed', () => {
   });
 
   it('can use custom compare function', () => {
-    const a = writable(0, () => false);
-    const b = computed(a, (value) => value >= 5);
+    const a = writable(0, {
+      equals: () => false,
+    });
+    const b = computed(a, {
+      equals: (value) => value >= 5,
+    });
     const spy = jest.fn();
 
     b.subscribe(spy);
@@ -655,7 +664,9 @@ describe('computed', () => {
   });
 
   it('can filter values using VOID constant', () => {
-    const a = writable(0, () => false);
+    const a = writable(0, {
+      equals: () => false,
+    });
     const b = computed(
       () => {
         const value = a();
@@ -663,7 +674,9 @@ describe('computed', () => {
         if (value >= 5) return VOID;
         return value;
       },
-      () => false,
+      {
+        equals: () => false,
+      },
     );
     const spy = jest.fn();
 
@@ -691,7 +704,9 @@ describe('computed', () => {
       return count();
     });
 
-    const handledError = computed(withError, null, () => 42);
+    const handledError = computed(withError, {
+      catch: () => 42,
+    });
 
     expect(handledError()).toBe(42);
 
@@ -721,7 +736,9 @@ describe('computed', () => {
 
     expect(errorSpy).toBeCalledTimes(1);
 
-    const handledError = computed(withErrorComp, null, () => 42);
+    const handledError = computed(withErrorComp, {
+      catch: () => 42,
+    });
     const unsub2 = handledError.subscribe(() => {}, false);
 
     expect(handledError()).toBe(42);
@@ -751,14 +768,17 @@ describe('computed', () => {
         if (count() < 5) throw 5 - count();
         return count();
       },
-      null,
-      (e: any) => {
-        if (e > 5) throw Error();
-        return 42;
+      {
+        catch: (e: any) => {
+          if (e > 5) throw Error();
+          return 42;
+        },
       },
     );
 
-    const secondHandledError = computed(handledError, null, () => 999);
+    const secondHandledError = computed(handledError, {
+      catch: () => 999,
+    });
 
     handledError.subscribe(() => {}, false);
 

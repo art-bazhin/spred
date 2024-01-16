@@ -1,10 +1,9 @@
 import { Signal } from '../signal/signal';
-import { Computation } from '../core/core';
 import { WritableSignal } from '../writable/writable';
 import { VOID } from '../utils/constants';
 
 export function isSignal<T>(
-  value: Computation<T>,
+  value: () => T,
 ): value is Signal<Exclude<T, typeof VOID>>;
 export function isSignal<T>(
   value: (...args: unknown[]) => T,
@@ -18,9 +17,7 @@ export function isWritableSignal<T>(
   value: (...args: unknown[]) => T,
 ): value is WritableSignal<T>;
 
-export function isWritableSignal<T>(
-  value: Computation<T>,
-): value is WritableSignal<T>;
+export function isWritableSignal<T>(value: () => T): value is WritableSignal<T>;
 
 export function isWritableSignal(
   value: unknown,

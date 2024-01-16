@@ -676,4 +676,319 @@ describe('signal', () => {
     expect(d()).toBe(2);
     expect(spy).toBeCalledTimes(1);
   });
+
+  describe('lifecycle hooks', () => {
+    it('emits in right order', () => {
+      const result: any = {};
+      let order = 0;
+
+      const counter = writable(0, {
+        onActivate: () => (result.activate = ++order),
+        onDeactivate: () => (result.deactivate = ++order),
+        onUpdate: () => (result.update = ++order),
+      });
+
+      const unsub = counter.subscribe(() => {});
+      counter.set(1);
+      unsub();
+
+      expect(result.activate).toBe(1);
+      expect(result.update).toBe(2);
+      expect(result.deactivate).toBe(3);
+    });
+  });
+
+  describe('onActivate option', () => {
+    it('sets signal activation listener', () => {
+      let value: any;
+      let unsub: any;
+
+      const listener = jest.fn((v) => (value = v));
+
+      const counter = writable(0, {
+        onActivate(v) {
+          listener(v);
+        },
+      });
+
+      expect(value).toBeUndefined();
+      expect(listener).toBeCalledTimes(0);
+
+      unsub = counter.subscribe(() => {});
+      expect(value).toBe(0);
+      expect(listener).toBeCalledTimes(1);
+
+      counter.set(1);
+      expect(value).toBe(0);
+      expect(listener).toBeCalledTimes(1);
+
+      unsub();
+      expect(value).toBe(0);
+      expect(listener).toBeCalledTimes(1);
+    });
+
+    it('correctly reacts to activation of previously calculated signal', () => {
+      const spy = jest.fn();
+
+      const a = writable(0, {
+        onActivate: () => spy(),
+      });
+      const b = computed(() => a() * 2);
+      const c = computed(() => b() * 2);
+      const d = computed(() => c() * 2);
+
+      d();
+      d.subscribe(() => {});
+
+      expect(spy).toBeCalledTimes(1);
+    });
+
+    it('correctly reacts to activation of new dependency', () => {
+      const spy = jest.fn();
+
+      const a = writable(0);
+      const b = writable(1, { onActivate: () => spy() });
+      const c = computed(() => a() && b());
+      const d = computed(() => c());
+
+      d.subscribe(() => {});
+
+      expect(spy).toBeCalledTimes(0);
+
+      a.set(1);
+
+      expect(spy).toBeCalledTimes(1);
+    });
+  });
+
+  describe('onDeactivate option', () => {
+    it('sets signal deactivation listener', () => {
+      let value: any;
+      let unsub: any;
+
+      const listener = jest.fn((v) => (value = v));
+      const counter = writable(0, { onDeactivate: (v) => listener(v) });
+
+      expect(value).toBeUndefined();
+      expect(listener).toBeCalledTimes(0);
+
+      unsub = counter.subscribe(() => {});
+      expect(value).toBeUndefined();
+      expect(listener).toBeCalledTimes(0);
+
+      counter.set(1);
+      expect(value).toBeUndefined();
+      expect(listener).toBeCalledTimes(0);
+
+      unsub();
+      expect(value).toBe(1);
+      expect(listener).toBeCalledTimes(1);
+    });
+
+    it('correctly reacts to deactivation of dependency', () => {
+      const spy = jest.fn();
+
+      const a = writable(1);
+      const b = writable(1, { onDeactivate: () => spy() });
+      const c = computed(() => a() && b());
+      const d = computed(() => c());
+
+      d.subscribe(() => {});
+
+      expect(spy).toBeCalledTimes(0);
+
+      a.set(0);
+      expect(spy).toBeCalledTimes(1);
+    });
+  });
+
+  describe('onUpdate option', () => {
+    it('sets signal update listener', () => {
+      let res: any = {};
+      let unsub: any;
+
+      const listener = jest.fn((v, p) => {
+        res.value = v;
+        res.prevValue = p;
+      });
+
+      const counter = writable(0, {
+        onUpdate: (v, p) => listener(v, p),
+      });
+
+      expect(res.value).toBeUndefined();
+      expect(res.prevValue).toBeUndefined();
+      expect(listener).toBeCalledTimes(0);
+
+      unsub = counter.subscribe(() => {});
+      expect(res.value).toBeUndefined();
+      expect(res.prevValue).toBeUndefined();
+      expect(listener).toBeCalledTimes(0);
+
+      counter.set(1);
+      expect(res.value).toBe(1);
+      expect(res.prevValue).toBe(0);
+      expect(listener).toBeCalledTimes(1);
+
+      unsub();
+      expect(res.value).toBe(1);
+      expect(res.prevValue).toBe(0);
+      expect(listener).toBeCalledTimes(1);
+    });
+  });
+
+  describe('onException option', () => {
+    it('sets signal exception listener', () => {
+      configure({
+        logException: () => {},
+      });
+
+      const listener = jest.fn((v) => (error = v));
+
+      let error: any;
+      let unsub: any;
+
+      const counter = writable(0);
+      const x2Counter = computed(
+        () => {
+          if (counter() > 4) throw 'error';
+          return counter() * 2;
+        },
+        {
+          onException: (v) => listener(v),
+        },
+      );
+
+      expect(error).toBeUndefined();
+      expect(listener).toBeCalledTimes(0);
+
+      unsub = x2Counter.subscribe(() => {});
+      expect(error).toBeUndefined();
+      expect(listener).toBeCalledTimes(0);
+
+      counter.set(2);
+      expect(error).toBeUndefined();
+      expect(listener).toBeCalledTimes(0);
+
+      counter.set(5);
+      expect(error).toBe('error');
+      expect(listener).toBeCalledTimes(1);
+
+      counter.set(6);
+      expect(error).toBe('error');
+      expect(listener).toBeCalledTimes(2);
+
+      counter.set(3);
+      expect(error).toBe('error');
+      expect(listener).toBeCalledTimes(2);
+
+      unsub();
+      expect(error).toBe('error');
+      expect(listener).toBeCalledTimes(2);
+
+      configure();
+    });
+
+    it('correctly reacts to exceptions in intermideate signals', () => {
+      configure({
+        logException: () => {},
+      });
+
+      const listener = jest.fn((v) => (error = v));
+
+      let error: any;
+      let unsub: any;
+
+      const counter = writable(0);
+      const x2Counter = computed(() => {
+        if (counter() > 4) throw 'error';
+        return counter() * 2;
+      });
+      const x4Counter = computed(() => x2Counter() * 2, {
+        onException: (v) => listener(v),
+      });
+
+      expect(error).toBeUndefined();
+      expect(listener).toBeCalledTimes(0);
+
+      unsub = x4Counter.subscribe(() => {});
+      expect(error).toBeUndefined();
+      expect(listener).toBeCalledTimes(0);
+
+      counter.set(2);
+      expect(error).toBeUndefined();
+      expect(listener).toBeCalledTimes(0);
+
+      counter.set(5);
+      expect(error).toBe('error');
+      expect(listener).toBeCalledTimes(1);
+
+      counter.set(6);
+      expect(error).toBe('error');
+      expect(listener).toBeCalledTimes(2);
+
+      counter.set(3);
+      expect(error).toBe('error');
+      expect(listener).toBeCalledTimes(2);
+
+      unsub();
+      expect(error).toBe('error');
+      expect(listener).toBeCalledTimes(2);
+
+      configure();
+    });
+  });
+
+  describe('signal options', () => {
+    it('allow to handle activation and deactivation of signals', () => {
+      const activateSpy = jest.fn();
+      const deactivateSpy = jest.fn();
+
+      const a = writable(0);
+      const b = writable(0);
+      const c = writable(0);
+      const d = writable(0);
+
+      const a1 = computed(() => a());
+      const b1 = computed(() => b(), {
+        onActivate: activateSpy,
+        onDeactivate: deactivateSpy,
+      });
+      const c1 = computed(() => c());
+      const d1 = computed(() => d());
+
+      const a2 = computed(() => a1());
+      const b2 = computed(() => b1());
+      const c2 = computed(() => c1());
+      const d2 = computed(() => d1());
+
+      const res = computed(() => {
+        return a2() < 10 ? b2() + c2() + d2() : d2() + c2();
+      });
+
+      const unsub = res.subscribe(() => {});
+      expect(activateSpy).toHaveBeenCalledTimes(1);
+      expect(deactivateSpy).toHaveBeenCalledTimes(0);
+
+      a.set(1);
+      expect(activateSpy).toHaveBeenCalledTimes(1);
+      expect(deactivateSpy).toHaveBeenCalledTimes(0);
+
+      b.set(1);
+      expect(activateSpy).toHaveBeenCalledTimes(1);
+      expect(deactivateSpy).toHaveBeenCalledTimes(0);
+
+      a.set(10);
+      expect(activateSpy).toHaveBeenCalledTimes(1);
+      expect(deactivateSpy).toHaveBeenCalledTimes(1);
+
+      a.set(5);
+      expect(activateSpy).toHaveBeenCalledTimes(2);
+      expect(deactivateSpy).toHaveBeenCalledTimes(1);
+
+      unsub();
+      expect(activateSpy).toHaveBeenCalledTimes(2);
+      expect(deactivateSpy).toHaveBeenCalledTimes(2);
+    });
+  });
 });

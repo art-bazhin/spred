@@ -100,10 +100,9 @@ describe('writable', () => {
 
   it('force emits dependant subscribers using notify method', () => {
     const s = writable({} as any);
-    const comp = computed(
-      () => s().a,
-      () => false,
-    );
+    const comp = computed(() => s().a, {
+      equals: () => false,
+    });
 
     let value: any;
     const subscriber = jest.fn((v: any) => (value = v));
@@ -181,7 +180,9 @@ describe('writable', () => {
   });
 
   it('does not ignore any new value if the second arg returns false', () => {
-    const a = writable(0, () => false);
+    const a = writable(0, {
+      equals: () => false,
+    });
     const spy = jest.fn();
 
     a.subscribe(spy);
@@ -200,8 +201,13 @@ describe('writable', () => {
     expect(spy).toBeCalledTimes(5);
   });
 
-  it('can use custom compare function', () => {
-    const a = writable(0, (value) => value >= 5);
+  it('can use custom equals function', () => {
+    const a = writable(0, {
+      equals(value) {
+        return value >= 5;
+      },
+    });
+
     const spy = jest.fn();
 
     a.subscribe(spy);

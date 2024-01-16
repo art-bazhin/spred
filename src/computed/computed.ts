@@ -1,7 +1,11 @@
 import { Signal } from '../signal/signal';
 import { signalProto } from '../signal/signal';
-import { Computation, createSignalState } from '../core/core';
-import { get, EqualityFn } from '../core/core';
+import {
+  Computation,
+  createSignalState,
+  get,
+  SignalOptions,
+} from '../core/core';
 import { VOID } from '../utils/constants';
 
 /**
@@ -13,15 +17,9 @@ import { VOID } from '../utils/constants';
  */
 export function computed<T>(
   compute: Computation<T>,
-  compare?: EqualityFn<T> | null | undefined,
-  handleException?: (e: unknown, prevValue?: T) => T,
+  options?: SignalOptions<T>,
 ): Signal<Exclude<T, typeof VOID>> {
-  const state = createSignalState(
-    undefined as any,
-    compute,
-    compare,
-    handleException,
-  );
+  const state = createSignalState(undefined as any, compute, options);
 
   const self: any = function () {
     return get(state);

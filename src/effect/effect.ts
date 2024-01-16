@@ -80,12 +80,14 @@ export function effect<T, A extends unknown[]>(
   let current = -1;
 
   const _status = writable<EffectStatus>('pristine');
-  const _exception = writable(undefined as unknown, FALSE_FN);
-  const _data = writable<T | undefined>(undefined, FALSE_FN);
+  const _exception = writable(undefined as unknown, { equals: FALSE_FN });
+  const _data = writable<T | undefined>(undefined, { equals: FALSE_FN });
   const _aborted = writable();
-  const _args = writable<A | undefined>(undefined, FALSE_FN);
+  const _args = writable<A | undefined>(undefined, { equals: FALSE_FN });
 
-  const lastStatus = computed(_status, (status) => status === 'pending');
+  const lastStatus = computed(_status, {
+    equals: (status) => status === 'pending',
+  });
 
   lastStatus.subscribe(NOOP_FN);
 
@@ -102,25 +104,28 @@ export function effect<T, A extends unknown[]>(
     } as EffectStatusObject;
   });
 
-  const exception = computed(_exception, FALSE_FN);
+  const exception = computed(_exception, { equals: FALSE_FN });
 
-  const done = computed(() => {
-    const data = _data();
-    const exception = _exception();
+  const done = computed(
+    () => {
+      const data = _data();
+      const exception = _exception();
 
-    switch (_status.get(false)) {
-      case 'pristine':
-      case 'fulfilled':
-        return data;
+      switch (_status.get(false)) {
+        case 'pristine':
+        case 'fulfilled':
+          return data;
 
-      case 'rejected':
-        return exception;
-    }
-  }, FALSE_FN);
+        case 'rejected':
+          return exception;
+      }
+    },
+    { equals: FALSE_FN },
+  );
 
-  const data = computed(_data, FALSE_FN);
-  const aborted = computed(_aborted, FALSE_FN);
-  const args = computed(_args, FALSE_FN);
+  const data = computed(_data, { equals: FALSE_FN });
+  const aborted = computed(_aborted, { equals: FALSE_FN });
+  const args = computed(_args, { equals: FALSE_FN });
 
   const abort = () => {
     if (!status.get(false)!.pending) return;
