@@ -6,7 +6,6 @@ import {
   onException,
 } from './lifecycle/lifecycle';
 import { computed } from './computed/computed';
-import { store, Store } from './store/store';
 import { configure, Config } from './config/config';
 import { Signal } from './signal/signal';
 import { watch } from './watch/watch';
@@ -30,7 +29,6 @@ import {
 import {
   isSignal,
   isWritableSignal,
-  isStore,
   getValue,
   sampleValue,
 } from './guards/guards';
@@ -45,7 +43,6 @@ export {
   Effect,
   EffectStatus,
   EffectStatusObject,
-  Store,
   Config,
   Subscriber,
   Comparator,
@@ -60,11 +57,9 @@ export {
   onUpdate,
   onException,
   effect,
-  store,
   configure,
   isSignal,
   isWritableSignal,
-  isStore,
   getValue,
   sampleValue,
   isolate,

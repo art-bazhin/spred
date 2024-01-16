@@ -1,18 +1,10 @@
 import { computed } from '../computed/computed';
-import { store } from '../store/store';
 import { writable } from '../writable/writable';
-import {
-  getValue,
-  isSignal,
-  isStore,
-  isWritableSignal,
-  sampleValue,
-} from './guards';
+import { getValue, isSignal, isWritableSignal, sampleValue } from './guards';
 
 describe('guard functions', () => {
   const w = writable('foo');
   const c = computed(w);
-  const s = store({});
   const fn = () => {};
   const str = 'bar';
 
@@ -31,16 +23,6 @@ describe('guard functions', () => {
       expect(isWritableSignal(c)).toBeFalsy();
       expect(isWritableSignal(fn)).toBeFalsy();
       expect(isWritableSignal(str)).toBeFalsy();
-    });
-  });
-
-  describe('isStore', () => {
-    it('returns truthy value if the argument is a store', () => {
-      expect(isStore(w)).toBeFalsy();
-      expect(isStore(c)).toBeFalsy();
-      expect(isStore(fn)).toBeFalsy();
-      expect(isStore(str)).toBeFalsy();
-      expect(isStore(s)).toBeTruthy();
     });
   });
 
