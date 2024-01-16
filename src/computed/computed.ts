@@ -17,15 +17,16 @@ export function computed<T>(
   compare?: Comparator<T> | null | undefined,
   handleException?: (e: unknown, prevValue?: T) => T,
 ): Signal<Exclude<T, typeof VOID>, T extends typeof VOID ? undefined : T> {
-  const getValue = isWritableSignal(compute) ? () => compute() : compute;
-
   const state = createSignalState(
     undefined as any,
-    getValue,
+    compute,
     compare,
     handleException,
   );
-  const self: any = () => get(state);
+
+  const self: any = function () {
+    return get(state);
+  };
 
   self._state = state;
   self.get = signalProto.get;

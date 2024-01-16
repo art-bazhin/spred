@@ -26,7 +26,7 @@ describe('watch', () => {
   });
 
   it('invokes passed function on dependency change', () => {
-    counter(1);
+    counter.set(1);
 
     expect(fn).toHaveBeenCalledTimes(2);
   });
@@ -34,7 +34,7 @@ describe('watch', () => {
   it('stops to invoke passed function after unsubscribing', () => {
     unsub();
 
-    counter(0);
+    counter.set(0);
 
     expect(fn).toHaveBeenCalledTimes(2);
   });
@@ -50,7 +50,7 @@ describe('watch', () => {
     watch(double);
     expect(spy).toBeCalledTimes(1);
 
-    count(1);
+    count.set(1);
     expect(spy).toBeCalledTimes(2);
   });
 });

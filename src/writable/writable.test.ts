@@ -1,5 +1,6 @@
 import { computed } from '../computed/computed';
 import { writable } from './writable';
+import { batch } from '../core/core';
 
 describe('writable', () => {
   const counter = writable(0);
@@ -9,7 +10,7 @@ describe('writable', () => {
   });
 
   it('updates value', () => {
-    counter(1);
+    counter.set(1);
     expect(counter()).toBe(1);
   });
 
@@ -19,7 +20,7 @@ describe('writable', () => {
   });
 
   it('returns new value after set', () => {
-    const newValue = counter(3);
+    const newValue = counter.set(3);
     expect(newValue).toBe(3);
 
     const newSetValue = counter.set(3);
@@ -31,6 +32,30 @@ describe('writable', () => {
     expect(value).toBe(3);
   });
 
+  it('updates value using update fn', () => {
+    counter.update((value) => value + 1);
+    expect(counter()).toBe(4);
+
+    let newValue: any;
+
+    batch(() => {
+      newValue = counter.update((value) => value + 1);
+      newValue = counter.update((value) => value + 1);
+      newValue = counter.update((value) => value + 1);
+      newValue = counter.update((value) => value + 1);
+    });
+
+    expect(counter()).toBe(8);
+    expect(newValue).toBe(8);
+  });
+
+  it('updates value using update fn right after init', () => {
+    const value = writable(0);
+
+    value.update((v) => v + 1);
+    expect(value()).toBe(1);
+  });
+
   it('triggers subscribers if undefined value was passed', () => {
     const value = writable<any>(null);
     const spy = jest.fn();
@@ -38,7 +63,7 @@ describe('writable', () => {
     value.subscribe(spy);
     expect(spy).toBeCalledTimes(1);
 
-    value(undefined);
+    value.set(undefined);
     expect(spy).toBeCalledTimes(2);
   });
 
@@ -114,13 +139,13 @@ describe('writable', () => {
 
     expect(spy).toBeCalledTimes(1);
 
-    a(1);
+    a.set(1);
     expect(spy).toBeCalledTimes(2);
 
-    b(1);
+    b.set(1);
     expect(spy).toBeCalledTimes(4);
 
-    b(2);
+    b.set(2);
     expect(spy).toBeCalledTimes(6);
   });
 
@@ -131,7 +156,7 @@ describe('writable', () => {
 
     expect(fn()).toBe(a);
 
-    fn(b);
+    fn.set(b);
     expect(fn()).toBe(b);
   });
 
@@ -142,16 +167,16 @@ describe('writable', () => {
     a.subscribe(spy);
     expect(spy).toBeCalledTimes(1);
 
-    a(0);
+    a.set(0);
     expect(spy).toBeCalledTimes(1);
 
-    a(1);
+    a.set(1);
     expect(spy).toBeCalledTimes(2);
 
-    a(2);
+    a.set(2);
     expect(spy).toBeCalledTimes(3);
 
-    a(2);
+    a.set(2);
     expect(spy).toBeCalledTimes(3);
   });
 
@@ -162,16 +187,16 @@ describe('writable', () => {
     a.subscribe(spy);
     expect(spy).toBeCalledTimes(1);
 
-    a(0);
+    a.set(0);
     expect(spy).toBeCalledTimes(2);
 
-    a(1);
+    a.set(1);
     expect(spy).toBeCalledTimes(3);
 
-    a(2);
+    a.set(2);
     expect(spy).toBeCalledTimes(4);
 
-    a(2);
+    a.set(2);
     expect(spy).toBeCalledTimes(5);
   });
 
@@ -182,17 +207,17 @@ describe('writable', () => {
     a.subscribe(spy);
     expect(spy).toBeCalledTimes(1);
 
-    a(0);
+    a.set(0);
     expect(spy).toBeCalledTimes(2);
 
-    a(1);
+    a.set(1);
     expect(spy).toBeCalledTimes(3);
 
-    a(5);
+    a.set(5);
     expect(spy).toBeCalledTimes(3);
     expect(a()).toBe(1);
 
-    a(2);
+    a.set(2);
     expect(spy).toBeCalledTimes(4);
   });
 });

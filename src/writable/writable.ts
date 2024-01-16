@@ -9,6 +9,10 @@ const writableSignalProto = {
     if (arguments.length) return set((this as any)._state, value);
     return set((this as any)._state);
   },
+
+  update<T>(this: WritableSignal<T>, updateFn: (value: T) => T) {
+    return this.set(updateFn((this as any)._state.nextValue));
+  },
 };
 
 /**
@@ -19,18 +23,18 @@ export interface WritableSignal<T, I = T> extends Signal<T, I> {
    * Set the value of the signal
    * @param value New value of the signal.
    */
-  (value: T): T;
-
-  /**
-   * Set the value of the signal
-   * @param value New value of the signal.
-   */
   set(value: T): T;
 
   /**
    * Notify subscribers without setting a new value.
    */
   set(): T | I;
+
+  /**
+   * Calculate and set a new value of the signal from the current value
+   * @param getNextValue Function that calculates a new value from the current value.
+   */
+  update(getNextValue: (currentValue: T | I) => T): T;
 }
 
 /**
@@ -58,14 +62,14 @@ export function writable<T>(
 export function writable(value?: any, compare?: any) {
   const state = createSignalState(value, undefined, compare);
 
-  const self: any = function (value?: any) {
-    if (!arguments.length) return get(state);
-    return set(state, value);
+  const self: any = function () {
+    return get(state);
   };
 
   self._state = state;
   self.set = writableSignalProto.set;
   self.get = writableSignalProto.get;
+  self.update = writableSignalProto.update;
   self.subscribe = writableSignalProto.subscribe;
 
   return self;

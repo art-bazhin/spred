@@ -3,8 +3,8 @@ import { computed } from '../computed/computed';
 import { Signal } from '../signal/signal';
 import { batch } from '../core/core';
 import { FALSE_FN, NOOP_FN } from '../utils/constants';
-import { named } from '../named/named';
-import { config } from '../config/config';
+// import { named } from '../named/named';
+// import { config } from '../config/config';
 
 export type EffectStatus = 'pristine' | 'pending' | 'fulfilled' | 'rejected';
 export type EffectEventName = 'CALL' | 'ABORT' | 'RESET';
@@ -126,11 +126,11 @@ export function effect<T, A extends unknown[]>(
   const abort = () => {
     if (!status.get(false)!.pending) return;
 
-    logEvent(name, 'ABORT');
+    // logEvent(name, 'ABORT');
 
     batch(() => {
-      _status(lastStatus() as any);
-      _aborted({});
+      _status.set(lastStatus() as any);
+      _aborted.set({});
     });
 
     counter++;
@@ -139,11 +139,11 @@ export function effect<T, A extends unknown[]>(
   const reset = () => {
     if (status.get(false)!.pristine) return;
 
-    logEvent(name, 'RESET');
+    // logEvent(name, 'RESET');
 
     batch(() => {
-      if (status()!.pending) _aborted({});
-      _status('pristine');
+      if (status()!.pending) _aborted.set({});
+      _status.set('pristine');
     });
 
     counter++;
@@ -162,15 +162,15 @@ export function effect<T, A extends unknown[]>(
   };
 
   const call = (...args: A) => {
-    logEvent(name, 'CALL', args);
+    // logEvent(name, 'CALL', args);
 
     if (_status.get(false) === 'pending') {
-      _aborted({});
+      _aborted.set({});
     }
 
     batch(() => {
-      _args(args as any);
-      _status('pending');
+      _args.set(args as any);
+      _status.set('pending');
     });
 
     return exec(++counter, ...args)
@@ -178,8 +178,8 @@ export function effect<T, A extends unknown[]>(
         if (current !== counter) return v;
 
         batch(() => {
-          _data(v as any);
-          _status('fulfilled');
+          _data.set(v as any);
+          _status.set('fulfilled');
         });
 
         return v;
@@ -188,22 +188,22 @@ export function effect<T, A extends unknown[]>(
         if (current !== counter) throw e;
 
         batch(() => {
-          _exception(e);
-          _status('rejected');
+          _exception.set(e);
+          _status.set('rejected');
         });
 
         throw e;
       });
   };
 
-  if (name) {
-    named(data, name + '.data');
-    named(exception, name + '.exception');
-    named(done, name + '.done');
-    named(aborted, name + '.aborted');
-    named(args, name + '.args');
-    named(status, name + '.status');
-  }
+  // if (name) {
+  //   named(data, name + '.data');
+  //   named(exception, name + '.exception');
+  //   named(done, name + '.done');
+  //   named(aborted, name + '.aborted');
+  //   named(args, name + '.args');
+  //   named(status, name + '.status');
+  // }
 
   return {
     data,
@@ -218,11 +218,11 @@ export function effect<T, A extends unknown[]>(
   } as Effect<T, A>;
 }
 
-function logEvent(
-  effectName?: string,
-  eventName?: EffectEventName,
-  payload?: any,
-) {
-  if (!effectName) return;
-  (config as any)._log(effectName, eventName, payload);
-}
+// function // logEvent(
+//   effectName?: string,
+//   eventName?: EffectEventName,
+//   payload?: any,
+// ) {
+//   if (!effectName) return;
+//   (config as any)._log(effectName, eventName, payload);
+// }

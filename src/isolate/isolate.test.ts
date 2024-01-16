@@ -17,7 +17,7 @@ describe('isolate', () => {
     comp.subscribe(() => {});
     expect(spy).toBeCalledTimes(1);
 
-    count(1);
+    count.set(1);
     expect(spy).toBeCalledTimes(1);
   });
 
@@ -52,27 +52,27 @@ describe('isolate', () => {
     expect(externalSpy).toBeCalledTimes(1);
     expect(deepSpy).toBeCalledTimes(1);
 
-    source(1);
+    source.set(1);
     expect(innerSpy).toBeCalledTimes(2);
     expect(externalSpy).toBeCalledTimes(2);
     expect(deepSpy).toBeCalledTimes(2);
 
-    source(2);
+    source.set(2);
     expect(innerSpy).toBeCalledTimes(3);
     expect(externalSpy).toBeCalledTimes(3);
     expect(deepSpy).toBeCalledTimes(3);
 
-    external(1);
+    external.set(1);
     expect(innerSpy).toBeCalledTimes(4);
     expect(externalSpy).toBeCalledTimes(4);
     expect(deepSpy).toBeCalledTimes(5); // because of subscription order
 
-    external(2);
+    external.set(2);
     expect(innerSpy).toBeCalledTimes(5);
     expect(externalSpy).toBeCalledTimes(5);
     expect(deepSpy).toBeCalledTimes(6);
 
-    external(3);
+    external.set(3);
     expect(innerSpy).toBeCalledTimes(6);
     expect(externalSpy).toBeCalledTimes(6);
     expect(deepSpy).toBeCalledTimes(7);
@@ -116,13 +116,13 @@ describe('isolate', () => {
     comp.subscribe(() => {});
     expect(spy).toBeCalledTimes(1);
 
-    source(1);
+    source.set(1);
     expect(spy).toBeCalledTimes(2);
 
-    external(1);
+    external.set(1);
     expect(spy).toBeCalledTimes(3);
 
-    external(2);
+    external.set(2);
     expect(spy).toBeCalledTimes(4);
   });
 
@@ -164,13 +164,13 @@ describe('isolate', () => {
     comp.subscribe(() => {});
     expect(spy).toBeCalledTimes(1);
 
-    source(1);
+    source.set(1);
     expect(spy).toBeCalledTimes(2);
 
-    external(1);
+    external.set(1);
     expect(spy).toBeCalledTimes(3);
 
-    external(2);
+    external.set(2);
     expect(spy).toBeCalledTimes(4);
   });
 

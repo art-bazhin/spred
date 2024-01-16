@@ -19,13 +19,13 @@ describe('collect function', () => {
     comp.subscribe(spy);
     expect(spy).toBeCalledTimes(1);
 
-    b(1);
+    b.set(1);
     expect(spy).toBeCalledTimes(1);
 
-    a(1);
+    a.set(1);
     expect(spy).toBeCalledTimes(2);
 
-    b(2);
+    b.set(2);
     expect(spy).toBeCalledTimes(2);
   });
 
@@ -53,14 +53,14 @@ describe('collect function', () => {
     expect(spyInner).toBeCalledTimes(1);
     expect(spyComp).toBeCalledTimes(1);
 
-    a(1);
+    a.set(1);
 
     expect(spy).toBeCalledTimes(2);
     expect(spyInner).toBeCalledTimes(2);
     expect(spyComp).toBeCalledTimes(2);
 
     cleanup();
-    a(2);
+    a.set(2);
 
     expect(spy).toBeCalledTimes(2);
     expect(spyInner).toBeCalledTimes(2);

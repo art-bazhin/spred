@@ -24,7 +24,7 @@ describe('configure function', () => {
         expect(endSpy).toBeCalledTimes(0);
       }, false);
 
-      counter(1);
+      counter.set(1);
       expect(endSpy).toBeCalledTimes(1);
     });
   });

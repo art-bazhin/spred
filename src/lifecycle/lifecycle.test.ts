@@ -13,7 +13,7 @@ describe('lifecycle signals', () => {
     onUpdate(counter, () => (result.update = ++order));
 
     const unsub = counter.subscribe(() => {});
-    counter(1);
+    counter.set(1);
     unsub();
 
     expect(result.activate).toBe(1);
@@ -28,7 +28,7 @@ describe('lifecycle signals', () => {
     onUpdate(counter, spy);
     onUpdate(counter, spy);
 
-    counter(1);
+    counter.set(1);
     expect(spy).toBeCalledTimes(1);
   });
 });
@@ -49,7 +49,7 @@ describe('onActivate function', () => {
     expect(value).toBe(0);
     expect(listener).toBeCalledTimes(1);
 
-    counter(1);
+    counter.set(1);
     expect(value).toBe(0);
     expect(listener).toBeCalledTimes(1);
 
@@ -86,7 +86,7 @@ describe('onActivate function', () => {
 
     expect(spy).toBeCalledTimes(0);
 
-    a(1);
+    a.set(1);
 
     expect(spy).toBeCalledTimes(1);
   });
@@ -108,7 +108,7 @@ describe('onDeactivate function', () => {
     expect(value).toBeUndefined();
     expect(listener).toBeCalledTimes(0);
 
-    counter(1);
+    counter.set(1);
     expect(value).toBeUndefined();
     expect(listener).toBeCalledTimes(0);
 
@@ -130,7 +130,7 @@ describe('onDeactivate function', () => {
 
     expect(spy).toBeCalledTimes(0);
 
-    a(0);
+    a.set(0);
     expect(spy).toBeCalledTimes(1);
   });
 });
@@ -156,7 +156,7 @@ describe('onUpdate function', () => {
     expect(res.prevValue).toBeUndefined();
     expect(listener).toBeCalledTimes(0);
 
-    counter(1);
+    counter.set(1);
     expect(res.value).toBe(1);
     expect(res.prevValue).toBe(0);
     expect(listener).toBeCalledTimes(1);
@@ -192,19 +192,19 @@ describe('onException function', () => {
     expect(error).toBeUndefined();
     expect(listener).toBeCalledTimes(0);
 
-    counter(2);
+    counter.set(2);
     expect(error).toBeUndefined();
     expect(listener).toBeCalledTimes(0);
 
-    counter(5);
+    counter.set(5);
     expect(error).toBe('error');
     expect(listener).toBeCalledTimes(1);
 
-    counter(6);
+    counter.set(6);
     expect(error).toBe('error');
     expect(listener).toBeCalledTimes(2);
 
-    counter(3);
+    counter.set(3);
     expect(error).toBe('error');
     expect(listener).toBeCalledTimes(2);
 
@@ -239,19 +239,19 @@ describe('onException function', () => {
     expect(error).toBeUndefined();
     expect(listener).toBeCalledTimes(0);
 
-    counter(2);
+    counter.set(2);
     expect(error).toBeUndefined();
     expect(listener).toBeCalledTimes(0);
 
-    counter(5);
+    counter.set(5);
     expect(error).toBe('error');
     expect(listener).toBeCalledTimes(1);
 
-    counter(6);
+    counter.set(6);
     expect(error).toBe('error');
     expect(listener).toBeCalledTimes(2);
 
-    counter(3);
+    counter.set(3);
     expect(error).toBe('error');
     expect(listener).toBeCalledTimes(2);
 
@@ -295,19 +295,19 @@ describe('onException function', () => {
     expect(activateSpy).toHaveBeenCalledTimes(1);
     expect(deactivateSpy).toHaveBeenCalledTimes(0);
 
-    a(1);
+    a.set(1);
     expect(activateSpy).toHaveBeenCalledTimes(1);
     expect(deactivateSpy).toHaveBeenCalledTimes(0);
 
-    b(1);
+    b.set(1);
     expect(activateSpy).toHaveBeenCalledTimes(1);
     expect(deactivateSpy).toHaveBeenCalledTimes(0);
 
-    a(10);
+    a.set(10);
     expect(activateSpy).toHaveBeenCalledTimes(1);
     expect(deactivateSpy).toHaveBeenCalledTimes(1);
 
-    a(5);
+    a.set(5);
     expect(activateSpy).toHaveBeenCalledTimes(2);
     expect(deactivateSpy).toHaveBeenCalledTimes(1);
 

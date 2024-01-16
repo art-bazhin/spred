@@ -170,12 +170,10 @@ export function set<T>(state: SignalState<T>, value?: any) {
     state.flags |= FORCED;
   }
 
-  if (state.flags & FORCED || !state.compare(state.nextValue, state.value)) {
-    providers.push(state);
+  providers.push(state);
 
-    if (wrapper) wrapper(recalc);
-    else recalc();
-  }
+  if (wrapper) wrapper(recalc);
+  else recalc();
 
   return state.nextValue;
 }
@@ -185,7 +183,8 @@ function notify(state: SignalState<any>) {
 
   state.flags |= NOTIFIED;
 
-  if (state.subs || !state.compute) consumers.push(state);
+  if (!state.compute) get(state);
+  if (state.subs) consumers.push(state);
 
   for (let node = state.firstTarget; node !== null; node = node.next) {
     if (typeof node.value === 'object') notify(node.value);
