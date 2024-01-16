@@ -6,10 +6,7 @@ const writableSignalProto = {
   ...signalProto,
 
   set(this: Signal<any>, value: any) {
-    return set((this as any)._state, value);
-  },
-
-  notify(this: Signal<any>) {
+    if (arguments.length) return set((this as any)._state, value);
     return set((this as any)._state);
   },
 };
@@ -33,7 +30,7 @@ export interface WritableSignal<T, I = T> extends Signal<T, I> {
   /**
    * Notify subscribers without setting a new value.
    */
-  notify(): T | I;
+  set(): T | I;
 }
 
 /**
@@ -69,7 +66,6 @@ export function writable(value?: any, compare?: any) {
   self._state = state;
   self.set = writableSignalProto.set;
   self.get = writableSignalProto.get;
-  self.notify = writableSignalProto.notify;
   self.subscribe = writableSignalProto.subscribe;
 
   return self;

@@ -27,7 +27,7 @@ describe('writable', () => {
   });
 
   it('returns current value after notify', () => {
-    const value = counter.notify();
+    const value = counter.set();
     expect(value).toBe(3);
   });
 
@@ -47,7 +47,7 @@ describe('writable', () => {
     expect(counter.subscribe).toBeDefined;
   });
 
-  it('force emits subscribers using notify method', () => {
+  it('force emits subscribers using set method without arguments', () => {
     const s = writable({} as any);
 
     let value: any;
@@ -55,19 +55,19 @@ describe('writable', () => {
 
     s.subscribe(subscriber);
 
-    s.notify();
+    s.set();
 
     expect(subscriber).toBeCalledTimes(2);
     expect(value).toBe(undefined);
 
     s().a = 1;
-    s.notify();
+    s.set();
 
     expect(subscriber).toBeCalledTimes(3);
     expect(value).toBe(1);
 
     s().a = 2;
-    s.notify();
+    s.set();
 
     expect(subscriber).toBeCalledTimes(4);
     expect(value).toBe(2);
@@ -85,19 +85,19 @@ describe('writable', () => {
 
     comp.subscribe(subscriber);
 
-    s.notify();
+    s.set();
 
     expect(subscriber).toBeCalledTimes(2);
     expect(value).toBe(undefined);
 
     s().a = 1;
-    s.notify();
+    s.set();
 
     expect(subscriber).toBeCalledTimes(3);
     expect(value).toBe(1);
 
     s().a = 2;
-    s.notify();
+    s.set();
 
     expect(subscriber).toBeCalledTimes(4);
     expect(value).toBe(2);
