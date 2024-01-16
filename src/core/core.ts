@@ -28,7 +28,7 @@ export interface DepNode {
 
 interface ListNode<T> {
   value: T;
-  link?: ListNode<T>;
+  link: ListNode<T> | null;
   prev: ListNode<T> | null;
   next: ListNode<T> | null;
 }
@@ -355,7 +355,7 @@ export function get<T>(state: SignalState<T>, notTrackDeps?: boolean): T {
         node.value = state;
 
         if (status) createTargetNode(state, tracking, node);
-        else node.link = undefined;
+        else node.link = null;
       }
 
       node = node.next;
@@ -498,7 +498,7 @@ function removeSourceNode(state: SignalState<any>, node: ListNode<any>) {
 
   if (node.link) {
     removeTargetNode(node.value, node.link);
-    node.link = undefined;
+    node.link = null;
   }
 }
 
@@ -524,6 +524,7 @@ function createSourceNode(source: SignalState<any>, target: SignalState<any>) {
     value: source,
     prev: target.lastSource,
     next: null,
+    link: null,
   };
 
   if (!target.lastSource) {
@@ -546,6 +547,7 @@ function createTargetNode(
     value: target,
     prev: source.lastTarget,
     next: null,
+    link: null,
   };
 
   if (source.lastTarget) {
@@ -572,6 +574,7 @@ function createSubscriberNode(
     value: target,
     prev: source.lastSub,
     next: null,
+    link: null,
   };
 
   if (source.lastSub) {
@@ -602,7 +605,7 @@ function unlinkDependencies(state: SignalState<any>) {
   for (let node = state.firstSource; node !== null; node = node.next) {
     if (node.link) {
       removeTargetNode(node.value, node.link);
-      node.link = undefined;
+      node.link = null;
     }
   }
 }
