@@ -37,6 +37,13 @@ import { collect } from './collect/collect';
 import { named } from './named/named';
 import { VOID } from './utils/constants';
 
+const __INTERNAL__ = {
+  get,
+  set,
+  subscribe,
+  createSignalState,
+};
+
 export {
   Signal,
   WritableSignal,
@@ -66,8 +73,5 @@ export {
   collect,
   named,
   VOID,
-  get,
-  set,
-  subscribe,
-  createSignalState,
+  __INTERNAL__,
 };

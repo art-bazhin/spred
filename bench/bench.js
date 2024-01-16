@@ -20,13 +20,12 @@ import {
 import {
   computed,
   writable,
+  __INTERNAL__,
   batch,
-  get,
-  set,
-  subscribe,
-  createSignalState,
   configure,
 } from '/dist/index.mjs';
+
+const { get, set, subscribe, createSignalState } = __INTERNAL__;
 
 window.process = {
   env: {
@@ -222,10 +221,10 @@ function testSpred(width, layerCount, newValues) {
   const st = performance.now();
 
   batch(() => {
-    start.prop1(newValues[0]);
-    start.prop2(newValues[1]);
-    start.prop3(newValues[2]);
-    start.prop4(newValues[3]);
+    start.prop1.set(newValues[0]);
+    start.prop2.set(newValues[1]);
+    start.prop3.set(newValues[2]);
+    start.prop4.set(newValues[3]);
   });
 
   report.afterChange = [end.prop1(), end.prop2(), end.prop3(), end.prop4()];
