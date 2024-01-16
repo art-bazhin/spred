@@ -38,7 +38,7 @@ export interface SignalOptions<T> {
   onException?: (e: unknown) => any;
 }
 
-export interface SignalState<T> {
+export interface SignalState<T> extends SignalOptions<T> {
   value: T;
   nextValue: T;
   compute?: Computation<T>;
@@ -54,8 +54,6 @@ export interface SignalState<T> {
 
   firstTarget: ListNode<SignalState<any> | Subscriber<any>> | null;
   lastTarget: ListNode<SignalState<any> | Subscriber<any>> | null;
-
-  options: SignalOptions<T>;
 }
 
 let tracking: SignalState<any> | null = null;
@@ -70,15 +68,6 @@ let consumers: SignalState<any>[] = [];
 let notifications: any[] = [];
 
 let version = {};
-
-const DEFAULT_OPTIONS: SignalOptions<any> = {
-  equals: Object.is,
-  catch: undefined,
-  onActivate: undefined,
-  onDeactivate: undefined,
-  onUpdate: undefined,
-  onException: undefined,
-};
 
 export function createSignalState<T>(
   value: T,
@@ -98,11 +87,13 @@ export function createSignalState<T>(
     lastSource: null,
     firstTarget: null,
     lastTarget: null,
-    options: options || DEFAULT_OPTIONS,
+    equals: Object.is,
   };
 
-  if (options && !options.equals) {
-    options.equals = DEFAULT_OPTIONS.equals;
+  if (options) {
+    for (let key in options) {
+      (state as any)[key] = (options as any)[key];
+    }
   }
 
   if (parent) {
@@ -308,9 +299,9 @@ export function get<T>(state: SignalState<T>, trackDependency = true): T {
         config.logException(state.exception);
     } else if (
       state.flags & FORCED ||
-      (value !== (VOID as any) && !state.options.equals!(value, state.value))
+      (value !== (VOID as any) && !state.equals!(value, state.value))
     ) {
-      if (state.options.onUpdate) state.options.onUpdate(value, state.value);
+      if (state.onUpdate) state.onUpdate(value, state.value);
 
       state.value = value;
       state.flags |= CHANGED;
@@ -400,9 +391,9 @@ function calcComputed<T>(state: SignalState<T>) {
   }
 
   if (state.flags & HAS_EXCEPTION) {
-    if (state.options.catch) {
+    if (state.catch) {
       try {
-        value = state.options.catch(state.exception, state.value);
+        value = state.catch(state.exception, state.value);
         state.flags &= ~HAS_EXCEPTION;
         state.exception = undefined;
       } catch (e) {
@@ -410,8 +401,8 @@ function calcComputed<T>(state: SignalState<T>) {
       }
     }
 
-    if (state.flags & HAS_EXCEPTION && state.options.onException) {
-      state.options.onException(state.exception);
+    if (state.flags & HAS_EXCEPTION && state.onException) {
+      state.onException(state.exception);
     }
   }
 
@@ -460,7 +451,7 @@ function removeTargetNode(state: SignalState<any>, node: ListNode<any>) {
 
   if (!state.firstTarget) {
     unlinkDependencies(state);
-    if (state.options.onDeactivate) state.options.onDeactivate(state.value);
+    if (state.onDeactivate) state.onDeactivate(state.value);
   }
 }
 
@@ -500,7 +491,7 @@ function createTargetNode(
   } else {
     source.firstTarget = node;
     linkDependencies(source);
-    if (source.options.onActivate) source.options.onActivate(source.value);
+    if (source.onActivate) source.onActivate(source.value);
   }
 
   source.lastTarget = node;
