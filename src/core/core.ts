@@ -1,4 +1,3 @@
-import { Subscriber } from '../subscriber/subscriber';
 import { config } from '../config/config';
 import { CircularDependencyError } from '../errors/errors';
 import { LifecycleHookName } from '../lifecycle/lifecycle';
@@ -15,7 +14,6 @@ import {
   TRACKING,
   VOID,
 } from '../utils/constants';
-import { Comparator } from '../compartor/comparator';
 
 interface ListNode<T> {
   value: T;
@@ -23,6 +21,10 @@ interface ListNode<T> {
   prev: ListNode<T> | null;
   next: ListNode<T> | null;
 }
+
+export type Subscriber<T> = (value: T, exec?: boolean) => any;
+
+export type Comparator<T> = (value: T, prevValue: T | undefined) => unknown;
 
 export type Computation<T> =
   | (() => T)

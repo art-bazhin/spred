@@ -2,8 +2,7 @@ import { Signal } from '../signal/signal';
 import { signalProto } from '../signal/signal';
 import { Computation, createSignalState } from '../core/core';
 import { isWritableSignal } from '../guards/guards';
-import { get } from '../core/core';
-import { Comparator } from '../compartor/comparator';
+import { get, Comparator } from '../core/core';
 import { VOID } from '../utils/constants';
 
 /**

@@ -1,5 +1,4 @@
-import { get, subscribe } from '../core/core';
-import { Subscriber } from '../subscriber/subscriber';
+import { get, subscribe, Subscriber } from '../core/core';
 
 /**
  * Basic reactive primitive.
