@@ -1,9 +1,7 @@
-import { Logger } from '../logger/logger';
 import { NOOP_FN } from '../utils/constants';
 
 export interface Config {
   logException: (e: unknown) => any;
-  logger: Logger | null | false;
 }
 
 const DEFAULT_CONFIG: any = {

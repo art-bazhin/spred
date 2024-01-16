@@ -1,6 +1,5 @@
 import { Signal, signalProto } from '../signal/signal';
-import { get, set, createSignalState } from '../core/core';
-import { Comparator } from '../compartor/comparator';
+import { get, set, createSignalState, Comparator } from '../core/core';
 import { VOID } from '../utils/constants';
 
 const writableSignalProto = {
