@@ -159,15 +159,13 @@ export function batch(fn: (...args: any) => any) {
   else recalc();
 }
 
-export function set<T>(state: SignalState<T>, value: (currentValue: T) => T): T;
-export function set<T>(state: SignalState<T>, value: T | undefined): T;
+export function set<T>(state: SignalState<T>, value: T): T;
 export function set<T>(state: SignalState<T>): void;
 export function set<T>(state: SignalState<T>, value?: any) {
   const wrapper = (config as any)._notificationWrapper;
 
   if (arguments.length > 1) {
-    if (typeof value === 'function') state.nextValue = value(state.nextValue);
-    else state.nextValue = value;
+    state.nextValue = value;
   } else {
     state.flags |= FORCED;
   }

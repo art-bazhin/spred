@@ -1,5 +1,4 @@
 import { computed } from '../computed/computed';
-import { batch } from '../core/core';
 import { writable } from './writable';
 
 describe('writable', () => {
@@ -30,30 +29,6 @@ describe('writable', () => {
   it('returns current value after notify', () => {
     const value = counter.notify();
     expect(value).toBe(3);
-  });
-
-  it('updates value using update fn', () => {
-    counter((value) => value + 1);
-    expect(counter()).toBe(4);
-
-    let newValue: any;
-
-    batch(() => {
-      newValue = counter((value) => value + 1);
-      newValue = counter((value) => value + 1);
-      newValue = counter((value) => value + 1);
-      newValue = counter((value) => value + 1);
-    });
-
-    expect(counter()).toBe(8);
-    expect(newValue).toBe(8);
-  });
-
-  it('updates value using update fn right after init', () => {
-    const value = writable(0);
-
-    value((v) => v + 1);
-    expect(value()).toBe(1);
   });
 
   it('triggers subscribers if undefined value was passed', () => {
@@ -102,7 +77,7 @@ describe('writable', () => {
     const s = writable({} as any);
     const comp = computed(
       () => s().a,
-      () => false
+      () => false,
     );
 
     let value: any;
@@ -156,7 +131,7 @@ describe('writable', () => {
 
     expect(fn()).toBe(a);
 
-    fn(() => b);
+    fn(b);
     expect(fn()).toBe(b);
   });
 

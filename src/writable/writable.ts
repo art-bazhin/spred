@@ -22,25 +22,13 @@ export interface WritableSignal<T, I = T> extends Signal<T, I> {
    * Set the value of the signal
    * @param value New value of the signal.
    */
-  (value: Exclude<T, Function>): T;
-
-  /**
-   * Calculate and set a new value of the signal from the current value
-   * @param getNextValue Function that calculates a new value from the current value.
-   */
-  (getNextValue: (currentValue: T | I) => T): T;
+  (value: T): T;
 
   /**
    * Set the value of the signal
    * @param value New value of the signal.
    */
-  set(value: Exclude<T, Function>): T;
-
-  /**
-   * Calculate and set a new value of the signal from the current value
-   * @param getNextValue Function that calculates a new value from the current value.
-   */
-  set(getNextValue: (currentValue: T | I) => T): T;
+  set(value: T): T;
 
   /**
    * Notify subscribers without setting a new value.
