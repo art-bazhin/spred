@@ -37,18 +37,16 @@ export interface SignalState<T> {
   compute?: Computation<T>;
   catch?: (err: unknown, prevValue?: T) => T;
   compare: Comparator<T>;
-  version?: any;
+  version: any;
   children?: ((() => any) | SignalState<any>)[];
   name?: string;
+  subs: number;
 
   firstSource: ListNode<SignalState<any>> | null;
   lastSource: ListNode<SignalState<any>> | null;
 
-  firstTarget: ListNode<SignalState<any>> | null;
-  lastTarget: ListNode<SignalState<any>> | null;
-
-  firstSub: ListNode<Subscriber<T>> | null;
-  lastSub: ListNode<Subscriber<T>> | null;
+  firstTarget: ListNode<SignalState<any> | Subscriber<any>> | null;
+  lastTarget: ListNode<SignalState<any> | Subscriber<any>> | null;
 
   onActivate?: ((value: T) => any) | null;
   onDeactivate?: ((value: T) => any) | null;
@@ -84,9 +82,8 @@ export function createSignalState<T>(
     catch: handleException,
     nextValue: value,
     flags: 0,
+    subs: 0,
     version: null,
-    firstSub: null,
-    lastSub: null,
     firstSource: null,
     lastSource: null,
     firstTarget: null,
@@ -189,10 +186,10 @@ function notify(state: SignalState<any>) {
 
   state.flags |= NOTIFIED;
 
-  if (state.firstSub || !state.compute) consumers.push(state);
+  if (state.subs || !state.compute) consumers.push(state);
 
   for (let node = state.firstTarget; node !== null; node = node.next) {
-    notify(node.value);
+    if ((node.value as any).version) notify(node.value as any);
   }
 }
 
@@ -203,7 +200,7 @@ export function subscribe<T>(
 ) {
   const prevStatus = status;
 
-  if (!(state.flags & FREEZED) && !(state.firstTarget || state.firstSub)) {
+  if (!(state.flags & FREEZED) && !state.firstTarget) {
     status = ACTIVATING_STATUS;
     state.flags |= ACTIVATING;
   }
@@ -218,7 +215,8 @@ export function subscribe<T>(
     return NOOP_FN;
   }
 
-  let node = createSubscriberNode(state, subscriber);
+  let node = createTargetNode(state, subscriber, null);
+  state.subs++;
 
   if (exec) {
     isolate(() => subscriber(value, true));
@@ -226,7 +224,8 @@ export function subscribe<T>(
 
   const dispose = () => {
     if (!node) return;
-    removeSubscriberNode(state, node);
+    removeTargetNode(state, node);
+    state.subs--;
     node = null as any;
   };
 
@@ -274,7 +273,7 @@ export function recalc() {
 
   for (let state of q) notify(state);
   for (let state of consumers) {
-    if (state.firstSub || !state.compute) get(state);
+    if (state.subs || !state.compute) get(state);
   }
 
   status = prevStatus;
@@ -309,10 +308,7 @@ export function get<T>(state: SignalState<T>, notTrackDeps?: boolean): T {
     const value = state.compute ? calcComputed(state) : state.nextValue;
 
     if (state.flags & HAS_EXCEPTION) {
-      if (
-        (state.firstSub || state.flags & ACTIVATING) &&
-        state.version !== version
-      )
+      if ((state.subs || state.flags & ACTIVATING) && state.version !== version)
         config.logException(state.exception);
     } else if (
       state.flags & FORCED ||
@@ -323,8 +319,11 @@ export function get<T>(state: SignalState<T>, notTrackDeps?: boolean): T {
       state.value = value;
       state.flags |= CHANGED;
 
-      for (let node = state.firstSub; node !== null; node = node.next) {
-        notifications.push(node.value, state.value);
+      if (state.subs) {
+        for (let node = state.firstTarget; node !== null; node = node.next) {
+          if (!(node.value as any).version)
+            notifications.push(node.value, state.value);
+        }
       }
     }
   }
@@ -360,7 +359,7 @@ export function get<T>(state: SignalState<T>, notTrackDeps?: boolean): T {
 }
 
 function calcComputed<T>(state: SignalState<T>) {
-  if (state.firstTarget || state.firstSub) {
+  if (state.firstTarget) {
     let sameDeps = true;
     let hasException = false;
 
@@ -464,23 +463,6 @@ function logHook<T>(state: SignalState<T>, hook: LifecycleHookName, value?: T) {
   (config as any)._log(state.name, hook, payload);
 }
 
-function removeSubscriberNode(state: SignalState<any>, node: ListNode<any>) {
-  if (state.firstSub === node) state.firstSub = node.next;
-  if (state.lastSub === node) state.lastSub = node.prev;
-  if (node.prev) node.prev.next = node.next;
-  if (node.next) node.next.prev = node.prev;
-
-  if (!state.firstSub && !state.firstTarget) {
-    logHook(state, 'DEACTIVATE');
-
-    if (state.onDeactivate) {
-      state.onDeactivate(state.value);
-    }
-
-    unlinkDependencies(state);
-  }
-}
-
 function removeSourceNode(state: SignalState<any>, node: ListNode<any>) {
   if (state.firstSource === node) state.firstSource = node.next;
   if (state.lastSource === node) state.lastSource = node.prev;
@@ -499,7 +481,7 @@ function removeTargetNode(state: SignalState<any>, node: ListNode<any>) {
   if (node.prev) node.prev.next = node.next;
   if (node.next) node.next.prev = node.prev;
 
-  if (!state.firstSub && !state.firstTarget) {
+  if (!state.firstTarget) {
     logHook(state, 'DEACTIVATE');
 
     if (state.onDeactivate) {
@@ -531,8 +513,8 @@ function createSourceNode(source: SignalState<any>, target: SignalState<any>) {
 
 function createTargetNode(
   source: SignalState<any>,
-  target: SignalState<any>,
-  sourceNode: ListNode<any>,
+  target: SignalState<any> | Subscriber<any>,
+  sourceNode: ListNode<any> | null,
 ) {
   const node: ListNode<any> = {
     value: target,
@@ -545,40 +527,12 @@ function createTargetNode(
     source.lastTarget.next = node;
   } else {
     source.firstTarget = node;
-    if (!source.firstSub) {
-      emitActivateLifecycle(source);
-      linkDependencies(source);
-    }
+    emitActivateLifecycle(source);
+    linkDependencies(source);
   }
 
   source.lastTarget = node;
-  sourceNode.link = node;
-
-  return node;
-}
-
-function createSubscriberNode(
-  source: SignalState<any>,
-  target: Subscriber<any>,
-) {
-  const node = {
-    value: target,
-    prev: source.lastSub,
-    next: null,
-    link: null,
-  };
-
-  if (source.lastSub) {
-    source.lastSub.next = node;
-  } else {
-    source.firstSub = node;
-    if (!source.firstTarget) {
-      emitActivateLifecycle(source);
-      linkDependencies(source);
-    }
-  }
-
-  source.lastSub = node;
+  if (sourceNode) sourceNode.link = node;
 
   return node;
 }
