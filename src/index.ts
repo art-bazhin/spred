@@ -20,7 +20,6 @@ import {
   subscribe,
   createSignalState,
 } from './core/core';
-import { signal, Setter } from './signal/create-signal';
 import { on } from './on/on';
 import {
   effect,
@@ -51,12 +50,10 @@ export {
   Subscriber,
   Comparator,
   Computation,
-  Setter,
   writable,
   computed,
   watch,
   batch,
-  signal,
   on,
   onActivate,
   onDeactivate,

@@ -1,6 +1,5 @@
 import { config } from '../config/config';
 import { CircularDependencyError } from '../errors/errors';
-import { LifecycleHookName } from '../lifecycle/lifecycle';
 import {
   ACTIVATING,
   ACTIVATING_STATUS,
@@ -191,7 +190,7 @@ function notify(state: SignalState<any>) {
   if (state.subs || !state.compute) consumers.push(state);
 
   for (let node = state.firstTarget; node !== null; node = node.next) {
-    if ((node.value as any).version) notify(node.value as any);
+    if (typeof node.value === 'object') notify(node.value);
   }
 }
 
@@ -307,7 +306,7 @@ export function get<T>(state: SignalState<T>, trackDependency = true): T {
 
       if (state.subs) {
         for (let node = state.firstTarget; node !== null; node = node.next) {
-          if (!(node.value as any).version)
+          if (typeof node.value === 'function')
             notifications.push(node.value, state.value);
         }
       }
