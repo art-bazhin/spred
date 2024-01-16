@@ -207,7 +207,7 @@ export function subscribe<T>(
     state.flags |= ACTIVATING;
   }
 
-  const value = get(state, true);
+  const value = get(state, false);
 
   status = prevStatus;
   state.flags &= ~ACTIVATING;
@@ -275,7 +275,7 @@ export function recalc() {
   recalc();
 }
 
-export function get<T>(state: SignalState<T>, notTrackDeps?: boolean): T {
+export function get<T>(state: SignalState<T>, trackDependency = true): T {
   if (!status) state.flags &= ~NOTIFIED;
 
   if (state.compute) {
@@ -318,7 +318,7 @@ export function get<T>(state: SignalState<T>, notTrackDeps?: boolean): T {
 
   state.flags &= ~NOTIFIED;
 
-  if (tracking && !notTrackDeps) {
+  if (tracking && trackDependency) {
     if (state.flags & HAS_EXCEPTION && !(tracking.flags & HAS_EXCEPTION)) {
       tracking.exception = state.exception;
       tracking.flags |= HAS_EXCEPTION;
@@ -352,7 +352,7 @@ function calcComputed<T>(state: SignalState<T>) {
     for (let node = state.firstSource; node !== null; node = node.next) {
       const source = node.value;
 
-      get(source, true);
+      get(source, false);
 
       if (source.flags & HAS_EXCEPTION) {
         hasException = true;

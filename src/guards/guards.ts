@@ -47,5 +47,5 @@ export function getValue<T>(value: T | Signal<T>) {
 }
 
 export function sampleValue<T>(value: T | Signal<T>) {
-  return isSignal(value) ? value.sample() : value;
+  return isSignal(value) ? value.get(false) : value;
 }

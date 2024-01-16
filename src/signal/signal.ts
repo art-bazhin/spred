@@ -15,9 +15,9 @@ export interface Signal<T, I = T> {
   get(): T | I;
 
   /**
-   * Returns the current value of the signal without dependency tracking.
+   * Calculates and returns the current value of the signal.
    */
-  sample(): T | I;
+  get(trackDependency: boolean): T | I;
 
   /**
    * Subscribes the function to updates of the signal value.
@@ -39,15 +39,11 @@ export interface Signal<T, I = T> {
 }
 
 export const signalProto = {
-  get() {
-    return get((this as any)._state);
+  get(trackDependency = true) {
+    return get((this as any)._state, trackDependency);
   },
 
-  subscribe(subscriber: any, exec: any) {
+  subscribe(subscriber: any, exec = true) {
     return subscribe((this as any)._state, subscriber, exec);
-  },
-
-  sample() {
-    return get((this as any)._state, true);
   },
 };

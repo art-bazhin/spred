@@ -75,7 +75,7 @@ export interface Effect<T, A extends unknown[]> {
  */
 export function effect<T, A extends unknown[]>(
   asyncFn: (...args: A) => Promise<T>,
-  name?: string
+  name?: string,
 ) {
   let counter = 0;
   let current = -1;
@@ -109,7 +109,7 @@ export function effect<T, A extends unknown[]>(
     const data = _data();
     const exception = _exception();
 
-    switch (_status.sample()) {
+    switch (_status.get(false)) {
       case 'pristine':
       case 'fulfilled':
         return data;
@@ -124,7 +124,7 @@ export function effect<T, A extends unknown[]>(
   const args = computed(_args, FALSE_FN);
 
   const abort = () => {
-    if (!status.sample()!.pending) return;
+    if (!status.get(false)!.pending) return;
 
     logEvent(name, 'ABORT');
 
@@ -137,7 +137,7 @@ export function effect<T, A extends unknown[]>(
   };
 
   const reset = () => {
-    if (status.sample()!.pristine) return;
+    if (status.get(false)!.pristine) return;
 
     logEvent(name, 'RESET');
 
@@ -164,7 +164,7 @@ export function effect<T, A extends unknown[]>(
   const call = (...args: A) => {
     logEvent(name, 'CALL', args);
 
-    if (_status.sample() === 'pending') {
+    if (_status.get(false) === 'pending') {
       _aborted({});
     }
 
@@ -221,7 +221,7 @@ export function effect<T, A extends unknown[]>(
 function logEvent(
   effectName?: string,
   eventName?: EffectEventName,
-  payload?: any
+  payload?: any,
 ) {
   if (!effectName) return;
   (config as any)._log(effectName, eventName, payload);

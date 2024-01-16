@@ -30,7 +30,6 @@ export function computed<T>(
   self._state = state;
   self.get = signalProto.get;
   self.subscribe = signalProto.subscribe;
-  self.sample = signalProto.sample;
 
   return self;
 }

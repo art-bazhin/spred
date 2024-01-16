@@ -83,7 +83,6 @@ export function writable(value?: any, compare?: any) {
   self.get = writableSignalProto.get;
   self.notify = writableSignalProto.notify;
   self.subscribe = writableSignalProto.subscribe;
-  self.sample = writableSignalProto.sample;
 
   return self;
 }

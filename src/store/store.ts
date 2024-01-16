@@ -12,7 +12,7 @@ export interface Store<T> extends Signal<T> {
   update(updateFn: (state: T) => T | void): void;
   update<K extends Keys<T>>(
     key: K,
-    updateFn: (state: T[K]) => T[K] | void
+    updateFn: (state: T[K]) => T[K] | void,
   ): void;
   select<K extends Keys<T>>(key: K): Store<T[K]>;
 }
@@ -46,7 +46,7 @@ function getClone<T>(id: string, state?: Signal<T>, value?: T): T {
   const cached = VALUES_CACHE[id];
 
   if (cached !== undefined) return cached;
-  return copy(arguments.length === 3 ? value! : state!.sample());
+  return copy(arguments.length === 3 ? value! : state!.get(false));
 }
 
 function clearValuesCache() {
