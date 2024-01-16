@@ -241,18 +241,6 @@ export function subscribe<T>(
   return dispose;
 }
 
-function emitActivateLifecycle(state: SignalState<any>) {
-  if (state.onActivate) {
-    state.onActivate(state.value);
-  }
-}
-
-function emitUpdateLifecycle(state: SignalState<any>, value: any) {
-  if (state.onUpdate) {
-    state.onUpdate(value, state.value);
-  }
-}
-
 /**
  * Immediately calculates the updated values of the signals and notifies their subscribers.
  */
@@ -312,7 +300,7 @@ export function get<T>(state: SignalState<T>, notTrackDeps?: boolean): T {
       state.flags & FORCED ||
       (value !== (VOID as any) && !state.compare(value, state.value))
     ) {
-      emitUpdateLifecycle(state, value);
+      if (state.onUpdate) state.onUpdate(value, state.value);
 
       state.value = value;
       state.flags |= CHANGED;
@@ -412,10 +400,8 @@ function calcComputed<T>(state: SignalState<T>) {
       }
     }
 
-    if (state.flags & HAS_EXCEPTION) {
-      if (state.onException) {
-        state.onException(state.exception);
-      }
+    if (state.flags & HAS_EXCEPTION && state.onException) {
+      state.onException(state.exception);
     }
   }
 
@@ -463,11 +449,8 @@ function removeTargetNode(state: SignalState<any>, node: ListNode<any>) {
   if (node.next) node.next.prev = node.prev;
 
   if (!state.firstTarget) {
-    if (state.onDeactivate) {
-      state.onDeactivate(state.value);
-    }
-
     unlinkDependencies(state);
+    if (state.onDeactivate) state.onDeactivate(state.value);
   }
 }
 
@@ -506,8 +489,8 @@ function createTargetNode(
     source.lastTarget.next = node;
   } else {
     source.firstTarget = node;
-    emitActivateLifecycle(source);
     linkDependencies(source);
+    if (source.onActivate) source.onActivate(source.value);
   }
 
   source.lastTarget = node;
