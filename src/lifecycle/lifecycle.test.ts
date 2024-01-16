@@ -1,4 +1,4 @@
-import { writable, computed, configure } from '..';
+import { writable, computed, configure, named } from '..';
 import { onActivate, onUpdate, onDeactivate, onException } from './lifecycle';
 
 describe('lifecycle signals', () => {
@@ -260,5 +260,59 @@ describe('onException function', () => {
     expect(listener).toBeCalledTimes(2);
 
     configure();
+  });
+
+  it('allow to handle activation and deactivation of signals', () => {
+    const activateSpy = jest.fn();
+    const deactivateSpy = jest.fn();
+
+    const a = writable(0);
+    const b = writable(0);
+    const c = writable(0);
+    const d = writable(0);
+
+    const a1 = computed(() => a());
+    const b1 = named(
+      computed(() => b()),
+      'test',
+    );
+    const c1 = computed(() => c());
+    const d1 = computed(() => d());
+
+    const a2 = computed(() => a1());
+    const b2 = computed(() => b1());
+    const c2 = computed(() => c1());
+    const d2 = computed(() => d1());
+
+    onActivate(b1, activateSpy);
+    onDeactivate(b1, deactivateSpy);
+
+    const res = computed(() => {
+      return a2() < 10 ? b2() + c2() + d2() : d2() + c2();
+    });
+
+    const unsub = res.subscribe(() => {});
+    expect(activateSpy).toHaveBeenCalledTimes(1);
+    expect(deactivateSpy).toHaveBeenCalledTimes(0);
+
+    a(1);
+    expect(activateSpy).toHaveBeenCalledTimes(1);
+    expect(deactivateSpy).toHaveBeenCalledTimes(0);
+
+    b(1);
+    expect(activateSpy).toHaveBeenCalledTimes(1);
+    expect(deactivateSpy).toHaveBeenCalledTimes(0);
+
+    a(10);
+    expect(activateSpy).toHaveBeenCalledTimes(1);
+    expect(deactivateSpy).toHaveBeenCalledTimes(1);
+
+    a(5);
+    expect(activateSpy).toHaveBeenCalledTimes(2);
+    expect(deactivateSpy).toHaveBeenCalledTimes(1);
+
+    unsub();
+    expect(activateSpy).toHaveBeenCalledTimes(2);
+    expect(deactivateSpy).toHaveBeenCalledTimes(2);
   });
 });

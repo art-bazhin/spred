@@ -477,25 +477,25 @@ describe('computed', () => {
 
     unsub = result.subscribe(() => {});
     expect(lastScheduled).toBe(false);
-    expect(spy).toBeCalledTimes(5);
+    expect(spy).toBeCalledTimes(4);
 
     source(10);
     expect(lastScheduled).toBe(true);
     expect(lastMedScheduled).toBe(false);
     expect(medSpy).toBeCalledTimes(1);
-    expect(spy).toBeCalledTimes(6);
+    expect(spy).toBeCalledTimes(5);
 
     source(11);
     expect(lastScheduled).toBe(true);
     expect(lastMedScheduled).toBe(true);
     expect(medSpy).toBeCalledTimes(2);
-    expect(spy).toBeCalledTimes(7);
+    expect(spy).toBeCalledTimes(6);
 
     source(4);
     expect(lastScheduled).toBe(true);
     expect(lastMedScheduled).toBe(true);
     expect(medSpy).toBeCalledTimes(2);
-    expect(spy).toBeCalledTimes(8);
+    expect(spy).toBeCalledTimes(7);
 
     med();
     expect(lastMedScheduled).toBe(false);

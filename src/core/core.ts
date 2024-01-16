@@ -28,6 +28,7 @@ export interface DepNode {
 
 interface ListNode<T> {
   value: T;
+  link?: ListNode<T>;
   prev: ListNode<T> | null;
   next: ListNode<T> | null;
 }
@@ -49,15 +50,15 @@ export interface SignalState<T> {
   children?: ((() => any) | SignalState<any>)[];
   name?: string;
 
-  fs: DepNode | null;
-  ls: DepNode | null;
-  ft: DepNode | null;
-  lt: DepNode | null;
+  firstSource: ListNode<SignalState<any>> | null;
+  lastSource: ListNode<SignalState<any>> | null;
+
+  firstTarget: ListNode<SignalState<any>> | null;
+  lastTarget: ListNode<SignalState<any>> | null;
 
   firstSub: ListNode<Subscriber<T>> | null;
   lastSub: ListNode<Subscriber<T>> | null;
 
-  // lifecycle:
   onActivate?: ((value: T) => any) | null;
   onDeactivate?: ((value: T) => any) | null;
   onUpdate?: ((value: T, prevValue?: T) => any) | null;
@@ -66,7 +67,7 @@ export interface SignalState<T> {
 
 let tracking: SignalState<any> | null = null;
 let scope: SignalState<any> | null = null;
-let node: DepNode | null = null;
+let node: ListNode<SignalState<any>> | null = null;
 
 let batchLevel = 0;
 let status = 0;
@@ -93,12 +94,12 @@ export function createSignalState<T>(
     nextValue: value,
     flags: 0,
     version: null,
-    fs: null,
-    ls: null,
-    ft: null,
-    lt: null,
     firstSub: null,
     lastSub: null,
+    firstSource: null,
+    lastSource: null,
+    firstTarget: null,
+    lastTarget: null,
   };
 
   if (parent) {
@@ -199,8 +200,8 @@ function notify(state: SignalState<any>) {
 
   if (state.firstSub || !state.compute) consumers.push(state);
 
-  for (let node = state.ft; node !== null; node = node.nt) {
-    notify(node.t);
+  for (let node = state.firstTarget; node !== null; node = node.next) {
+    notify(node.value);
   }
 }
 
@@ -211,7 +212,7 @@ export function subscribe<T>(
 ) {
   const prevStatus = status;
 
-  if (!(state.flags & FREEZED) && !(state.ft || state.firstSub)) {
+  if (!(state.flags & FREEZED) && !(state.firstTarget || state.firstSub)) {
     status = ACTIVATING_STATUS;
     state.flags |= ACTIVATING;
   }
@@ -309,8 +310,7 @@ export function get<T>(state: SignalState<T>, notTrackDeps?: boolean): T {
     }
   }
 
-  let shouldCompute =
-    state.version !== version || (status && state.compute && !state.fs);
+  let shouldCompute = state.version !== version;
 
   if (shouldCompute) {
     state.flags &= ~CHANGED;
@@ -348,31 +348,20 @@ export function get<T>(state: SignalState<T>, notTrackDeps?: boolean): T {
       tracking.flags |= HAS_EXCEPTION;
     }
 
-    if (status) {
-      if (node) {
-        if (node.s !== state) {
-          if (node.s.ft === node) node.s.ft = node.nt;
-          if (node.s.lt === node) node.s.lt = node.pt;
-          if (node.pt) node.pt.nt = node.nt;
-          if (node.nt) node.nt.pt = node.pt;
+    if (node) {
+      if (node.value !== state) {
+        if (node.link) removeTargetNode(node.value, node.link);
 
-          node.nt = null;
-          node.pt = state.lt;
-          node.s = state;
+        node.value = state;
 
-          if (state.lt) {
-            state.lt.nt = node;
-          } else {
-            state.ft = node;
-          }
-
-          state.lt = node;
-        }
-
-        node = node.ns;
-      } else {
-        createNode(state, tracking);
+        if (status) createTargetNode(state, tracking, node);
+        else node.link = undefined;
       }
+
+      node = node.next;
+    } else {
+      const n = createSourceNode(state, tracking);
+      if (status) createTargetNode(state, tracking, n);
     }
   }
 
@@ -380,27 +369,29 @@ export function get<T>(state: SignalState<T>, notTrackDeps?: boolean): T {
 }
 
 function calcComputed<T>(state: SignalState<T>) {
-  let sameDeps = true;
-  let hasException = false;
+  if (state.firstTarget || state.firstSub) {
+    let sameDeps = true;
+    let hasException = false;
 
-  for (let node = state.fs; node !== null; node = node.ns) {
-    const source = node.s;
+    for (let node = state.firstSource; node !== null; node = node.next) {
+      const source = node.value;
 
-    get(source, true);
+      get(source, true);
 
-    if (source.flags & HAS_EXCEPTION) {
-      hasException = true;
-      state.flags |= HAS_EXCEPTION;
-      state.exception = source.exception;
-      break;
-    } else if (source.flags & CHANGED) {
-      sameDeps = false;
-      break;
+      if (source.flags & HAS_EXCEPTION) {
+        hasException = true;
+        state.flags |= HAS_EXCEPTION;
+        state.exception = source.exception;
+        break;
+      } else if (source.flags & CHANGED) {
+        sameDeps = false;
+        break;
+      }
     }
-  }
 
-  if (state.fs && sameDeps && !hasException) {
-    return state.value;
+    if (sameDeps && !hasException) {
+      return state.value;
+    }
   }
 
   const prevTracking = tracking;
@@ -409,7 +400,7 @@ function calcComputed<T>(state: SignalState<T>) {
   let value = state.value;
 
   tracking = state;
-  node = state.fs;
+  node = state.firstSource;
 
   state.flags |= TRACKING;
   state.flags &= ~HAS_EXCEPTION;
@@ -442,14 +433,12 @@ function calcComputed<T>(state: SignalState<T>) {
     }
   }
 
-  if (status) {
-    while (node) {
-      removeNode(node);
-      node = node.ns;
-    }
-
-    if (!state.fs) state.flags |= FREEZED;
+  while (node) {
+    removeSourceNode(state, node);
+    node = node.next;
   }
+
+  if (!state.firstSource) state.flags |= FREEZED;
 
   state.flags &= ~TRACKING;
   tracking = prevTracking;
@@ -484,6 +473,97 @@ function logHook<T>(state: SignalState<T>, hook: LifecycleHookName, value?: T) {
   (config as any)._log(state.name, hook, payload);
 }
 
+function removeSubscriberNode(state: SignalState<any>, node: ListNode<any>) {
+  if (state.firstSub === node) state.firstSub = node.next;
+  if (state.lastSub === node) state.lastSub = node.prev;
+  if (node.prev) node.prev.next = node.next;
+  if (node.next) node.next.prev = node.prev;
+
+  if (!state.firstSub && !state.firstTarget) {
+    logHook(state, 'DEACTIVATE');
+
+    if (state.onDeactivate) {
+      state.onDeactivate(state.value);
+    }
+
+    unlinkDependencies(state);
+  }
+}
+
+function removeSourceNode(state: SignalState<any>, node: ListNode<any>) {
+  if (state.firstSource === node) state.firstSource = node.next;
+  if (state.lastSource === node) state.lastSource = node.prev;
+  if (node.prev) node.prev.next = node.next;
+  if (node.next) node.next.prev = node.prev;
+
+  if (node.link) {
+    removeTargetNode(node.value, node.link);
+    node.link = undefined;
+  }
+}
+
+function removeTargetNode(state: SignalState<any>, node: ListNode<any>) {
+  if (state.firstTarget === node) state.firstTarget = node.next;
+  if (state.lastTarget === node) state.lastTarget = node.prev;
+  if (node.prev) node.prev.next = node.next;
+  if (node.next) node.next.prev = node.prev;
+
+  if (!state.firstSub && !state.firstTarget) {
+    logHook(state, 'DEACTIVATE');
+
+    if (state.onDeactivate) {
+      state.onDeactivate(state.value);
+    }
+
+    unlinkDependencies(state);
+  }
+}
+
+function createSourceNode(source: SignalState<any>, target: SignalState<any>) {
+  const node: ListNode<any> = {
+    value: source,
+    prev: target.lastSource,
+    next: null,
+  };
+
+  if (!target.lastSource) {
+    target.firstSource = node;
+  } else {
+    target.lastSource.next = node;
+  }
+
+  target.lastSource = node;
+
+  return node;
+}
+
+function createTargetNode(
+  source: SignalState<any>,
+  target: SignalState<any>,
+  sourceNode: ListNode<any>,
+) {
+  const node: ListNode<any> = {
+    value: target,
+    prev: source.lastTarget,
+    next: null,
+  };
+
+  if (source.lastTarget) {
+    source.lastTarget.next = node;
+  } else {
+    source.firstTarget = node;
+    if (!source.firstSub) {
+      emitActivateLifecycle(source);
+      linkDependencies(source);
+    }
+  }
+
+  source.lastTarget = node;
+  sourceNode.link = node;
+
+  return node;
+}
+
 function createSubscriberNode(
   source: SignalState<any>,
   target: Subscriber<any>,
@@ -498,7 +578,10 @@ function createSubscriberNode(
     source.lastSub.next = node;
   } else {
     source.firstSub = node;
-    emitActivateLifecycle(source);
+    if (!source.firstTarget) {
+      emitActivateLifecycle(source);
+      linkDependencies(source);
+    }
   }
 
   source.lastSub = node;
@@ -506,86 +589,20 @@ function createSubscriberNode(
   return node;
 }
 
-function createNode(source: SignalState<any>, target: SignalState<any>) {
-  const node: DepNode = {
-    s: source,
-    t: target,
-
-    ps: target.ls,
-    ns: null,
-
-    pt: null,
-    nt: null,
-  };
-
-  if (target.ls) {
-    target.ls.ns = node;
-  } else {
-    target.fs = node;
-  }
-
-  target.ls = node;
-
-  node.pt = source.lt;
-
-  if (source.lt) {
-    source.lt.nt = node;
-  } else {
-    source.ft = node;
-    emitActivateLifecycle(node.s);
-  }
-
-  source.lt = node;
-
-  return node;
-}
-
-function removeNode(node: DepNode) {
-  if ((node.t as SignalState<any>).fs === node)
-    (node.t as SignalState<any>).fs = node.ns;
-
-  if ((node.t as SignalState<any>).ls === node)
-    (node.t as SignalState<any>).ls = node.ps;
-
-  if (node.ps) node.ps.ns = node.ns;
-  if (node.ns) node.ns.ps = node.ps;
-
-  if (node.s.ft === node) node.s.ft = node.nt;
-  if (node.s.lt === node) node.s.lt = node.pt;
-
-  if (node.pt) node.pt.nt = node.nt;
-  if (node.nt) node.nt.pt = node.pt;
-
-  if (!node.s.ft && !node.s.firstSub) {
-    const state = node.s;
-
-    logHook(state, 'DEACTIVATE');
-
-    if (state.onDeactivate) {
-      state.onDeactivate(state.value);
-    }
-
-    for (let node = state.fs; node !== null; node = node.ns) {
-      removeNode(node);
+function linkDependencies(state: SignalState<any>) {
+  for (let node = state.firstSource; node !== null; node = node.next) {
+    if (!node.link) {
+      createTargetNode(node.value, state, node);
+      linkDependencies(node.value);
     }
   }
 }
 
-function removeSubscriberNode(state: SignalState<any>, node: ListNode<any>) {
-  if (state.firstSub === node) state.firstSub = node.next;
-  if (state.lastSub === node) state.lastSub = node.prev;
-  if (node.prev) node.prev.next = node.next;
-  if (node.next) node.next.prev = node.prev;
-
-  if (!state.firstSub && !state.ft) {
-    logHook(state, 'DEACTIVATE');
-
-    if (state.onDeactivate) {
-      state.onDeactivate(state.value);
-    }
-
-    for (let node = state.fs; node !== null; node = node.ns) {
-      removeNode(node);
+function unlinkDependencies(state: SignalState<any>) {
+  for (let node = state.firstSource; node !== null; node = node.next) {
+    if (node.link) {
+      removeTargetNode(node.value, node.link);
+      node.link = undefined;
     }
   }
 }
