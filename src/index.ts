@@ -13,6 +13,8 @@ import { watch } from './watch/watch';
 import {
   batch,
   Computation,
+  Subscriber,
+  Comparator,
   get,
   set,
   subscribe,
@@ -26,8 +28,6 @@ import {
   EffectStatus,
   EffectStatusObject,
 } from './effect/effect';
-import { Subscriber } from './subscriber/subscriber';
-import { Comparator } from './compartor/comparator';
 import {
   isSignal,
   isWritableSignal,
