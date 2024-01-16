@@ -38,7 +38,6 @@ import {
 import { isolate } from './isolate/isolate';
 import { collect } from './collect/collect';
 import { named } from './named/named';
-import { createLogger } from './logger/logger';
 import { VOID } from './utils/constants';
 
 export {
@@ -74,7 +73,6 @@ export {
   isolate,
   collect,
   named,
-  createLogger,
   VOID,
   get,
   set,

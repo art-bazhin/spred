@@ -242,16 +242,12 @@ export function subscribe<T>(
 }
 
 function emitActivateLifecycle(state: SignalState<any>) {
-  logHook(state, 'ACTIVATE');
-
   if (state.onActivate) {
     state.onActivate(state.value);
   }
 }
 
 function emitUpdateLifecycle(state: SignalState<any>, value: any) {
-  logHook(state, 'UPDATE', value);
-
   if (state.onUpdate) {
     state.onUpdate(value, state.value);
   }
@@ -417,8 +413,6 @@ function calcComputed<T>(state: SignalState<T>) {
     }
 
     if (state.flags & HAS_EXCEPTION) {
-      logHook(state, 'EXCEPTION');
-
       if (state.onException) {
         state.onException(state.exception);
       }
@@ -450,21 +444,6 @@ function cleanupChildren(state: SignalState<any>) {
   }
 }
 
-function logHook<T>(state: SignalState<T>, hook: LifecycleHookName, value?: T) {
-  if (!state.name) return;
-
-  let payload: any = state.value;
-
-  if (hook === 'EXCEPTION') payload = state.exception;
-  else if (hook === 'UPDATE')
-    payload = {
-      prevValue: state.value,
-      value,
-    };
-
-  (config as any)._log(state.name, hook, payload);
-}
-
 function removeSourceNode(state: SignalState<any>, node: ListNode<any>) {
   if (state.firstSource === node) state.firstSource = node.next;
   if (state.lastSource === node) state.lastSource = node.prev;
@@ -484,8 +463,6 @@ function removeTargetNode(state: SignalState<any>, node: ListNode<any>) {
   if (node.next) node.next.prev = node.prev;
 
   if (!state.firstTarget) {
-    logHook(state, 'DEACTIVATE');
-
     if (state.onDeactivate) {
       state.onDeactivate(state.value);
     }
