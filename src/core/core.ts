@@ -17,15 +17,6 @@ import {
 } from '../utils/constants';
 import { Comparator } from '../compartor/comparator';
 
-export interface DepNode {
-  nt: DepNode | null;
-  pt: DepNode | null;
-  ns: DepNode | null;
-  ps: DepNode | null;
-  s: SignalState<any>;
-  t: SignalState<any>;
-}
-
 interface ListNode<T> {
   value: T;
   link: ListNode<T> | null;
