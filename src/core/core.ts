@@ -39,21 +39,20 @@ export interface SignalOptions<T> {
 }
 
 export interface SignalState<T> extends SignalOptions<T> {
-  value: T;
-  nextValue: T;
-  compute?: Computation<T>;
-  flags: number;
-  exception?: unknown;
-  version: any;
-  children?: ((() => any) | SignalState<any>)[];
-  name?: string;
-  subs: number;
+  _value: T;
+  _nextValue: T;
+  _compute?: Computation<T>;
+  _flags: number;
+  _exception?: unknown;
+  _version: any;
+  _children?: ((() => any) | SignalState<any>)[];
+  _subs: number;
 
-  firstSource: ListNode<SignalState<any>> | null;
-  lastSource: ListNode<SignalState<any>> | null;
+  _firstSource: ListNode<SignalState<any>> | null;
+  _lastSource: ListNode<SignalState<any>> | null;
 
-  firstTarget: ListNode<SignalState<any> | Subscriber<any>> | null;
-  lastTarget: ListNode<SignalState<any> | Subscriber<any>> | null;
+  _firstTarget: ListNode<SignalState<any> | Subscriber<any>> | null;
+  _lastTarget: ListNode<SignalState<any> | Subscriber<any>> | null;
 }
 
 let tracking: SignalState<any> | null = null;
@@ -77,16 +76,16 @@ export function createSignalState<T>(
   const parent = tracking || scope;
 
   const state: SignalState<T> = {
-    value,
-    compute,
-    nextValue: value,
-    flags: 0,
-    subs: 0,
-    version: null,
-    firstSource: null,
-    lastSource: null,
-    firstTarget: null,
-    lastTarget: null,
+    _value: value,
+    _compute: compute,
+    _nextValue: value,
+    _flags: 0,
+    _subs: 0,
+    _version: null,
+    _firstSource: null,
+    _lastSource: null,
+    _firstTarget: null,
+    _lastTarget: null,
     equals: Object.is,
   };
 
@@ -97,8 +96,8 @@ export function createSignalState<T>(
   }
 
   if (parent) {
-    if (!parent.children) parent.children = [state];
-    else parent.children.push(state);
+    if (!parent._children) parent._children = [state];
+    else parent._children.push(state);
   }
 
   return state;
@@ -170,9 +169,9 @@ export function set<T>(state: SignalState<T>, value?: any) {
   const wrapper = (config as any)._notificationWrapper;
 
   if (arguments.length > 1) {
-    state.nextValue = value;
+    state._nextValue = value;
   } else {
-    state.flags |= FORCED;
+    state._flags |= FORCED;
   }
 
   providers.push(state);
@@ -180,18 +179,18 @@ export function set<T>(state: SignalState<T>, value?: any) {
   if (wrapper) wrapper(recalc);
   else recalc();
 
-  return state.nextValue;
+  return state._nextValue;
 }
 
 function notify(state: SignalState<any>) {
-  if (state.flags & NOTIFIED) return;
+  if (state._flags & NOTIFIED) return;
 
-  state.flags |= NOTIFIED;
+  state._flags |= NOTIFIED;
 
-  if (!state.compute) get(state);
-  if (state.subs) consumers.push(state);
+  if (!state._compute) get(state);
+  if (state._subs) consumers.push(state);
 
-  for (let node = state.firstTarget; node !== null; node = node.next) {
+  for (let node = state._firstTarget; node !== null; node = node.next) {
     if (typeof node.value === 'object') notify(node.value);
   }
 }
@@ -203,23 +202,23 @@ export function subscribe<T>(
 ) {
   const prevStatus = status;
 
-  if (!(state.flags & FREEZED) && !state.firstTarget) {
+  if (!(state._flags & FREEZED) && !state._firstTarget) {
     status = ACTIVATING_STATUS;
-    state.flags |= ACTIVATING;
+    state._flags |= ACTIVATING;
   }
 
   const value = get(state, false);
 
   status = prevStatus;
-  state.flags &= ~ACTIVATING;
+  state._flags &= ~ACTIVATING;
 
-  if (state.flags & FREEZED) {
+  if (state._flags & FREEZED) {
     if (exec) isolate(() => subscriber(value, true));
     return NOOP_FN;
   }
 
   let node = createTargetNode(state, subscriber, null);
-  state.subs++;
+  state._subs++;
 
   if (exec) {
     isolate(() => subscriber(value, true));
@@ -228,15 +227,15 @@ export function subscribe<T>(
   const dispose = () => {
     if (!node) return;
     removeTargetNode(state, node);
-    state.subs--;
+    state._subs--;
     node = null as any;
   };
 
   const parent = tracking || scope;
 
   if (parent) {
-    if (!parent.children) parent.children = [dispose];
-    else parent.children.push(dispose);
+    if (!parent._children) parent._children = [dispose];
+    else parent._children.push(dispose);
   }
 
   return dispose;
@@ -260,7 +259,7 @@ export function recalc() {
 
   for (let state of q) notify(state);
   for (let state of consumers) {
-    if (state.subs || !state.compute) get(state);
+    if (state._subs || !state._compute) get(state);
   }
 
   status = prevStatus;
@@ -277,52 +276,55 @@ export function recalc() {
 }
 
 export function get<T>(state: SignalState<T>, trackDependency = true): T {
-  if (!status) state.flags &= ~NOTIFIED;
+  if (!status) state._flags &= ~NOTIFIED;
 
-  if (state.compute) {
-    if (state.flags & FREEZED) return state.value;
+  if (state._compute) {
+    if (state._flags & FREEZED) return state._value;
 
-    if (state.flags & TRACKING) {
+    if (state._flags & TRACKING) {
       throw new CircularDependencyError();
     }
   }
 
-  let shouldCompute = state.version !== version;
+  let shouldCompute = state._version !== version;
 
   if (shouldCompute) {
-    state.flags &= ~CHANGED;
+    state._flags &= ~CHANGED;
 
-    const value = state.compute ? calcComputed(state) : state.nextValue;
+    const value = state._compute ? calcComputed(state) : state._nextValue;
 
-    if (state.flags & HAS_EXCEPTION) {
-      if ((state.subs || state.flags & ACTIVATING) && state.version !== version)
-        config.logException(state.exception);
+    if (state._flags & HAS_EXCEPTION) {
+      if (
+        (state._subs || state._flags & ACTIVATING) &&
+        state._version !== version
+      )
+        config.logException(state._exception);
     } else if (
-      state.flags & FORCED ||
-      (value !== (VOID as any) && !state.equals!(value, state.value))
+      state._flags & FORCED ||
+      (value !== (VOID as any) && !state.equals!(value, state._value))
     ) {
-      if (state.onUpdate) state.onUpdate(value, state.value);
+      if (state.onUpdate) state.onUpdate(value, state._value);
 
-      state.value = value;
-      state.flags |= CHANGED;
+      state._value = value;
+      state._flags |= CHANGED;
 
-      if (state.subs) {
-        for (let node = state.firstTarget; node !== null; node = node.next) {
+      if (state._subs) {
+        for (let node = state._firstTarget; node !== null; node = node.next) {
           if (typeof node.value === 'function')
-            notifications.push(node.value, state.value);
+            notifications.push(node.value, state._value);
         }
       }
     }
   }
 
-  state.version = version;
+  state._version = version;
 
-  state.flags &= ~NOTIFIED;
+  state._flags &= ~NOTIFIED;
 
   if (tracking && trackDependency) {
-    if (state.flags & HAS_EXCEPTION && !(tracking.flags & HAS_EXCEPTION)) {
-      tracking.exception = state.exception;
-      tracking.flags |= HAS_EXCEPTION;
+    if (state._flags & HAS_EXCEPTION && !(tracking._flags & HAS_EXCEPTION)) {
+      tracking._exception = state._exception;
+      tracking._flags |= HAS_EXCEPTION;
     }
 
     if (node) {
@@ -342,67 +344,67 @@ export function get<T>(state: SignalState<T>, trackDependency = true): T {
     }
   }
 
-  return state.value;
+  return state._value;
 }
 
 function calcComputed<T>(state: SignalState<T>) {
-  if (state.firstTarget) {
+  if (state._firstTarget) {
     let sameDeps = true;
     let hasException = false;
 
-    for (let node = state.firstSource; node !== null; node = node.next) {
+    for (let node = state._firstSource; node !== null; node = node.next) {
       const source = node.value;
 
       get(source, false);
 
-      if (source.flags & HAS_EXCEPTION) {
+      if (source._flags & HAS_EXCEPTION) {
         hasException = true;
-        state.flags |= HAS_EXCEPTION;
-        state.exception = source.exception;
+        state._flags |= HAS_EXCEPTION;
+        state._exception = source._exception;
         break;
-      } else if (source.flags & CHANGED) {
+      } else if (source._flags & CHANGED) {
         sameDeps = false;
         break;
       }
     }
 
     if (sameDeps && !hasException) {
-      return state.value;
+      return state._value;
     }
   }
 
   const prevTracking = tracking;
   const prevNode = node;
 
-  let value = state.value;
+  let value = state._value;
 
   tracking = state;
-  node = state.firstSource;
+  node = state._firstSource;
 
-  state.flags |= TRACKING;
-  state.flags &= ~HAS_EXCEPTION;
+  state._flags |= TRACKING;
+  state._flags &= ~HAS_EXCEPTION;
 
   try {
-    if (state.children) cleanupChildren(state);
-    value = state.compute!(state.value, !!(state.flags & NOTIFIED));
+    if (state._children) cleanupChildren(state);
+    value = state._compute!(state._value, !!(state._flags & NOTIFIED));
   } catch (e: any) {
-    state.exception = e;
-    state.flags |= HAS_EXCEPTION;
+    state._exception = e;
+    state._flags |= HAS_EXCEPTION;
   }
 
-  if (state.flags & HAS_EXCEPTION) {
+  if (state._flags & HAS_EXCEPTION) {
     if (state.catch) {
       try {
-        value = state.catch(state.exception, state.value);
-        state.flags &= ~HAS_EXCEPTION;
-        state.exception = undefined;
+        value = state.catch(state._exception, state._value);
+        state._flags &= ~HAS_EXCEPTION;
+        state._exception = undefined;
       } catch (e) {
-        state.exception = e;
+        state._exception = e;
       }
     }
 
-    if (state.flags & HAS_EXCEPTION && state.onException) {
-      state.onException(state.exception);
+    if (state._flags & HAS_EXCEPTION && state.onException) {
+      state.onException(state._exception);
     }
   }
 
@@ -411,9 +413,9 @@ function calcComputed<T>(state: SignalState<T>) {
     node = node.next;
   }
 
-  if (!state.firstSource) state.flags |= FREEZED;
+  if (!state._firstSource) state._flags |= FREEZED;
 
-  state.flags &= ~TRACKING;
+  state._flags &= ~TRACKING;
   tracking = prevTracking;
   node = prevNode;
 
@@ -421,19 +423,19 @@ function calcComputed<T>(state: SignalState<T>) {
 }
 
 function cleanupChildren(state: SignalState<any>) {
-  if (state.children && state.children.length) {
-    for (let child of state.children) {
+  if (state._children && state._children.length) {
+    for (let child of state._children) {
       if (typeof child === 'function') child();
       else cleanupChildren(child);
     }
 
-    state.children = [];
+    state._children = [];
   }
 }
 
 function removeSourceNode(state: SignalState<any>, node: ListNode<any>) {
-  if (state.firstSource === node) state.firstSource = node.next;
-  if (state.lastSource === node) state.lastSource = node.prev;
+  if (state._firstSource === node) state._firstSource = node.next;
+  if (state._lastSource === node) state._lastSource = node.prev;
   if (node.prev) node.prev.next = node.next;
   if (node.next) node.next.prev = node.prev;
 
@@ -444,32 +446,32 @@ function removeSourceNode(state: SignalState<any>, node: ListNode<any>) {
 }
 
 function removeTargetNode(state: SignalState<any>, node: ListNode<any>) {
-  if (state.firstTarget === node) state.firstTarget = node.next;
-  if (state.lastTarget === node) state.lastTarget = node.prev;
+  if (state._firstTarget === node) state._firstTarget = node.next;
+  if (state._lastTarget === node) state._lastTarget = node.prev;
   if (node.prev) node.prev.next = node.next;
   if (node.next) node.next.prev = node.prev;
 
-  if (!state.firstTarget) {
+  if (!state._firstTarget) {
     unlinkDependencies(state);
-    if (state.onDeactivate) state.onDeactivate(state.value);
+    if (state.onDeactivate) state.onDeactivate(state._value);
   }
 }
 
 function createSourceNode(source: SignalState<any>, target: SignalState<any>) {
   const node: ListNode<any> = {
     value: source,
-    prev: target.lastSource,
+    prev: target._lastSource,
     next: null,
     link: null,
   };
 
-  if (!target.lastSource) {
-    target.firstSource = node;
+  if (!target._lastSource) {
+    target._firstSource = node;
   } else {
-    target.lastSource.next = node;
+    target._lastSource.next = node;
   }
 
-  target.lastSource = node;
+  target._lastSource = node;
 
   return node;
 }
@@ -481,27 +483,27 @@ function createTargetNode(
 ) {
   const node: ListNode<any> = {
     value: target,
-    prev: source.lastTarget,
+    prev: source._lastTarget,
     next: null,
     link: null,
   };
 
-  if (source.lastTarget) {
-    source.lastTarget.next = node;
+  if (source._lastTarget) {
+    source._lastTarget.next = node;
   } else {
-    source.firstTarget = node;
+    source._firstTarget = node;
     linkDependencies(source);
-    if (source.onActivate) source.onActivate(source.value);
+    if (source.onActivate) source.onActivate(source._value);
   }
 
-  source.lastTarget = node;
+  source._lastTarget = node;
   if (sourceNode) sourceNode.link = node;
 
   return node;
 }
 
 function linkDependencies(state: SignalState<any>) {
-  for (let node = state.firstSource; node !== null; node = node.next) {
+  for (let node = state._firstSource; node !== null; node = node.next) {
     if (!node.link) {
       createTargetNode(node.value, state, node);
       linkDependencies(node.value);
@@ -510,7 +512,7 @@ function linkDependencies(state: SignalState<any>) {
 }
 
 function unlinkDependencies(state: SignalState<any>) {
-  for (let node = state.firstSource; node !== null; node = node.next) {
+  for (let node = state._firstSource; node !== null; node = node.next) {
     if (node.link) {
       removeTargetNode(node.value, node.link);
       node.link = null;

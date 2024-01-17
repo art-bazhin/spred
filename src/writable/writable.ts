@@ -11,7 +11,7 @@ const writableSignalProto = {
   },
 
   update<T>(this: WritableSignal<T>, updateFn: (value: T) => T) {
-    return this.set(updateFn((this as any)._state.nextValue));
+    return this.set(updateFn((this as any)._state._nextValue));
   },
 };
 

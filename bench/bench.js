@@ -187,16 +187,16 @@ function testSpred(width, layerCount, newValues) {
       layer = (function (m) {
         const s = {
           prop1: computed(function () {
-            return m.prop2();
+            return m.prop2.get();
           }),
           prop2: computed(function () {
-            return m.prop1() - m.prop3();
+            return m.prop1.get() - m.prop3.get();
           }),
           prop3: computed(function () {
-            return m.prop2() + m.prop4();
+            return m.prop2.get() + m.prop4.get();
           }),
           prop4: computed(function () {
-            return m.prop3();
+            return m.prop3.get();
           }),
         };
 
@@ -216,7 +216,12 @@ function testSpred(width, layerCount, newValues) {
 
   const end = layer;
 
-  report.beforeChange = [end.prop1(), end.prop2(), end.prop3(), end.prop4()];
+  report.beforeChange = [
+    end.prop1.get(),
+    end.prop2.get(),
+    end.prop3.get(),
+    end.prop4.get(),
+  ];
 
   const st = performance.now();
 
@@ -227,7 +232,12 @@ function testSpred(width, layerCount, newValues) {
     start.prop4.set(newValues[3]);
   });
 
-  report.afterChange = [end.prop1(), end.prop2(), end.prop3(), end.prop4()];
+  report.afterChange = [
+    end.prop1.get(),
+    end.prop2.get(),
+    end.prop3.get(),
+    end.prop4.get(),
+  ];
 
   report.recalcTime = performance.now() - st;
 
