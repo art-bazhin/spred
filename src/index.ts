@@ -28,7 +28,6 @@ import {
 } from './guards/guards';
 import { isolate } from './isolate/isolate';
 import { collect } from './collect/collect';
-import { named } from './named/named';
 import { VOID } from './utils/constants';
 
 const __INTERNAL__ = {
@@ -61,7 +60,6 @@ export {
   sampleValue,
   isolate,
   collect,
-  named,
   VOID,
   __INTERNAL__,
 };

@@ -13,7 +13,4 @@ export const config = Object.assign({}, DEFAULT_CONFIG);
 
 export function configure(configUpdate?: Partial<Config>) {
   Object.assign(config, configUpdate || DEFAULT_CONFIG);
-
-  if (!config.logger) (config as any)._log = NOOP_FN;
-  else (config as any)._log = config.logger;
 }
