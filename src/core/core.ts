@@ -75,7 +75,6 @@ export interface SignalState<T> extends SignalOptions<T>, Signal<T> {
   _flags: number;
   _exception?: unknown;
   _version: any;
-  _children?: ((() => any) | SignalState<any>)[];
   _subs: number;
 
   _firstSource: ListNode<SignalState<any>> | null;
@@ -83,6 +82,9 @@ export interface SignalState<T> extends SignalOptions<T>, Signal<T> {
 
   _firstTarget: ListNode<SignalState<any> | Subscriber<any>> | null;
   _lastTarget: ListNode<SignalState<any> | Subscriber<any>> | null;
+
+  _firstChild?: ListNode<SignalState<any> | (() => any)> | null;
+  _lastChild?: ListNode<SignalState<any> | (() => any)> | null;
 }
 
 let tracking: SignalState<any> | null = null;
@@ -125,10 +127,7 @@ export function Signal<T>(
     }
   }
 
-  if (parent) {
-    if (!parent._children) parent._children = [this];
-    else parent._children.push(this);
-  }
+  if (parent) createChildNode(parent, this);
 }
 
 Signal.prototype.get = get;
@@ -270,10 +269,7 @@ export function subscribe<T>(
 
   const parent = tracking || scope;
 
-  if (parent) {
-    if (!parent._children) parent._children = [dispose];
-    else parent._children.push(dispose);
-  }
+  if (parent) createChildNode(parent, dispose);
 
   return dispose;
 }
@@ -419,7 +415,7 @@ function calcComputed<T>(state: SignalState<T>) {
   state._flags &= ~HAS_EXCEPTION;
 
   try {
-    if (state._children) cleanupChildren(state);
+    if (state._firstChild) cleanupChildren(state);
     value = state._compute!(state._value, !!(state._flags & NOTIFIED));
   } catch (e: any) {
     state._exception = e;
@@ -457,14 +453,13 @@ function calcComputed<T>(state: SignalState<T>) {
 }
 
 function cleanupChildren(state: SignalState<any>) {
-  if (state._children && state._children.length) {
-    for (let child of state._children) {
-      if (typeof child === 'function') child();
-      else cleanupChildren(child);
-    }
-
-    state._children = [];
+  for (let node = state._firstChild; node; node = node.next) {
+    if (typeof node.value === 'function') node.value();
+    else cleanupChildren(node.value);
   }
+
+  state._firstChild = null;
+  state._lastChild = null;
 }
 
 function removeSourceNode(state: SignalState<any>, node: ListNode<any>) {
@@ -532,6 +527,28 @@ function createTargetNode(
 
   source._lastTarget = node;
   if (sourceNode) sourceNode.link = node;
+
+  return node;
+}
+
+function createChildNode(
+  parent: SignalState<any>,
+  child: SignalState<any> | Subscriber<any>,
+) {
+  const node: ListNode<any> = {
+    value: child,
+    prev: parent._lastChild || null,
+    next: null,
+    link: null,
+  };
+
+  if (parent._lastChild) {
+    parent._lastChild.next = node;
+  } else {
+    parent._firstChild = node;
+  }
+
+  parent._lastChild = node;
 
   return node;
 }
