@@ -8,14 +8,14 @@ describe('watch', () => {
 
   const counter = writable(0);
   const x2Counter = computed(() => {
-    const res = counter() * 2;
+    const res = counter.get() * 2;
 
     if (res > 4) throw new Error();
 
     return res;
   });
 
-  const fn = jest.fn(() => x2Counter());
+  const fn = jest.fn(() => x2Counter.get());
 
   let unsub: () => any;
 
@@ -37,20 +37,5 @@ describe('watch', () => {
     counter.set(0);
 
     expect(fn).toHaveBeenCalledTimes(2);
-  });
-
-  it('can receive a signal as argument', () => {
-    const spy = jest.fn();
-    const count = writable(0);
-    const double = computed(() => {
-      spy();
-      return count() * 2;
-    });
-
-    watch(double);
-    expect(spy).toBeCalledTimes(1);
-
-    count.set(1);
-    expect(spy).toBeCalledTimes(2);
   });
 });

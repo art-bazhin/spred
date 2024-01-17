@@ -1,19 +1,5 @@
-import { Signal, signalProto } from '../signal/signal';
-import { get, set, createSignalState, SignalOptions } from '../core/core';
+import { Signal, SignalOptions } from '../core/core';
 import { VOID } from '../utils/constants';
-
-const writableSignalProto = {
-  ...signalProto,
-
-  set(this: Signal<any>, value: any) {
-    if (arguments.length) return set((this as any)._state, value);
-    return set((this as any)._state);
-  },
-
-  update<T>(this: WritableSignal<T>, updateFn: (value: T) => T) {
-    return this.set(updateFn((this as any)._state._nextValue));
-  },
-};
 
 /**
  * A signal whose value can be set.
@@ -62,17 +48,5 @@ export function writable<T>(
 ): WritableSignal<Exclude<T, typeof VOID>>;
 
 export function writable(value?: any, options?: any) {
-  const state = createSignalState(value, undefined, options);
-
-  const self: any = function () {
-    return get(state);
-  };
-
-  self._state = state;
-  self.set = writableSignalProto.set;
-  self.get = writableSignalProto.get;
-  self.update = writableSignalProto.update;
-  self.subscribe = writableSignalProto.subscribe;
-
-  return self;
+  return new (Signal as any)(value, undefined, options);
 }

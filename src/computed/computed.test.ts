@@ -10,21 +10,21 @@ describe('computed', () => {
   const c = writable(3);
   const d = writable(4);
 
-  const a1 = computed(() => b());
-  const b1 = computed(() => a() - c());
-  const c1 = computed(() => b() + d());
-  const d1 = computed(() => c());
+  const a1 = computed(() => b.get());
+  const b1 = computed(() => a.get() - c.get());
+  const c1 = computed(() => b.get() + d.get());
+  const d1 = computed(() => c.get());
 
-  const a2 = computed(() => b1());
-  const b2 = computed(() => a1() - c1());
-  const c2 = computed(() => b1() + d1());
-  const d2 = computed(() => c1());
+  const a2 = computed(() => b1.get());
+  const b2 = computed(() => a1.get() - c1.get());
+  const c2 = computed(() => b1.get() + d1.get());
+  const d2 = computed(() => c1.get());
 
   it('is calculates value properly after creation', () => {
-    expect(a2()).toBe(-2);
-    expect(b2()).toBe(-4);
-    expect(c2()).toBe(1);
-    expect(d2()).toBe(6);
+    expect(a2.get()).toBe(-2);
+    expect(b2.get()).toBe(-4);
+    expect(c2.get()).toBe(1);
+    expect(d2.get()).toBe(6);
   });
 
   it('updates value after dependency value change', () => {
@@ -33,10 +33,10 @@ describe('computed', () => {
     c.set(2);
     d.set(1);
 
-    expect(a2()).toBe(2);
-    expect(b2()).toBe(-1);
-    expect(c2()).toBe(4);
-    expect(d2()).toBe(4);
+    expect(a2.get()).toBe(2);
+    expect(b2.get()).toBe(-1);
+    expect(c2.get()).toBe(4);
+    expect(d2.get()).toBe(4);
   });
 
   it('updates value properly using batching', () => {
@@ -47,10 +47,10 @@ describe('computed', () => {
       d.set(4);
     });
 
-    expect(a2()).toBe(-2);
-    expect(b2()).toBe(-4);
-    expect(c2()).toBe(1);
-    expect(d2()).toBe(6);
+    expect(a2.get()).toBe(-2);
+    expect(b2.get()).toBe(-4);
+    expect(c2.get()).toBe(1);
+    expect(d2.get()).toBe(6);
   });
 
   it('updates value properly on subscribers run', () => {
@@ -59,15 +59,15 @@ describe('computed', () => {
     const c = writable(3);
     const d = writable(4);
 
-    const a1 = computed(() => b());
-    const b1 = computed(() => a() - c());
-    const c1 = computed(() => b() + d());
-    const d1 = computed(() => c());
+    const a1 = computed(() => b.get());
+    const b1 = computed(() => a.get() - c.get());
+    const c1 = computed(() => b.get() + d.get());
+    const d1 = computed(() => c.get());
 
-    const a2 = computed(() => b1());
-    const b2 = computed(() => a1() - c1());
-    const c2 = computed(() => b1() + d1());
-    const d2 = computed(() => c1());
+    const a2 = computed(() => b1.get());
+    const b2 = computed(() => a1.get() - c1.get());
+    const c2 = computed(() => b1.get() + d1.get());
+    const d2 = computed(() => c1.get());
 
     let aSub,
       bSub,
@@ -102,8 +102,8 @@ describe('computed', () => {
     const stringCounter = writable('0');
 
     const x2Counter = computed(() => {
-      stringCounter.set(counter() + '');
-      return counter() * 2;
+      stringCounter.set(counter.get() + '');
+      return counter.get() * 2;
     });
 
     let value = '';
@@ -124,21 +124,21 @@ describe('computed', () => {
     const a = writable(0);
     const b = writable(0);
     const c = computed(() => {
-      if (a() > 5) b.set(10);
-      return a() + b();
+      if (a.get() > 5) b.set(10);
+      return a.get() + b.get();
     });
 
     c.subscribe(() => {});
-    expect(c()).toBe(0);
+    expect(c.get()).toBe(0);
 
     a.set(1);
-    expect(c()).toBe(1);
+    expect(c.get()).toBe(1);
 
     a.set(6);
-    expect(c()).toBe(16);
+    expect(c.get()).toBe(16);
 
     b.set(5);
-    expect(c()).toBe(16);
+    expect(c.get()).toBe(16);
   });
 
   it('logs unhandled exceptions', () => {
@@ -151,7 +151,7 @@ describe('computed', () => {
     const obj = null as any;
 
     const field = writable('bar');
-    const count = computed(() => obj[field()]);
+    const count = computed(() => obj[field.get()]);
 
     count.subscribe(() => {});
 
@@ -168,9 +168,9 @@ describe('computed', () => {
     const obj = null as any;
 
     const field = writable('bar');
-    const count = computed(() => obj[field()]);
+    const count = computed(() => obj[field.get()]);
 
-    const parent = computed(() => count());
+    const parent = computed(() => count.get());
 
     parent.subscribe(() => {});
 
@@ -185,7 +185,7 @@ describe('computed', () => {
 
     const comp = computed(() => {
       ext.subscribe(() => spy());
-      return source();
+      return source.get();
     });
 
     comp.subscribe(() => {});
@@ -215,7 +215,7 @@ describe('computed', () => {
       wrap.subscribe(() => {
         ext.subscribe(() => spy());
       });
-      return source();
+      return source.get();
     });
 
     comp.subscribe(() => {});
@@ -247,7 +247,7 @@ describe('computed', () => {
 
       wrap.subscribe(() => {});
 
-      return source();
+      return source.get();
     });
 
     comp.subscribe(() => {});
@@ -276,16 +276,16 @@ describe('computed', () => {
 
     const comp = computed(() => {
       const inner = computed(() => {
-        const deep = computed(external);
+        const deep = computed(() => external.get());
         deep.subscribe(() => deepSpy());
 
-        return external();
+        return external.get();
       });
 
       external.subscribe(() => externalSpy());
       inner.subscribe(() => innerSpy());
 
-      return source();
+      return source.get();
     });
 
     comp.subscribe(() => {});
@@ -329,7 +329,7 @@ describe('computed', () => {
 
     const comp = computed(() => {
       ext.subscribe(() => {});
-      return source();
+      return source.get();
     });
 
     comp.subscribe(() => {});
@@ -344,9 +344,9 @@ describe('computed', () => {
 
     const source = writable(0);
     const comp = computed(() => {
-      source();
+      source.get();
 
-      const res = computed(() => source() * 2, {
+      const res = computed(() => source.get() * 2, {
         onDeactivate: () => onDeactivateSpy(),
       });
 
@@ -354,7 +354,7 @@ describe('computed', () => {
     });
 
     const parent = computed(() => {
-      const res = comp();
+      const res = comp.get();
       res.subscribe(() => {});
     });
 
@@ -368,7 +368,7 @@ describe('computed', () => {
   it('keeps subscriptions made inside a subscriber', () => {
     const spy = jest.fn();
     const a = writable(0);
-    const aComp = computed(() => a());
+    const aComp = computed(() => a.get());
     const b = writable(0);
 
     aComp.subscribe(() => {
@@ -390,7 +390,7 @@ describe('computed', () => {
   it('keeps subscriptions made inside a deep nested subscriber', () => {
     const spy = jest.fn();
     const a = writable(0);
-    const aComp = computed(() => a());
+    const aComp = computed(() => a.get());
     const b = writable(0);
 
     const wrap = computed(() => {
@@ -399,7 +399,7 @@ describe('computed', () => {
       });
     });
 
-    wrap();
+    wrap.get();
 
     expect(spy).toBeCalledTimes(1);
 
@@ -419,7 +419,7 @@ describe('computed', () => {
     const source = writable(0);
     const result = computed((prevValue: number | undefined) => {
       prev = prevValue;
-      return source();
+      return source.get();
     });
 
     result.subscribe(() => {});
@@ -445,13 +445,13 @@ describe('computed', () => {
     const med = computed((_: any, scheduled: boolean) => {
       lastMedScheduled = scheduled;
       medSpy();
-      return source() * 2;
+      return source.get() * 2;
     });
 
     const result = computed((_: any, scheduled: boolean) => {
       lastScheduled = scheduled;
       spy();
-      return source() < 5 ? source() : med();
+      return source.get() < 5 ? source.get() : med.get();
     });
 
     let unsub = result.subscribe(() => {});
@@ -468,11 +468,11 @@ describe('computed', () => {
     expect(spy).toBeCalledTimes(3);
 
     unsub();
-    result();
+    result.get();
     expect(spy).toBeCalledTimes(3);
 
     source.set(3);
-    result();
+    result.get();
     expect(lastScheduled).toBe(false);
     expect(spy).toBeCalledTimes(4);
 
@@ -498,7 +498,7 @@ describe('computed', () => {
     expect(medSpy).toBeCalledTimes(2);
     expect(spy).toBeCalledTimes(7);
 
-    med();
+    med.get();
     expect(lastMedScheduled).toBe(false);
   });
 
@@ -513,12 +513,12 @@ describe('computed', () => {
     const c = computed((_: any, scheduled?: boolean) => {
       lastScheduled = scheduled;
       spy();
-      return a();
+      return a.get();
     });
 
     const d = computed(() => {
-      if (b()) c.subscribe(() => {});
-      return b();
+      if (b.get()) c.subscribe(() => {});
+      return b.get();
     });
 
     d.subscribe(() => {});
@@ -535,7 +535,7 @@ describe('computed', () => {
     let unsub: any;
 
     const a = computed(() => {
-      const v = source();
+      const v = source.get();
 
       if (v > 10 && unsub) unsub();
       return v;
@@ -545,10 +545,10 @@ describe('computed', () => {
 
     const b = computed(() => {
       spy();
-      return source();
+      return source.get();
     });
 
-    const c = computed(() => b());
+    const c = computed(() => b.get());
 
     unsub = c.subscribe(() => {});
     expect(spy).toBeCalledTimes(1);
@@ -562,39 +562,39 @@ describe('computed', () => {
 
   it('does not trigger dependants until its value is changed by default', () => {
     const counter = writable(0);
-    const x2Counter = computed(() => counter() * 2);
+    const x2Counter = computed(() => counter.get() * 2);
     const spy = jest.fn();
 
     x2Counter.subscribe(spy, false);
 
-    expect(counter()).toBe(0);
-    expect(x2Counter()).toBe(0);
+    expect(counter.get()).toBe(0);
+    expect(x2Counter.get()).toBe(0);
     expect(spy).toBeCalledTimes(0);
 
     counter.set(0);
-    expect(counter()).toBe(0);
-    expect(x2Counter()).toBe(0);
+    expect(counter.get()).toBe(0);
+    expect(x2Counter.get()).toBe(0);
     expect(spy).toBeCalledTimes(0);
 
     counter.set(1);
-    expect(counter()).toBe(1);
-    expect(x2Counter()).toBe(2);
+    expect(counter.get()).toBe(1);
+    expect(x2Counter.get()).toBe(2);
     expect(spy).toBeCalledTimes(1);
 
     counter.set(2);
-    expect(counter()).toBe(2);
-    expect(x2Counter()).toBe(4);
+    expect(counter.get()).toBe(2);
+    expect(x2Counter.get()).toBe(4);
     expect(spy).toBeCalledTimes(2);
 
     counter.set(2);
-    expect(counter()).toBe(2);
-    expect(x2Counter()).toBe(4);
+    expect(counter.get()).toBe(2);
+    expect(x2Counter.get()).toBe(4);
     expect(spy).toBeCalledTimes(2);
   });
 
   it('ignores a new value if it is equal to the current value', () => {
     const a = writable(0);
-    const b = computed(a);
+    const b = computed(() => a.get());
     const spy = jest.fn();
 
     b.subscribe(spy);
@@ -617,7 +617,7 @@ describe('computed', () => {
     const a = writable(0, {
       equals: () => false,
     });
-    const b = computed(a, {
+    const b = computed(() => a.get(), {
       equals: () => false,
     });
     const spy = jest.fn();
@@ -642,7 +642,7 @@ describe('computed', () => {
     const a = writable(0, {
       equals: () => false,
     });
-    const b = computed(a, {
+    const b = computed(() => a.get(), {
       equals: (value) => value >= 5,
     });
     const spy = jest.fn();
@@ -669,7 +669,7 @@ describe('computed', () => {
     });
     const b = computed(
       () => {
-        const value = a();
+        const value = a.get();
 
         if (value >= 5) return VOID;
         return value;
@@ -700,21 +700,21 @@ describe('computed', () => {
     const count = writable(0);
 
     const withError = computed(() => {
-      if (count() < 5) throw Error();
-      return count();
+      if (count.get() < 5) throw Error();
+      return count.get();
     });
 
-    const handledError = computed(withError, {
+    const handledError = computed(() => withError.get(), {
       catch: () => 42,
     });
 
-    expect(handledError()).toBe(42);
+    expect(handledError.get()).toBe(42);
 
     count.set(5);
-    expect(handledError()).toBe(5);
+    expect(handledError.get()).toBe(5);
 
     count.set(4);
-    expect(handledError()).toBe(42);
+    expect(handledError.get()).toBe(42);
   });
 
   it('allows to handle active signal exceptions', () => {
@@ -727,27 +727,27 @@ describe('computed', () => {
     const count = writable(0);
 
     const withError = computed(() => {
-      if (count() < 5) throw Error();
-      return count();
+      if (count.get() < 5) throw Error();
+      return count.get();
     });
 
-    const withErrorComp = computed(withError);
+    const withErrorComp = computed(() => withError.get());
     const unsub1 = withErrorComp.subscribe(() => {}, false);
 
     expect(errorSpy).toBeCalledTimes(1);
 
-    const handledError = computed(withErrorComp, {
+    const handledError = computed(() => withErrorComp.get(), {
       catch: () => 42,
     });
     const unsub2 = handledError.subscribe(() => {}, false);
 
-    expect(handledError()).toBe(42);
+    expect(handledError.get()).toBe(42);
 
     count.set(5);
-    expect(handledError()).toBe(5);
+    expect(handledError.get()).toBe(5);
 
     count.set(4);
-    expect(handledError()).toBe(42);
+    expect(handledError.get()).toBe(42);
     expect(errorSpy).toBeCalledTimes(2); // check logging on middle computed with subs and dependants
 
     unsub2();
@@ -765,8 +765,8 @@ describe('computed', () => {
 
     const handledError = computed(
       () => {
-        if (count() < 5) throw 5 - count();
-        return count();
+        if (count.get() < 5) throw 5 - count.get();
+        return count.get();
       },
       {
         catch: (e: any) => {
@@ -776,29 +776,29 @@ describe('computed', () => {
       },
     );
 
-    const secondHandledError = computed(handledError, {
+    const secondHandledError = computed(() => handledError.get(), {
       catch: () => 999,
     });
 
     handledError.subscribe(() => {}, false);
 
-    expect(handledError()).toBe(42);
-    expect(secondHandledError()).toBe(42);
+    expect(handledError.get()).toBe(42);
+    expect(secondHandledError.get()).toBe(42);
 
     count.set(5);
-    expect(handledError()).toBe(5);
-    expect(secondHandledError()).toBe(5);
+    expect(handledError.get()).toBe(5);
+    expect(secondHandledError.get()).toBe(5);
 
     count.set(4);
-    expect(handledError()).toBe(42);
-    expect(secondHandledError()).toBe(42);
+    expect(handledError.get()).toBe(42);
+    expect(secondHandledError.get()).toBe(42);
 
     count.set(-10);
-    expect(handledError()).toBe(42);
-    expect(secondHandledError()).toBe(999);
+    expect(handledError.get()).toBe(42);
+    expect(secondHandledError.get()).toBe(999);
 
     count.set(7);
-    expect(handledError()).toBe(7);
-    expect(secondHandledError()).toBe(7);
+    expect(handledError.get()).toBe(7);
+    expect(secondHandledError.get()).toBe(7);
   });
 });

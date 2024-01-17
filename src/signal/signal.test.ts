@@ -1,5 +1,4 @@
-import { computed } from '../computed/computed';
-import { writable, WritableSignal } from '../writable/writable';
+import { signal } from './signal';
 import { configure } from '../config/config';
 import { batch } from '../core/core';
 
@@ -8,7 +7,7 @@ describe('signal', () => {
     logException: () => {},
   });
 
-  const counter = writable(0);
+  const counter = signal(0);
   let unsubs: (() => any)[] = [];
   let num: number;
   let x2Num: number;
@@ -59,23 +58,23 @@ describe('signal', () => {
   });
 
   it('correctly handles multiple unsubscribing', () => {
-    const x2Counter = computed(() => 2 * counter());
+    const x2Counter = signal(() => 2 * counter.get());
     const x2Unsub = x2Counter.subscribe(() => {});
 
-    expect(x2Counter()).toBe(6);
+    expect(x2Counter.get()).toBe(6);
 
     x2Unsub();
     x2Unsub();
 
     counter.set(4);
-    expect(x2Counter()).toBe(8);
+    expect(x2Counter.get()).toBe(8);
   });
 
   it('does not track itself on subscribing', () => {
-    const counter = writable(0);
-    const gt5 = computed(() => counter() > 5);
-    const res = computed(() => {
-      if (gt5()) {
+    const counter = signal(0);
+    const gt5 = signal(() => counter.get() > 5);
+    const res = signal(() => {
+      if (gt5.get()) {
         const obj: any = {};
 
         counter.subscribe((v) => (obj.value = v));
@@ -100,13 +99,13 @@ describe('signal', () => {
   });
 
   it('does not track dependencies inside subscriber function', () => {
-    const counter = writable(0);
-    const gt5 = computed(() => counter() > 5);
-    const res = computed(() => {
-      if (gt5()) {
+    const counter = signal(0);
+    const gt5 = signal(() => counter.get() > 5);
+    const res = signal(() => {
+      if (gt5.get()) {
         const obj: any = {};
 
-        counter.subscribe((v) => (obj.value = counter()));
+        counter.subscribe((v) => (obj.value = counter.get()));
         return obj;
       }
 
@@ -145,11 +144,11 @@ describe('signal', () => {
      *            └─────┘
      */
 
-    const a = writable(0);
-    const b = computed(() => a() * 2);
-    const c = computed(() => a() * 2);
-    const d = computed(() => c() * 2);
-    const e = computed(() => b() + d());
+    const a = signal(0);
+    const b = signal(() => a.get() * 2);
+    const c = signal(() => a.get() * 2);
+    const d = signal(() => c.get() * 2);
+    const e = signal(() => b.get() + d.get());
 
     const subscriber = jest.fn();
 
@@ -157,7 +156,7 @@ describe('signal', () => {
 
     a.set(1);
 
-    expect(e()).toBe(6);
+    expect(e.get()).toBe(6);
     expect(subscriber).toHaveBeenCalledTimes(1);
   });
 
@@ -179,10 +178,10 @@ describe('signal', () => {
      *            └─────┘
      */
 
-    const a = writable(0);
-    const b = computed(() => a() * 2);
-    const c = computed(() => b() * 2);
-    const d = computed(() => c() + b());
+    const a = signal(0);
+    const b = signal(() => a.get() * 2);
+    const c = signal(() => b.get() * 2);
+    const d = signal(() => c.get() + b.get());
 
     const subscriber = jest.fn();
 
@@ -190,24 +189,24 @@ describe('signal', () => {
 
     a.set(1);
 
-    expect(d()).toBe(6);
+    expect(d.get()).toBe(6);
     expect(subscriber).toHaveBeenCalledTimes(1);
   });
 
   it('dynamically updates dependencies', () => {
-    const counter = writable(0);
-    const tumbler = writable(false);
-    const x2Counter = computed(() => counter() * 2);
-    const result = computed(() => (tumbler() ? x2Counter() : 'FALSE'));
+    const counter = signal(0);
+    const tumbler = signal(false);
+    const x2Counter = signal(() => counter.get() * 2);
+    const result = signal(() => (tumbler.get() ? x2Counter.get() : 'FALSE'));
 
     const subscriber = jest.fn();
 
     result.subscribe(subscriber, false);
 
-    expect(result()).toBe('FALSE');
+    expect(result.get()).toBe('FALSE');
 
     counter.set(1);
-    expect(result()).toBe('FALSE');
+    expect(result.get()).toBe('FALSE');
     expect(subscriber).toBeCalledTimes(0);
 
     batch(() => {
@@ -215,39 +214,39 @@ describe('signal', () => {
       counter.set(2);
     });
 
-    expect(result()).toBe(4);
+    expect(result.get()).toBe(4);
     expect(subscriber).toBeCalledTimes(1);
 
     tumbler.set(false);
     counter.set(3);
-    expect(result()).toBe('FALSE');
+    expect(result.get()).toBe('FALSE');
     expect(subscriber).toBeCalledTimes(2);
 
     counter.set(4);
-    expect(result()).toBe('FALSE');
+    expect(result.get()).toBe('FALSE');
     expect(subscriber).toBeCalledTimes(2);
 
     tumbler.set(true);
-    expect(result()).toBe(8);
+    expect(result.get()).toBe(8);
     expect(subscriber).toBeCalledTimes(3);
 
     counter.set(5);
-    expect(result()).toBe(10);
+    expect(result.get()).toBe(10);
     expect(subscriber).toBeCalledTimes(4);
 
     counter.set(6);
-    expect(result()).toBe(12);
+    expect(result.get()).toBe(12);
     expect(subscriber).toBeCalledTimes(5);
   });
 
   it('dynamically updates dependencies (case 2)', () => {
-    const tumbler = writable(true);
-    const a = writable('a');
-    const b = writable('b');
+    const tumbler = signal(true);
+    const a = signal('a');
+    const b = signal('b');
 
-    const sum = computed(() => {
-      if (tumbler()) return a() + b();
-      return b() + a();
+    const sum = signal(() => {
+      if (tumbler.get()) return a.get() + b.get();
+      return b.get() + a.get();
     });
 
     const subSum = jest.fn();
@@ -265,16 +264,16 @@ describe('signal', () => {
 
   it('dynamically updates dependencies (case 3)', () => {
     const spy = jest.fn();
-    const a = writable(11);
-    const b = writable(2);
-    const bComp = computed(() => {
+    const a = signal(11);
+    const b = signal(2);
+    const bComp = signal(() => {
       spy();
-      return b();
+      return b.get();
     });
 
-    const value = computed(() => {
-      if (a() > 10) return bComp() + bComp() + bComp();
-      return a();
+    const value = signal(() => {
+      if (a.get() > 10) return bComp.get() + bComp.get() + bComp.get();
+      return a.get();
     });
 
     value.subscribe(() => {});
@@ -301,13 +300,15 @@ describe('signal', () => {
       return n + fib(16);
     };
 
-    const A = writable(0);
-    const B = writable(0);
-    const C = computed(() => (A() % 2) + (B() % 2));
-    const D = computed(() => (A() % 2) - (B() % 2));
-    const E = computed(() => hard(C() + A() + D(), 'E'));
-    const F = computed(() => hard(D() && B(), 'F'));
-    const G = computed(() => C() + (C() || E() % 2) + D() + F());
+    const A = signal(0);
+    const B = signal(0);
+    const C = signal(() => (A.get() % 2) + (B.get() % 2));
+    const D = signal(() => (A.get() % 2) - (B.get() % 2));
+    const E = signal(() => hard(C.get() + A.get() + D.get(), 'E'));
+    const F = signal(() => hard(D.get() && B.get(), 'F'));
+    const G = signal(
+      () => C.get() + (C.get() || E.get() % 2) + D.get() + F.get(),
+    );
     const H = G.subscribe((v) => hard(v, 'H'));
     const I = G.subscribe(() => {});
     const J = F.subscribe((v) => hard(v, 'J'));
@@ -335,19 +336,19 @@ describe('signal', () => {
     const bSpy = jest.fn();
     const cSpy = jest.fn();
 
-    const a = writable(1);
+    const a = signal(1);
 
-    const b = computed(() => {
+    const b = signal(() => {
       bSpy();
-      return a() * 2;
+      return a.get() * 2;
     });
 
-    const c = computed(() => {
+    const c = signal(() => {
       cSpy();
-      return b() * 2;
+      return b.get() * 2;
     });
 
-    c();
+    c.get();
     expect(bSpy).toBeCalledTimes(1);
     expect(cSpy).toBeCalledTimes(1);
 
@@ -368,20 +369,20 @@ describe('signal', () => {
     const bSpy = jest.fn();
     const cSpy = jest.fn();
 
-    const a = writable(1);
+    const a = signal(1);
 
-    const b = computed(() => {
+    const b = signal(() => {
       bSpy();
-      return a() * 2;
+      return a.get() * 2;
     });
 
-    const c = computed(() => {
+    const c = signal(() => {
       cSpy();
-      return b() * 2;
+      return b.get() * 2;
     });
 
-    c();
-    c();
+    c.get();
+    c.get();
     expect(bSpy).toBeCalledTimes(1);
     expect(cSpy).toBeCalledTimes(1);
 
@@ -402,22 +403,22 @@ describe('signal', () => {
     const bSpy = jest.fn();
     const cSpy = jest.fn();
 
-    const a = writable(1);
+    const a = signal(1);
 
-    const b = computed(() => {
+    const b = signal(() => {
       bSpy();
-      return a() * 2;
+      return a.get() * 2;
     });
 
-    const c = computed(() => {
+    const c = signal(() => {
       cSpy();
-      return b() * 2;
+      return b.get() * 2;
     });
 
-    c();
-    c();
+    c.get();
+    c.get();
     a.set(0);
-    c();
+    c.get();
 
     expect(bSpy).toBeCalledTimes(2);
     expect(cSpy).toBeCalledTimes(2);
@@ -438,13 +439,13 @@ describe('signal', () => {
   it('does not make redundant computations on scheduled run', () => {
     const spy = jest.fn();
 
-    const a = writable(0);
-    const b = writable(0);
-    const c = computed(() => {
+    const a = signal(0);
+    const b = signal(0);
+    const c = signal(() => {
       spy();
-      return a();
+      return a.get();
     });
-    const d = computed(() => c() + b());
+    const d = signal(() => c.get() + b.get());
 
     d.subscribe(() => {});
     expect(spy).toBeCalledTimes(1);
@@ -453,10 +454,10 @@ describe('signal', () => {
     expect(spy).toBeCalledTimes(1);
   });
 
-  it('notifies intermidiate computed subscribers', () => {
-    const count = writable(0);
-    const x2Count = computed(() => count() * 2);
-    const sum = computed(() => count() + x2Count());
+  it('notifies intermidiate signal subscribers', () => {
+    const count = signal(0);
+    const x2Count = signal(() => count.get() * 2);
+    const sum = signal(() => count.get() + x2Count.get());
 
     const subSum = jest.fn();
     const subX2Xount = jest.fn();
@@ -471,54 +472,54 @@ describe('signal', () => {
   });
 
   it('passes exceptions down to dependants', () => {
-    const obj: WritableSignal<{ a: number } | null> = writable({
+    const obj = signal({
       a: 1,
     } as any);
-    const num = writable(1);
-    const objNum = computed(() => (obj() as any).a as number);
-    const sum = computed(() => num() + objNum());
-    const x2Sum = computed(() => sum() * 2);
+    const num = signal(1);
+    const objNum = signal(() => (obj.get() as any).a as number);
+    const sum = signal(() => num.get() + objNum.get());
+    const x2Sum = signal(() => sum.get() * 2);
 
     const subscriber = jest.fn();
 
     x2Sum.subscribe(subscriber);
 
-    expect(sum()).toBe(2);
-    expect(x2Sum()).toBe(4);
+    expect(sum.get()).toBe(2);
+    expect(x2Sum.get()).toBe(4);
 
     batch(() => {
       obj.set(null);
       num.set(5);
     });
 
-    expect(num()).toBe(5);
-    expect(sum()).toBe(2);
-    expect(x2Sum()).toBe(4);
+    expect(num.get()).toBe(5);
+    expect(sum.get()).toBe(2);
+    expect(x2Sum.get()).toBe(4);
 
     obj.set({ a: 5 });
-    expect(sum()).toBe(10);
-    expect(x2Sum()).toBe(20);
+    expect(sum.get()).toBe(10);
+    expect(x2Sum.get()).toBe(20);
   });
 
   it('continues to trigger dependants after error eliminated', () => {
     let str = '';
 
-    const tumbler = writable(false);
-    const counter = writable(0);
+    const tumbler = signal(false);
+    const counter = signal(0);
 
-    const x2Counter = computed(() => {
-      const res = counter() * 2;
+    const x2Counter = signal(() => {
+      const res = counter.get() * 2;
 
       if (res > 5) throw new Error();
 
       return res;
     });
 
-    const x4Counter = computed(() => x2Counter() * 2);
+    const x4Counter = signal(() => x2Counter.get() * 2);
 
-    const text = computed(() => {
+    const text = signal(() => {
       let res = 'OFF';
-      if (tumbler()) res = `ON (${x4Counter()})`;
+      if (tumbler.get()) res = `ON (${x4Counter.get()})`;
 
       return res;
     });
@@ -540,75 +541,75 @@ describe('signal', () => {
   });
 
   it('has get method which returns current value', () => {
-    const test = writable(0);
+    const test = signal(0);
 
     expect(test.get()).toBe(0);
-    expect(test.get()).toBe(test());
+    expect(test.get()).toBe(test.get());
   });
 
   it('returns previous value if an exception occured', () => {
-    const counter = writable(0);
+    const counter = signal(0);
 
-    const x2Counter = computed(() => {
-      if (counter() > 5) throw new Error();
-      return counter() * 2;
+    const x2Counter = signal(() => {
+      if (counter.get() > 5) throw new Error();
+      return counter.get() * 2;
     });
 
-    const x4Counter = computed(() => x2Counter() * 2);
+    const x4Counter = signal(() => x2Counter.get() * 2);
 
-    expect(x4Counter()).toBe(0);
+    expect(x4Counter.get()).toBe(0);
 
     counter.set(20);
-    expect(x4Counter()).toBe(0);
+    expect(x4Counter.get()).toBe(0);
   });
 
   it('does not run subscribers if an exception occured', () => {
     const subscriber = jest.fn();
 
-    const counter = writable(0);
+    const counter = signal(0);
 
-    const x2Counter = computed(() => {
-      if (counter() > 5) throw new Error();
-      return counter() * 2;
+    const x2Counter = signal(() => {
+      if (counter.get() > 5) throw new Error();
+      return counter.get() * 2;
     });
 
-    const x4Counter = computed(() => x2Counter() * 2);
+    const x4Counter = signal(() => x2Counter.get() * 2);
 
     x4Counter.subscribe(subscriber, false);
 
     counter.set(1);
-    expect(x4Counter()).toBe(4);
+    expect(x4Counter.get()).toBe(4);
     expect(subscriber).toBeCalledTimes(1);
 
     counter.set(20);
-    expect(x4Counter()).toBe(4);
+    expect(x4Counter.get()).toBe(4);
     expect(subscriber).toBeCalledTimes(1);
   });
 
   it('prevents circular dependencies', () => {
     let counter = 0;
 
-    const a = writable(0);
+    const a = signal(0);
 
-    const b: any = computed(() => {
-      if (!a()) return 0;
+    const b: any = signal(() => {
+      if (!a.get()) return 0;
 
-      const res = c();
+      const res = c.get();
       counter++;
 
       return res;
     });
 
-    const c = computed(() => {
-      return b();
+    const c = signal(() => {
+      return b.get();
     });
 
-    expect(c()).toBe(0);
+    expect(c.get()).toBe(0);
     expect(counter).toBe(0);
 
     a.set(1);
 
-    expect(c()).toBe(0);
+    expect(c.get()).toBe(0);
     expect(counter).toBeLessThan(2);
 
     counter = 0;
@@ -616,29 +617,29 @@ describe('signal', () => {
 
     a.set(10);
 
-    expect(c()).toBe(0);
+    expect(c.get()).toBe(0);
     expect(counter).toBeLessThan(2);
   });
 
-  it('can update writables in subscribers', () => {
-    const counter = writable(0);
-    const x2Counter = writable(0);
+  it('can update signals in subscribers', () => {
+    const counter = signal(0);
+    const x2Counter = signal(0);
 
     counter.subscribe((value) => x2Counter.set(value * 2));
 
     counter.set(1);
 
-    expect(x2Counter()).toBe(2);
+    expect(x2Counter.get()).toBe(2);
   });
 
-  it('can use actual writable state in subscribers', () => {
-    const counter = writable(0);
-    const x2Counter = computed(() => counter() * 2);
+  it('can use actual signal state in subscribers', () => {
+    const counter = signal(0);
+    const x2Counter = signal(() => counter.get() * 2);
 
     x2Counter.subscribe(() => {});
 
     counter.subscribe((value) => {
-      expect(value * 2).toBe(x2Counter());
+      expect(value * 2).toBe(x2Counter.get());
     });
 
     counter.set(1);
@@ -646,7 +647,7 @@ describe('signal', () => {
 
   it('batches updates using batch function', () => {
     const subscriber = jest.fn();
-    const counter = writable(0);
+    const counter = signal(0);
 
     counter.subscribe(subscriber, false);
 
@@ -660,20 +661,20 @@ describe('signal', () => {
   });
 
   it('batches updates in subscribers', () => {
-    const a = writable(0);
-    const b = writable(0);
-    const c = writable(0);
-    const d = computed(() => b() + c());
+    const a = signal(0);
+    const b = signal(0);
+    const c = signal(0);
+    const d = signal(() => b.get() + c.get());
     const spy = jest.fn();
 
-    a.subscribe(() => b.set(b() + 1), false);
-    a.subscribe(() => c.set(c() + 1), false);
+    a.subscribe(() => b.set(b.get() + 1), false);
+    a.subscribe(() => c.set(c.get() + 1), false);
     d.subscribe(spy, false);
 
     expect(spy).toBeCalledTimes(0);
 
     a.set(1);
-    expect(d()).toBe(2);
+    expect(d.get()).toBe(2);
     expect(spy).toBeCalledTimes(1);
   });
 
@@ -682,7 +683,7 @@ describe('signal', () => {
       const result: any = {};
       let order = 0;
 
-      const counter = writable(0, {
+      const counter = signal(0, {
         onActivate: () => (result.activate = ++order),
         onDeactivate: () => (result.deactivate = ++order),
         onUpdate: () => (result.update = ++order),
@@ -705,7 +706,7 @@ describe('signal', () => {
 
       const listener = jest.fn((v) => (value = v));
 
-      const counter = writable(0, {
+      const counter = signal(0, {
         onActivate(v) {
           listener(v);
         },
@@ -730,14 +731,14 @@ describe('signal', () => {
     it('correctly reacts to activation of previously calculated signal', () => {
       const spy = jest.fn();
 
-      const a = writable(0, {
+      const a = signal(0, {
         onActivate: () => spy(),
       });
-      const b = computed(() => a() * 2);
-      const c = computed(() => b() * 2);
-      const d = computed(() => c() * 2);
+      const b = signal(() => a.get() * 2);
+      const c = signal(() => b.get() * 2);
+      const d = signal(() => c.get() * 2);
 
-      d();
+      d.get();
       d.subscribe(() => {});
 
       expect(spy).toBeCalledTimes(1);
@@ -746,10 +747,10 @@ describe('signal', () => {
     it('correctly reacts to activation of new dependency', () => {
       const spy = jest.fn();
 
-      const a = writable(0);
-      const b = writable(1, { onActivate: () => spy() });
-      const c = computed(() => a() && b());
-      const d = computed(() => c());
+      const a = signal(0);
+      const b = signal(1, { onActivate: () => spy() });
+      const c = signal(() => a.get() && b.get());
+      const d = signal(() => c.get());
 
       d.subscribe(() => {});
 
@@ -767,7 +768,7 @@ describe('signal', () => {
       let unsub: any;
 
       const listener = jest.fn((v) => (value = v));
-      const counter = writable(0, { onDeactivate: (v) => listener(v) });
+      const counter = signal(0, { onDeactivate: (v) => listener(v) });
 
       expect(value).toBeUndefined();
       expect(listener).toBeCalledTimes(0);
@@ -788,10 +789,10 @@ describe('signal', () => {
     it('correctly reacts to deactivation of dependency', () => {
       const spy = jest.fn();
 
-      const a = writable(1);
-      const b = writable(1, { onDeactivate: () => spy() });
-      const c = computed(() => a() && b());
-      const d = computed(() => c());
+      const a = signal(1);
+      const b = signal(1, { onDeactivate: () => spy() });
+      const c = signal(() => a.get() && b.get());
+      const d = signal(() => c.get());
 
       d.subscribe(() => {});
 
@@ -812,7 +813,7 @@ describe('signal', () => {
         res.prevValue = p;
       });
 
-      const counter = writable(0, {
+      const counter = signal(0, {
         onUpdate: (v, p) => listener(v, p),
       });
 
@@ -848,11 +849,11 @@ describe('signal', () => {
       let error: any;
       let unsub: any;
 
-      const counter = writable(0);
-      const x2Counter = computed(
+      const counter = signal(0);
+      const x2Counter = signal(
         () => {
-          if (counter() > 4) throw 'error';
-          return counter() * 2;
+          if (counter.get() > 4) throw 'error';
+          return counter.get() * 2;
         },
         {
           onException: (v) => listener(v),
@@ -899,12 +900,12 @@ describe('signal', () => {
       let error: any;
       let unsub: any;
 
-      const counter = writable(0);
-      const x2Counter = computed(() => {
-        if (counter() > 4) throw 'error';
-        return counter() * 2;
+      const counter = signal(0);
+      const x2Counter = signal(() => {
+        if (counter.get() > 4) throw 'error';
+        return counter.get() * 2;
       });
-      const x4Counter = computed(() => x2Counter() * 2, {
+      const x4Counter = signal(() => x2Counter.get() * 2, {
         onException: (v) => listener(v),
       });
 
@@ -944,26 +945,28 @@ describe('signal', () => {
       const activateSpy = jest.fn();
       const deactivateSpy = jest.fn();
 
-      const a = writable(0);
-      const b = writable(0);
-      const c = writable(0);
-      const d = writable(0);
+      const a = signal(0);
+      const b = signal(0);
+      const c = signal(0);
+      const d = signal(0);
 
-      const a1 = computed(() => a());
-      const b1 = computed(() => b(), {
+      const a1 = signal(() => a.get());
+      const b1 = signal(() => b.get(), {
         onActivate: activateSpy,
         onDeactivate: deactivateSpy,
       });
-      const c1 = computed(() => c());
-      const d1 = computed(() => d());
+      const c1 = signal(() => c.get());
+      const d1 = signal(() => d.get());
 
-      const a2 = computed(() => a1());
-      const b2 = computed(() => b1());
-      const c2 = computed(() => c1());
-      const d2 = computed(() => d1());
+      const a2 = signal(() => a1.get());
+      const b2 = signal(() => b1.get());
+      const c2 = signal(() => c1.get());
+      const d2 = signal(() => d1.get());
 
-      const res = computed(() => {
-        return a2() < 10 ? b2() + c2() + d2() : d2() + c2();
+      const res = signal(() => {
+        return a2.get() < 10
+          ? b2.get() + c2.get() + d2.get()
+          : d2.get() + c2.get();
       });
 
       const unsub = res.subscribe(() => {});

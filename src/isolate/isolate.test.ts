@@ -10,7 +10,7 @@ describe('isolate', () => {
     const comp = computed(() => {
       isolate(() => {
         spy();
-        count();
+        count.get();
       });
     });
 
@@ -33,18 +33,18 @@ describe('isolate', () => {
       isolate(() => {
         const inner = computed(() => {
           isolate(() => {
-            const deep = computed(external);
+            const deep = computed(() => external.get());
             deep.subscribe(() => deepSpy());
           });
 
-          return external();
+          return external.get();
         });
 
         external.subscribe(() => externalSpy());
         inner.subscribe(() => innerSpy());
       });
 
-      return source();
+      return source.get();
     });
 
     comp.subscribe(() => {});
@@ -105,12 +105,12 @@ describe('isolate', () => {
     const comp = computed(() => {
       isolate(() => {
         const innerToggle = writable(true);
-        const innerComp = computed(() => innerToggle() && innerFn2());
+        const innerComp = computed(() => innerToggle.get() && innerFn2());
 
         innerComp.subscribe(() => {});
       });
 
-      return source();
+      return source.get();
     });
 
     comp.subscribe(() => {});
@@ -153,12 +153,12 @@ describe('isolate', () => {
     const comp = computed(() => {
       isolate(() => {
         const innerToggle = writable(true);
-        const innerComp = computed(() => innerToggle() && innerFn2());
+        const innerComp = computed(() => innerToggle.get() && innerFn2());
 
-        innerComp();
+        innerComp.get();
       });
 
-      return source();
+      return source.get();
     });
 
     comp.subscribe(() => {});

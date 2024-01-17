@@ -1,7 +1,6 @@
 import { writable } from '../writable/writable';
 import { computed } from '../computed/computed';
-import { Signal } from '../signal/signal';
-import { batch } from '../core/core';
+import { Signal, batch } from '../core/core';
 import { FALSE_FN, NOOP_FN } from '../utils/constants';
 // import { named } from '../named/named';
 // import { config } from '../config/config';
@@ -85,14 +84,14 @@ export function effect<T, A extends unknown[]>(
   const _aborted = writable();
   const _args = writable<A | undefined>(undefined, { equals: FALSE_FN });
 
-  const lastStatus = computed(_status, {
+  const lastStatus = computed(() => _status.get(), {
     equals: (status) => status === 'pending',
   });
 
   lastStatus.subscribe(NOOP_FN);
 
   const status = computed(() => {
-    const value = _status();
+    const value = _status.get();
 
     return {
       value,
@@ -104,12 +103,12 @@ export function effect<T, A extends unknown[]>(
     } as EffectStatusObject;
   });
 
-  const exception = computed(_exception, { equals: FALSE_FN });
+  const exception = computed(() => _exception.get(), { equals: FALSE_FN });
 
   const done = computed(
     () => {
-      const data = _data();
-      const exception = _exception();
+      const data = _data.get();
+      const exception = _exception.get();
 
       switch (_status.get(false)) {
         case 'pristine':
@@ -123,9 +122,9 @@ export function effect<T, A extends unknown[]>(
     { equals: FALSE_FN },
   );
 
-  const data = computed(_data, { equals: FALSE_FN });
-  const aborted = computed(_aborted, { equals: FALSE_FN });
-  const args = computed(_args, { equals: FALSE_FN });
+  const data = computed(() => _data.get(), { equals: FALSE_FN });
+  const aborted = computed(() => _aborted.get(), { equals: FALSE_FN });
+  const args = computed(() => _args.get(), { equals: FALSE_FN });
 
   const abort = () => {
     if (!status.get(false)!.pending) return;
@@ -133,7 +132,7 @@ export function effect<T, A extends unknown[]>(
     // logEvent(name, 'ABORT');
 
     batch(() => {
-      _status.set(lastStatus() as any);
+      _status.set(lastStatus.get() as any);
       _aborted.set({});
     });
 
@@ -146,7 +145,7 @@ export function effect<T, A extends unknown[]>(
     // logEvent(name, 'RESET');
 
     batch(() => {
-      if (status()!.pending) _aborted.set({});
+      if (status.get()!.pending) _aborted.set({});
       _status.set('pristine');
     });
 

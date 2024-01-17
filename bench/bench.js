@@ -17,15 +17,7 @@ import {
   effect as preactEffect,
 } from '../node_modules/@preact/signals-core/dist/signals-core.mjs';
 
-import {
-  computed,
-  writable,
-  __INTERNAL__,
-  batch,
-  configure,
-} from '/dist/index.mjs';
-
-const { get, set, subscribe, createSignalState } = __INTERNAL__;
+import { computed, writable, batch, signal, configure } from '/dist/index.mjs';
 
 window.process = {
   env: {
@@ -172,10 +164,10 @@ function testSpred(width, layerCount, newValues) {
   const initTimestamp = performance.now();
 
   const start = {
-    prop1: writable(1),
-    prop2: writable(2),
-    prop3: writable(3),
-    prop4: writable(4),
+    prop1: signal(1),
+    prop2: signal(2),
+    prop3: signal(3),
+    prop4: signal(4),
   };
 
   let layer;
@@ -186,16 +178,16 @@ function testSpred(width, layerCount, newValues) {
     for (let i = layerCount; i--; ) {
       layer = (function (m) {
         const s = {
-          prop1: computed(function () {
+          prop1: signal(function () {
             return m.prop2.get();
           }),
-          prop2: computed(function () {
+          prop2: signal(function () {
             return m.prop1.get() - m.prop3.get();
           }),
-          prop3: computed(function () {
+          prop3: signal(function () {
             return m.prop2.get() + m.prop4.get();
           }),
-          prop4: computed(function () {
+          prop4: signal(function () {
             return m.prop3.get();
           }),
         };
@@ -237,83 +229,6 @@ function testSpred(width, layerCount, newValues) {
     end.prop2.get(),
     end.prop3.get(),
     end.prop4.get(),
-  ];
-
-  report.recalcTime = performance.now() - st;
-
-  return report;
-}
-
-function testSpredInternal(width, layerCount, newValues) {
-  const report = { name: 'spred' };
-  const initTimestamp = performance.now();
-
-  const start = {
-    prop1: createSignalState(1),
-    prop2: createSignalState(2),
-    prop3: createSignalState(3),
-    prop4: createSignalState(4),
-  };
-
-  let layer;
-
-  for (let j = width; j--; ) {
-    layer = start;
-
-    for (let i = layerCount; i--; ) {
-      layer = (function (m) {
-        const s = {
-          prop1: createSignalState(undefined, function () {
-            return get(m.prop2);
-          }),
-          prop2: createSignalState(undefined, function () {
-            return get(m.prop1) - get(m.prop3);
-          }),
-          prop3: createSignalState(undefined, function () {
-            return get(m.prop2) + get(m.prop4);
-          }),
-          prop4: createSignalState(undefined, function () {
-            return get(m.prop3);
-          }),
-        };
-
-        if (!i) {
-          subscribe(s.prop1, subscriber);
-          subscribe(s.prop2, subscriber);
-          subscribe(s.prop3, subscriber);
-          subscribe(s.prop4, subscriber);
-        }
-
-        return s;
-      })(layer);
-    }
-  }
-
-  report.initTime = performance.now() - initTimestamp;
-
-  const end = layer;
-
-  report.beforeChange = [
-    get(end.prop1),
-    get(end.prop2),
-    get(end.prop3),
-    get(end.prop4),
-  ];
-
-  const st = performance.now();
-
-  batch(() => {
-    set(start.prop1, newValues[0]);
-    set(start.prop2, newValues[1]);
-    set(start.prop3, newValues[2]);
-    set(start.prop4, newValues[3]);
-  });
-
-  report.afterChange = [
-    get(end.prop1),
-    get(end.prop2),
-    get(end.prop3),
-    get(end.prop4),
   ];
 
   report.recalcTime = performance.now() - st;

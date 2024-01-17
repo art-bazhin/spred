@@ -4,7 +4,7 @@ import { getValue, isSignal, isWritableSignal, sampleValue } from './guards';
 
 describe('guard functions', () => {
   const w = writable('foo');
-  const c = computed(w);
+  const c = computed(() => w);
   const fn = () => {};
   const str = 'bar';
 

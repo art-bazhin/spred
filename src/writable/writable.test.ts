@@ -6,17 +6,17 @@ describe('writable', () => {
   const counter = writable(0);
 
   it('is created with default value', () => {
-    expect(counter()).toBe(0);
+    expect(counter.get()).toBe(0);
   });
 
   it('updates value', () => {
     counter.set(1);
-    expect(counter()).toBe(1);
+    expect(counter.get()).toBe(1);
   });
 
   it('updates value using set method', () => {
     counter.set(2);
-    expect(counter()).toBe(2);
+    expect(counter.get()).toBe(2);
   });
 
   it('returns new value after set', () => {
@@ -34,7 +34,7 @@ describe('writable', () => {
 
   it('updates value using update fn', () => {
     counter.update((value) => value + 1);
-    expect(counter()).toBe(4);
+    expect(counter.get()).toBe(4);
 
     let newValue: any;
 
@@ -45,7 +45,7 @@ describe('writable', () => {
       newValue = counter.update((value) => value + 1);
     });
 
-    expect(counter()).toBe(8);
+    expect(counter.get()).toBe(8);
     expect(newValue).toBe(8);
   });
 
@@ -53,7 +53,7 @@ describe('writable', () => {
     const value = writable(0);
 
     value.update((v) => v + 1);
-    expect(value()).toBe(1);
+    expect(value.get()).toBe(1);
   });
 
   it('triggers subscribers if undefined value was passed', () => {
@@ -85,13 +85,13 @@ describe('writable', () => {
     expect(subscriber).toBeCalledTimes(2);
     expect(value).toBe(undefined);
 
-    s().a = 1;
+    s.get().a = 1;
     s.set();
 
     expect(subscriber).toBeCalledTimes(3);
     expect(value).toBe(1);
 
-    s().a = 2;
+    s.get().a = 2;
     s.set();
 
     expect(subscriber).toBeCalledTimes(4);
@@ -100,7 +100,7 @@ describe('writable', () => {
 
   it('force emits dependant subscribers using notify method', () => {
     const s = writable({} as any);
-    const comp = computed(() => s().a, {
+    const comp = computed(() => s.get().a, {
       equals: () => false,
     });
 
@@ -114,13 +114,13 @@ describe('writable', () => {
     expect(subscriber).toBeCalledTimes(2);
     expect(value).toBe(undefined);
 
-    s().a = 1;
+    s.get().a = 1;
     s.set();
 
     expect(subscriber).toBeCalledTimes(3);
     expect(value).toBe(1);
 
-    s().a = 2;
+    s.get().a = 2;
     s.set();
 
     expect(subscriber).toBeCalledTimes(4);
@@ -153,10 +153,10 @@ describe('writable', () => {
     const b = () => {};
     const fn = writable(a);
 
-    expect(fn()).toBe(a);
+    expect(fn.get()).toBe(a);
 
     fn.set(b);
-    expect(fn()).toBe(b);
+    expect(fn.get()).toBe(b);
   });
 
   it('ignores a new value if it is equal to the current value', () => {
@@ -221,7 +221,7 @@ describe('writable', () => {
 
     a.set(5);
     expect(spy).toBeCalledTimes(3);
-    expect(a()).toBe(1);
+    expect(a.get()).toBe(1);
 
     a.set(2);
     expect(spy).toBeCalledTimes(4);

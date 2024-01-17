@@ -10,10 +10,10 @@ describe('collect function', () => {
 
     const comp = computed(() => {
       collect(() => {
-        b();
+        b.get();
       });
 
-      return a();
+      return a.get();
     });
 
     comp.subscribe(spy);
@@ -43,7 +43,7 @@ describe('collect function', () => {
 
       const comp = computed(() => {
         b.subscribe(spyInner);
-        return a();
+        return a.get();
       });
 
       comp.subscribe(spyComp);

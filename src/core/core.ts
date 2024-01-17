@@ -28,6 +28,36 @@ export type Computation<T> =
   | ((prevValue: T | undefined) => T)
   | ((prevValue: T | undefined, scheduled: boolean) => T);
 
+/**
+ * Basic reactive primitive.
+ */
+export interface Signal<T> {
+  /**
+   * Calculates and returns the current value of the signal.
+   */
+  get(): T;
+
+  /**
+   * Calculates and returns the current value of the signal.
+   */
+  get(trackDependency: boolean): T;
+
+  /**
+   * Subscribes the function to updates of the signal value.
+   * @param subscriber A function that listens to updates.
+   * @param exec Determines whether the function should be called immediately after subscription.
+   * @returns Unsubscribe function.
+   */
+  subscribe<E extends boolean>(subscriber: Subscriber<T>, exec: E): () => void;
+
+  /**
+   * Subscribes the function to updates of the signal value and calls it immediately.
+   * @param subscriber A function that listens to updates.
+   * @returns Unsubscribe function.
+   */
+  subscribe(subscriber: Subscriber<T>): () => void;
+}
+
 export interface SignalOptions<T> {
   name?: string;
   equals?: (value: T, prevValue?: T) => unknown;
@@ -38,7 +68,7 @@ export interface SignalOptions<T> {
   onException?: (e: unknown) => any;
 }
 
-export interface SignalState<T> extends SignalOptions<T> {
+export interface SignalState<T> extends SignalOptions<T>, Signal<T> {
   _value: T;
   _nextValue: T;
   _compute?: Computation<T>;
@@ -68,40 +98,43 @@ let notifications: any[] = [];
 
 let version = {};
 
-export function createSignalState<T>(
+export function Signal<T>(
+  this: SignalState<T>,
   value: T,
   compute?: Computation<T>,
   options?: SignalOptions<T>,
-): SignalState<T> {
+) {
   const parent = tracking || scope;
 
-  const state: SignalState<T> = {
-    _value: value,
-    _compute: compute,
-    _nextValue: value,
-    _flags: 0,
-    _subs: 0,
-    _version: null,
-    _firstSource: null,
-    _lastSource: null,
-    _firstTarget: null,
-    _lastTarget: null,
-    equals: Object.is,
-  };
+  this._value = value;
+  this._compute = compute;
+  this._nextValue = value;
+  this._flags = 0;
+  this._subs = 0;
+  this._version = null;
+  this._firstSource = null;
+  this._lastSource = null;
+  this._firstTarget = null;
+  this._lastTarget = null;
+
+  this.equals = Object.is;
 
   if (options) {
     for (let key in options) {
-      (state as any)[key] = (options as any)[key];
+      (this as any)[key] = (options as any)[key];
     }
   }
 
   if (parent) {
-    if (!parent._children) parent._children = [state];
-    else parent._children.push(state);
+    if (!parent._children) parent._children = [this];
+    else parent._children.push(this);
   }
-
-  return state;
 }
+
+Signal.prototype.get = get;
+Signal.prototype.set = set;
+Signal.prototype.update = update;
+Signal.prototype.subscribe = subscribe;
 
 export function isolate<T>(fn: () => T): T;
 export function isolate<T, A extends unknown[]>(
@@ -163,23 +196,27 @@ export function batch(fn: (...args: any) => any) {
   else recalc();
 }
 
-export function set<T>(state: SignalState<T>, value: T): T;
-export function set<T>(state: SignalState<T>): void;
-export function set<T>(state: SignalState<T>, value?: any) {
+export function set<T>(this: SignalState<T>, value: T): T;
+export function set<T>(this: SignalState<T>): void;
+export function set<T>(this: SignalState<T>, value?: any) {
   const wrapper = (config as any)._notificationWrapper;
 
-  if (arguments.length > 1) {
-    state._nextValue = value;
+  if (arguments.length) {
+    this._nextValue = value;
   } else {
-    state._flags |= FORCED;
+    this._flags |= FORCED;
   }
 
-  providers.push(state);
+  providers.push(this);
 
   if (wrapper) wrapper(recalc);
   else recalc();
 
-  return state._nextValue;
+  return this._nextValue;
+}
+
+function update<T>(this: any, updateFn: (value: T) => T) {
+  return this.set(updateFn(this._nextValue));
 }
 
 function notify(state: SignalState<any>) {
@@ -187,7 +224,7 @@ function notify(state: SignalState<any>) {
 
   state._flags |= NOTIFIED;
 
-  if (!state._compute) get(state);
+  if (!state._compute) state.get();
   if (state._subs) consumers.push(state);
 
   for (let node = state._firstTarget; node !== null; node = node.next) {
@@ -196,29 +233,29 @@ function notify(state: SignalState<any>) {
 }
 
 export function subscribe<T>(
-  state: SignalState<T>,
+  this: SignalState<T>,
   subscriber: Subscriber<T>,
   exec = true,
 ) {
   const prevStatus = status;
 
-  if (!(state._flags & FREEZED) && !state._firstTarget) {
+  if (!(this._flags & FREEZED) && !this._firstTarget) {
     status = ACTIVATING_STATUS;
-    state._flags |= ACTIVATING;
+    this._flags |= ACTIVATING;
   }
 
-  const value = get(state, false);
+  const value = this.get(false);
 
   status = prevStatus;
-  state._flags &= ~ACTIVATING;
+  this._flags &= ~ACTIVATING;
 
-  if (state._flags & FREEZED) {
+  if (this._flags & FREEZED) {
     if (exec) isolate(() => subscriber(value, true));
     return NOOP_FN;
   }
 
-  let node = createTargetNode(state, subscriber, null);
-  state._subs++;
+  let node = createTargetNode(this, subscriber, null);
+  this._subs++;
 
   if (exec) {
     isolate(() => subscriber(value, true));
@@ -226,8 +263,8 @@ export function subscribe<T>(
 
   const dispose = () => {
     if (!node) return;
-    removeTargetNode(state, node);
-    state._subs--;
+    removeTargetNode(this, node);
+    this._subs--;
     node = null as any;
   };
 
@@ -259,7 +296,7 @@ export function recalc() {
 
   for (let state of q) notify(state);
   for (let state of consumers) {
-    if (state._subs || !state._compute) get(state);
+    if (state._subs || !state._compute) state.get();
   }
 
   status = prevStatus;
@@ -275,76 +312,73 @@ export function recalc() {
   recalc();
 }
 
-export function get<T>(state: SignalState<T>, trackDependency = true): T {
-  if (!status) state._flags &= ~NOTIFIED;
+export function get<T>(this: SignalState<T>, trackDependency = true): T {
+  if (!status) this._flags &= ~NOTIFIED;
 
-  if (state._compute) {
-    if (state._flags & FREEZED) return state._value;
+  if (this._compute) {
+    if (this._flags & FREEZED) return this._value;
 
-    if (state._flags & TRACKING) {
+    if (this._flags & TRACKING) {
       throw new CircularDependencyError();
     }
   }
 
-  let shouldCompute = state._version !== version;
+  let shouldCompute = this._version !== version;
 
   if (shouldCompute) {
-    state._flags &= ~CHANGED;
+    this._flags &= ~CHANGED;
 
-    const value = state._compute ? calcComputed(state) : state._nextValue;
+    const value = this._compute ? calcComputed(this) : this._nextValue;
 
-    if (state._flags & HAS_EXCEPTION) {
-      if (
-        (state._subs || state._flags & ACTIVATING) &&
-        state._version !== version
-      )
-        config.logException(state._exception);
+    if (this._flags & HAS_EXCEPTION) {
+      if ((this._subs || this._flags & ACTIVATING) && this._version !== version)
+        config.logException(this._exception);
     } else if (
-      state._flags & FORCED ||
-      (value !== (VOID as any) && !state.equals!(value, state._value))
+      this._flags & FORCED ||
+      (value !== (VOID as any) && !this.equals!(value, this._value))
     ) {
-      if (state.onUpdate) state.onUpdate(value, state._value);
+      if (this.onUpdate) this.onUpdate(value, this._value);
 
-      state._value = value;
-      state._flags |= CHANGED;
+      this._value = value;
+      this._flags |= CHANGED;
 
-      if (state._subs) {
-        for (let node = state._firstTarget; node !== null; node = node.next) {
+      if (this._subs) {
+        for (let node = this._firstTarget; node !== null; node = node.next) {
           if (typeof node.value === 'function')
-            notifications.push(node.value, state._value);
+            notifications.push(node.value, this._value);
         }
       }
     }
   }
 
-  state._version = version;
+  this._version = version;
 
-  state._flags &= ~NOTIFIED;
+  this._flags &= ~NOTIFIED;
 
   if (tracking && trackDependency) {
-    if (state._flags & HAS_EXCEPTION && !(tracking._flags & HAS_EXCEPTION)) {
-      tracking._exception = state._exception;
+    if (this._flags & HAS_EXCEPTION && !(tracking._flags & HAS_EXCEPTION)) {
+      tracking._exception = this._exception;
       tracking._flags |= HAS_EXCEPTION;
     }
 
     if (node) {
-      if (node.value !== state) {
+      if (node.value !== this) {
         if (node.link) removeTargetNode(node.value, node.link);
 
-        node.value = state;
+        node.value = this;
 
-        if (status) createTargetNode(state, tracking, node);
+        if (status) createTargetNode(this, tracking, node);
         else node.link = null;
       }
 
       node = node.next;
     } else {
-      const n = createSourceNode(state, tracking);
-      if (status) createTargetNode(state, tracking, n);
+      const n = createSourceNode(this, tracking);
+      if (status) createTargetNode(this, tracking, n);
     }
   }
 
-  return state._value;
+  return this._value;
 }
 
 function calcComputed<T>(state: SignalState<T>) {
@@ -355,7 +389,7 @@ function calcComputed<T>(state: SignalState<T>) {
     for (let node = state._firstSource; node !== null; node = node.next) {
       const source = node.value;
 
-      get(source, false);
+      source.get(false);
 
       if (source._flags & HAS_EXCEPTION) {
         hasException = true;

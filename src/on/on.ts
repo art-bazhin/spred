@@ -1,5 +1,4 @@
-import { Signal } from '../signal/signal';
-import { Subscriber } from '../core/core';
+import { Signal, Subscriber } from '../core/core';
 
 /**
  * Subscribes the function to updates of the signal value.

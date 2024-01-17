@@ -18,14 +18,14 @@ describe('effect', () => {
     effect(fn);
 
   it('is initialized with default state', () => {
-    expect(data()).toBe(undefined);
-    expect(exception()).toBe(undefined);
-    expect(status().value).toBe('pristine');
-    expect(status().pristine).toBe(true);
-    expect(status().pending).toBe(false);
-    expect(status().fulfilled).toBe(false);
-    expect(status().rejected).toBe(false);
-    expect(status().settled).toBe(false);
+    expect(data.get()).toBe(undefined);
+    expect(exception.get()).toBe(undefined);
+    expect(status.get().value).toBe('pristine');
+    expect(status.get().pristine).toBe(true);
+    expect(status.get().pending).toBe(false);
+    expect(status.get().fulfilled).toBe(false);
+    expect(status.get().rejected).toBe(false);
+    expect(status.get().settled).toBe(false);
     expect(reset).toBeDefined;
     expect(abort).toBeDefined;
   });
@@ -33,40 +33,40 @@ describe('effect', () => {
   it('has pending status after run', async () => {
     const res = call(5);
 
-    expect(data()).toBe(undefined);
-    expect(exception()).toBe(undefined);
-    expect(status().value).toBe('pending');
-    expect(status().pristine).toBe(false);
-    expect(status().pending).toBe(true);
-    expect(status().fulfilled).toBe(false);
-    expect(status().rejected).toBe(false);
-    expect(status().settled).toBe(false);
+    expect(data.get()).toBe(undefined);
+    expect(exception.get()).toBe(undefined);
+    expect(status.get().value).toBe('pending');
+    expect(status.get().pristine).toBe(false);
+    expect(status.get().pending).toBe(true);
+    expect(status.get().fulfilled).toBe(false);
+    expect(status.get().rejected).toBe(false);
+    expect(status.get().settled).toBe(false);
 
     await res;
   });
 
   it('has fulfilled status after success', () => {
-    expect(data()).toBe(5);
-    expect(exception()).toBe(undefined);
-    expect(status().value).toBe('fulfilled');
-    expect(status().pristine).toBe(false);
-    expect(status().pending).toBe(false);
-    expect(status().fulfilled).toBe(true);
-    expect(status().rejected).toBe(false);
-    expect(status().settled).toBe(true);
+    expect(data.get()).toBe(5);
+    expect(exception.get()).toBe(undefined);
+    expect(status.get().value).toBe('fulfilled');
+    expect(status.get().pristine).toBe(false);
+    expect(status.get().pending).toBe(false);
+    expect(status.get().fulfilled).toBe(true);
+    expect(status.get().rejected).toBe(false);
+    expect(status.get().settled).toBe(true);
   });
 
   it('has rejected status after error occurance', async () => {
     await call(11).catch(() => {});
 
-    expect(data()).toBe(5);
-    expect(exception()).toBe('FAIL');
-    expect(status().value).toBe('rejected');
-    expect(status().pristine).toBe(false);
-    expect(status().pending).toBe(false);
-    expect(status().fulfilled).toBe(false);
-    expect(status().rejected).toBe(true);
-    expect(status().settled).toBe(true);
+    expect(data.get()).toBe(5);
+    expect(exception.get()).toBe('FAIL');
+    expect(status.get().value).toBe('rejected');
+    expect(status.get().pristine).toBe(false);
+    expect(status.get().pending).toBe(false);
+    expect(status.get().fulfilled).toBe(false);
+    expect(status.get().rejected).toBe(true);
+    expect(status.get().settled).toBe(true);
   });
 
   it('returns to the last state after abort', async () => {
@@ -75,14 +75,14 @@ describe('effect', () => {
     abort();
     await res;
 
-    expect(data()).toBe(5);
-    expect(exception()).toBe('FAIL');
-    expect(status().value).toBe('rejected');
-    expect(status().pristine).toBe(false);
-    expect(status().pending).toBe(false);
-    expect(status().fulfilled).toBe(false);
-    expect(status().rejected).toBe(true);
-    expect(status().settled).toBe(true);
+    expect(data.get()).toBe(5);
+    expect(exception.get()).toBe('FAIL');
+    expect(status.get().value).toBe('rejected');
+    expect(status.get().pristine).toBe(false);
+    expect(status.get().pending).toBe(false);
+    expect(status.get().fulfilled).toBe(false);
+    expect(status.get().rejected).toBe(true);
+    expect(status.get().settled).toBe(true);
   });
 
   it('correctly handles multiple aborts', async () => {
@@ -95,25 +95,25 @@ describe('effect', () => {
 
     await res;
 
-    expect(data()).toBe(7);
-    expect(exception()).toBe('FAIL');
-    expect(status().value).toBe('fulfilled');
-    expect(status().pristine).toBe(false);
-    expect(status().pending).toBe(false);
-    expect(status().fulfilled).toBe(true);
-    expect(status().rejected).toBe(false);
-    expect(status().settled).toBe(true);
+    expect(data.get()).toBe(7);
+    expect(exception.get()).toBe('FAIL');
+    expect(status.get().value).toBe('fulfilled');
+    expect(status.get().pristine).toBe(false);
+    expect(status.get().pending).toBe(false);
+    expect(status.get().fulfilled).toBe(true);
+    expect(status.get().rejected).toBe(false);
+    expect(status.get().settled).toBe(true);
   });
 
   it('returns to the pristine status after reset', () => {
     reset();
 
-    expect(status().value).toBe('pristine');
-    expect(status().pristine).toBe(true);
-    expect(status().pending).toBe(false);
-    expect(status().fulfilled).toBe(false);
-    expect(status().rejected).toBe(false);
-    expect(status().settled).toBe(false);
+    expect(status.get().value).toBe('pristine');
+    expect(status.get().pristine).toBe(true);
+    expect(status.get().pending).toBe(false);
+    expect(status.get().fulfilled).toBe(false);
+    expect(status.get().rejected).toBe(false);
+    expect(status.get().settled).toBe(false);
   });
 
   it('can work as Promise', async () => {

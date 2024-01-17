@@ -1,46 +1,54 @@
-import { get, subscribe, Subscriber } from '../core/core';
+import { Computation, Signal, SignalOptions } from '../core/core';
+import { VOID } from '../utils/constants';
+import { WritableSignal } from '../writable/writable';
 
 /**
- * Basic reactive primitive.
+ * Creates a signal that automatically calculates its value from other signals.
+ * @param compute The function that calculates the signal value and returns it.
+ * @param options Signal options.
+ * @returns Computed signal.
  */
-export interface Signal<T> {
-  /**
-   * Calculates and returns the current value of the signal.
-   */
-  (): T;
+export function signal<T>(
+  compute: Computation<T>,
+): Signal<Exclude<T, typeof VOID>>;
 
-  /**
-   * Calculates and returns the current value of the signal.
-   */
-  get(): T;
+/**
+ * Creates a signal that automatically calculates its value from other signals.
+ * @param compute The function that calculates the signal value and returns it.
+ * @param options Signal options.
+ * @returns Computed signal.
+ */
+export function signal<T>(
+  compute: Computation<T>,
+  options: SignalOptions<T>,
+): Signal<Exclude<T, typeof VOID>>;
 
-  /**
-   * Calculates and returns the current value of the signal.
-   */
-  get(trackDependency: boolean): T;
+/**
+ * Сreates a writable signal.
+ * @returns Writable signal.
+ */
+export function signal(): WritableSignal<unknown>;
 
-  /**
-   * Subscribes the function to updates of the signal value.
-   * @param subscriber A function that listens to updates.
-   * @param exec Determines whether the function should be called immediately after subscription.
-   * @returns Unsubscribe function.
-   */
-  subscribe<E extends boolean>(subscriber: Subscriber<T>, exec: E): () => void;
+/**
+ * Сreates a writable signal.
+ * @param value Initial value of the signal.
+ * @returns Writable signal.
+ */
+export function signal<T>(value: T): WritableSignal<Exclude<T, typeof VOID>>;
 
-  /**
-   * Subscribes the function to updates of the signal value and calls it immediately.
-   * @param subscriber A function that listens to updates.
-   * @returns Unsubscribe function.
-   */
-  subscribe(subscriber: Subscriber<T>): () => void;
+/**
+ * Сreates a writable signal.
+ * @param value Initial value of the signal.
+ * @param options Signal options.
+ * @returns Writable signal.
+ */
+export function signal<T>(
+  value: T,
+  options: SignalOptions<T>,
+): WritableSignal<Exclude<T, typeof VOID>>;
+
+export function signal(value?: any, options?: any) {
+  if (typeof value === 'function')
+    return new (Signal as any)(undefined, value, options);
+  return new (Signal as any)(value, undefined, options);
 }
-
-export const signalProto = {
-  get(trackDependency = true) {
-    return get((this as any)._state, trackDependency);
-  },
-
-  subscribe(subscriber: any, exec = true) {
-    return subscribe((this as any)._state, subscriber, exec);
-  },
-};
