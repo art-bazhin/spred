@@ -2,6 +2,48 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.33.0](https://github.com/art-bazhin/spred/compare/v0.32.5...v0.33.0) (2024-01-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* writableSignal(newValue) => writableSignal.set(newValue)
+* remove signal function
+* use get method with an argument instead of sample method
+
+### Features
+
+* implement signal options ([d508439](https://github.com/art-bazhin/spred/commit/d508439d487c6205b522477673507a622c1936c5))
+
+
+### Bug Fixes
+
+* fix wrong import ([12f163c](https://github.com/art-bazhin/spred/commit/12f163c21f2842f662731f9ee1249836228d9266))
+* fix wrong imports ([9521819](https://github.com/art-bazhin/spred/commit/9521819da003d5ac2266d90542d109eef3542bb8))
+
+
+### Code Refactoring
+
+* export internal methods in __INTERNAL__ object ([2aa6466](https://github.com/art-bazhin/spred/commit/2aa6466f0875aa6a7cfa09b242d24f3572f5d120))
+* implement new api ([aed432a](https://github.com/art-bazhin/spred/commit/aed432a40755923c04efa048ae7503d0d49fbf2b))
+* minor file structure changes ([4fb7025](https://github.com/art-bazhin/spred/commit/4fb702567508b769bab8822171f860ba464c6dde))
+* minor refactoring ([6f786b4](https://github.com/art-bazhin/spred/commit/6f786b44f4d531256af86fb6126e276f491651a1))
+* refactor dependency tracking ([a32caf8](https://github.com/art-bazhin/spred/commit/a32caf83d185806949274ca479017bb426504134))
+* refactor lifecycle hooks call ([7234ccf](https://github.com/art-bazhin/spred/commit/7234ccf3d7ffba8e34cf01bd54f0869eeff2a60d))
+* refactor options ([e3ef1d4](https://github.com/art-bazhin/spred/commit/e3ef1d4b317749f23be438721deb64e5d141d8d8))
+* refactor storing subscribers ([9407ba3](https://github.com/art-bazhin/spred/commit/9407ba371536c903c75245dc9f99d608feb7bf73))
+* refactor writable signal setters ([fb00869](https://github.com/art-bazhin/spred/commit/fb00869fbcb54696a0148fbe9e0f856ae40411c0))
+* remove ability to set signal value using function ([7bc25bd](https://github.com/art-bazhin/spred/commit/7bc25bdf675c9f51ed57ab99049bd718ef2a1bc6))
+* remove experimental logger api ([0e1f2cf](https://github.com/art-bazhin/spred/commit/0e1f2cfdc928fa847938b0db9606fee26e93f1f3))
+* remove notify method ([750cb6b](https://github.com/art-bazhin/spred/commit/750cb6b1babb4e6be7ec2420fca6e0a7a655e5cf))
+* remove redundant interface ([2e5fbeb](https://github.com/art-bazhin/spred/commit/2e5fbebde8706ab89d7c4fe9c786786649abe8ad))
+* remove sample method ([6fd0390](https://github.com/art-bazhin/spred/commit/6fd039052b59aa915b7b6c48ee9f3470eb3bf25d))
+* remove signal function ([a6638a9](https://github.com/art-bazhin/spred/commit/a6638a9adaa9b34b7865663f77aee161519f5354))
+* remove store api ([e192f91](https://github.com/art-bazhin/spred/commit/e192f9164c2c0817cc510aa02ef8b4e82986dc09))
+* rename internal fields ([78f81be](https://github.com/art-bazhin/spred/commit/78f81be6c31c073e466e3ee2efaf574d525b470b))
+* simplify types ([bb14db0](https://github.com/art-bazhin/spred/commit/bb14db0ee3cadd3e2e20c1bf4cf3b997a07f9ba0))
+* unify ListNode shape ([1dfaae6](https://github.com/art-bazhin/spred/commit/1dfaae6ef2d2b3a3370a26cace5e61df64888d3a))
+
 ### [0.32.5](https://github.com/art-bazhin/spred/compare/v0.32.4...v0.32.5) (2024-01-12)
 
 
