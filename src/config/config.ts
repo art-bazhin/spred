@@ -1,12 +1,9 @@
-import { NOOP_FN } from '../utils/constants';
-
 export interface Config {
   logException: (e: unknown) => any;
 }
 
 const DEFAULT_CONFIG: any = {
   logException: /* istanbul ignore next */ (e: unknown) => console.error(e),
-  _log: NOOP_FN,
 };
 
 export const config = Object.assign({}, DEFAULT_CONFIG);

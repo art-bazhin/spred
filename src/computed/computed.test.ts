@@ -2,7 +2,7 @@ import { computed } from './computed';
 import { writable } from '../writable/writable';
 import { configure } from '../config/config';
 import { batch } from '../core/core';
-import { VOID } from '../utils/constants';
+import { VOID } from '../common/constants';
 
 describe('computed', () => {
   const a = writable(1);

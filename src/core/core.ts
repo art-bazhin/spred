@@ -1,5 +1,5 @@
 import { config } from '../config/config';
-import { CircularDependencyError } from '../errors/errors';
+import { CircularDependencyError } from '../common/errors';
 import {
   ACTIVATING,
   ACTIVATING_STATUS,
@@ -12,7 +12,7 @@ import {
   SCHEDULED_STATUS,
   TRACKING,
   VOID,
-} from '../utils/constants';
+} from '../common/constants';
 
 interface ListNode<T> {
   value: T;

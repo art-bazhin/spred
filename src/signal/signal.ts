@@ -1,5 +1,5 @@
 import { Computation, Signal, SignalOptions } from '../core/core';
-import { VOID } from '../utils/constants';
+import { VOID } from '../common/constants';
 import { WritableSignal } from '../writable/writable';
 
 /**

@@ -1,5 +1,5 @@
 import { Signal, SignalOptions } from '../core/core';
-import { VOID } from '../utils/constants';
+import { VOID } from '../common/constants';
 
 /**
  * A signal whose value can be set.
