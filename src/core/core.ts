@@ -221,7 +221,6 @@ function notify(state: SignalState<any>) {
 
   state._flags |= NOTIFIED;
 
-  if (!state._compute) state.get();
   if (state._subs) consumers.push(state);
 
   for (let node = state._firstTarget; node !== null; node = node.next) {
@@ -318,22 +317,19 @@ export function get<T>(this: SignalState<T>, trackDependency = true): T {
   if (this._version !== version) {
     this._flags &= ~CHANGED;
 
-    let value = this._nextValue;
-
-    if (this._compute) {
-      value = calcComputed(this, shouldLink && !!(this._flags & NOTIFIED));
-    }
+    if (this._compute) compute(this, shouldLink && !!(this._flags & NOTIFIED));
 
     if (this._flags & HAS_EXCEPTION) {
       if (this._subs || this._flags & ACTIVATING)
         config.logException(this._exception);
     } else if (
       this._flags & FORCED ||
-      (value !== (VOID as any) && !this.equals!(value, this._value))
+      (this._nextValue !== (VOID as any) &&
+        !this.equals!(this._nextValue, this._value))
     ) {
-      if (this.onUpdate) this.onUpdate(value, this._value);
+      if (this.onUpdate) this.onUpdate(this._nextValue, this._value);
 
-      this._value = value;
+      this._value = this._nextValue;
       this._flags |= CHANGED;
 
       if (this._subs) {
@@ -374,21 +370,7 @@ export function get<T>(this: SignalState<T>, trackDependency = true): T {
   return this._value;
 }
 
-function hasSameSourceVersions(state: SignalState<any>) {
-  const targetVersion = state._version;
-
-  for (let node = state._firstSource; node !== null; node = node.next) {
-    const source = node.value;
-
-    if (!source._version) return false;
-    if (source._version !== targetVersion) return false;
-    if (!hasSameSourceVersions(source)) return false;
-  }
-
-  return true;
-}
-
-function calcComputed<T>(state: SignalState<T>, scheduled: boolean) {
+function compute<T>(state: SignalState<T>, scheduled: boolean) {
   if (state._firstTarget) {
     let sameDeps = true;
     let hasException = false;
@@ -417,8 +399,6 @@ function calcComputed<T>(state: SignalState<T>, scheduled: boolean) {
   const prevTracking = tracking;
   const prevNode = node;
 
-  let value = state._value;
-
   tracking = state;
   node = state._firstSource;
 
@@ -427,7 +407,7 @@ function calcComputed<T>(state: SignalState<T>, scheduled: boolean) {
 
   try {
     if (state._firstChild) cleanupChildren(state);
-    value = state._compute!(state._value, scheduled);
+    state._nextValue = state._compute!(state._value, scheduled);
   } catch (e: any) {
     state._exception = e;
     state._flags |= HAS_EXCEPTION;
@@ -436,7 +416,7 @@ function calcComputed<T>(state: SignalState<T>, scheduled: boolean) {
   if (state._flags & HAS_EXCEPTION) {
     if (state.catch) {
       try {
-        value = state.catch(state._exception, state._value);
+        state._nextValue = state.catch(state._exception, state._value);
         state._flags &= ~HAS_EXCEPTION;
         state._exception = undefined;
       } catch (e) {
@@ -459,8 +439,6 @@ function calcComputed<T>(state: SignalState<T>, scheduled: boolean) {
   state._flags &= ~TRACKING;
   tracking = prevTracking;
   node = prevNode;
-
-  return value;
 }
 
 function cleanupChildren(state: SignalState<any>) {
