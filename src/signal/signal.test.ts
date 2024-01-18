@@ -436,6 +436,20 @@ describe('signal', () => {
     expect(cSpy).toBeCalledTimes(2);
   });
 
+  it('updates target value after multiple dependency recalculations', () => {
+    const a = signal(0);
+    const b = signal(() => a.get());
+
+    expect(b.get()).toBe(0);
+
+    a.set(1);
+    a.get();
+    a.set(1);
+    a.get();
+
+    expect(b.get()).toBe(1);
+  });
+
   it('does not make redundant computations on pulling', () => {
     const spy = jest.fn();
 

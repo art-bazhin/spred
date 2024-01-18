@@ -317,7 +317,7 @@ export function get<T>(this: SignalState<T>, trackDependency = true): T {
   if (this._version !== version) {
     this._flags &= ~CHANGED;
 
-    if (this._compute) compute(this, shouldLink && !!(this._flags & NOTIFIED));
+    if (this._compute) compute(this);
 
     if (this._flags & HAS_EXCEPTION) {
       if (this._subs || this._flags & ACTIVATING)
@@ -370,7 +370,9 @@ export function get<T>(this: SignalState<T>, trackDependency = true): T {
   return this._value;
 }
 
-function compute<T>(state: SignalState<T>, scheduled: boolean) {
+function compute<T>(state: SignalState<T>) {
+  const scheduled = !!(state._flags & NOTIFIED);
+
   if (state._firstSource) {
     let sameDeps = true;
     let hasException = false;
@@ -555,6 +557,8 @@ function linkDependencies(state: SignalState<any>) {
 }
 
 function unlinkDependencies(state: SignalState<any>) {
+  state._flags &= ~NOTIFIED;
+
   for (let node = state._firstSource; node !== null; node = node.next) {
     if (node.link) {
       removeTargetNode(node.value, node.link);

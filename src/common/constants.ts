@@ -4,9 +4,6 @@ export const TRUE_FN = () => true;
 
 export const VOID: unique symbol = Object.freeze({}) as any;
 
-export const ACTIVATING_STATUS = 1;
-export const SCHEDULED_STATUS = 2;
-
 export const TRACKING = 1 << 0;
 export const NOTIFIED = 1 << 1;
 export const CHANGED = 1 << 2;

@@ -500,6 +500,11 @@ describe('computed', () => {
 
     med.get();
     expect(lastMedScheduled).toBe(false);
+
+    source.set(11);
+    source.set(4);
+    source.set(11);
+    expect(lastMedScheduled).toBe(false);
   });
 
   it('passes true as second compute fn argument if computation was scheduled (case 2)', () => {
