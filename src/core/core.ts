@@ -14,9 +14,9 @@ import {
 
 interface ListNode<T> {
   value: T;
-  link: ListNode<T> | null;
   prev: ListNode<T> | null;
   next: ListNode<T> | null;
+  link?: ListNode<T> | null;
 }
 
 export type Subscriber<T> = (value: T, exec?: boolean) => any;
@@ -371,12 +371,17 @@ export function get<T>(this: SignalState<T>, trackDependency = true): T {
 }
 
 function compute<T>(state: SignalState<T>, scheduled: boolean) {
-  if (state._firstTarget) {
+  if (state._firstSource) {
     let sameDeps = true;
     let hasException = false;
 
     for (let node = state._firstSource; node !== null; node = node.next!) {
       const source = node.value;
+
+      if (!scheduled && source._version !== state._version) {
+        sameDeps = false;
+        break;
+      }
 
       source.get(false);
 
@@ -503,7 +508,6 @@ function createTargetNode(
     value: target,
     prev: source._lastTarget,
     next: null,
-    link: null,
   };
 
   if (source._lastTarget) {
@@ -528,7 +532,6 @@ function createChildNode(
     value: child,
     prev: parent._lastChild || null,
     next: null,
-    link: null,
   };
 
   if (parent._lastChild) {
