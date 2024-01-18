@@ -2,14 +2,12 @@ import { config } from '../config/config';
 import { CircularDependencyError } from '../common/errors';
 import {
   ACTIVATING,
-  ACTIVATING_STATUS,
   CHANGED,
   FORCED,
   FREEZED,
   HAS_EXCEPTION,
   NOOP_FN,
   NOTIFIED,
-  SCHEDULED_STATUS,
   TRACKING,
   VOID,
 } from '../common/constants';
@@ -92,7 +90,7 @@ let scope: SignalState<any> | null = null;
 let node: ListNode<SignalState<any>> | null = null;
 
 let batchLevel = 0;
-let status = 0;
+let shouldLink = false;
 
 let providers: SignalState<any>[] = [];
 let consumers: SignalState<any>[] = [];
@@ -143,12 +141,12 @@ export function isolate<T, A extends unknown[]>(
 export function isolate(fn: any, args?: any) {
   const prevTracking = tracking;
   const prevScope = scope;
-  const prevStatus = status;
+  const prevShouldLink = shouldLink;
 
   let result: any;
 
   if (tracking) scope = tracking;
-  status = 0;
+  shouldLink = false;
   tracking = null;
 
   if (args) result = fn(...args);
@@ -156,7 +154,7 @@ export function isolate(fn: any, args?: any) {
 
   tracking = prevTracking;
   scope = prevScope;
-  status = prevStatus;
+  shouldLink = prevShouldLink;
 
   return result;
 }
@@ -164,10 +162,10 @@ export function isolate(fn: any, args?: any) {
 export function collect(fn: () => any) {
   const prevTracking = tracking;
   const prevScope = scope;
-  const prevStatus = status;
+  const prevShouldLink = shouldLink;
   const fakeState = {} as any as SignalState<any>;
 
-  status = 0;
+  shouldLink = false;
   scope = fakeState;
   tracking = null;
 
@@ -175,7 +173,7 @@ export function collect(fn: () => any) {
 
   tracking = prevTracking;
   scope = prevScope;
-  status = prevStatus;
+  shouldLink = prevShouldLink;
 
   return () => cleanupChildren(fakeState);
 }
@@ -236,16 +234,16 @@ export function subscribe<T>(
   subscriber: Subscriber<T>,
   exec = true,
 ) {
-  const prevStatus = status;
+  const prevShouldLink = shouldLink;
 
   if (!(this._flags & FREEZED) && !this._firstTarget) {
-    status = ACTIVATING_STATUS;
+    shouldLink = true;
     this._flags |= ACTIVATING;
   }
 
   const value = this.get(false);
 
-  status = prevStatus;
+  shouldLink = prevShouldLink;
   this._flags &= ~ACTIVATING;
 
   if (this._flags & FREEZED) {
@@ -281,12 +279,12 @@ export function recalc() {
   if (!providers.length || batchLevel) return;
 
   const q = providers;
-  const prevStatus = status;
+  const prevShouldLink = shouldLink;
 
   providers = [];
   consumers = [];
   version = {};
-  status = SCHEDULED_STATUS;
+  shouldLink = true;
 
   ++batchLevel;
 
@@ -295,7 +293,7 @@ export function recalc() {
     if (state._subs || !state._compute) state.get();
   }
 
-  status = prevStatus;
+  shouldLink = prevShouldLink;
 
   for (let i = 0; i < notifications.length; i += 2) {
     notifications[i](notifications[i + 1]);
@@ -309,8 +307,6 @@ export function recalc() {
 }
 
 export function get<T>(this: SignalState<T>, trackDependency = true): T {
-  if (!status) this._flags &= ~NOTIFIED;
-
   if (this._compute) {
     if (this._flags & FREEZED) return this._value;
 
@@ -319,15 +315,17 @@ export function get<T>(this: SignalState<T>, trackDependency = true): T {
     }
   }
 
-  let shouldCompute = this._version !== version;
-
-  if (shouldCompute) {
+  if (this._version !== version) {
     this._flags &= ~CHANGED;
 
-    const value = this._compute ? calcComputed(this) : this._nextValue;
+    let value = this._nextValue;
+
+    if (this._compute) {
+      value = calcComputed(this, shouldLink && !!(this._flags & NOTIFIED));
+    }
 
     if (this._flags & HAS_EXCEPTION) {
-      if ((this._subs || this._flags & ACTIVATING) && this._version !== version)
+      if (this._subs || this._flags & ACTIVATING)
         config.logException(this._exception);
     } else if (
       this._flags & FORCED ||
@@ -348,7 +346,6 @@ export function get<T>(this: SignalState<T>, trackDependency = true): T {
   }
 
   this._version = version;
-
   this._flags &= ~NOTIFIED;
 
   if (tracking && trackDependency) {
@@ -363,26 +360,40 @@ export function get<T>(this: SignalState<T>, trackDependency = true): T {
 
         node.value = this;
 
-        if (status) createTargetNode(this, tracking, node);
+        if (shouldLink) createTargetNode(this, tracking, node);
         else node.link = null;
       }
 
       node = node.next;
     } else {
       const n = createSourceNode(this, tracking);
-      if (status) createTargetNode(this, tracking, n);
+      if (shouldLink) createTargetNode(this, tracking, n);
     }
   }
 
   return this._value;
 }
 
-function calcComputed<T>(state: SignalState<T>) {
+function hasSameSourceVersions(state: SignalState<any>) {
+  const targetVersion = state._version;
+
+  for (let node = state._firstSource; node !== null; node = node.next) {
+    const source = node.value;
+
+    if (!source._version) return false;
+    if (source._version !== targetVersion) return false;
+    if (!hasSameSourceVersions(source)) return false;
+  }
+
+  return true;
+}
+
+function calcComputed<T>(state: SignalState<T>, scheduled: boolean) {
   if (state._firstTarget) {
     let sameDeps = true;
     let hasException = false;
 
-    for (let node = state._firstSource; node !== null; node = node.next) {
+    for (let node = state._firstSource; node !== null; node = node.next!) {
       const source = node.value;
 
       source.get(false);
@@ -416,7 +427,7 @@ function calcComputed<T>(state: SignalState<T>) {
 
   try {
     if (state._firstChild) cleanupChildren(state);
-    value = state._compute!(state._value, !!(state._flags & NOTIFIED));
+    value = state._compute!(state._value, scheduled);
   } catch (e: any) {
     state._exception = e;
     state._flags |= HAS_EXCEPTION;
