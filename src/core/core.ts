@@ -117,8 +117,6 @@ export function Signal<T>(
   this._firstTarget = null;
   this._lastTarget = null;
 
-  this.equals = Object.is;
-
   if (options) {
     for (let key in options) {
       (this as any)[key] = (options as any)[key];
@@ -132,6 +130,7 @@ Signal.prototype.get = get;
 Signal.prototype.set = set;
 Signal.prototype.update = update;
 Signal.prototype.subscribe = subscribe;
+Signal.prototype.equals = Object.is;
 
 export function isolate<T>(fn: () => T): T;
 export function isolate<T, A extends unknown[]>(
