@@ -1,5 +1,5 @@
-import type { Signal } from './core/core';
-import { writable, WritableSignal } from './writable/writable';
+import type { Signal, WritableSignal } from './core/core';
+import { writable } from './writable/writable';
 import { computed } from './computed/computed';
 import { configure, Config } from './config/config';
 import { batch, Subscriber, SignalOptions, Computation } from './core/core';

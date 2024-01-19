@@ -1,9 +1,8 @@
-import { Signal, get } from '../core/core';
-import { WritableSignal } from '../writable/writable';
+import { Signal, WritableSignal } from '../core/core';
 
 export function isSignal(value: unknown): value is Signal<unknown>;
 export function isSignal(value: any) {
-  return value.get === get;
+  return value instanceof Signal;
 }
 
 export function isWritableSignal(
@@ -11,7 +10,7 @@ export function isWritableSignal(
 ): value is WritableSignal<unknown>;
 
 export function isWritableSignal(value: any) {
-  return value.get === get && !value._compute;
+  return value instanceof WritableSignal;
 }
 
 export function getValue<T>(value: T | Signal<T>) {

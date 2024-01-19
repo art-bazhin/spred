@@ -1,6 +1,10 @@
-import { Computation, Signal, SignalOptions } from '../core/core';
+import {
+  Computation,
+  Signal,
+  WritableSignal,
+  SignalOptions,
+} from '../core/core';
 import { VOID } from '../common/constants';
-import { WritableSignal } from '../writable/writable';
 
 /**
  * Creates a signal that automatically calculates its value from other signals.
@@ -48,7 +52,6 @@ export function signal<T>(
 ): WritableSignal<Exclude<T, typeof VOID>>;
 
 export function signal(value?: any, options?: any) {
-  if (typeof value === 'function')
-    return new (Signal as any)(undefined, value, options);
-  return new (Signal as any)(value, undefined, options);
+  if (typeof value === 'function') return new (Signal as any)(value, options);
+  return new (WritableSignal as any)(value, options);
 }

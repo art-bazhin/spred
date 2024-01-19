@@ -11,5 +11,5 @@ export function computed<T>(
   compute: Computation<T>,
   options?: SignalOptions<Exclude<T, typeof VOID>>,
 ): Signal<Exclude<T, typeof VOID>> {
-  return new (Signal as any)(undefined as any, compute, options);
+  return new (Signal as any)(compute, options);
 }

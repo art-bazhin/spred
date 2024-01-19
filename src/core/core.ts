@@ -19,12 +19,35 @@ interface ListNode<T> {
   link?: ListNode<T> | null;
 }
 
+let computing: SignalState<any> | null = null;
+let scope: SignalState<any> | null = null;
+let node: ListNode<SignalState<any>> | null = null;
+
+let batchLevel = 0;
+let shouldLink = false;
+
+let providers: SignalState<any>[] = [];
+let consumers: SignalState<any>[] = [];
+let notifications: any[] = [];
+
+let version = 1;
+
 export type Subscriber<T> = (value: T, exec?: boolean) => any;
 
 export type Computation<T> =
   | (() => T)
   | ((prevValue: T | undefined) => T)
   | ((prevValue: T | undefined, scheduled: boolean) => T);
+
+export interface SignalOptions<T> {
+  name?: string;
+  equals?: (value: T, prevValue?: T) => unknown;
+  catch?: (err: unknown, prevValue?: T) => T;
+  onActivate?: (value: T) => any;
+  onDeactivate?: (value: T) => any;
+  onUpdate?: (value: T, prevValue?: T) => any;
+  onException?: (e: unknown) => any;
+}
 
 /**
  * Basic reactive primitive.
@@ -56,15 +79,74 @@ export interface Signal<T> {
   subscribe(subscriber: Subscriber<T>): () => void;
 }
 
-export interface SignalOptions<T> {
-  name?: string;
-  equals?: (value: T, prevValue?: T) => unknown;
-  catch?: (err: unknown, prevValue?: T) => T;
-  onActivate?: (value: T) => any;
-  onDeactivate?: (value: T) => any;
-  onUpdate?: (value: T, prevValue?: T) => any;
-  onException?: (e: unknown) => any;
+export function Signal<T>(
+  this: SignalState<T>,
+  compute?: Computation<T>,
+  options?: SignalOptions<T>,
+) {
+  const parent = computing || scope;
+
+  this._value = undefined as any;
+  this._nextValue = undefined as any;
+  this._compute = compute;
+  this._flags = 0;
+  this._subs = 0;
+  this._version = 0;
+  this._firstSource = null;
+  this._lastSource = null;
+  this._firstTarget = null;
+  this._lastTarget = null;
+
+  if (options) {
+    for (let key in options) {
+      (this as any)[key] = (options as any)[key];
+    }
+  }
+
+  if (parent) createChildNode(parent, this);
 }
+
+Signal.prototype.get = get;
+Signal.prototype.subscribe = subscribe;
+Signal.prototype.equals = Object.is;
+
+/**
+ * A signal whose value can be set.
+ */
+export interface WritableSignal<T> extends Signal<T> {
+  /**
+   * Set the value of the signal
+   * @param value New value of the signal.
+   */
+  set(value: T): T;
+
+  /**
+   * Notify subscribers without setting a new value.
+   */
+  set(): T;
+
+  /**
+   * Calculate and set a new value of the signal from the current value
+   * @param getNextValue Function that calculates a new value from the current value.
+   */
+  update(getNextValue: (currentValue: T) => T): T;
+}
+
+export function WritableSignal<T>(
+  this: SignalState<T>,
+  value: T,
+  options?: SignalOptions<T>,
+) {
+  Signal.call(this as any, undefined, options as any);
+
+  this._value = value;
+  this._nextValue = value;
+}
+
+WritableSignal.prototype = new (Signal as any)();
+WritableSignal.prototype.constructor = WritableSignal;
+WritableSignal.prototype.set = set;
+WritableSignal.prototype.update = update;
 
 export interface SignalState<T> extends SignalOptions<T>, Signal<T> {
   _value: T;
@@ -84,53 +166,6 @@ export interface SignalState<T> extends SignalOptions<T>, Signal<T> {
   _firstChild?: ListNode<SignalState<any> | (() => any)> | null;
   _lastChild?: ListNode<SignalState<any> | (() => any)> | null;
 }
-
-let computing: SignalState<any> | null = null;
-let scope: SignalState<any> | null = null;
-let node: ListNode<SignalState<any>> | null = null;
-
-let batchLevel = 0;
-let shouldLink = false;
-
-let providers: SignalState<any>[] = [];
-let consumers: SignalState<any>[] = [];
-let notifications: any[] = [];
-
-let version = 1;
-
-export function Signal<T>(
-  this: SignalState<T>,
-  value: T,
-  compute?: Computation<T>,
-  options?: SignalOptions<T>,
-) {
-  const parent = computing || scope;
-
-  this._value = value;
-  this._compute = compute;
-  this._nextValue = value;
-  this._flags = 0;
-  this._subs = 0;
-  this._version = 0;
-  this._firstSource = null;
-  this._lastSource = null;
-  this._firstTarget = null;
-  this._lastTarget = null;
-
-  if (options) {
-    for (let key in options) {
-      (this as any)[key] = (options as any)[key];
-    }
-  }
-
-  if (parent) createChildNode(parent, this);
-}
-
-Signal.prototype.get = get;
-Signal.prototype.set = set;
-Signal.prototype.update = update;
-Signal.prototype.subscribe = subscribe;
-Signal.prototype.equals = Object.is;
 
 export function isolate<T>(fn: () => T): T;
 export function isolate<T, A extends unknown[]>(
@@ -192,9 +227,9 @@ export function batch(fn: (...args: any) => any) {
   else recalc();
 }
 
-export function set<T>(this: SignalState<T>, value: T): T;
-export function set<T>(this: SignalState<T>): void;
-export function set<T>(this: SignalState<T>, value?: any) {
+function set<T>(this: SignalState<T>, value: T): T;
+function set<T>(this: SignalState<T>): void;
+function set<T>(this: SignalState<T>, value?: any) {
   const wrapper = (config as any)._notificationWrapper;
 
   if (arguments.length) {
@@ -227,7 +262,7 @@ function notify(state: SignalState<any>) {
   }
 }
 
-export function subscribe<T>(
+function subscribe<T>(
   this: SignalState<T>,
   subscriber: Subscriber<T>,
   exec = true,
@@ -277,10 +312,7 @@ export function subscribe<T>(
   return dispose;
 }
 
-/**
- * Immediately calculates the updated values of the signals and notifies their subscribers.
- */
-export function recalc() {
+function recalc() {
   if (!providers.length || batchLevel) return;
 
   const q = providers;
@@ -316,7 +348,7 @@ export function recalc() {
   recalc();
 }
 
-export function get<T>(this: SignalState<T>, trackDependency = true): T {
+function get<T>(this: SignalState<T>, trackDependency = true): T {
   if (this._compute) {
     if (this._flags & FREEZED) return this._value;
 
@@ -469,30 +501,6 @@ function cleanupChildren(state: SignalState<any>) {
   state._lastChild = null;
 }
 
-function removeSourceNode(state: SignalState<any>, node: ListNode<any>) {
-  if (state._firstSource === node) state._firstSource = node.next;
-  if (state._lastSource === node) state._lastSource = node.prev;
-  if (node.prev) node.prev.next = node.next;
-  if (node.next) node.next.prev = node.prev;
-
-  if (node.link) {
-    removeTargetNode(node.value, node.link);
-    node.link = null;
-  }
-}
-
-function removeTargetNode(state: SignalState<any>, node: ListNode<any>) {
-  if (state._firstTarget === node) state._firstTarget = node.next;
-  if (state._lastTarget === node) state._lastTarget = node.prev;
-  if (node.prev) node.prev.next = node.next;
-  if (node.next) node.next.prev = node.prev;
-
-  if (!state._firstTarget) {
-    unlinkDependencies(state);
-    if (state.onDeactivate) state.onDeactivate(state._value);
-  }
-}
-
 function createSourceNode(source: SignalState<any>, target: SignalState<any>) {
   const node: ListNode<any> = {
     value: source,
@@ -510,6 +518,18 @@ function createSourceNode(source: SignalState<any>, target: SignalState<any>) {
   target._lastSource = node;
 
   return node;
+}
+
+function removeSourceNode(state: SignalState<any>, node: ListNode<any>) {
+  if (state._firstSource === node) state._firstSource = node.next;
+  if (state._lastSource === node) state._lastSource = node.prev;
+  if (node.prev) node.prev.next = node.next;
+  if (node.next) node.next.prev = node.prev;
+
+  if (node.link) {
+    removeTargetNode(node.value, node.link);
+    node.link = null;
+  }
 }
 
 function createTargetNode(
@@ -535,6 +555,18 @@ function createTargetNode(
   if (sourceNode) sourceNode.link = node;
 
   return node;
+}
+
+function removeTargetNode(state: SignalState<any>, node: ListNode<any>) {
+  if (state._firstTarget === node) state._firstTarget = node.next;
+  if (state._lastTarget === node) state._lastTarget = node.prev;
+  if (node.prev) node.prev.next = node.next;
+  if (node.next) node.next.prev = node.prev;
+
+  if (!state._firstTarget) {
+    unlinkDependencies(state);
+    if (state.onDeactivate) state.onDeactivate(state._value);
+  }
 }
 
 function createChildNode(
