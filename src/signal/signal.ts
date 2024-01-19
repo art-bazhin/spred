@@ -24,7 +24,7 @@ export function signal<T>(
  */
 export function signal<T>(
   compute: Computation<T>,
-  options: SignalOptions<T>,
+  options: SignalOptions<Exclude<T, typeof VOID>>,
 ): Signal<Exclude<T, typeof VOID>>;
 
 /**
@@ -48,7 +48,7 @@ export function signal<T>(value: T): WritableSignal<Exclude<T, typeof VOID>>;
  */
 export function signal<T>(
   value: T,
-  options: SignalOptions<T>,
+  options: SignalOptions<Exclude<T, typeof VOID>>,
 ): WritableSignal<Exclude<T, typeof VOID>>;
 
 export function signal(value?: any, options?: any) {

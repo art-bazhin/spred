@@ -22,7 +22,7 @@ export function writable<T>(value: T): WritableSignal<Exclude<T, typeof VOID>>;
  */
 export function writable<T>(
   value: T,
-  options: SignalOptions<T>,
+  options: SignalOptions<Exclude<T, typeof VOID>>,
 ): WritableSignal<Exclude<T, typeof VOID>>;
 
 export function writable(value?: any, options?: any) {
