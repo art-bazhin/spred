@@ -184,9 +184,9 @@ export function collect(fn: () => any) {
 export function batch(fn: (...args: any) => any) {
   const wrapper = (config as any)._notificationWrapper;
 
-  batchLevel++;
+  ++batchLevel;
   fn();
-  batchLevel--;
+  --batchLevel;
 
   if (wrapper) wrapper(recalc);
   else recalc();
@@ -233,6 +233,7 @@ export function subscribe<T>(
   exec = true,
 ) {
   const prevShouldLink = shouldLink;
+  const runSubscriber = () => batch(() => subscriber(value, true));
 
   if (!(this._flags & FREEZED) && !this._firstTarget) {
     shouldLink = true;
@@ -245,21 +246,19 @@ export function subscribe<T>(
   this._flags &= ~ACTIVATING;
 
   if (this._flags & FREEZED) {
-    if (exec) isolate(() => subscriber(value, true));
+    if (exec) isolate(runSubscriber);
     return NOOP_FN;
   }
 
   let node = createTargetNode(this, subscriber, null);
-  this._subs++;
+  ++this._subs;
 
-  if (exec) {
-    isolate(() => subscriber(value, true));
-  }
+  if (exec) isolate(runSubscriber);
 
   const dispose = () => {
     if (!node) return;
     removeTargetNode(this, node);
-    this._subs--;
+    --this._subs;
     node = null as any;
   };
 

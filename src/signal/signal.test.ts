@@ -724,6 +724,24 @@ describe('signal', () => {
     expect(spy).toBeCalledTimes(1);
   });
 
+  it('batches updates while subscribing', () => {
+    const a = signal(0);
+    const b = signal(0);
+    const c = signal(0);
+    const d = signal(() => b.get() + c.get());
+    const spy = jest.fn();
+
+    d.subscribe(spy, false);
+
+    a.subscribe(() => {
+      b.set(1);
+      c.set(1);
+    });
+
+    expect(d.get()).toBe(2);
+    expect(spy).toBeCalledTimes(1);
+  });
+
   describe('lifecycle hooks', () => {
     it('emits in right order', () => {
       const result: any = {};
