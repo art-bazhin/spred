@@ -2,7 +2,6 @@ import { computed } from './computed';
 import { writable } from '../writable/writable';
 import { configure } from '../config/config';
 import { batch } from '../core/core';
-import { VOID } from '../common/constants';
 
 describe('computed', () => {
   const a = writable(1);
@@ -668,16 +667,14 @@ describe('computed', () => {
     expect(spy).toBeCalledTimes(4);
   });
 
-  it('can filter values using VOID constant', () => {
+  it('can filter values using undefined value', () => {
     const a = writable(0, {
       equals: () => false,
     });
     const b = computed(
       () => {
         const value = a.get();
-
-        if (value >= 5) return VOID;
-        return value;
+        if (value < 5) return value;
       },
       {
         equals: () => false,

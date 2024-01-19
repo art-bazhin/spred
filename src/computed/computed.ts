@@ -1,5 +1,4 @@
 import { Computation, Signal, SignalOptions } from '../core/core';
-import { VOID } from '../common/constants';
 
 /**
  * Creates a signal that automatically calculates its value from other signals.
@@ -9,7 +8,7 @@ import { VOID } from '../common/constants';
  */
 export function computed<T>(
   compute: Computation<T>,
-  options?: SignalOptions<Exclude<T, typeof VOID>>,
-): Signal<Exclude<T, typeof VOID>> {
+  options?: SignalOptions<T>,
+): Signal<T> {
   return new (Signal as any)(compute, options);
 }

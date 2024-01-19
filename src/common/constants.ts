@@ -1,8 +1,4 @@
 export const NOOP_FN = () => {};
-export const FALSE_FN = () => false;
-export const TRUE_FN = () => true;
-
-export const VOID: unique symbol = Object.freeze({}) as any;
 
 export const TRACKING = 1 << 0;
 export const NOTIFIED = 1 << 1;

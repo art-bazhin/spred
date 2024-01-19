@@ -9,8 +9,9 @@ import {
   NOOP_FN,
   NOTIFIED,
   TRACKING,
-  VOID,
 } from '../common/constants';
+
+const VOID = {};
 
 interface ListNode<T> {
   value: T;
@@ -367,7 +368,7 @@ function get<T>(this: SignalState<T>, trackDependency = true): T {
         config.logException(this._exception);
     } else if (
       this._flags & FORCED ||
-      (this._nextValue !== (VOID as any) &&
+      (this._nextValue !== undefined &&
         !this.equals!(this._nextValue, this._value))
     ) {
       if (this.onUpdate) this.onUpdate(this._nextValue, this._value);

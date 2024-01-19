@@ -56,17 +56,6 @@ describe('writable', () => {
     expect(value.get()).toBe(1);
   });
 
-  it('triggers subscribers if undefined value was passed', () => {
-    const value = writable<any>(null);
-    const spy = jest.fn();
-
-    value.subscribe(spy);
-    expect(spy).toBeCalledTimes(1);
-
-    value.set(undefined);
-    expect(spy).toBeCalledTimes(2);
-  });
-
   it('has Signal methods', () => {
     expect(counter.get).toBeDefined;
     expect(counter.subscribe).toBeDefined;
@@ -100,7 +89,7 @@ describe('writable', () => {
 
   it('force emits dependant subscribers using notify method', () => {
     const s = writable({} as any);
-    const comp = computed(() => s.get().a, {
+    const comp = computed(() => s.get().a || null, {
       equals: () => false,
     });
 
@@ -112,7 +101,7 @@ describe('writable', () => {
     s.set();
 
     expect(subscriber).toBeCalledTimes(2);
-    expect(value).toBe(undefined);
+    expect(value).toBe(null);
 
     s.get().a = 1;
     s.set();

@@ -14,7 +14,6 @@ import {
 } from './guards/guards';
 import { isolate } from './isolate/isolate';
 import { collect } from './collect/collect';
-import { VOID } from './common/constants';
 
 export {
   Signal,
@@ -36,5 +35,4 @@ export {
   sampleValue,
   isolate,
   collect,
-  VOID,
 };
