@@ -233,7 +233,15 @@ export function subscribe<T>(
   exec = true,
 ) {
   const prevShouldLink = shouldLink;
-  const runSubscriber = () => batch(() => subscriber(value, true));
+  const runSubscriber = () => {
+    batch(() => {
+      try {
+        subscriber(value, true);
+      } catch (e) {
+        config.logException(e);
+      }
+    });
+  };
 
   if (!(this._flags & FREEZED) && !this._firstTarget) {
     shouldLink = true;
@@ -280,9 +288,9 @@ export function recalc() {
 
   providers = [];
   consumers = [];
-  ++version;
   shouldLink = true;
 
+  ++version;
   ++batchLevel;
 
   for (let state of q) notify(state);
@@ -294,7 +302,11 @@ export function recalc() {
   shouldLink = prevShouldLink;
 
   for (let i = 0; i < notifications.length; i += 2) {
-    notifications[i](notifications[i + 1]);
+    try {
+      notifications[i](notifications[i + 1]);
+    } catch (e) {
+      config.logException(e);
+    }
   }
 
   notifications = [];

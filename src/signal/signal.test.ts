@@ -742,6 +742,27 @@ describe('signal', () => {
     expect(spy).toBeCalledTimes(1);
   });
 
+  it('catches and logs exceptions in subscribers', () => {
+    const spy = jest.fn();
+
+    configure({
+      logException: spy,
+    });
+
+    const a = signal(0);
+    const sub = () => {
+      throw 'ERROR';
+    };
+
+    a.subscribe(sub);
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    a.set(1);
+    expect(spy).toHaveBeenCalledTimes(2);
+
+    configure();
+  });
+
   describe('lifecycle hooks', () => {
     it('emits in right order', () => {
       const result: any = {};
