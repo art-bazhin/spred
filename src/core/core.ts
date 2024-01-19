@@ -72,7 +72,7 @@ export interface SignalState<T> extends SignalOptions<T>, Signal<T> {
   _compute?: Computation<T>;
   _flags: number;
   _exception?: unknown;
-  _version: any;
+  _version: number;
   _subs: number;
 
   _firstSource: ListNode<SignalState<any>> | null;
@@ -96,7 +96,7 @@ let providers: SignalState<any>[] = [];
 let consumers: SignalState<any>[] = [];
 let notifications: any[] = [];
 
-let version = {};
+let version = 1;
 
 export function Signal<T>(
   this: SignalState<T>,
@@ -111,7 +111,7 @@ export function Signal<T>(
   this._nextValue = value;
   this._flags = 0;
   this._subs = 0;
-  this._version = null;
+  this._version = 0;
   this._firstSource = null;
   this._lastSource = null;
   this._firstTarget = null;
@@ -281,7 +281,7 @@ export function recalc() {
 
   providers = [];
   consumers = [];
-  version = {};
+  ++version;
   shouldLink = true;
 
   ++batchLevel;
