@@ -85,7 +85,7 @@ export interface SignalState<T> extends SignalOptions<T>, Signal<T> {
   _lastChild?: ListNode<SignalState<any> | (() => any)> | null;
 }
 
-let tracking: SignalState<any> | null = null;
+let computing: SignalState<any> | null = null;
 let scope: SignalState<any> | null = null;
 let node: ListNode<SignalState<any>> | null = null;
 
@@ -104,7 +104,7 @@ export function Signal<T>(
   compute?: Computation<T>,
   options?: SignalOptions<T>,
 ) {
-  const parent = tracking || scope;
+  const parent = computing || scope;
 
   this._value = value;
   this._compute = compute;
@@ -138,20 +138,20 @@ export function isolate<T, A extends unknown[]>(
   args: A,
 ): T;
 export function isolate(fn: any, args?: any) {
-  const prevTracking = tracking;
+  const prevComputing = computing;
   const prevScope = scope;
   const prevShouldLink = shouldLink;
 
   let result: any;
 
-  if (tracking) scope = tracking;
+  if (computing) scope = computing;
   shouldLink = false;
-  tracking = null;
+  computing = null;
 
   if (args) result = fn(...args);
   else result = fn();
 
-  tracking = prevTracking;
+  computing = prevComputing;
   scope = prevScope;
   shouldLink = prevShouldLink;
 
@@ -159,18 +159,18 @@ export function isolate(fn: any, args?: any) {
 }
 
 export function collect(fn: () => any) {
-  const prevTracking = tracking;
+  const prevComputing = computing;
   const prevScope = scope;
   const prevShouldLink = shouldLink;
   const fakeState = {} as any as SignalState<any>;
 
   shouldLink = false;
   scope = fakeState;
-  tracking = null;
+  computing = null;
 
   fn();
 
-  tracking = prevTracking;
+  computing = prevComputing;
   scope = prevScope;
   shouldLink = prevShouldLink;
 
@@ -263,7 +263,7 @@ export function subscribe<T>(
     node = null as any;
   };
 
-  const parent = tracking || scope;
+  const parent = computing || scope;
 
   if (parent) createChildNode(parent, dispose);
 
@@ -343,10 +343,10 @@ export function get<T>(this: SignalState<T>, trackDependency = true): T {
   this._version = version;
   this._flags &= ~NOTIFIED;
 
-  if (tracking && trackDependency) {
-    if (this._flags & HAS_EXCEPTION && !(tracking._flags & HAS_EXCEPTION)) {
-      tracking._exception = this._exception;
-      tracking._flags |= HAS_EXCEPTION;
+  if (computing && trackDependency) {
+    if (this._flags & HAS_EXCEPTION && !(computing._flags & HAS_EXCEPTION)) {
+      computing._exception = this._exception;
+      computing._flags |= HAS_EXCEPTION;
     }
 
     if (node) {
@@ -355,14 +355,14 @@ export function get<T>(this: SignalState<T>, trackDependency = true): T {
 
         node.value = this;
 
-        if (shouldLink) createTargetNode(this, tracking, node);
+        if (shouldLink) createTargetNode(this, computing, node);
         else node.link = null;
       }
 
       node = node.next;
     } else {
-      const n = createSourceNode(this, tracking);
-      if (shouldLink) createTargetNode(this, tracking, n);
+      const n = createSourceNode(this, computing);
+      if (shouldLink) createTargetNode(this, computing, n);
     }
   }
 
@@ -402,10 +402,10 @@ function compute<T>(state: SignalState<T>) {
     }
   }
 
-  const prevTracking = tracking;
+  const prevComputing = computing;
   const prevNode = node;
 
-  tracking = state;
+  computing = state;
   node = state._firstSource;
 
   state._flags |= TRACKING;
@@ -443,7 +443,7 @@ function compute<T>(state: SignalState<T>) {
   if (!state._firstSource) state._flags |= FREEZED;
 
   state._flags &= ~TRACKING;
-  tracking = prevTracking;
+  computing = prevComputing;
   node = prevNode;
 }
 
