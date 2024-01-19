@@ -216,14 +216,14 @@ function update<T>(this: any, updateFn: (value: T) => T) {
 }
 
 function notify(state: SignalState<any>) {
-  if (state._flags & NOTIFIED) return;
-
   state._flags |= NOTIFIED;
 
   if (state._subs) consumers.push(state);
 
   for (let node = state._firstTarget; node !== null; node = node.next) {
-    if (typeof node.value === 'object') notify(node.value);
+    if (typeof node.value === 'object' && !(node.value._flags & NOTIFIED)) {
+      notify(node.value);
+    }
   }
 }
 
@@ -287,8 +287,9 @@ export function recalc() {
   ++batchLevel;
 
   for (let state of q) notify(state);
+
   for (let state of consumers) {
-    if (state._subs || !state._compute) state.get();
+    if (state._subs) state.get();
   }
 
   shouldLink = prevShouldLink;
