@@ -11,8 +11,6 @@ import {
   TRACKING,
 } from '../common/constants';
 
-const VOID = {};
-
 interface ListNode<T> {
   value: T;
   prev: ListNode<T> | null;
@@ -254,6 +252,13 @@ function update<T>(this: any, updateFn: (value: T) => T) {
 function notify(state: SignalState<any>) {
   state._flags |= NOTIFIED;
 
+  if (
+    typeof state._nextValue === 'object' &&
+    state._nextValue &&
+    state._nextValue.shit
+  ) {
+  }
+
   if (state._subs) consumers.push(state);
 
   for (let node = state._firstTarget; node !== null; node = node.next) {
@@ -326,7 +331,15 @@ function recalc() {
   ++version;
   ++batchLevel;
 
-  for (let state of q) notify(state);
+  for (let state of q) {
+    if (
+      state._flags & FORCED ||
+      (state._nextValue !== undefined &&
+        !state.equals!(state._nextValue, state._value))
+    ) {
+      notify(state);
+    }
+  }
 
   for (let state of consumers) {
     if (state._subs) state.get();
@@ -359,16 +372,19 @@ function get<T>(this: SignalState<T>, trackDependency = true): T {
   }
 
   if (this._version !== version) {
+    const sourcesChanged = checkSources(this);
+
     this._flags &= ~CHANGED;
 
-    if (this._compute) compute(this);
+    if (this._compute && sourcesChanged) compute(this);
 
     if (this._flags & HAS_EXCEPTION) {
       if (this._subs || this._flags & ACTIVATING)
         config.logException(this._exception);
     } else if (
       this._flags & FORCED ||
-      (this._nextValue !== undefined &&
+      (sourcesChanged &&
+        this._nextValue !== undefined &&
         !this.equals!(this._nextValue, this._value))
     ) {
       if (this.onUpdate) this.onUpdate(this._nextValue, this._value);
@@ -387,6 +403,7 @@ function get<T>(this: SignalState<T>, trackDependency = true): T {
 
   this._version = version;
   this._flags &= ~NOTIFIED;
+  this._flags &= ~FORCED;
 
   if (computing && trackDependency) {
     if (this._flags & HAS_EXCEPTION && !(computing._flags & HAS_EXCEPTION)) {
@@ -414,18 +431,16 @@ function get<T>(this: SignalState<T>, trackDependency = true): T {
   return this._value;
 }
 
-function compute<T>(state: SignalState<T>) {
-  const scheduled = !!(state._flags & NOTIFIED);
-
+function checkSources(state: SignalState<any>) {
   if (state._firstSource) {
-    let sameDeps = true;
+    let sameSources = true;
     let hasException = false;
 
     for (let node = state._firstSource; node !== null; node = node.next!) {
       const source = node.value;
 
-      if (!scheduled && source._version !== state._version) {
-        sameDeps = false;
+      if (!(state._flags & NOTIFIED) && source._version !== state._version) {
+        sameSources = false;
         break;
       }
 
@@ -437,16 +452,21 @@ function compute<T>(state: SignalState<T>) {
         state._exception = source._exception;
         break;
       } else if (source._flags & CHANGED) {
-        sameDeps = false;
+        sameSources = false;
         break;
       }
     }
 
-    if (sameDeps && !hasException) {
-      return state._value;
+    if (sameSources && !hasException) {
+      return false;
     }
   }
 
+  return true;
+}
+
+function compute<T>(state: SignalState<T>) {
+  const scheduled = !!(state._flags & NOTIFIED);
   const prevComputing = computing;
   const prevNode = node;
 

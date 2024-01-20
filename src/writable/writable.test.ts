@@ -85,16 +85,24 @@ describe('writable', () => {
 
     expect(subscriber).toBeCalledTimes(4);
     expect(value).toBe(2);
+
+    s.set(s.get());
+
+    expect(subscriber).toBeCalledTimes(4);
   });
 
-  it('force emits dependant subscribers using notify method', () => {
-    const s = writable({} as any);
+  it('force emits dependant subscribers using set method without arguments', () => {
+    const obj = { shit: 'yeah' } as any;
+    const s = writable(obj);
     const comp = computed(() => s.get().a || null, {
       equals: () => false,
     });
 
     let value: any;
-    const subscriber = jest.fn((v: any) => (value = v));
+
+    const subscriber = jest.fn((v: any) => {
+      value = v;
+    });
 
     comp.subscribe(subscriber);
 
@@ -114,6 +122,11 @@ describe('writable', () => {
 
     expect(subscriber).toBeCalledTimes(4);
     expect(value).toBe(2);
+
+    s.set(obj);
+
+    expect(value).toBe(2);
+    expect(subscriber).toBeCalledTimes(4);
   });
 
   it('keeps subscriptions made inside a subscriber', () => {
