@@ -2,6 +2,50 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.34.0](https://github.com/art-bazhin/spred/compare/v0.33.0...v0.34.0) (2024-01-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove VOID constant, filter undefined values instead of VOID
+* rename watch to effect, remove old effect
+
+### Features
+
+* filter undefined values ([d16eb97](https://github.com/art-bazhin/spred/commit/d16eb972b7da6513f6e1d170de01d993b470f104))
+
+
+### Bug Fixes
+
+* catch errors in subscribers ([cf613a5](https://github.com/art-bazhin/spred/commit/cf613a52e4fe7edcf7abed329035e7c9bff55a56))
+* fix batching while subscribing ([e91c835](https://github.com/art-bazhin/spred/commit/e91c835f6e2ea7e9bbbe54015ab9f7fb810e42e4))
+* fix redundant calculations using Signal.set() ([d8145e5](https://github.com/art-bazhin/spred/commit/d8145e55814eeb754e00137272557541aebb1652))
+* fix redundant computations on pulling ([9e12ecb](https://github.com/art-bazhin/spred/commit/9e12ecb9d419e078af1161c9fc7cdc9ca3c6df1c))
+* fix scheduled argument bug ([bf788d7](https://github.com/art-bazhin/spred/commit/bf788d74098ccdc32ca9eb3c48df20cc02801050))
+* fix signal options typings ([fa0519b](https://github.com/art-bazhin/spred/commit/fa0519b48d38194e39b70b9cda4133177871e7a2))
+
+
+### Performance Improvements
+
+* use number version instead of object ([1968697](https://github.com/art-bazhin/spred/commit/1968697e2a5991473aeeaf83f64389c7ef14ea7c))
+
+
+### Code Refactoring
+
+* minor refactoring ([b2d3238](https://github.com/art-bazhin/spred/commit/b2d32380c6039a78bf29fdf7d19578b3e1fcc583))
+* minor refactoring ([df0616a](https://github.com/art-bazhin/spred/commit/df0616a8792892413c80aee4fd9aac0d1c274ca5))
+* move equals function to Signal prototype ([10cbbb1](https://github.com/art-bazhin/spred/commit/10cbbb190c0f9ce5bf264b393689ed554a9810cc))
+* refactor prototypes ([ace8853](https://github.com/art-bazhin/spred/commit/ace8853fa4f1fb447ab88fa7013ff41511fcd301))
+* remove obsolete apis ([71177da](https://github.com/art-bazhin/spred/commit/71177da7541fb16cc02b94567b6836533e419870))
+* remove redundant checks ([1e31b6b](https://github.com/art-bazhin/spred/commit/1e31b6b958163c23ebf5255345593fd6847f52e6))
+* rename tracking to computing ([de72bf3](https://github.com/art-bazhin/spred/commit/de72bf3778475d5b2bbf1670e812593b2b6f470f))
+* use list to handle child signals ([80b8be3](https://github.com/art-bazhin/spred/commit/80b8be3f06764bc7e912324a67aa55e7e8fdc84e))
+
+
+### Docs
+
+* replace docs with new package name info ([7e351a7](https://github.com/art-bazhin/spred/commit/7e351a76e8863f06bfd5c69c56e5f81b09949b09))
+
 ## [0.33.0](https://github.com/art-bazhin/spred/compare/v0.32.5...v0.33.0) (2024-01-17)
 
 
