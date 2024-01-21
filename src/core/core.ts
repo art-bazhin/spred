@@ -252,13 +252,6 @@ function update<T>(this: any, updateFn: (value: T) => T) {
 function notify(state: SignalState<any>) {
   state._flags |= NOTIFIED;
 
-  if (
-    typeof state._nextValue === 'object' &&
-    state._nextValue &&
-    state._nextValue.shit
-  ) {
-  }
-
   if (state._subs) consumers.push(state);
 
   for (let node = state._firstTarget; node !== null; node = node.next) {
