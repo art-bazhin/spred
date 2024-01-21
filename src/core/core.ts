@@ -54,13 +54,9 @@ export interface SignalOptions<T> {
 export interface Signal<T> {
   /**
    * Calculates and returns the current value of the signal.
+   * @param track Determines if the signal should be tracked as dependency.
    */
-  get(): T;
-
-  /**
-   * Calculates and returns the current value of the signal.
-   */
-  get(trackDependency: boolean): T;
+  get(track?: boolean): T;
 
   /**
    * Subscribes the function to updates of the signal value.
@@ -68,14 +64,7 @@ export interface Signal<T> {
    * @param exec Determines whether the function should be called immediately after subscription.
    * @returns Unsubscribe function.
    */
-  subscribe<E extends boolean>(subscriber: Subscriber<T>, exec: E): () => void;
-
-  /**
-   * Subscribes the function to updates of the signal value and calls it immediately.
-   * @param subscriber A function that listens to updates.
-   * @returns Unsubscribe function.
-   */
-  subscribe(subscriber: Subscriber<T>): () => void;
+  subscribe<E extends boolean>(subscriber: Subscriber<T>, exec?: E): () => void;
 }
 
 export function Signal<T>(
@@ -125,10 +114,10 @@ export interface WritableSignal<T> extends Signal<T> {
   set(): T;
 
   /**
-   * Calculate and set a new value of the signal from the current value
-   * @param getNextValue Function that calculates a new value from the current value.
+   * Calculate and set a new value of the signal from the last set signal value.
+   * @param getNextValue Function that calculates a new value.
    */
-  update(getNextValue: (currentValue: T) => T): T;
+  update(getNextValue: (lastValue: T) => T): T;
 }
 
 export function WritableSignal<T>(
