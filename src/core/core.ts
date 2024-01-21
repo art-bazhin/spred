@@ -39,9 +39,8 @@ export type Computation<T> =
   | ((prevValue: T | undefined, scheduled: boolean) => T);
 
 export interface SignalOptions<T> {
-  name?: string;
-  equals?: (value: T, prevValue?: T) => unknown;
-  catch?: (err: unknown, prevValue?: T) => T;
+  equal?: (value: T, prevValue?: T) => unknown;
+  catch?: (e: unknown, prevValue?: T) => T;
   onActivate?: (value: T) => any;
   onDeactivate?: (value: T) => any;
   onUpdate?: (value: T, prevValue?: T) => any;
@@ -64,7 +63,7 @@ export interface Signal<T> {
    * @param exec Determines whether the function should be called immediately after subscription.
    * @returns Unsubscribe function.
    */
-  subscribe<E extends boolean>(subscriber: Subscriber<T>, exec?: E): () => void;
+  subscribe(subscriber: Subscriber<T>, exec?: boolean): () => void;
 }
 
 export function Signal<T>(
@@ -317,7 +316,7 @@ function recalc() {
     if (
       state._flags & FORCED ||
       (state._nextValue !== undefined &&
-        !state.equals!(state._nextValue, state._value))
+        !state.equal!(state._nextValue, state._value))
     ) {
       notify(state);
     }
@@ -367,7 +366,7 @@ function get<T>(this: SignalState<T>, trackDependency = true): T {
       this._flags & FORCED ||
       (sourcesChanged &&
         this._nextValue !== undefined &&
-        !this.equals!(this._nextValue, this._value))
+        !this.equal!(this._nextValue, this._value))
     ) {
       const prevValue = this._value;
 
