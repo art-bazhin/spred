@@ -369,10 +369,12 @@ function get<T>(this: SignalState<T>, trackDependency = true): T {
         this._nextValue !== undefined &&
         !this.equals!(this._nextValue, this._value))
     ) {
-      if (this.onUpdate) this.onUpdate(this._nextValue, this._value);
+      const prevValue = this._value;
 
       this._value = this._nextValue;
       this._flags |= CHANGED;
+
+      if (this.onUpdate) this.onUpdate(this._value, prevValue);
 
       if (this._subs) {
         for (let node = this._firstTarget; node !== null; node = node.next) {
