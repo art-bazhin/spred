@@ -180,7 +180,7 @@ By default all signals trigger their dependents and subscribers only if its valu
 ```ts
 import { signal } from '@spred/core';
 
-const counter = signal<number | undefined>(0);
+const counter = signal(0);
 const doubleCounter = signal(() => counter.get() * 2);
 
 const unsub = doubleCounter.subscribe((value) =>
