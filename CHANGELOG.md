@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.35.1](https://github.com/art-bazhin/spred/compare/v0.35.0...v0.35.1) (2024-01-22)
+
+
+### CI
+
+* fix npm publish script ([fdb9eb1](https://github.com/art-bazhin/spred/commit/fdb9eb1c08959832abed4fd308247414a0bdb84c))
+
 ## [0.35.0](https://github.com/art-bazhin/spred/compare/v0.34.0...v0.35.0) (2024-01-22)
 
 
