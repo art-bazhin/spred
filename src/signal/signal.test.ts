@@ -313,7 +313,7 @@ describe('signal', () => {
     const E = signal(() => hard(C.get() + A.get() + D.get(), 'E'));
     const F = signal(() => hard(D.get() && B.get(), 'F'));
     const G = signal(
-      () => C.get() + (C.get() || E.get() % 2) + D.get() + F.get(),
+      () => C.get() + (C.get() || E.get() % 2) + D.get() + F.get()
     );
     const H = G.subscribe((v) => hard(v, 'H'));
     const I = G.subscribe(() => {});
@@ -336,6 +336,47 @@ describe('signal', () => {
     });
 
     expect(res).toBe('EH');
+  });
+
+  it('dynamically updates dependencies (case 5)', () => {
+    const spy = jest.fn();
+
+    const a = signal(0);
+    const b = signal(0);
+    const c = signal(0);
+
+    const d = signal(() => {
+      if (a.get() < 10) return a.get() + b.get();
+      return c.get() + a.get();
+    });
+
+    const unsub = d.subscribe(spy);
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    a.set(1);
+    expect(spy).toHaveBeenCalledTimes(2);
+
+    b.set(1);
+    expect(spy).toHaveBeenCalledTimes(3);
+
+    c.set(1);
+    expect(spy).toHaveBeenCalledTimes(3);
+
+    unsub();
+    a.set(11);
+    expect(d.get()).toBe(12);
+
+    d.subscribe(spy);
+    expect(spy).toHaveBeenCalledTimes(4);
+
+    a.set(12);
+    expect(spy).toHaveBeenCalledTimes(5);
+
+    b.set(2);
+    expect(spy).toHaveBeenCalledTimes(5);
+
+    c.set(2);
+    expect(spy).toHaveBeenCalledTimes(6);
   });
 
   it('does not recalc a dependant if it is not active', () => {
@@ -952,7 +993,7 @@ describe('signal', () => {
         },
         {
           onException: (e, v) => listener(e, v),
-        },
+        }
       );
 
       expect(error).toBeUndefined();
