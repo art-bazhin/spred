@@ -7,7 +7,7 @@ export default [
     input: 'src/index.ts',
     output: {
       name: 'spred',
-      file: `dist/${pkg.name}.min.js`,
+      file: `dist/spred.min.js`,
       format: 'umd',
     },
     plugins: [

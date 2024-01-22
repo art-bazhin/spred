@@ -88,7 +88,7 @@ export interface SignalOptions<T> {
   onUpdate?: (value: T, prevValue?: T) => void;
 
   /**
-   * A function called whenever an exception occurs during the calculation of the signal value.
+   * A function called whenever an unhandled exception occurs during the calculation of the signal value.
    * @param e An exception.
    * @param prevValue A previous value of the signal.
    */

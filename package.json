@@ -1,5 +1,5 @@
 {
-  "name": "spred",
+  "name": "@spred/core",
   "description": "Reactive programming library",
   "homepage": "https://github.com/art-bazhin/spred",
   "repository": "git@github.com/art-bazhin/spred.git",

@@ -1,8 +1,8 @@
 # Spred
 
-[![npm](https://img.shields.io/npm/v/spred.svg)](http://npm.im/spred)
+[![npm](https://img.shields.io/npm/v/spred.svg)](http://npm.im/@spred/core)
 [![codecov](https://codecov.io/gh/art-bazhin/spred/branch/master/graph/badge.svg?token=G3AF7HLH7W)](https://codecov.io/gh/art-bazhin/spred)
-[![gzip size](http://img.badgesize.io/https://unpkg.com/spred/dist/spred.min.js?compression=gzip&label=gzip)](https://unpkg.com/spred/dist/spred.min.js)
+[![gzip size](http://img.badgesize.io/https://unpkg.com/spred/dist/spred.min.js?compression=gzip&label=gzip)](https://unpkg.com/@spred/core/dist/spred.min.js)
 
 Simple and fast JavaScript reactive programming library.
 
@@ -14,7 +14,7 @@ Simple and fast JavaScript reactive programming library.
 ## Basic Example
 
 ```ts
-import { signal, effect, batch } from 'spred';
+import { signal, effect, batch } from '@spred/core';
 
 const formatter = new Intl.DateTimeFormat('en-GB');
 
@@ -55,7 +55,7 @@ npm install @spred/core --save
 [Signal](https://art-bazhin.github.io/spred/interfaces/Signal.html) is the basic reactive primitive of the library. A signal stores a value and notifies its subscribers when it changes. To create a [writable signal](https://art-bazhin.github.io/spred/interfaces/WritableSignal.html) you should call the [signal](https://art-bazhin.github.io/spred/functions/signal.html) function with an initial value that is not a function.
 
 ```ts
-import { signal, on } from 'spred';
+import { signal, on } from '@spred/core';
 
 const counter = signal(0);
 ```
@@ -129,7 +129,7 @@ Computed signals initialize their values lazily. That means that the calculation
 Writable signal updates are immediate and synchronous.
 
 ```ts
-import { signal, batch, on } from 'spred';
+import { signal, batch, on } from '@spred/core';
 
 const a = signal(0);
 const b = signal(0);
@@ -176,7 +176,7 @@ trigger.set(1);
 By default all signals trigger their dependants and subscribers only if its value changes.
 
 ```ts
-import { signal } from 'spred';
+import { signal } from '@spred/core';
 
 const counter = signal<number | undefined>(0);
 const doubleCounter = signal(() => counter.get() * 2);
@@ -241,7 +241,7 @@ counter.set(3);
 Any signal that have subscribers and an exception ocured during the computation will log the error in the console and will not cause recalculation of its dependents. You can set an exception handler in the [signal options](https://art-bazhin.github.io/spred/interfaces/SignalOptions.html). It will return the new signal value and stop the exception propagation.
 
 ```ts
-import { signal } from 'spred';
+import { signal } from '@spred/core';
 
 const sub = (value) => console.log('The value is ' + value);
 const source = signal(0);
@@ -279,7 +279,7 @@ source.set(5);
 [effect](https://art-bazhin.github.io/spred/functions/effect.html) calls the passed function immediately and every time its dependencies change.
 
 ```ts
-import { signal, effect, batch } from 'spred';
+import { signal, effect, batch } from '@spred/core';
 
 const a = signal('Hello');
 const b = signal('World');
@@ -312,7 +312,7 @@ Every signal has lifecycle hooks whose handlers can be set in the [signal option
 - `onException` - emits when an unhandled exception occurs during the signal computation.
 
 ```ts
-import { signal } from 'spred';
+import { signal } from '@spred/core';
 
 const source = signal(0);
 const result = signal(
