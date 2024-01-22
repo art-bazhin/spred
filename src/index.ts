@@ -1,4 +1,4 @@
-import type { Signal, WritableSignal } from './core/core';
+import { Signal, WritableSignal } from './core/core';
 import { writable } from './writable/writable';
 import { computed } from './computed/computed';
 import { configure, Config } from './config/config';

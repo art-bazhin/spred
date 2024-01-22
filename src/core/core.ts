@@ -72,27 +72,27 @@ export interface SignalOptions<T> {
    * A function called when the first subscriber or the first active dependent signal appears.
    * @param value A current value of the signal.
    */
-  onActivate?: (value: T) => unknown;
+  onActivate?: (value: T) => void;
 
   /**
    * A function called when the last subscriber or the last active dependent signal disappears.
    * @param value A current value of the signal.
    */
-  onDeactivate?: (value: T) => unknown;
+  onDeactivate?: (value: T) => void;
 
   /**
    * A function called each time the signal value is updated.
    * @param value A new value of the signal.
    * @param prevValue A previous value of the signal.
    */
-  onUpdate?: (value: T, prevValue?: T) => unknown;
+  onUpdate?: (value: T, prevValue?: T) => void;
 
   /**
    * A function called whenever an exception occurs during the calculation of the signal value.
    * @param e An exception.
    * @param prevValue A previous value of the signal.
    */
-  onException?: (e: unknown, prevValue?: T) => unknown;
+  onException?: (e: unknown, prevValue?: T) => void;
 }
 
 /**
@@ -117,7 +117,7 @@ export interface Signal<T> {
 export function _Signal<T>(
   this: SignalState<T>,
   compute?: Computation<T>,
-  options?: SignalOptions<T>,
+  options?: SignalOptions<T>
 ) {
   const parent = computing || scope;
 
@@ -173,7 +173,7 @@ export interface WritableSignal<T> extends Signal<T> {
 export function _WritableSignal<T>(
   this: SignalState<T>,
   value: T,
-  options?: SignalOptions<T>,
+  options?: SignalOptions<T>
 ) {
   _Signal.call(this as any, undefined, options as any);
 
@@ -220,7 +220,7 @@ export function isolate<T>(fn: () => T): T;
  */
 export function isolate<T, A extends unknown[]>(
   fn: (...args: A) => T,
-  args: A,
+  args: A
 ): T;
 
 export function isolate(fn: any, args?: any) {
@@ -249,7 +249,7 @@ export function isolate(fn: any, args?: any) {
  * @param fn A function to call.
  * @returns A cleanup function.
  */
-export function collect(fn: () => unknown) {
+export function collect(fn: () => void) {
   const prevComputing = computing;
   const prevScope = scope;
   const prevShouldLink = shouldLink;
@@ -321,7 +321,7 @@ function notify(state: SignalState<any>) {
 function subscribe<T>(
   this: SignalState<T>,
   subscriber: Subscriber<T>,
-  exec = true,
+  exec = true
 ) {
   let cleanup: any = undefined;
 
@@ -611,7 +611,7 @@ function removeSourceNode(state: SignalState<any>, node: ListNode<any>) {
 function createTargetNode(
   source: SignalState<any>,
   target: SignalState<any> | Subscriber<any>,
-  sourceNode: ListNode<any> | null,
+  sourceNode: ListNode<any> | null
 ) {
   const node: ListNode<any> = {
     value: target,
@@ -647,7 +647,7 @@ function removeTargetNode(state: SignalState<any>, node: ListNode<any>) {
 
 function createChildNode(
   parent: SignalState<any>,
-  child: SignalState<any> | Subscriber<any>,
+  child: SignalState<any> | Subscriber<any>
 ) {
   const node: ListNode<any> = {
     value: child,

@@ -6,7 +6,7 @@ export interface Config {
    * A function that logs exceptions. Default is console.error.
    * @param e An exception to log.
    */
-  logException: (e: unknown) => unknown;
+  logException: (e: unknown) => void;
 }
 
 const DEFAULT_CONFIG: any = {

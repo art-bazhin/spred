@@ -15,7 +15,7 @@ import {
  */
 export function signal<T>(
   compute: Computation<T>,
-  options?: SignalOptions<T>,
+  options?: SignalOptions<T>
 ): Signal<T>;
 
 /**
@@ -32,7 +32,7 @@ export function signal(): WritableSignal<unknown>;
  */
 export function signal<T>(
   value: T,
-  options?: SignalOptions<T>,
+  options?: SignalOptions<T>
 ): WritableSignal<T>;
 
 export function signal(value?: any, options?: any) {
