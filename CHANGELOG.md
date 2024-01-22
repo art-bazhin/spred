@@ -2,6 +2,48 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.35.0](https://github.com/art-bazhin/spred/compare/v0.34.0...v0.35.0) (2024-01-22)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove name field, rename equals to equal
+
+### Features
+
+* **effect:** add options ([fa60a77](https://github.com/art-bazhin/spred/commit/fa60a77328794540c0b061699a23987e07ff72de))
+* subscriber returns a cleanup function ([e44d5e1](https://github.com/art-bazhin/spred/commit/e44d5e15f4802fb3a52ec41a384bf8fe331c677a))
+
+
+### Bug Fixes
+
+* fix return types in void functions ([9982db7](https://github.com/art-bazhin/spred/commit/9982db744d04f4d7154df805fb7cae604be052e7))
+* trigger onUpdate after signal value change ([25030eb](https://github.com/art-bazhin/spred/commit/25030ebb3ae7aa34cdbce3b018767bb8a2cb369a))
+
+
+### Code Refactoring
+
+* minor changes in SignalOptions ([2182562](https://github.com/art-bazhin/spred/commit/218256248bee281a4cce49610a20f4bb94dcd8a0))
+* remove getValue and sampleValue functions ([17d4350](https://github.com/art-bazhin/spred/commit/17d43504fd5d86f4be942ba5e54fcf42ef816d05))
+* remove redundant code ([49bfa09](https://github.com/art-bazhin/spred/commit/49bfa0910023d24aa5fe509f65367149a5d25905))
+
+
+### Build System
+
+* rename package ([f814fdd](https://github.com/art-bazhin/spred/commit/f814fdd3737bb883bc3ae6dddaf8a7ffdad35ae4))
+
+
+### Docs
+
+* **config:** add docs ([4d2853b](https://github.com/art-bazhin/spred/commit/4d2853b616187c6decb98db109bdad5f4cba21c6))
+* **guards:** add docs ([ee61191](https://github.com/art-bazhin/spred/commit/ee611916f66a3948b56e563a7d3fa1af6eb99817))
+* rebuild docs ([88e687c](https://github.com/art-bazhin/spred/commit/88e687ccb67d9c1b5ca5b7095df062b502dde486))
+* update docs ([bcfa4aa](https://github.com/art-bazhin/spred/commit/bcfa4aa3214ad2bb1b4ddbd45aca2792e39c0b18))
+* update docs ([f684979](https://github.com/art-bazhin/spred/commit/f68497920dbda34669829332ab30a8d48f338a83))
+* update package size in readme ([e2bcad9](https://github.com/art-bazhin/spred/commit/e2bcad92a6657a49381739c8a9c3d9b0d7a54d29))
+* update readme ([71395ec](https://github.com/art-bazhin/spred/commit/71395ec933e7cdd59b761d58d195a2fe70ac690d))
+* update Signal and WritableSignal docs ([6c90bb3](https://github.com/art-bazhin/spred/commit/6c90bb3a8d63c5b49950807913a6c063d6d3b1c4))
+
 ## [0.34.0](https://github.com/art-bazhin/spred/compare/v0.33.0...v0.34.0) (2024-01-20)
 
 
