@@ -2,15 +2,15 @@ import { WritableSignal, SignalOptions } from '../core/core';
 
 /**
  * Сreates a writable signal.
- * @returns Writable signal.
+ * @returns A writable signal.
  */
 export function writable(): WritableSignal<unknown>;
 
 /**
  * Сreates a writable signal.
- * @param value Initial value of the signal.
- * @param options Signal options.
- * @returns Writable signal.
+ * @param value An initial value of the signal.
+ * @param options A signal options.
+ * @returns A writable signal.
  */
 export function writable<T>(
   value: T,

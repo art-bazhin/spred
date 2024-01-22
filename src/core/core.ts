@@ -31,13 +31,31 @@ let notifications: any[] = [];
 
 let version = 1;
 
+/**
+ * A function subscribed to updates of a signal.
+ * @param value A new value of the signal.
+ * @param exec Determines whether the function has been executed immediately after subscription.
+ */
 export type Subscriber<T> = (value: T, exec?: boolean) => any;
 
+/**
+ * A function that calculates the new value of the signal.
+ * @param prevValue The previous value of the signal.
+ * @param scheduled Has a true value if the recalculation was caused by a dependency change or the setter call.
+ */
 export type Computation<T> =
-  | (() => T)
-  | ((prevValue: T | undefined) => T)
+  | ((prevValue?: T) => T)
   | ((prevValue: T | undefined, scheduled: boolean) => T);
 
+/**
+ * An object that stores the options of the signal to be created.
+ * @property {SignalOptions} equal An equality function used to check whether the value of the signal has been changed. Default is Object.is.
+ * @property {SignalOptions} catch A function that catches exceptions that occurred during the calculation of the signal value. Returns the new signal value and stops the exception propagation.
+ * @property {SignalOptions} onActivate A function called when the first subscriber or the first active dependent signal appears.
+ * @property {SignalOptions} onDeactivate A function called when the last subscriber or the last active dependent signal disappears.
+ * @property {SignalOptions} onUpdate A function called each time the signal value is updated.
+ * @property {SignalOptions} onException A function that called whenever an exception occurs during the calculation of the signal value.
+ */
 export interface SignalOptions<T> {
   equal?: (value: T, prevValue?: T) => unknown;
   catch?: (e: unknown, prevValue?: T) => T;
@@ -48,20 +66,20 @@ export interface SignalOptions<T> {
 }
 
 /**
- * Basic reactive primitive.
+ * A basic reactive primitive.
  */
 export interface Signal<T> {
   /**
    * Calculates and returns the current value of the signal.
-   * @param track Determines if the signal should be tracked as dependency.
+   * @param track Determines whether the signal should be tracked as a dependency. Default is true.
    */
   get(track?: boolean): T;
 
   /**
-   * Subscribes the function to updates of the signal value.
-   * @param subscriber A function that listens to updates.
-   * @param exec Determines whether the function should be called immediately after subscription.
-   * @returns Unsubscribe function.
+   * Subscribes the passed function to updates of the signal value.
+   * @param subscriber A function subscribed to updates.
+   * @param exec Determines whether the function should be executed immediately after subscription. Default is true.
+   * @returns An unsubscribe function.
    */
   subscribe(subscriber: Subscriber<T>, exec?: boolean): () => void;
 }
@@ -95,7 +113,7 @@ export function Signal<T>(
 
 Signal.prototype.get = get;
 Signal.prototype.subscribe = subscribe;
-Signal.prototype.equals = Object.is;
+Signal.prototype.equal = Object.is;
 
 /**
  * A signal whose value can be set.
@@ -103,7 +121,7 @@ Signal.prototype.equals = Object.is;
 export interface WritableSignal<T> extends Signal<T> {
   /**
    * Set the value of the signal
-   * @param value New value of the signal.
+   * @param value A new value of the signal.
    */
   set(value: T): T;
 
@@ -113,8 +131,8 @@ export interface WritableSignal<T> extends Signal<T> {
   set(): T;
 
   /**
-   * Calculate and set a new value of the signal from the last set signal value.
-   * @param getNextValue Function that calculates a new value.
+   * Calculate and set a new signal value based on the the last set value.
+   * @param getNextValue A function that calculates a new value.
    */
   update(getNextValue: (lastValue: T) => T): T;
 }
@@ -200,8 +218,8 @@ export function collect(fn: () => any) {
 }
 
 /**
- * Commits all writable signal updates inside the passed function as a single transaction.
- * @param fn The function with updates.
+ * Commits all writable signal updates made within the passed function as a single transaction.
+ * @param fn A function with updates.
  */
 export function batch(fn: (...args: any) => any) {
   const wrapper = (config as any)._notificationWrapper;

@@ -6,10 +6,10 @@ import {
 } from '../core/core';
 
 /**
- * Creates a signal that automatically calculates its value from other signals.
- * @param compute The function that calculates the signal value and returns it.
- * @param options Signal options.
- * @returns Computed signal.
+ * Creates a signal that automatically calculates its value based on other signals.
+ * @param compute A function that calculates the signal value and returns it.
+ * @param options A signal options.
+ * @returns A computed signal.
  */
 export function signal<T>(
   compute: Computation<T>,
@@ -18,15 +18,15 @@ export function signal<T>(
 
 /**
  * Сreates a writable signal.
- * @returns Writable signal.
+ * @returns A writable signal.
  */
 export function signal(): WritableSignal<unknown>;
 
 /**
  * Сreates a writable signal.
- * @param value Initial value of the signal.
- * @param options Signal options.
- * @returns Writable signal.
+ * @param value An initial value of the signal.
+ * @param options A signal options.
+ * @returns A writable signal.
  */
 export function signal<T>(
   value: T,
