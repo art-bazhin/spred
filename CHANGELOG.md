@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.35.2](https://github.com/art-bazhin/spred/compare/v0.35.1...v0.35.2) (2024-01-22)
+
+
+### Tests
+
+* add another one dependency tracking test ([b7be6b3](https://github.com/art-bazhin/spred/commit/b7be6b3b8b0238d9879af10e0622a1b99d5658c6))
+* **on:** add on function test ([d32b1fd](https://github.com/art-bazhin/spred/commit/d32b1fd13694087f4e2fdbd8c12ce50ed737574e))
+* replace redundant jest functions with the actual ones ([001f776](https://github.com/art-bazhin/spred/commit/001f776193b3f3d7debd1d9b8da170e0de3d2d6e))
+
+
+### Docs
+
+* fix typos in readme ([c9db3b4](https://github.com/art-bazhin/spred/commit/c9db3b4ef61adafb35f40d00c81cf3be2a5cd49d))
+* rebuild docs ([4c9752a](https://github.com/art-bazhin/spred/commit/4c9752ab2583f05d5e84490f73db8fd2b0ffba4a))
+
 ### [0.35.1](https://github.com/art-bazhin/spred/compare/v0.35.0...v0.35.1) (2024-01-22)
 
 
