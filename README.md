@@ -1,8 +1,8 @@
 # Spred
 
-[![npm](https://img.shields.io/npm/v/spred.svg)](http://npm.im/@spred/core)
+[![npm](https://img.shields.io/npm/v/@spred/core.svg)](http://npm.im/@spred/core)
 [![codecov](https://codecov.io/gh/art-bazhin/spred/branch/master/graph/badge.svg?token=G3AF7HLH7W)](https://codecov.io/gh/art-bazhin/spred)
-[![gzip size](http://img.badgesize.io/https://unpkg.com/spred/dist/spred.min.js?compression=gzip&label=gzip)](https://unpkg.com/@spred/core/dist/spred.min.js)
+[![gzip size](https://img.badgesize.io/https:/unpkg.com/@spred/core/dist/spred.min.js?label=gzip&compression=gzip)](https://unpkg.com/@spred/core/dist/spred.min.js)
 
 Simple and fast JavaScript reactive programming library.
 
@@ -10,6 +10,8 @@ Simple and fast JavaScript reactive programming library.
 - **Fast.** No unnecessary calculations and excellent performance
 - **Simple.** Small API and autotracking of dependencies
 - **Well typed.** Written in TypeScript
+
+[API Reference](https://art-bazhin.github.io/spred/modules.html)
 
 ## Basic Example
 
@@ -28,7 +30,8 @@ const formattedBirthday = signal(() =>
 
 effect(() =>
   console.log(
-    `Hello. My name is ${name.get()}, I play ${instrument.get()} and I was born on ${formattedBirthday.get()}.`
+    `Hello. My name is ${name.get()}, I play ${instrument.get()} ` +
+      `and I was born on ${formattedBirthday.get()}.`
   )
 );
 // > Hello. My name is Paul, I play bass and I was born on 18/06/1942.
@@ -42,7 +45,6 @@ batch(() => {
 ```
 
 [All examples on StackBlitz](https://stackblitz.com/@art-bazhin/collections/spred-examples)
-[API Reference](https://art-bazhin.github.io/spred/modules.html)
 
 ## Installation
 
@@ -52,7 +54,7 @@ npm install @spred/core --save
 
 ## Signals
 
-[Signal](https://art-bazhin.github.io/spred/interfaces/Signal.html) is the basic reactive primitive of the library. A signal stores a value and notifies its subscribers when it changes. To create a [writable signal](https://art-bazhin.github.io/spred/interfaces/WritableSignal.html) you should call the [signal](https://art-bazhin.github.io/spred/functions/signal.html) function with an initial value that is not a function.
+[Signal](https://art-bazhin.github.io/spred/interfaces/Signal.html) is the basic reactive primitive of the library. A signal stores a value and notifies its subscribers when it changes. To create a [writable signal](https://art-bazhin.github.io/spred/interfaces/WritableSignal.html) you should call the [signal](https://art-bazhin.github.io/spred/functions/signal-1.html) function with an initial value that is not a function.
 
 ```ts
 import { signal, on } from '@spred/core';
@@ -79,7 +81,7 @@ console.log(counter.get());
 // > 1
 ```
 
-A call of the [signal](https://art-bazhin.github.io/spred/functions/signal.html) function with a function argument will create a computed signal that automatically tracks dependencies and recalculates its own value when they change. The return value of the passed computation function must only depend on other signals.
+A call of the [signal](https://art-bazhin.github.io/spred/functions/signal-1.html) function with a function argument will create a computed signal that automatically tracks dependencies and recalculates its own value when they change. The return value of the passed computation function must only depend on other signals.
 
 ```ts
 /*...*/
@@ -110,7 +112,7 @@ console.log(doubleCounter.get());
 // > 6
 ```
 
-You can also subscribe to a signal value updates without immediately executing the subscriber using [on]](https://art-bazhin.github.io/spred/functions/on.html) function, which is a shorthand for `someSignal.subscribe(someFn, false)`.
+You can also subscribe to a signal value updates without immediately executing the subscriber using [on](https://art-bazhin.github.io/spred/functions/on.html) function, which is a shorthand for `someSignal.subscribe(someFn, false)`.
 
 ```ts
 /*...*/
@@ -173,7 +175,7 @@ trigger.set(1);
 
 ## Change Detection
 
-By default all signals trigger their dependants and subscribers only if its value changes.
+By default all signals trigger their dependents and subscribers only if its value changes.
 
 ```ts
 import { signal } from '@spred/core';
@@ -379,4 +381,4 @@ Big thanks for inspiration to
 - [nanostores](https://github.com/nanostores/nanostores)
 - [$mol](https://github.com/hyoo-ru/mam_mol)
 - [preact](https://github.com/preactjs/signals)
-- [Act](https://github.com/artalar/act)
+- [act](https://github.com/artalar/act)
