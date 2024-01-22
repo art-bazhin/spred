@@ -12,8 +12,11 @@ describe('signal', () => {
   let num: number;
   let x2Num: number;
 
+  const cleanup = jest.fn();
+
   const subscriber = jest.fn((value: number) => {
     num = value;
+    return cleanup;
   });
 
   const altSubscriber = jest.fn((value: number) => (x2Num = value * 2));
@@ -49,12 +52,15 @@ describe('signal', () => {
     expect(num).toBe(2);
   });
 
-  it('stops to trigger subscribers after unsubscribe', () => {
+  it('stops to trigger subscribers after unsubscribe and calls cleanup fn', () => {
+    expect(cleanup).toHaveBeenCalledTimes(0);
+
     unsubs.forEach((fn) => fn());
     counter.set(3);
 
     expect(subscriber).toHaveBeenCalledTimes(4);
     expect(num).toBe(2);
+    expect(cleanup).toHaveBeenCalledTimes(2);
   });
 
   it('correctly handles multiple unsubscribing', () => {

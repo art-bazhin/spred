@@ -17,7 +17,15 @@ import {
   effect as preactEffect,
 } from '../node_modules/@preact/signals-core/dist/signals-core.mjs';
 
-import { computed, writable, batch, signal, configure } from '/dist/index.mjs';
+import {
+  computed,
+  writable,
+  batch,
+  signal,
+  configure,
+  isWritableSignal,
+  isSignal,
+} from '/dist/index.mjs';
 
 window.process = {
   env: {
@@ -523,3 +531,13 @@ function runBenchmark() {
 }
 
 runButton.addEventListener('click', runBenchmark);
+
+function expect(value) {
+  return {
+    toBe(v) {
+      if (value !== v) {
+        console.log(value + ' != ' + v);
+      }
+    },
+  };
+}

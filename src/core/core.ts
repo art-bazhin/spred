@@ -35,8 +35,9 @@ let version = 1;
  * A function subscribed to updates of a signal.
  * @param value A new value of the signal.
  * @param exec Determines whether the function has been executed immediately after subscription.
+ * @param returns A cleanup function called after unsubscribing.
  */
-export type Subscriber<T> = (value: T, exec?: boolean) => any;
+export type Subscriber<T> = (value: T, exec?: boolean) => (() => any) | any;
 
 /**
  * A function that calculates the new value of the signal.
@@ -59,10 +60,10 @@ export type Computation<T> =
 export interface SignalOptions<T> {
   equal?: (value: T, prevValue?: T) => unknown;
   catch?: (e: unknown, prevValue?: T) => T;
-  onActivate?: (value: T) => any;
-  onDeactivate?: (value: T) => any;
-  onUpdate?: (value: T, prevValue?: T) => any;
-  onException?: (e: unknown) => any;
+  onActivate?: (value: T) => void;
+  onDeactivate?: (value: T) => void;
+  onUpdate?: (value: T, prevValue?: T) => void;
+  onException?: (e: unknown) => void;
 }
 
 /**
@@ -272,11 +273,13 @@ function subscribe<T>(
   subscriber: Subscriber<T>,
   exec = true,
 ) {
+  let cleanup: any = undefined;
+
   const prevShouldLink = shouldLink;
   const runSubscriber = () => {
     batch(() => {
       try {
-        subscriber(value, true);
+        cleanup = subscriber(value, true);
       } catch (e) {
         config.logException(e);
       }
@@ -308,6 +311,7 @@ function subscribe<T>(
     removeTargetNode(this, node);
     --this._subs;
     node = null as any;
+    if (typeof cleanup === 'function') cleanup();
   };
 
   const parent = computing || scope;

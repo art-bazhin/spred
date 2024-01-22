@@ -13,11 +13,11 @@ const subscriber = () => {};
 const value = writable(0);
 
 for (let i = 0; i < COUNT; i++) {
-  const x2Value = computed(() => value() * 2);
-  const x4Value = computed(() => x2Value() * 2);
-  const x8Value = computed(() => x4Value() * 2);
+  const x2Value = computed(() => value.get() * 2);
+  const x4Value = computed(() => x2Value.get() * 2);
+  const x8Value = computed(() => x4Value.get() * 2);
 
-  x8Value();
+  x8Value.get();
 
   signals.push(x8Value);
 }
@@ -42,7 +42,7 @@ function bench() {
   unsubs.length = 0;
 
   resultEl.textContent = `SUB TIME: ${Math.round(
-    subTime
+    subTime,
   )}; UNSUB TIME: ${Math.round(unsubTime)}`;
 }
 
