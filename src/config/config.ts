@@ -1,9 +1,12 @@
 /**
  * A library configuration object.
- * @property {Config} logException A function that logs exceptions. Default is console.error.
  */
 export interface Config {
-  logException: (e: unknown) => any;
+  /**
+   * A function that logs exceptions. Default is console.error.
+   * @param e An exception to log.
+   */
+  logException: (e: unknown) => unknown;
 }
 
 const DEFAULT_CONFIG: any = {

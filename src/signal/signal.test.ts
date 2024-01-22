@@ -935,9 +935,13 @@ describe('signal', () => {
         logException: () => {},
       });
 
-      const listener = jest.fn((v) => (error = v));
+      const listener = jest.fn((e, v) => {
+        error = e;
+        lastValue = v;
+      });
 
       let error: any;
+      let lastValue: any;
       let unsub: any;
 
       const counter = signal(0);
@@ -947,7 +951,7 @@ describe('signal', () => {
           return counter.get() * 2;
         },
         {
-          onException: (v) => listener(v),
+          onException: (e, v) => listener(e, v),
         },
       );
 
@@ -961,22 +965,27 @@ describe('signal', () => {
       counter.set(2);
       expect(error).toBeUndefined();
       expect(listener).toBeCalledTimes(0);
+      expect(lastValue).toBeUndefined();
 
       counter.set(5);
       expect(error).toBe('error');
       expect(listener).toBeCalledTimes(1);
+      expect(lastValue).toBe(4);
 
       counter.set(6);
       expect(error).toBe('error');
       expect(listener).toBeCalledTimes(2);
+      expect(lastValue).toBe(4);
 
       counter.set(3);
       expect(error).toBe('error');
       expect(listener).toBeCalledTimes(2);
+      expect(lastValue).toBe(4);
 
       unsub();
       expect(error).toBe('error');
       expect(listener).toBeCalledTimes(2);
+      expect(lastValue).toBe(4);
 
       configure();
     });

@@ -1,0 +1,16 @@
+.tsd-signatures .tsd-signature:first-child {
+  margin-top: 0;
+}
+
+.tsd-signatures .tsd-signature {
+  margin-top: 2.5rem;
+}
+
+.tsd-sources {
+  margin-top: 2rem;
+  font-size: 0.75em;
+}
+
+.tsd-panel.tsd-member {
+  margin-bottom: 3rem;
+}

@@ -1,4 +1,4 @@
-import { Signal, WritableSignal } from '../core/core';
+import { Signal, WritableSignal, _Signal, _WritableSignal } from '../core/core';
 
 /**
  * Checks if the passed value is a {@link Signal}
@@ -8,7 +8,7 @@ import { Signal, WritableSignal } from '../core/core';
 export function isSignal(value: unknown): value is Signal<unknown>;
 
 export function isSignal(value: any) {
-  return value instanceof Signal;
+  return value instanceof _Signal;
 }
 
 /**
@@ -21,5 +21,5 @@ export function isWritableSignal(
 ): value is WritableSignal<unknown>;
 
 export function isWritableSignal(value: any) {
-  return value instanceof WritableSignal;
+  return value instanceof _WritableSignal;
 }

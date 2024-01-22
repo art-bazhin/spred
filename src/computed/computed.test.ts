@@ -441,13 +441,13 @@ describe('computed', () => {
 
     const source = writable(0);
 
-    const med = computed((_: any, scheduled: boolean) => {
+    const med = computed((_: any, scheduled) => {
       lastMedScheduled = scheduled;
       medSpy();
       return source.get() * 2;
     });
 
-    const result = computed((_: any, scheduled: boolean) => {
+    const result = computed((_: any, scheduled) => {
       lastScheduled = scheduled;
       spy();
       return source.get() < 5 ? source.get() : med.get();

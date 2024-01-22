@@ -37,45 +37,68 @@ let version = 1;
  * @param exec Determines whether the function has been executed immediately after subscription.
  * @param returns A cleanup function called after unsubscribing.
  */
-export type Subscriber<T> = (value: T, exec?: boolean) => (() => any) | any;
+export type Subscriber<T> = (value: T, exec: boolean) => (() => any) | any;
 
 /**
  * A function that calculates the new value of the signal.
- * @param prevValue The previous value of the signal.
+ * @param prevValue A previous value of the signal.
  * @param scheduled Has a true value if the recalculation was caused by a dependency change or the setter call.
  */
 export type Computation<T> =
-  | ((prevValue?: T) => T)
+  | (() => T)
   | ((prevValue: T | undefined, scheduled: boolean) => T);
 
 /**
  * An object that stores the options of the signal to be created.
- * @property {SignalOptions} equal An equality function used to check whether the value of the signal has been changed. Default is Object.is.
- * @property {SignalOptions} catch A function that catches exceptions that occurred during the calculation of the signal value. Returns the new signal value and stops the exception propagation.
- * @property {SignalOptions} onActivate A function called when the first subscriber or the first active dependent signal appears.
- * @property {SignalOptions} onDeactivate A function called when the last subscriber or the last active dependent signal disappears.
- * @property {SignalOptions} onUpdate A function called each time the signal value is updated.
- * @property {SignalOptions} onException A function that called whenever an exception occurs during the calculation of the signal value.
  */
 export interface SignalOptions<T> {
+  /**
+   * An equality function used to check whether the value of the signal has been changed. Default is Object.is.
+   * @param value A new value of the signal.
+   * @param prevValue A previous value of the signal.
+   * @returns Truthy if the values are equal, falsy otherwise.
+   */
   equal?: (value: T, prevValue?: T) => unknown;
+
+  /**
+   * A function that catches exceptions that occurred during the calculation of the signal value. Returns a new signal value and stops the exception propagation.
+   * @param e An exception.
+   * @param prevValue A previous value of the signal.
+   * @returns A new value of the signal.
+   */
   catch?: (e: unknown, prevValue?: T) => T;
-  onActivate?: (value: T) => void;
-  onDeactivate?: (value: T) => void;
-  onUpdate?: (value: T, prevValue?: T) => void;
-  onException?: (e: unknown) => void;
+
+  /**
+   * A function called when the first subscriber or the first active dependent signal appears.
+   * @param value A current value of the signal.
+   */
+  onActivate?: (value: T) => unknown;
+
+  /**
+   * A function called when the last subscriber or the last active dependent signal disappears.
+   * @param value A current value of the signal.
+   */
+  onDeactivate?: (value: T) => unknown;
+
+  /**
+   * A function called each time the signal value is updated.
+   * @param value A new value of the signal.
+   * @param prevValue A previous value of the signal.
+   */
+  onUpdate?: (value: T, prevValue?: T) => unknown;
+
+  /**
+   * A function called whenever an exception occurs during the calculation of the signal value.
+   * @param e An exception.
+   * @param prevValue A previous value of the signal.
+   */
+  onException?: (e: unknown, prevValue?: T) => unknown;
 }
 
 /**
- * A basic reactive primitive.
+ * A basic reactive primitive. Notifies consumers of a change in the stored value and triggers them to recalculate.
  */
 export interface Signal<T> {
-  /**
-   * Calculates and returns the current value of the signal.
-   * @param track Determines whether the signal should be tracked as a dependency. Default is true.
-   */
-  get(track?: boolean): T;
-
   /**
    * Subscribes the passed function to updates of the signal value.
    * @param subscriber A function subscribed to updates.
@@ -83,9 +106,15 @@ export interface Signal<T> {
    * @returns An unsubscribe function.
    */
   subscribe(subscriber: Subscriber<T>, exec?: boolean): () => void;
+
+  /**
+   * Calculates and returns the current value of the signal.
+   * @param track Determines whether the signal should be tracked as a dependency. Default is true.
+   */
+  get(track?: boolean): T;
 }
 
-export function Signal<T>(
+export function _Signal<T>(
   this: SignalState<T>,
   compute?: Computation<T>,
   options?: SignalOptions<T>,
@@ -112,47 +141,50 @@ export function Signal<T>(
   if (parent) createChildNode(parent, this);
 }
 
-Signal.prototype.get = get;
-Signal.prototype.subscribe = subscribe;
-Signal.prototype.equal = Object.is;
+_Signal.prototype.get = get;
+_Signal.prototype.subscribe = subscribe;
+_Signal.prototype.equal = Object.is;
 
 /**
- * A signal whose value can be set.
+ * A {@link Signal} whose value can be set.
  */
 export interface WritableSignal<T> extends Signal<T> {
   /**
    * Set the value of the signal
    * @param value A new value of the signal.
+   * @returns The value has been set.
    */
   set(value: T): T;
 
   /**
    * Notify subscribers without setting a new value.
+   * @returns The last value has been set.
    */
   set(): T;
 
   /**
    * Calculate and set a new signal value based on the the last set value.
    * @param getNextValue A function that calculates a new value.
+   * @returns The value has been set.
    */
   update(getNextValue: (lastValue: T) => T): T;
 }
 
-export function WritableSignal<T>(
+export function _WritableSignal<T>(
   this: SignalState<T>,
   value: T,
   options?: SignalOptions<T>,
 ) {
-  Signal.call(this as any, undefined, options as any);
+  _Signal.call(this as any, undefined, options as any);
 
   this._value = value;
   this._nextValue = value;
 }
 
-WritableSignal.prototype = new (Signal as any)();
-WritableSignal.prototype.constructor = WritableSignal;
-WritableSignal.prototype.set = set;
-WritableSignal.prototype.update = update;
+_WritableSignal.prototype = new (_Signal as any)();
+_WritableSignal.prototype.constructor = _WritableSignal;
+_WritableSignal.prototype.set = set;
+_WritableSignal.prototype.update = update;
 
 export interface SignalState<T> extends SignalOptions<T>, Signal<T> {
   _value: T;
@@ -173,11 +205,24 @@ export interface SignalState<T> extends SignalOptions<T>, Signal<T> {
   _lastChild?: ListNode<SignalState<any> | (() => any)> | null;
 }
 
+/**
+ * Calls the passed function without tracking dependencies.
+ * @param fn A function to call.
+ * @returns A result of the function call.
+ */
 export function isolate<T>(fn: () => T): T;
+
+/**
+ * Calls the passed function without tracking dependencies.
+ * @param fn A function to call.
+ * @param args Function arguments.
+ * @returns A result of the function call.
+ */
 export function isolate<T, A extends unknown[]>(
   fn: (...args: A) => T,
   args: A,
 ): T;
+
 export function isolate(fn: any, args?: any) {
   const prevComputing = computing;
   const prevScope = scope;
@@ -199,7 +244,12 @@ export function isolate(fn: any, args?: any) {
   return result;
 }
 
-export function collect(fn: () => any) {
+/**
+ * Calls the passed function and returns the unsubscribe function from all signals and subscriptions created within it.
+ * @param fn A function to call.
+ * @returns A cleanup function.
+ */
+export function collect(fn: () => unknown) {
   const prevComputing = computing;
   const prevScope = scope;
   const prevShouldLink = shouldLink;
@@ -501,7 +551,7 @@ function compute<T>(state: SignalState<T>) {
     }
 
     if (state._flags & HAS_EXCEPTION && state.onException) {
-      state.onException(state._exception);
+      state.onException(state._exception, state._value);
     }
   }
 
