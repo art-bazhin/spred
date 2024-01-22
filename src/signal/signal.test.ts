@@ -101,7 +101,7 @@ describe('signal', () => {
     counter.set(7);
     counter.set(8);
 
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
   });
 
   it('does not track dependencies inside subscriber function', () => {
@@ -129,7 +129,7 @@ describe('signal', () => {
     counter.set(7);
     counter.set(8);
 
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
   });
 
   it('handles diamond problem', () => {
@@ -213,7 +213,7 @@ describe('signal', () => {
 
     counter.set(1);
     expect(result.get()).toBe('FALSE');
-    expect(subscriber).toBeCalledTimes(0);
+    expect(subscriber).toHaveBeenCalledTimes(0);
 
     batch(() => {
       tumbler.set(true);
@@ -221,28 +221,28 @@ describe('signal', () => {
     });
 
     expect(result.get()).toBe(4);
-    expect(subscriber).toBeCalledTimes(1);
+    expect(subscriber).toHaveBeenCalledTimes(1);
 
     tumbler.set(false);
     counter.set(3);
     expect(result.get()).toBe('FALSE');
-    expect(subscriber).toBeCalledTimes(2);
+    expect(subscriber).toHaveBeenCalledTimes(2);
 
     counter.set(4);
     expect(result.get()).toBe('FALSE');
-    expect(subscriber).toBeCalledTimes(2);
+    expect(subscriber).toHaveBeenCalledTimes(2);
 
     tumbler.set(true);
     expect(result.get()).toBe(8);
-    expect(subscriber).toBeCalledTimes(3);
+    expect(subscriber).toHaveBeenCalledTimes(3);
 
     counter.set(5);
     expect(result.get()).toBe(10);
-    expect(subscriber).toBeCalledTimes(4);
+    expect(subscriber).toHaveBeenCalledTimes(4);
 
     counter.set(6);
     expect(result.get()).toBe(12);
-    expect(subscriber).toBeCalledTimes(5);
+    expect(subscriber).toHaveBeenCalledTimes(5);
   });
 
   it('dynamically updates dependencies (case 2)', () => {
@@ -259,13 +259,13 @@ describe('signal', () => {
 
     sum.subscribe(subSum);
 
-    expect(subSum).toBeCalledTimes(1);
+    expect(subSum).toHaveBeenCalledTimes(1);
 
     tumbler.set(false);
-    expect(subSum).toBeCalledTimes(2);
+    expect(subSum).toHaveBeenCalledTimes(2);
 
     tumbler.set(true);
-    expect(subSum).toBeCalledTimes(3);
+    expect(subSum).toHaveBeenCalledTimes(3);
   });
 
   it('dynamically updates dependencies (case 3)', () => {
@@ -283,16 +283,16 @@ describe('signal', () => {
     });
 
     value.subscribe(() => {});
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
 
     a.set(1);
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
 
     b.set(2);
     b.set(3);
     b.set(4);
     b.set(5);
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
   });
 
   it('dynamically updates dependencies (case 4)', () => {
@@ -396,20 +396,20 @@ describe('signal', () => {
     });
 
     c.get();
-    expect(bSpy).toBeCalledTimes(1);
-    expect(cSpy).toBeCalledTimes(1);
+    expect(bSpy).toHaveBeenCalledTimes(1);
+    expect(cSpy).toHaveBeenCalledTimes(1);
 
     a.set(2);
-    expect(bSpy).toBeCalledTimes(1);
-    expect(cSpy).toBeCalledTimes(1);
+    expect(bSpy).toHaveBeenCalledTimes(1);
+    expect(cSpy).toHaveBeenCalledTimes(1);
 
     b.subscribe(() => {});
-    expect(bSpy).toBeCalledTimes(2);
-    expect(cSpy).toBeCalledTimes(1);
+    expect(bSpy).toHaveBeenCalledTimes(2);
+    expect(cSpy).toHaveBeenCalledTimes(1);
 
     a.set(3);
-    expect(bSpy).toBeCalledTimes(3);
-    expect(cSpy).toBeCalledTimes(1);
+    expect(bSpy).toHaveBeenCalledTimes(3);
+    expect(cSpy).toHaveBeenCalledTimes(1);
   });
 
   it('does not recalc a dependant if it is not active (case 2)', () => {
@@ -430,20 +430,20 @@ describe('signal', () => {
 
     c.get();
     c.get();
-    expect(bSpy).toBeCalledTimes(1);
-    expect(cSpy).toBeCalledTimes(1);
+    expect(bSpy).toHaveBeenCalledTimes(1);
+    expect(cSpy).toHaveBeenCalledTimes(1);
 
     a.set(2);
-    expect(bSpy).toBeCalledTimes(1);
-    expect(cSpy).toBeCalledTimes(1);
+    expect(bSpy).toHaveBeenCalledTimes(1);
+    expect(cSpy).toHaveBeenCalledTimes(1);
 
     b.subscribe(() => {});
-    expect(bSpy).toBeCalledTimes(2);
-    expect(cSpy).toBeCalledTimes(1);
+    expect(bSpy).toHaveBeenCalledTimes(2);
+    expect(cSpy).toHaveBeenCalledTimes(1);
 
     a.set(3);
-    expect(bSpy).toBeCalledTimes(3);
-    expect(cSpy).toBeCalledTimes(1);
+    expect(bSpy).toHaveBeenCalledTimes(3);
+    expect(cSpy).toHaveBeenCalledTimes(1);
   });
 
   it('does not recalc a dependant if it is not active (case 3)', () => {
@@ -467,20 +467,20 @@ describe('signal', () => {
     a.set(0);
     c.get();
 
-    expect(bSpy).toBeCalledTimes(2);
-    expect(cSpy).toBeCalledTimes(2);
+    expect(bSpy).toHaveBeenCalledTimes(2);
+    expect(cSpy).toHaveBeenCalledTimes(2);
 
     a.set(2);
-    expect(bSpy).toBeCalledTimes(2);
-    expect(cSpy).toBeCalledTimes(2);
+    expect(bSpy).toHaveBeenCalledTimes(2);
+    expect(cSpy).toHaveBeenCalledTimes(2);
 
     b.subscribe(() => {});
-    expect(bSpy).toBeCalledTimes(3);
-    expect(cSpy).toBeCalledTimes(2);
+    expect(bSpy).toHaveBeenCalledTimes(3);
+    expect(cSpy).toHaveBeenCalledTimes(2);
 
     a.set(3);
-    expect(bSpy).toBeCalledTimes(4);
-    expect(cSpy).toBeCalledTimes(2);
+    expect(bSpy).toHaveBeenCalledTimes(4);
+    expect(cSpy).toHaveBeenCalledTimes(2);
   });
 
   it('updates target value after multiple dependency recalculations', () => {
@@ -541,10 +541,10 @@ describe('signal', () => {
     const d = signal(() => c.get() + b.get());
 
     d.subscribe(() => {});
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
 
     b.set(1);
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
   });
 
   it('notifies intermidiate signal subscribers', () => {
@@ -558,10 +558,10 @@ describe('signal', () => {
     sum.subscribe(subSum);
     x2Count.subscribe(subX2Xount);
 
-    expect(subX2Xount).toBeCalledTimes(1);
+    expect(subX2Xount).toHaveBeenCalledTimes(1);
 
     count.set(1);
-    expect(subX2Xount).toBeCalledTimes(2);
+    expect(subX2Xount).toHaveBeenCalledTimes(2);
   });
 
   it('passes exceptions down to dependants', () => {
@@ -672,11 +672,11 @@ describe('signal', () => {
 
     counter.set(1);
     expect(x4Counter.get()).toBe(4);
-    expect(subscriber).toBeCalledTimes(1);
+    expect(subscriber).toHaveBeenCalledTimes(1);
 
     counter.set(20);
     expect(x4Counter.get()).toBe(4);
-    expect(subscriber).toBeCalledTimes(1);
+    expect(subscriber).toHaveBeenCalledTimes(1);
   });
 
   it('prevents circular dependencies', () => {
@@ -764,11 +764,11 @@ describe('signal', () => {
     a.subscribe(() => c.set(c.get() + 1), false);
     d.subscribe(spy, false);
 
-    expect(spy).toBeCalledTimes(0);
+    expect(spy).toHaveBeenCalledTimes(0);
 
     a.set(1);
     expect(d.get()).toBe(2);
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
   });
 
   it('batches updates while subscribing', () => {
@@ -786,7 +786,7 @@ describe('signal', () => {
     });
 
     expect(d.get()).toBe(2);
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
   });
 
   it('catches and logs exceptions in subscribers', () => {
@@ -845,19 +845,19 @@ describe('signal', () => {
       });
 
       expect(value).toBeUndefined();
-      expect(listener).toBeCalledTimes(0);
+      expect(listener).toHaveBeenCalledTimes(0);
 
       unsub = counter.subscribe(() => {});
       expect(value).toBe(0);
-      expect(listener).toBeCalledTimes(1);
+      expect(listener).toHaveBeenCalledTimes(1);
 
       counter.set(1);
       expect(value).toBe(0);
-      expect(listener).toBeCalledTimes(1);
+      expect(listener).toHaveBeenCalledTimes(1);
 
       unsub();
       expect(value).toBe(0);
-      expect(listener).toBeCalledTimes(1);
+      expect(listener).toHaveBeenCalledTimes(1);
     });
 
     it('correctly reacts to activation of previously calculated signal', () => {
@@ -873,7 +873,7 @@ describe('signal', () => {
       d.get();
       d.subscribe(() => {});
 
-      expect(spy).toBeCalledTimes(1);
+      expect(spy).toHaveBeenCalledTimes(1);
     });
 
     it('correctly reacts to activation of new dependency', () => {
@@ -886,11 +886,11 @@ describe('signal', () => {
 
       d.subscribe(() => {});
 
-      expect(spy).toBeCalledTimes(0);
+      expect(spy).toHaveBeenCalledTimes(0);
 
       a.set(1);
 
-      expect(spy).toBeCalledTimes(1);
+      expect(spy).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -903,19 +903,19 @@ describe('signal', () => {
       const counter = signal(0, { onDeactivate: (v) => listener(v) });
 
       expect(value).toBeUndefined();
-      expect(listener).toBeCalledTimes(0);
+      expect(listener).toHaveBeenCalledTimes(0);
 
       unsub = counter.subscribe(() => {});
       expect(value).toBeUndefined();
-      expect(listener).toBeCalledTimes(0);
+      expect(listener).toHaveBeenCalledTimes(0);
 
       counter.set(1);
       expect(value).toBeUndefined();
-      expect(listener).toBeCalledTimes(0);
+      expect(listener).toHaveBeenCalledTimes(0);
 
       unsub();
       expect(value).toBe(1);
-      expect(listener).toBeCalledTimes(1);
+      expect(listener).toHaveBeenCalledTimes(1);
     });
 
     it('correctly reacts to deactivation of dependency', () => {
@@ -928,10 +928,10 @@ describe('signal', () => {
 
       d.subscribe(() => {});
 
-      expect(spy).toBeCalledTimes(0);
+      expect(spy).toHaveBeenCalledTimes(0);
 
       a.set(0);
-      expect(spy).toBeCalledTimes(1);
+      expect(spy).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -951,22 +951,22 @@ describe('signal', () => {
 
       expect(res.value).toBeUndefined();
       expect(res.prevValue).toBeUndefined();
-      expect(listener).toBeCalledTimes(0);
+      expect(listener).toHaveBeenCalledTimes(0);
 
       unsub = counter.subscribe(() => {});
       expect(res.value).toBeUndefined();
       expect(res.prevValue).toBeUndefined();
-      expect(listener).toBeCalledTimes(0);
+      expect(listener).toHaveBeenCalledTimes(0);
 
       counter.set(1);
       expect(res.value).toBe(1);
       expect(res.prevValue).toBe(0);
-      expect(listener).toBeCalledTimes(1);
+      expect(listener).toHaveBeenCalledTimes(1);
 
       unsub();
       expect(res.value).toBe(1);
       expect(res.prevValue).toBe(0);
-      expect(listener).toBeCalledTimes(1);
+      expect(listener).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -997,35 +997,35 @@ describe('signal', () => {
       );
 
       expect(error).toBeUndefined();
-      expect(listener).toBeCalledTimes(0);
+      expect(listener).toHaveBeenCalledTimes(0);
 
       unsub = x2Counter.subscribe(() => {});
       expect(error).toBeUndefined();
-      expect(listener).toBeCalledTimes(0);
+      expect(listener).toHaveBeenCalledTimes(0);
 
       counter.set(2);
       expect(error).toBeUndefined();
-      expect(listener).toBeCalledTimes(0);
+      expect(listener).toHaveBeenCalledTimes(0);
       expect(lastValue).toBeUndefined();
 
       counter.set(5);
       expect(error).toBe('error');
-      expect(listener).toBeCalledTimes(1);
+      expect(listener).toHaveBeenCalledTimes(1);
       expect(lastValue).toBe(4);
 
       counter.set(6);
       expect(error).toBe('error');
-      expect(listener).toBeCalledTimes(2);
+      expect(listener).toHaveBeenCalledTimes(2);
       expect(lastValue).toBe(4);
 
       counter.set(3);
       expect(error).toBe('error');
-      expect(listener).toBeCalledTimes(2);
+      expect(listener).toHaveBeenCalledTimes(2);
       expect(lastValue).toBe(4);
 
       unsub();
       expect(error).toBe('error');
-      expect(listener).toBeCalledTimes(2);
+      expect(listener).toHaveBeenCalledTimes(2);
       expect(lastValue).toBe(4);
 
       configure();
@@ -1051,31 +1051,31 @@ describe('signal', () => {
       });
 
       expect(error).toBeUndefined();
-      expect(listener).toBeCalledTimes(0);
+      expect(listener).toHaveBeenCalledTimes(0);
 
       unsub = x4Counter.subscribe(() => {});
       expect(error).toBeUndefined();
-      expect(listener).toBeCalledTimes(0);
+      expect(listener).toHaveBeenCalledTimes(0);
 
       counter.set(2);
       expect(error).toBeUndefined();
-      expect(listener).toBeCalledTimes(0);
+      expect(listener).toHaveBeenCalledTimes(0);
 
       counter.set(5);
       expect(error).toBe('error');
-      expect(listener).toBeCalledTimes(1);
+      expect(listener).toHaveBeenCalledTimes(1);
 
       counter.set(6);
       expect(error).toBe('error');
-      expect(listener).toBeCalledTimes(2);
+      expect(listener).toHaveBeenCalledTimes(2);
 
       counter.set(3);
       expect(error).toBe('error');
-      expect(listener).toBeCalledTimes(2);
+      expect(listener).toHaveBeenCalledTimes(2);
 
       unsub();
       expect(error).toBe('error');
-      expect(listener).toBeCalledTimes(2);
+      expect(listener).toHaveBeenCalledTimes(2);
 
       configure();
     });

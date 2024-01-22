@@ -154,7 +154,7 @@ describe('computed', () => {
 
     count.subscribe(() => {});
 
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
   });
 
   it('logs unhandled exceptions in nested computeds', () => {
@@ -173,7 +173,7 @@ describe('computed', () => {
 
     parent.subscribe(() => {});
 
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
   });
 
   it('unsubscribes inner subscriptions on every calculation', () => {
@@ -188,19 +188,19 @@ describe('computed', () => {
     });
 
     comp.subscribe(() => {});
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
 
     source.set(1);
-    expect(spy).toBeCalledTimes(2);
+    expect(spy).toHaveBeenCalledTimes(2);
 
     source.set(2);
-    expect(spy).toBeCalledTimes(3);
+    expect(spy).toHaveBeenCalledTimes(3);
 
     ext.set(1);
-    expect(spy).toBeCalledTimes(4);
+    expect(spy).toHaveBeenCalledTimes(4);
 
     ext.set(2);
-    expect(spy).toBeCalledTimes(5);
+    expect(spy).toHaveBeenCalledTimes(5);
   });
 
   it('unsubscribes nested inner subscriptions on every calculation', () => {
@@ -218,19 +218,19 @@ describe('computed', () => {
     });
 
     comp.subscribe(() => {});
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
 
     source.set(1);
-    expect(spy).toBeCalledTimes(2);
+    expect(spy).toHaveBeenCalledTimes(2);
 
     source.set(2);
-    expect(spy).toBeCalledTimes(3);
+    expect(spy).toHaveBeenCalledTimes(3);
 
     ext.set(1);
-    expect(spy).toBeCalledTimes(4);
+    expect(spy).toHaveBeenCalledTimes(4);
 
     ext.set(2);
-    expect(spy).toBeCalledTimes(5);
+    expect(spy).toHaveBeenCalledTimes(5);
   });
 
   it('unsubscribes inner subscriptions in nested computeds on every calculation', () => {
@@ -250,19 +250,19 @@ describe('computed', () => {
     });
 
     comp.subscribe(() => {});
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
 
     source.set(1);
-    expect(spy).toBeCalledTimes(2);
+    expect(spy).toHaveBeenCalledTimes(2);
 
     source.set(2);
-    expect(spy).toBeCalledTimes(3);
+    expect(spy).toHaveBeenCalledTimes(3);
 
     ext.set(1);
-    expect(spy).toBeCalledTimes(4);
+    expect(spy).toHaveBeenCalledTimes(4);
 
     ext.set(2);
-    expect(spy).toBeCalledTimes(5);
+    expect(spy).toHaveBeenCalledTimes(5);
   });
 
   it('unsubscribes all inner subscriptions on parent calculation', () => {
@@ -288,34 +288,34 @@ describe('computed', () => {
     });
 
     comp.subscribe(() => {});
-    expect(innerSpy).toBeCalledTimes(1);
-    expect(externalSpy).toBeCalledTimes(1);
-    expect(deepSpy).toBeCalledTimes(1);
+    expect(innerSpy).toHaveBeenCalledTimes(1);
+    expect(externalSpy).toHaveBeenCalledTimes(1);
+    expect(deepSpy).toHaveBeenCalledTimes(1);
 
     source.set(1);
-    expect(innerSpy).toBeCalledTimes(2);
-    expect(externalSpy).toBeCalledTimes(2);
-    expect(deepSpy).toBeCalledTimes(2);
+    expect(innerSpy).toHaveBeenCalledTimes(2);
+    expect(externalSpy).toHaveBeenCalledTimes(2);
+    expect(deepSpy).toHaveBeenCalledTimes(2);
 
     source.set(2);
-    expect(innerSpy).toBeCalledTimes(3);
-    expect(externalSpy).toBeCalledTimes(3);
-    expect(deepSpy).toBeCalledTimes(3);
+    expect(innerSpy).toHaveBeenCalledTimes(3);
+    expect(externalSpy).toHaveBeenCalledTimes(3);
+    expect(deepSpy).toHaveBeenCalledTimes(3);
 
     external.set(1);
-    expect(innerSpy).toBeCalledTimes(4);
-    expect(externalSpy).toBeCalledTimes(4);
-    expect(deepSpy).toBeCalledTimes(5); // because of subscription order
+    expect(innerSpy).toHaveBeenCalledTimes(4);
+    expect(externalSpy).toHaveBeenCalledTimes(4);
+    expect(deepSpy).toHaveBeenCalledTimes(5); // because of subscription order
 
     external.set(2);
-    expect(innerSpy).toBeCalledTimes(5);
-    expect(externalSpy).toBeCalledTimes(5);
-    expect(deepSpy).toBeCalledTimes(6);
+    expect(innerSpy).toHaveBeenCalledTimes(5);
+    expect(externalSpy).toHaveBeenCalledTimes(5);
+    expect(deepSpy).toHaveBeenCalledTimes(6);
 
     external.set(3);
-    expect(innerSpy).toBeCalledTimes(6);
-    expect(externalSpy).toBeCalledTimes(6);
-    expect(deepSpy).toBeCalledTimes(7);
+    expect(innerSpy).toHaveBeenCalledTimes(6);
+    expect(externalSpy).toHaveBeenCalledTimes(6);
+    expect(deepSpy).toHaveBeenCalledTimes(7);
   });
 
   it('handles automatic unsubscribing in the right order', () => {
@@ -332,10 +332,10 @@ describe('computed', () => {
     });
 
     comp.subscribe(() => {});
-    expect(onDeactivateSpy).toBeCalledTimes(0);
+    expect(onDeactivateSpy).toHaveBeenCalledTimes(0);
 
     source.set(1);
-    expect(onDeactivateSpy).toBeCalledTimes(1);
+    expect(onDeactivateSpy).toHaveBeenCalledTimes(1);
   });
 
   it('handles deep nested automatic unsubscribing in the right order', () => {
@@ -358,10 +358,10 @@ describe('computed', () => {
     });
 
     parent.subscribe(() => {});
-    expect(onDeactivateSpy).toBeCalledTimes(0);
+    expect(onDeactivateSpy).toHaveBeenCalledTimes(0);
 
     source.set(1);
-    expect(onDeactivateSpy).toBeCalledTimes(1);
+    expect(onDeactivateSpy).toHaveBeenCalledTimes(1);
   });
 
   it('keeps subscriptions made inside a subscriber', () => {
@@ -374,16 +374,16 @@ describe('computed', () => {
       b.subscribe(() => spy());
     });
 
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
 
     a.set(1);
-    expect(spy).toBeCalledTimes(2);
+    expect(spy).toHaveBeenCalledTimes(2);
 
     b.set(1);
-    expect(spy).toBeCalledTimes(4);
+    expect(spy).toHaveBeenCalledTimes(4);
 
     b.set(2);
-    expect(spy).toBeCalledTimes(6);
+    expect(spy).toHaveBeenCalledTimes(6);
   });
 
   it('keeps subscriptions made inside a deep nested subscriber', () => {
@@ -400,16 +400,16 @@ describe('computed', () => {
 
     wrap.get();
 
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
 
     a.set(1);
-    expect(spy).toBeCalledTimes(2);
+    expect(spy).toHaveBeenCalledTimes(2);
 
     b.set(1);
-    expect(spy).toBeCalledTimes(4);
+    expect(spy).toHaveBeenCalledTimes(4);
 
     b.set(2);
-    expect(spy).toBeCalledTimes(6);
+    expect(spy).toHaveBeenCalledTimes(6);
   });
 
   it('passes previous value into compute fn as first argument', () => {
@@ -456,46 +456,46 @@ describe('computed', () => {
     let unsub = result.subscribe(() => {});
 
     expect(lastScheduled).toBe(false);
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
 
     source.set(1);
     expect(lastScheduled).toBe(true);
-    expect(spy).toBeCalledTimes(2);
+    expect(spy).toHaveBeenCalledTimes(2);
 
     source.set(2);
     expect(lastScheduled).toBe(true);
-    expect(spy).toBeCalledTimes(3);
+    expect(spy).toHaveBeenCalledTimes(3);
 
     unsub();
     result.get();
-    expect(spy).toBeCalledTimes(3);
+    expect(spy).toHaveBeenCalledTimes(3);
 
     source.set(3);
     result.get();
     expect(lastScheduled).toBe(false);
-    expect(spy).toBeCalledTimes(4);
+    expect(spy).toHaveBeenCalledTimes(4);
 
     unsub = result.subscribe(() => {});
     expect(lastScheduled).toBe(false);
-    expect(spy).toBeCalledTimes(4);
+    expect(spy).toHaveBeenCalledTimes(4);
 
     source.set(10);
     expect(lastScheduled).toBe(true);
     expect(lastMedScheduled).toBe(false);
-    expect(medSpy).toBeCalledTimes(1);
-    expect(spy).toBeCalledTimes(5);
+    expect(medSpy).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(5);
 
     source.set(11);
     expect(lastScheduled).toBe(true);
     expect(lastMedScheduled).toBe(true);
-    expect(medSpy).toBeCalledTimes(2);
-    expect(spy).toBeCalledTimes(6);
+    expect(medSpy).toHaveBeenCalledTimes(2);
+    expect(spy).toHaveBeenCalledTimes(6);
 
     source.set(4);
     expect(lastScheduled).toBe(true);
     expect(lastMedScheduled).toBe(true);
-    expect(medSpy).toBeCalledTimes(2);
-    expect(spy).toBeCalledTimes(7);
+    expect(medSpy).toHaveBeenCalledTimes(2);
+    expect(spy).toHaveBeenCalledTimes(7);
 
     med.get();
     expect(lastMedScheduled).toBe(false);
@@ -555,13 +555,13 @@ describe('computed', () => {
     const c = computed(() => b.get());
 
     unsub = c.subscribe(() => {});
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
 
     source.set(1);
-    expect(spy).toBeCalledTimes(2);
+    expect(spy).toHaveBeenCalledTimes(2);
 
     source.set(11);
-    expect(spy).toBeCalledTimes(2);
+    expect(spy).toHaveBeenCalledTimes(2);
   });
 
   it('does not trigger dependants until its value is changed by default', () => {
@@ -573,27 +573,27 @@ describe('computed', () => {
 
     expect(counter.get()).toBe(0);
     expect(x2Counter.get()).toBe(0);
-    expect(spy).toBeCalledTimes(0);
+    expect(spy).toHaveBeenCalledTimes(0);
 
     counter.set(0);
     expect(counter.get()).toBe(0);
     expect(x2Counter.get()).toBe(0);
-    expect(spy).toBeCalledTimes(0);
+    expect(spy).toHaveBeenCalledTimes(0);
 
     counter.set(1);
     expect(counter.get()).toBe(1);
     expect(x2Counter.get()).toBe(2);
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
 
     counter.set(2);
     expect(counter.get()).toBe(2);
     expect(x2Counter.get()).toBe(4);
-    expect(spy).toBeCalledTimes(2);
+    expect(spy).toHaveBeenCalledTimes(2);
 
     counter.set(2);
     expect(counter.get()).toBe(2);
     expect(x2Counter.get()).toBe(4);
-    expect(spy).toBeCalledTimes(2);
+    expect(spy).toHaveBeenCalledTimes(2);
   });
 
   it('ignores a new value if it is equal to the current value', () => {
@@ -602,19 +602,19 @@ describe('computed', () => {
     const spy = jest.fn();
 
     b.subscribe(spy);
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
 
     a.set(0);
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
 
     a.set(1);
-    expect(spy).toBeCalledTimes(2);
+    expect(spy).toHaveBeenCalledTimes(2);
 
     a.set(2);
-    expect(spy).toBeCalledTimes(3);
+    expect(spy).toHaveBeenCalledTimes(3);
 
     a.set(2);
-    expect(spy).toBeCalledTimes(3);
+    expect(spy).toHaveBeenCalledTimes(3);
   });
 
   it('does not ignore any new value if the second arg returns true', () => {
@@ -627,19 +627,19 @@ describe('computed', () => {
     const spy = jest.fn();
 
     b.subscribe(spy);
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
 
     a.set(0);
-    expect(spy).toBeCalledTimes(2);
+    expect(spy).toHaveBeenCalledTimes(2);
 
     a.set(1);
-    expect(spy).toBeCalledTimes(3);
+    expect(spy).toHaveBeenCalledTimes(3);
 
     a.set(2);
-    expect(spy).toBeCalledTimes(4);
+    expect(spy).toHaveBeenCalledTimes(4);
 
     a.set(2);
-    expect(spy).toBeCalledTimes(5);
+    expect(spy).toHaveBeenCalledTimes(5);
   });
 
   it('can use custom compare function', () => {
@@ -652,19 +652,19 @@ describe('computed', () => {
     const spy = jest.fn();
 
     b.subscribe(spy);
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
 
     a.set(0);
-    expect(spy).toBeCalledTimes(2);
+    expect(spy).toHaveBeenCalledTimes(2);
 
     a.set(1);
-    expect(spy).toBeCalledTimes(3);
+    expect(spy).toHaveBeenCalledTimes(3);
 
     a.set(5);
-    expect(spy).toBeCalledTimes(3);
+    expect(spy).toHaveBeenCalledTimes(3);
 
     a.set(2);
-    expect(spy).toBeCalledTimes(4);
+    expect(spy).toHaveBeenCalledTimes(4);
   });
 
   it('can filter values using undefined value', () => {
@@ -678,24 +678,24 @@ describe('computed', () => {
       },
       {
         equal: () => false,
-      },
+      }
     );
     const spy = jest.fn();
 
     b.subscribe(spy);
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
 
     a.set(0);
-    expect(spy).toBeCalledTimes(2);
+    expect(spy).toHaveBeenCalledTimes(2);
 
     a.set(1);
-    expect(spy).toBeCalledTimes(3);
+    expect(spy).toHaveBeenCalledTimes(3);
 
     a.set(5);
-    expect(spy).toBeCalledTimes(3);
+    expect(spy).toHaveBeenCalledTimes(3);
 
     a.set(2);
-    expect(spy).toBeCalledTimes(4);
+    expect(spy).toHaveBeenCalledTimes(4);
   });
 
   it('allows to handle inactive signal exceptions', () => {
@@ -736,7 +736,7 @@ describe('computed', () => {
     const withErrorComp = computed(() => withError.get());
     const unsub1 = withErrorComp.subscribe(() => {}, false);
 
-    expect(errorSpy).toBeCalledTimes(1);
+    expect(errorSpy).toHaveBeenCalledTimes(1);
 
     const handledError = computed(() => withErrorComp.get(), {
       catch: () => 42,
@@ -750,16 +750,16 @@ describe('computed', () => {
 
     count.set(4);
     expect(handledError.get()).toBe(42);
-    expect(errorSpy).toBeCalledTimes(2); // check logging on middle computed with subs and dependants
+    expect(errorSpy).toHaveBeenCalledTimes(2); // check logging on middle computed with subs and dependants
 
     unsub2();
     count.set(2);
-    expect(errorSpy).toBeCalledTimes(3); // check logging on middle computed with subs only
+    expect(errorSpy).toHaveBeenCalledTimes(3); // check logging on middle computed with subs only
 
     unsub1();
     handledError.subscribe(() => {}, false);
     count.set(1);
-    expect(errorSpy).toBeCalledTimes(3);
+    expect(errorSpy).toHaveBeenCalledTimes(3);
   });
 
   it('allows to throw a new exception', () => {
@@ -775,7 +775,7 @@ describe('computed', () => {
           if (e > 5) throw Error();
           return 42;
         },
-      },
+      }
     );
 
     const secondHandledError = computed(() => handledError.get(), {

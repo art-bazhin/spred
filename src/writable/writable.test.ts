@@ -71,24 +71,24 @@ describe('writable', () => {
 
     s.set();
 
-    expect(subscriber).toBeCalledTimes(2);
+    expect(subscriber).toHaveBeenCalledTimes(2);
     expect(value).toBe(undefined);
 
     s.get().a = 1;
     s.set();
 
-    expect(subscriber).toBeCalledTimes(3);
+    expect(subscriber).toHaveBeenCalledTimes(3);
     expect(value).toBe(1);
 
     s.get().a = 2;
     s.set();
 
-    expect(subscriber).toBeCalledTimes(4);
+    expect(subscriber).toHaveBeenCalledTimes(4);
     expect(value).toBe(2);
 
     s.set(s.get());
 
-    expect(subscriber).toBeCalledTimes(4);
+    expect(subscriber).toHaveBeenCalledTimes(4);
   });
 
   it('force emits dependant subscribers using set method without arguments', () => {
@@ -108,25 +108,25 @@ describe('writable', () => {
 
     s.set();
 
-    expect(subscriber).toBeCalledTimes(2);
+    expect(subscriber).toHaveBeenCalledTimes(2);
     expect(value).toBe(null);
 
     s.get().a = 1;
     s.set();
 
-    expect(subscriber).toBeCalledTimes(3);
+    expect(subscriber).toHaveBeenCalledTimes(3);
     expect(value).toBe(1);
 
     s.get().a = 2;
     s.set();
 
-    expect(subscriber).toBeCalledTimes(4);
+    expect(subscriber).toHaveBeenCalledTimes(4);
     expect(value).toBe(2);
 
     s.set(obj);
 
     expect(value).toBe(2);
-    expect(subscriber).toBeCalledTimes(4);
+    expect(subscriber).toHaveBeenCalledTimes(4);
   });
 
   it('keeps subscriptions made inside a subscriber', () => {
@@ -138,16 +138,16 @@ describe('writable', () => {
       b.subscribe(() => spy());
     });
 
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
 
     a.set(1);
-    expect(spy).toBeCalledTimes(2);
+    expect(spy).toHaveBeenCalledTimes(2);
 
     b.set(1);
-    expect(spy).toBeCalledTimes(4);
+    expect(spy).toHaveBeenCalledTimes(4);
 
     b.set(2);
-    expect(spy).toBeCalledTimes(6);
+    expect(spy).toHaveBeenCalledTimes(6);
   });
 
   it('can have fn value', () => {
@@ -166,19 +166,19 @@ describe('writable', () => {
     const spy = jest.fn();
 
     a.subscribe(spy);
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
 
     a.set(0);
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
 
     a.set(1);
-    expect(spy).toBeCalledTimes(2);
+    expect(spy).toHaveBeenCalledTimes(2);
 
     a.set(2);
-    expect(spy).toBeCalledTimes(3);
+    expect(spy).toHaveBeenCalledTimes(3);
 
     a.set(2);
-    expect(spy).toBeCalledTimes(3);
+    expect(spy).toHaveBeenCalledTimes(3);
   });
 
   it('does not ignore any new value if the second arg returns false', () => {
@@ -188,19 +188,19 @@ describe('writable', () => {
     const spy = jest.fn();
 
     a.subscribe(spy);
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
 
     a.set(0);
-    expect(spy).toBeCalledTimes(2);
+    expect(spy).toHaveBeenCalledTimes(2);
 
     a.set(1);
-    expect(spy).toBeCalledTimes(3);
+    expect(spy).toHaveBeenCalledTimes(3);
 
     a.set(2);
-    expect(spy).toBeCalledTimes(4);
+    expect(spy).toHaveBeenCalledTimes(4);
 
     a.set(2);
-    expect(spy).toBeCalledTimes(5);
+    expect(spy).toHaveBeenCalledTimes(5);
   });
 
   it('can use custom equals function', () => {
@@ -213,19 +213,19 @@ describe('writable', () => {
     const spy = jest.fn();
 
     a.subscribe(spy);
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
 
     a.set(0);
-    expect(spy).toBeCalledTimes(2);
+    expect(spy).toHaveBeenCalledTimes(2);
 
     a.set(1);
-    expect(spy).toBeCalledTimes(3);
+    expect(spy).toHaveBeenCalledTimes(3);
 
     a.set(5);
-    expect(spy).toBeCalledTimes(3);
+    expect(spy).toHaveBeenCalledTimes(3);
     expect(a.get()).toBe(1);
 
     a.set(2);
-    expect(spy).toBeCalledTimes(4);
+    expect(spy).toHaveBeenCalledTimes(4);
   });
 });

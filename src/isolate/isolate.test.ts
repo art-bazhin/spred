@@ -15,10 +15,10 @@ describe('isolate', () => {
     });
 
     comp.subscribe(() => {});
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
 
     count.set(1);
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
   });
 
   it('unsubscribes all inner subscriptions on parent calculation', () => {
@@ -48,34 +48,34 @@ describe('isolate', () => {
     });
 
     comp.subscribe(() => {});
-    expect(innerSpy).toBeCalledTimes(1);
-    expect(externalSpy).toBeCalledTimes(1);
-    expect(deepSpy).toBeCalledTimes(1);
+    expect(innerSpy).toHaveBeenCalledTimes(1);
+    expect(externalSpy).toHaveBeenCalledTimes(1);
+    expect(deepSpy).toHaveBeenCalledTimes(1);
 
     source.set(1);
-    expect(innerSpy).toBeCalledTimes(2);
-    expect(externalSpy).toBeCalledTimes(2);
-    expect(deepSpy).toBeCalledTimes(2);
+    expect(innerSpy).toHaveBeenCalledTimes(2);
+    expect(externalSpy).toHaveBeenCalledTimes(2);
+    expect(deepSpy).toHaveBeenCalledTimes(2);
 
     source.set(2);
-    expect(innerSpy).toBeCalledTimes(3);
-    expect(externalSpy).toBeCalledTimes(3);
-    expect(deepSpy).toBeCalledTimes(3);
+    expect(innerSpy).toHaveBeenCalledTimes(3);
+    expect(externalSpy).toHaveBeenCalledTimes(3);
+    expect(deepSpy).toHaveBeenCalledTimes(3);
 
     external.set(1);
-    expect(innerSpy).toBeCalledTimes(4);
-    expect(externalSpy).toBeCalledTimes(4);
-    expect(deepSpy).toBeCalledTimes(5); // because of subscription order
+    expect(innerSpy).toHaveBeenCalledTimes(4);
+    expect(externalSpy).toHaveBeenCalledTimes(4);
+    expect(deepSpy).toHaveBeenCalledTimes(5); // because of subscription order
 
     external.set(2);
-    expect(innerSpy).toBeCalledTimes(5);
-    expect(externalSpy).toBeCalledTimes(5);
-    expect(deepSpy).toBeCalledTimes(6);
+    expect(innerSpy).toHaveBeenCalledTimes(5);
+    expect(externalSpy).toHaveBeenCalledTimes(5);
+    expect(deepSpy).toHaveBeenCalledTimes(6);
 
     external.set(3);
-    expect(innerSpy).toBeCalledTimes(6);
-    expect(externalSpy).toBeCalledTimes(6);
-    expect(deepSpy).toBeCalledTimes(7);
+    expect(innerSpy).toHaveBeenCalledTimes(6);
+    expect(externalSpy).toHaveBeenCalledTimes(6);
+    expect(deepSpy).toHaveBeenCalledTimes(7);
   });
 
   it('unsubscribes all inner subscriptions on parent calculation (case 2)', () => {
@@ -114,16 +114,16 @@ describe('isolate', () => {
     });
 
     comp.subscribe(() => {});
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
 
     source.set(1);
-    expect(spy).toBeCalledTimes(2);
+    expect(spy).toHaveBeenCalledTimes(2);
 
     external.set(1);
-    expect(spy).toBeCalledTimes(3);
+    expect(spy).toHaveBeenCalledTimes(3);
 
     external.set(2);
-    expect(spy).toBeCalledTimes(4);
+    expect(spy).toHaveBeenCalledTimes(4);
   });
 
   it('unsubscribes all inner subscriptions on parent calculation (case 3)', () => {
@@ -162,16 +162,16 @@ describe('isolate', () => {
     });
 
     comp.subscribe(() => {});
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
 
     source.set(1);
-    expect(spy).toBeCalledTimes(2);
+    expect(spy).toHaveBeenCalledTimes(2);
 
     external.set(1);
-    expect(spy).toBeCalledTimes(3);
+    expect(spy).toHaveBeenCalledTimes(3);
 
     external.set(2);
-    expect(spy).toBeCalledTimes(4);
+    expect(spy).toHaveBeenCalledTimes(4);
   });
 
   it('can take args as second argument', () => {

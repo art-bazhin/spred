@@ -17,16 +17,16 @@ describe('collect function', () => {
     });
 
     comp.subscribe(spy);
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
 
     b.set(1);
-    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
 
     a.set(1);
-    expect(spy).toBeCalledTimes(2);
+    expect(spy).toHaveBeenCalledTimes(2);
 
     b.set(2);
-    expect(spy).toBeCalledTimes(2);
+    expect(spy).toHaveBeenCalledTimes(2);
   });
 
   it('returnes cleanup fn', () => {
@@ -49,21 +49,21 @@ describe('collect function', () => {
       comp.subscribe(spyComp);
     });
 
-    expect(spy).toBeCalledTimes(1);
-    expect(spyInner).toBeCalledTimes(1);
-    expect(spyComp).toBeCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spyInner).toHaveBeenCalledTimes(1);
+    expect(spyComp).toHaveBeenCalledTimes(1);
 
     a.set(1);
 
-    expect(spy).toBeCalledTimes(2);
-    expect(spyInner).toBeCalledTimes(2);
-    expect(spyComp).toBeCalledTimes(2);
+    expect(spy).toHaveBeenCalledTimes(2);
+    expect(spyInner).toHaveBeenCalledTimes(2);
+    expect(spyComp).toHaveBeenCalledTimes(2);
 
     cleanup();
     a.set(2);
 
-    expect(spy).toBeCalledTimes(2);
-    expect(spyInner).toBeCalledTimes(2);
-    expect(spyComp).toBeCalledTimes(2);
+    expect(spy).toHaveBeenCalledTimes(2);
+    expect(spyInner).toHaveBeenCalledTimes(2);
+    expect(spyComp).toHaveBeenCalledTimes(2);
   });
 });

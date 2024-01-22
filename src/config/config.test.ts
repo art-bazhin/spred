@@ -20,12 +20,12 @@ describe('configure function', () => {
       const counter = writable(0);
 
       counter.subscribe(() => {
-        expect(startSpy).toBeCalledTimes(1);
-        expect(endSpy).toBeCalledTimes(0);
+        expect(startSpy).toHaveBeenCalledTimes(1);
+        expect(endSpy).toHaveBeenCalledTimes(0);
       }, false);
 
       counter.set(1);
-      expect(endSpy).toBeCalledTimes(1);
+      expect(endSpy).toHaveBeenCalledTimes(1);
     });
   });
 });
