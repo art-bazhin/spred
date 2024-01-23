@@ -7,7 +7,7 @@ import {
   HAS_EXCEPTION,
   NOOP_FN,
   NOTIFIED,
-  TRACKING,
+  COMPUTING,
 } from '../common/constants';
 
 interface ListNode<T> {
@@ -427,7 +427,7 @@ function get<T>(
   if (this._compute) {
     if (this._flags & FROZEN) return this._value;
 
-    if (this._flags & TRACKING) {
+    if (this._flags & COMPUTING) {
       throw new CircularDependencyError();
     }
   }
@@ -537,7 +537,7 @@ function compute<T>(state: SignalState<T>, scheduled: boolean) {
   computing = state;
   state._source = state._firstSource;
 
-  state._flags |= TRACKING;
+  state._flags |= COMPUTING;
   state._flags &= ~HAS_EXCEPTION;
 
   try {
@@ -579,7 +579,7 @@ function compute<T>(state: SignalState<T>, scheduled: boolean) {
   if (state._lastSource) state._lastSource.next = null;
   else state._flags |= FROZEN;
 
-  state._flags &= ~TRACKING;
+  state._flags &= ~COMPUTING;
   computing = prevComputing;
 }
 
