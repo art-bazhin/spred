@@ -52,7 +52,7 @@ describe('signal', () => {
     expect(num).toBe(2);
   });
 
-  it('stops to trigger subscribers after unsubscribe and calls cleanup fn', () => {
+  it('stops to trigger subscribers after unsubscribe and calls cleanup fn once', () => {
     expect(cleanup).toHaveBeenCalledTimes(0);
 
     unsubs.forEach((fn) => fn());
@@ -62,6 +62,9 @@ describe('signal', () => {
     expect(num).toBe(2);
     expect(cleanup).toHaveBeenCalledTimes(2);
 
+    unsubs.forEach((fn) => fn());
+    expect(cleanup).toHaveBeenCalledTimes(2);
+
     const frozen = signal(() => 0);
     (frozen as any).xxx = true;
 
@@ -69,6 +72,9 @@ describe('signal', () => {
 
     const unsubFrozen = frozen.subscribe(frozenSub);
     expect(frozenSub).toHaveBeenCalledTimes(1);
+
+    unsubFrozen();
+    expect(cleanup).toHaveBeenCalledTimes(3);
 
     unsubFrozen();
     expect(cleanup).toHaveBeenCalledTimes(3);

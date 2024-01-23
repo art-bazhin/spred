@@ -324,7 +324,7 @@ function subscribe<T>(
   subscriber: Subscriber<T>,
   exec = true
 ) {
-  let cleanup: any = undefined;
+  let cleanup: any = null;
 
   const prevShouldLink = shouldLink;
   const runSubscriber = () => {
@@ -347,13 +347,14 @@ function subscribe<T>(
   shouldLink = prevShouldLink;
   this._flags &= ~ACTIVATING;
 
-  if ((this as any).xxx) console.log(this._flags & FROZEN);
-
   if (this._flags & FROZEN) {
     if (exec) isolate(runSubscriber);
 
-    if (typeof cleanup === 'function') {
-      return cleanup;
+    if (cleanup) {
+      return () => {
+        if (typeof cleanup === 'function') cleanup();
+        cleanup = null;
+      };
     }
 
     return NOOP_FN;
