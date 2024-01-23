@@ -61,6 +61,17 @@ describe('signal', () => {
     expect(subscriber).toHaveBeenCalledTimes(4);
     expect(num).toBe(2);
     expect(cleanup).toHaveBeenCalledTimes(2);
+
+    const frozen = signal(() => 0);
+    (frozen as any).xxx = true;
+
+    const frozenSub = jest.fn(() => cleanup);
+
+    const unsubFrozen = frozen.subscribe(frozenSub);
+    expect(frozenSub).toHaveBeenCalledTimes(1);
+
+    unsubFrozen();
+    expect(cleanup).toHaveBeenCalledTimes(3);
   });
 
   it('correctly handles multiple unsubscribing', () => {

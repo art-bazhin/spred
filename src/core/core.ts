@@ -347,8 +347,15 @@ function subscribe<T>(
   shouldLink = prevShouldLink;
   this._flags &= ~ACTIVATING;
 
+  if ((this as any).xxx) console.log(this._flags & FROZEN);
+
   if (this._flags & FROZEN) {
     if (exec) isolate(runSubscriber);
+
+    if (typeof cleanup === 'function') {
+      return cleanup;
+    }
+
     return NOOP_FN;
   }
 
@@ -560,9 +567,6 @@ function compute<T>(state: SignalState<T>) {
   if (state._source) {
     state._lastSource = state._source.prev;
 
-    if (state._lastSource) state._lastSource.next = null;
-    else state._flags |= FROZEN;
-
     if (state._source.link) {
       for (let node = state._source; node !== null; node = node.next!) {
         removeTargetNode(node.value, node.link!);
@@ -571,6 +575,9 @@ function compute<T>(state: SignalState<T>) {
 
     state._source = null;
   }
+
+  if (state._lastSource) state._lastSource.next = null;
+  else state._flags |= FROZEN;
 
   state._flags &= ~TRACKING;
   computing = prevComputing;
