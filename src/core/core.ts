@@ -1,7 +1,6 @@
 import { config } from '../config/config';
 import { CircularDependencyError } from '../common/errors';
 import {
-  ACTIVATING,
   CHANGED,
   FORCED,
   FROZEN,
@@ -337,15 +336,11 @@ function subscribe<T>(
     });
   };
 
-  if (!(this._flags & FROZEN) && !this._firstTarget) {
-    shouldLink = true;
-    this._flags |= ACTIVATING;
-  }
+  shouldLink = true;
 
-  const value = this.get(false);
+  const value = (this.get as any)(false, true);
 
   shouldLink = prevShouldLink;
-  this._flags &= ~ACTIVATING;
 
   if (this._flags & FROZEN) {
     if (exec) isolate(runSubscriber);
@@ -424,7 +419,11 @@ function recalc() {
   recalc();
 }
 
-function get<T>(this: SignalState<T>, trackDependency = true): T {
+function get<T>(
+  this: SignalState<T>,
+  trackDependency = true,
+  subscribing = false
+): T {
   if (this._compute) {
     if (this._flags & FROZEN) return this._value;
 
@@ -441,8 +440,7 @@ function get<T>(this: SignalState<T>, trackDependency = true): T {
     if (this._compute && sourcesChanged) compute(this);
 
     if (this._flags & HAS_EXCEPTION) {
-      if (this._subs || this._flags & ACTIVATING)
-        config.logException(this._exception);
+      if (this._subs || subscribing) config.logException(this._exception);
     } else if (
       this._flags & FORCED ||
       (sourcesChanged &&
