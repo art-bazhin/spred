@@ -176,6 +176,36 @@ describe('computed', () => {
     expect(spy).toHaveBeenCalledTimes(1);
   });
 
+  it('logs unhandled exceptions while computing inactive signal', () => {
+    const spy = jest.fn();
+
+    configure({
+      logException: spy,
+    });
+
+    const a = writable(0);
+
+    const b = computed(() => {
+      const value = a.get();
+      if (value < 10) throw 'ERROR';
+      return value;
+    });
+
+    b.get();
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    b.get();
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    a.set(1);
+    b.get();
+    expect(spy).toHaveBeenCalledTimes(2);
+
+    a.set(10);
+    b.get();
+    expect(spy).toHaveBeenCalledTimes(2);
+  });
+
   it('unsubscribes inner subscriptions on every calculation', () => {
     const spy = jest.fn();
 

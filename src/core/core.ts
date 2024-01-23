@@ -433,14 +433,16 @@ function get<T>(
   }
 
   if (this._version !== version) {
+    const scheduled = !!(this._flags & NOTIFIED);
     const sourcesChanged = checkSources(this);
 
     this._flags &= ~CHANGED;
 
-    if (this._compute && sourcesChanged) compute(this);
+    if (this._compute && sourcesChanged) compute(this, scheduled);
 
     if (this._flags & HAS_EXCEPTION) {
-      if (this._subs || subscribing) config.logException(this._exception);
+      if (this._subs || subscribing || (!scheduled && !computing))
+        config.logException(this._exception);
     } else if (
       this._flags & FORCED ||
       (sourcesChanged &&
@@ -529,8 +531,7 @@ function checkSources(state: SignalState<any>) {
   return true;
 }
 
-function compute<T>(state: SignalState<T>) {
-  const scheduled = !!(state._flags & NOTIFIED);
+function compute<T>(state: SignalState<T>, scheduled: boolean) {
   const prevComputing = computing;
 
   computing = state;
