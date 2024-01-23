@@ -20,7 +20,6 @@ interface ListNode<T> {
 
 let computing: SignalState<any> | null = null;
 let scope: SignalState<any> | null = null;
-let node: ListNode<SignalState<any>> | null = null;
 
 let batchLevel = 0;
 let shouldLink = false;
@@ -129,6 +128,7 @@ export function _Signal<T>(
   this._version = 0;
   this._firstSource = null;
   this._lastSource = null;
+  this._source = null;
   this._firstTarget = null;
   this._lastTarget = null;
 
@@ -197,6 +197,7 @@ export interface SignalState<T> extends SignalOptions<T>, Signal<T> {
 
   _firstSource: ListNode<SignalState<any>> | null;
   _lastSource: ListNode<SignalState<any>> | null;
+  _source: ListNode<SignalState<any>> | null;
 
   _firstTarget: ListNode<SignalState<any> | Subscriber<any>> | null;
   _lastTarget: ListNode<SignalState<any> | Subscriber<any>> | null;
@@ -466,6 +467,8 @@ function get<T>(this: SignalState<T>, trackDependency = true): T {
       computing._flags |= HAS_EXCEPTION;
     }
 
+    const node = computing._source;
+
     if (node) {
       if (node.value !== this) {
         if (node.link) removeTargetNode(node.value, node.link);
@@ -476,7 +479,7 @@ function get<T>(this: SignalState<T>, trackDependency = true): T {
         else node.link = null;
       }
 
-      node = node.next;
+      computing._source = node.next;
     } else {
       const n = createSourceNode(this, computing);
       if (shouldLink) createTargetNode(this, computing, n);
@@ -523,10 +526,9 @@ function checkSources(state: SignalState<any>) {
 function compute<T>(state: SignalState<T>) {
   const scheduled = !!(state._flags & NOTIFIED);
   const prevComputing = computing;
-  const prevNode = node;
 
   computing = state;
-  node = state._firstSource;
+  state._source = state._firstSource;
 
   state._flags |= TRACKING;
   state._flags &= ~HAS_EXCEPTION;
@@ -555,16 +557,15 @@ function compute<T>(state: SignalState<T>) {
     }
   }
 
-  while (node) {
-    removeSourceNode(state, node);
-    node = node.next;
+  while (state._source) {
+    removeSourceNode(state, state._source);
+    state._source = state._source.next;
   }
 
   if (!state._firstSource) state._flags |= FREEZED;
 
   state._flags &= ~TRACKING;
   computing = prevComputing;
-  node = prevNode;
 }
 
 function cleanupChildren(state: SignalState<any>) {
