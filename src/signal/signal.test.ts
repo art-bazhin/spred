@@ -379,6 +379,35 @@ describe('signal', () => {
     expect(spy).toHaveBeenCalledTimes(6);
   });
 
+  it('dynamically updates dependencies (case 6)', () => {
+    const spy = jest.fn();
+
+    let tumbler = true;
+
+    const a = signal(0);
+    const b = signal(0);
+    const c = signal(0);
+
+    const d = signal(() => {
+      if (tumbler) return a.get() + b.get() + c.get();
+      return -1;
+    });
+
+    const unsub = d.subscribe(spy);
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    tumbler = false;
+    a.set(1);
+    expect(spy).toHaveBeenCalledTimes(2);
+
+    a.set(2);
+    expect(spy).toHaveBeenCalledTimes(2);
+
+    unsub();
+    a.set(3);
+    expect(d.get()).toBe(-1); // d is frozen after it has lost its dependencies
+  });
+
   it('does not recalc a dependant if it is not active', () => {
     const bSpy = jest.fn();
     const cSpy = jest.fn();

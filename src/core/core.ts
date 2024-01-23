@@ -4,7 +4,7 @@ import {
   ACTIVATING,
   CHANGED,
   FORCED,
-  FREEZED,
+  FROZEN,
   HAS_EXCEPTION,
   NOOP_FN,
   NOTIFIED,
@@ -337,7 +337,7 @@ function subscribe<T>(
     });
   };
 
-  if (!(this._flags & FREEZED) && !this._firstTarget) {
+  if (!(this._flags & FROZEN) && !this._firstTarget) {
     shouldLink = true;
     this._flags |= ACTIVATING;
   }
@@ -347,7 +347,7 @@ function subscribe<T>(
   shouldLink = prevShouldLink;
   this._flags &= ~ACTIVATING;
 
-  if (this._flags & FREEZED) {
+  if (this._flags & FROZEN) {
     if (exec) isolate(runSubscriber);
     return NOOP_FN;
   }
@@ -418,7 +418,7 @@ function recalc() {
 
 function get<T>(this: SignalState<T>, trackDependency = true): T {
   if (this._compute) {
-    if (this._flags & FREEZED) return this._value;
+    if (this._flags & FROZEN) return this._value;
 
     if (this._flags & TRACKING) {
       throw new CircularDependencyError();
@@ -557,12 +557,20 @@ function compute<T>(state: SignalState<T>) {
     }
   }
 
-  while (state._source) {
-    removeSourceNode(state, state._source);
-    state._source = state._source.next;
-  }
+  if (state._source) {
+    state._lastSource = state._source.prev;
 
-  if (!state._firstSource) state._flags |= FREEZED;
+    if (state._lastSource) state._lastSource.next = null;
+    else state._flags |= FROZEN;
+
+    if (state._source.link) {
+      for (let node = state._source; node !== null; node = node.next!) {
+        removeTargetNode(node.value, node.link!);
+      }
+    }
+
+    state._source = null;
+  }
 
   state._flags &= ~TRACKING;
   computing = prevComputing;
@@ -595,18 +603,6 @@ function createSourceNode(source: SignalState<any>, target: SignalState<any>) {
   target._lastSource = node;
 
   return node;
-}
-
-function removeSourceNode(state: SignalState<any>, node: ListNode<any>) {
-  if (state._firstSource === node) state._firstSource = node.next;
-  if (state._lastSource === node) state._lastSource = node.prev;
-  if (node.prev) node.prev.next = node.next;
-  if (node.next) node.next.prev = node.prev;
-
-  if (node.link) {
-    removeTargetNode(node.value, node.link);
-    node.link = null;
-  }
 }
 
 function createTargetNode(
