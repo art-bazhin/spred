@@ -5,7 +5,16 @@ import {
   effect as preactEffect,
 } from '../node_modules/@preact/signals-core/dist/signals-core.mjs';
 
+import {
+  createSignal as solidSignal,
+  createMemo as solidMemo,
+  createEffect as solidEffect,
+  batch as solidBatch,
+} from 'https://unpkg.com/solid-js@1.8.0/dist/solid.js';
+
 import { batch, signal } from '/dist/index.mjs';
+
+const NUMBER_OF_ITERATIONS = 100_000;
 
 const res = [];
 
@@ -27,9 +36,18 @@ function bench(writable, computed, get, set, subscribe, batch) {
   const G = computed(
     () => get(C) + (get(C) || get(E) % 2) + get(D)[4].x + get(F)
   );
-  const H = subscribe(G, (v) => res.push(hard(v, 'H')));
-  const I = subscribe(G, (v) => res.push(v));
-  const J = subscribe(F, (v) => res.push(hard(v, 'J')));
+
+  const H = subscribe(G, (v) => {
+    res.push(hard(v, 'H'));
+  });
+
+  const I = subscribe(G, (v) => {
+    res.push(v);
+  });
+
+  const J = subscribe(F, (v) => {
+    res.push(hard(v, 'J'));
+  });
 
   function iteration(i) {
     res.length = 0;
@@ -47,13 +65,15 @@ function bench(writable, computed, get, set, subscribe, batch) {
 
   const ts = performance.now();
 
-  for (let i = 0; i < 10000; i++) {
+  for (let i = 0; i < NUMBER_OF_ITERATIONS; i++) {
     iteration(i);
   }
 
   const time = performance.now() - ts;
 
-  H(), I(), J();
+  if (typeof H === 'function') {
+    H(), I(), J();
+  }
 
   document.getElementById('result').textContent = `[${res}] ${Math.round(
     time
@@ -81,5 +101,18 @@ document.getElementById('preact').onclick = () => {
     },
     (s, f) => preactEffect(() => f(s.value)),
     preactBatch
+  );
+};
+
+document.getElementById('solid').onclick = () => {
+  bench(
+    solidSignal,
+    solidMemo,
+    (s) => (typeof s === 'function' ? s() : s[0]()),
+    (s, v) => {
+      s[1](v);
+    },
+    (s, f) => solidEffect(() => f(s())),
+    solidBatch
   );
 };

@@ -6,7 +6,6 @@ import {
 import {
   createSignal as solidCreateSignal,
   createMemo as solidCreateMemo,
-  createComputed as solidCreateComputed,
   batch as solidBatch,
 } from 'https://unpkg.com/solid-js@1.8.0/dist/solid.js';
 
