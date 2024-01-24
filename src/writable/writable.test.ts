@@ -55,11 +55,12 @@ describe('writable', () => {
     expect(counter.subscribe).toBeDefined;
   });
 
-  it('force emits subscribers using update method with a function that returns void', () => {
-    interface Test {
-      a?: number;
-    }
-    const s = writable({} as Test);
+  it('force triggers subscribers using update method with a function that returns void', () => {
+    const s = writable(
+      {} as {
+        a?: number;
+      }
+    );
 
     let value: any;
     const subscriber = jest.fn((v: any) => (value = v.a));
@@ -90,8 +91,12 @@ describe('writable', () => {
     expect(subscriber).toHaveBeenCalledTimes(4);
   });
 
-  it('force emits subscribers using update method without arguments', () => {
-    const s = writable({} as any);
+  it('force triggers subscribers using update method without arguments', () => {
+    const s = writable(
+      {} as {
+        a?: number;
+      }
+    );
 
     let value: any;
     const subscriber = jest.fn((v: any) => (value = v.a));
@@ -120,9 +125,12 @@ describe('writable', () => {
     expect(subscriber).toHaveBeenCalledTimes(4);
   });
 
-  it('force emits dependent subscribers using update method without arguments', () => {
-    const obj = { shit: 'yeah' } as any;
-    const s = writable(obj);
+  it('force triggers dependent subscribers using update method without arguments', () => {
+    const s = writable(
+      {} as {
+        a?: number;
+      }
+    );
     const comp = computed(() => s.get().a || null, {
       equal: () => false,
     });
@@ -152,10 +160,58 @@ describe('writable', () => {
     expect(subscriber).toHaveBeenCalledTimes(4);
     expect(value).toBe(2);
 
-    s.set(obj);
+    s.set(s.get());
 
     expect(value).toBe(2);
     expect(subscriber).toHaveBeenCalledTimes(4);
+  });
+
+  it('force triggers subscribers using emit method', () => {
+    const s = writable(
+      {} as {
+        a?: number;
+      }
+    );
+
+    let value: any;
+    const subscriber = jest.fn((v: any) => (value = v.a));
+
+    s.subscribe(subscriber);
+
+    s.update();
+
+    expect(subscriber).toHaveBeenCalledTimes(2);
+    expect(value).toBe(undefined);
+
+    s.get().a = 1;
+    s.emit(s.get());
+
+    expect(subscriber).toHaveBeenCalledTimes(3);
+    expect(value).toBe(1);
+
+    s.get().a = 2;
+    s.emit(s.get());
+
+    expect(subscriber).toHaveBeenCalledTimes(4);
+    expect(value).toBe(2);
+
+    s.set(s.get());
+
+    expect(subscriber).toHaveBeenCalledTimes(4);
+  });
+
+  it('force triggers subscribers using emit method without arguments', () => {
+    const spy = jest.fn();
+    const event = writable();
+
+    event.subscribe(spy);
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    event.emit();
+    expect(spy).toHaveBeenCalledTimes(2);
+
+    event.emit();
+    expect(spy).toHaveBeenCalledTimes(3);
   });
 
   it('keeps subscriptions made inside a subscriber', () => {

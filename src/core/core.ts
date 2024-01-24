@@ -149,21 +149,22 @@ _Signal.prototype.equal = Object.is;
  */
 export interface WritableSignal<T> extends Signal<T> {
   /**
-   * Set the value of the signal
+   * Set the signal value and notify dependents if it was changed.
    * @param value A new value of the signal.
    */
   set(value: T): void;
 
   /**
-   * Notify subscribers without setting a new value if the current value is not undefined.
+   * Set the signal value and force notify dependents.
+   * @param value A new value of the signal.
    */
-  update(): void;
+  emit(value: unknown extends T ? void : T): void;
 
   /**
-   * Update the signal value and notify subscribers.
+   * Update the signal value if an update function was passed and force notify dependents.
    * @param updateFn A function that updates the current value or returns a new value.
    */
-  update(updateFn: (lastValue: T) => T | void): void;
+  update(updateFn?: (lastValue: T) => T | void): void;
 }
 
 export function _WritableSignal<T>(
@@ -181,6 +182,7 @@ _WritableSignal.prototype = new (_Signal as any)();
 _WritableSignal.prototype.constructor = _WritableSignal;
 _WritableSignal.prototype.set = set;
 _WritableSignal.prototype.update = update;
+_WritableSignal.prototype.emit = emit;
 
 export interface SignalState<T> extends SignalOptions<T>, Signal<T> {
   _value: T;
@@ -296,6 +298,12 @@ function update<T>(
 ) {
   this._flags |= FORCED;
   this.set(updateFn && updateFn(this._nextValue));
+}
+
+function emit<T>(this: WritableSignal<T> & SignalState<T>, value: T) {
+  this._flags |= FORCED;
+  if (arguments.length) this.set(value);
+  else this.set(null as any);
 }
 
 function notify(state: SignalState<any>) {
