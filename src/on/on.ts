@@ -6,6 +6,9 @@ import { Signal, Subscriber } from '../core/core';
  * @param subscriber A function subscribed to updates.
  * @returns An unsubscribe function.
  */
-export function on<T>(signal: Signal<T>, subscriber: Subscriber<T>) {
+export function on<T>(
+  signal: Signal<T>,
+  subscriber: Subscriber<Exclude<T, undefined>>
+) {
   return signal.subscribe(subscriber, false);
 }

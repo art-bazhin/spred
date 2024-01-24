@@ -22,7 +22,7 @@ export function signal<T>(
  * Сreate a writable signal.
  * @returns A writable signal.
  */
-export function signal(): WritableSignal<unknown>;
+export function signal<T>(): WritableSignal<T | undefined>;
 
 /**
  * Сreate a writable signal.
@@ -31,7 +31,7 @@ export function signal(): WritableSignal<unknown>;
  * @returns A writable signal.
  */
 export function signal<T>(
-  value: T,
+  value: Exclude<T, Function>,
   options?: SignalOptions<T>
 ): WritableSignal<T>;
 

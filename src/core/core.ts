@@ -32,19 +32,16 @@ let version = 1;
 /**
  * A function subscribed to updates of a signal.
  * @param value A new value of the signal.
- * @param exec Determines whether the function has been executed immediately after subscription.
+ * @param exec Determines if the function was executed immediately after subscription.
  * @param returns A cleanup function called after unsubscribing.
  */
-export type Subscriber<T> = (value: T, exec: boolean) => (() => any) | any;
+export type Subscriber<T> = (value: T, exec: boolean) => (() => void) | void;
 
 /**
  * A function that calculates the new value of the signal.
- * @param prevValue A previous value of the signal.
- * @param scheduled Has a true value if the recalculation was caused by a dependency change or the setter call.
+ * @param scheduled Determines if the recalculation was caused by a dependency update.
  */
-export type Computation<T> =
-  | (() => T)
-  | ((prevValue: T | undefined, scheduled: boolean) => T);
+export type Computation<T> = (scheduled: boolean) => T;
 
 /**
  * An object that stores the options of the signal to be created.
@@ -103,7 +100,10 @@ export interface Signal<T> {
    * @param exec Determines whether the function should be executed immediately after subscription. Default is true.
    * @returns An unsubscribe function.
    */
-  subscribe(subscriber: Subscriber<T>, exec?: boolean): () => void;
+  subscribe<E extends boolean>(
+    subscriber: Subscriber<true extends E ? T : Exclude<T, undefined>>,
+    exec?: E
+  ): () => void;
 
   /**
    * Calculates and returns the current value of the signal.
@@ -533,7 +533,7 @@ function compute<T>(state: SignalState<T>, scheduled: boolean) {
 
   try {
     if (state._firstChild) cleanupChildren(state);
-    state._nextValue = state._compute!(state._value, scheduled);
+    state._nextValue = state._compute!(scheduled);
   } catch (e: any) {
     state._exception = e;
     state._flags |= HAS_EXCEPTION;

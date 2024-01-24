@@ -4,7 +4,7 @@ import { _WritableSignal, WritableSignal, SignalOptions } from '../core/core';
  * Сreate a writable signal.
  * @returns A writable signal.
  */
-export function writable(): WritableSignal<unknown>;
+export function writable<T>(): WritableSignal<T | undefined>;
 
 /**
  * Сreate a writable signal.

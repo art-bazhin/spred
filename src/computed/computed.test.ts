@@ -442,27 +442,7 @@ describe('computed', () => {
     expect(spy).toHaveBeenCalledTimes(6);
   });
 
-  it('passes previous value into compute fn as first argument', () => {
-    let prev: any;
-
-    const source = writable(0);
-    const result = computed((prevValue: number | undefined) => {
-      prev = prevValue;
-      return source.get();
-    });
-
-    result.subscribe(() => {});
-
-    expect(prev).toBeUndefined();
-
-    source.set(1);
-    expect(prev).toBe(0);
-
-    source.set(2);
-    expect(prev).toBe(1);
-  });
-
-  it('passes true as second compute fn argument if computation was scheduled', () => {
+  it('passes true as the first compute fn argument if computation was scheduled', () => {
     let lastScheduled = false;
     let lastMedScheduled = false;
 
@@ -471,13 +451,13 @@ describe('computed', () => {
 
     const source = writable(0);
 
-    const med = computed((_: any, scheduled) => {
+    const med = computed((scheduled) => {
       lastMedScheduled = scheduled;
       medSpy();
       return source.get() * 2;
     });
 
-    const result = computed((_: any, scheduled) => {
+    const result = computed((scheduled) => {
       lastScheduled = scheduled;
       spy();
       return source.get() < 5 ? source.get() : med.get();
