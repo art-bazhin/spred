@@ -682,9 +682,7 @@ function unlinkDependencies(state: SignalState<any>) {
   state._flags &= ~NOTIFIED;
 
   for (let node = state._firstSource; node !== null; node = node.next) {
-    if (node.link) {
-      removeTargetNode(node.value, node.link);
-      node.link = null;
-    }
+    removeTargetNode(node.value, node.link!);
+    node.link = null;
   }
 }
