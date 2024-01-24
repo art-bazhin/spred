@@ -151,22 +151,19 @@ export interface WritableSignal<T> extends Signal<T> {
   /**
    * Set the value of the signal
    * @param value A new value of the signal.
-   * @returns The value has been set.
    */
-  set(value: T): T;
+  set(value: T): void;
 
   /**
-   * Notify subscribers without setting a new value.
-   * @returns The last value has been set.
+   * Notify subscribers without setting a new value if the current value is not undefined.
    */
-  set(): T;
+  update(): void;
 
   /**
-   * Calculate and set a new signal value based on the the last set value.
-   * @param getNextValue A function that calculates a new value.
-   * @returns The value has been set.
+   * Update the signal value and notify subscribers.
+   * @param updateFn A function that updates the current value or returns a new value.
    */
-  update(getNextValue: (lastValue: T) => T): T;
+  update(updateFn: (lastValue: T) => T | void): void;
 }
 
 export function _WritableSignal<T>(
@@ -283,27 +280,22 @@ export function batch(fn: (...args: any) => any) {
   else recalc();
 }
 
-function set<T>(this: SignalState<T>, value: T): T;
-function set<T>(this: SignalState<T>): void;
 function set<T>(this: SignalState<T>, value?: any) {
   const wrapper = (config as any)._notificationWrapper;
 
-  if (arguments.length) {
-    this._nextValue = value;
-  } else {
-    this._flags |= FORCED;
-  }
-
+  if (value !== undefined) this._nextValue = value;
   providers.push(this);
 
   if (wrapper) wrapper(recalc);
   else recalc();
-
-  return this._nextValue;
 }
 
-function update<T>(this: any, updateFn: (value: T) => T) {
-  return this.set(updateFn(this._nextValue));
+function update<T>(
+  this: WritableSignal<T> & SignalState<T>,
+  updateFn: (value: T) => T
+) {
+  this._flags |= FORCED;
+  this.set(updateFn && updateFn(this._nextValue));
 }
 
 function notify(state: SignalState<any>) {
@@ -391,8 +383,7 @@ function recalc() {
   for (let state of q) {
     if (
       state._flags & FORCED ||
-      (state._nextValue !== undefined &&
-        !state.equal!(state._nextValue, state._value))
+      !state.equal!(state._nextValue, state._value)
     ) {
       notify(state);
     }

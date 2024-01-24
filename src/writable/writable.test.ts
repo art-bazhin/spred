@@ -19,34 +19,28 @@ describe('writable', () => {
     expect(counter.get()).toBe(2);
   });
 
-  it('returns new value after set', () => {
+  it('returns void after set', () => {
     const newValue = counter.set(3);
-    expect(newValue).toBe(3);
-
-    const newSetValue = counter.set(3);
-    expect(newSetValue).toBe(3);
+    expect(newValue).toBeUndefined();
   });
 
-  it('returns current value after notify', () => {
-    const value = counter.set();
-    expect(value).toBe(3);
+  it('returns void value after notifiing', () => {
+    const value = counter.update();
+    expect(value).toBeUndefined();
   });
 
   it('updates value using update fn', () => {
     counter.update((value) => value + 1);
     expect(counter.get()).toBe(4);
 
-    let newValue: any;
-
     batch(() => {
-      newValue = counter.update((value) => value + 1);
-      newValue = counter.update((value) => value + 1);
-      newValue = counter.update((value) => value + 1);
-      newValue = counter.update((value) => value + 1);
+      counter.update((value) => value + 1);
+      counter.update((value) => value + 1);
+      counter.update((value) => value + 1);
+      counter.update((value) => value + 1);
     });
 
     expect(counter.get()).toBe(8);
-    expect(newValue).toBe(8);
   });
 
   it('updates value using update fn right after init', () => {
@@ -61,27 +55,32 @@ describe('writable', () => {
     expect(counter.subscribe).toBeDefined;
   });
 
-  it('force emits subscribers using set method without arguments', () => {
-    const s = writable({} as any);
+  it('force emits subscribers using update method with a function that returns void', () => {
+    interface Test {
+      a?: number;
+    }
+    const s = writable({} as Test);
 
     let value: any;
     const subscriber = jest.fn((v: any) => (value = v.a));
 
     s.subscribe(subscriber);
 
-    s.set();
+    s.update();
 
     expect(subscriber).toHaveBeenCalledTimes(2);
     expect(value).toBe(undefined);
 
-    s.get().a = 1;
-    s.set();
+    s.update((value) => {
+      value.a = 1;
+    });
 
     expect(subscriber).toHaveBeenCalledTimes(3);
     expect(value).toBe(1);
 
-    s.get().a = 2;
-    s.set();
+    s.update((value) => {
+      value.a = 2;
+    });
 
     expect(subscriber).toHaveBeenCalledTimes(4);
     expect(value).toBe(2);
@@ -91,7 +90,37 @@ describe('writable', () => {
     expect(subscriber).toHaveBeenCalledTimes(4);
   });
 
-  it('force emits dependant subscribers using set method without arguments', () => {
+  it('force emits subscribers using update method without arguments', () => {
+    const s = writable({} as any);
+
+    let value: any;
+    const subscriber = jest.fn((v: any) => (value = v.a));
+
+    s.subscribe(subscriber);
+
+    s.update();
+
+    expect(subscriber).toHaveBeenCalledTimes(2);
+    expect(value).toBe(undefined);
+
+    s.get().a = 1;
+    s.update();
+
+    expect(subscriber).toHaveBeenCalledTimes(3);
+    expect(value).toBe(1);
+
+    s.get().a = 2;
+    s.update();
+
+    expect(subscriber).toHaveBeenCalledTimes(4);
+    expect(value).toBe(2);
+
+    s.set(s.get());
+
+    expect(subscriber).toHaveBeenCalledTimes(4);
+  });
+
+  it('force emits dependent subscribers using update method without arguments', () => {
     const obj = { shit: 'yeah' } as any;
     const s = writable(obj);
     const comp = computed(() => s.get().a || null, {
@@ -106,19 +135,19 @@ describe('writable', () => {
 
     comp.subscribe(subscriber);
 
-    s.set();
+    s.update();
 
     expect(subscriber).toHaveBeenCalledTimes(2);
     expect(value).toBe(null);
 
     s.get().a = 1;
-    s.set();
+    s.update();
 
     expect(subscriber).toHaveBeenCalledTimes(3);
     expect(value).toBe(1);
 
     s.get().a = 2;
-    s.set();
+    s.update();
 
     expect(subscriber).toHaveBeenCalledTimes(4);
     expect(value).toBe(2);
