@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -41,7 +41,8 @@
         background-color: #fefefe;
       }
 
-      td, th {
+      td,
+      th {
         padding: 8px 16px;
       }
 
@@ -58,40 +59,18 @@
     </style>
   </head>
   <body>
+    <div class="m">Width: <input id="width" type="number" value="10000" /></div>
+    <div class="m">Depth: <input id="layers" type="number" value="10" /></div>
     <div class="m">
-      Width: <input id="width" type="number" value="10000"/>
-    </div>
-    <div class="m">
-      Depth: <input id="layers" type="number" value="10"/>
-    </div>
-    <div class="m">
-      Iterations: <input id="iterations" type="number" value="1"/>
-    </div>
-
-    <div class="l radios">
-      <label>
-        <input type="radio" name="lib" value="spred" checked></input>
-        spred
-      </label>
-
-      <label>
-        <input type="radio" name="lib" value="preact"></input>
-        preact
-      </label>
-
-      <label>
-        <input type="radio" name="lib" value="solid"></input>
-        solid
-      </label>
-
-      <label>
-        <input type="radio" name="lib" value="nanostores"></input>
-        nanostores
-      </label>
+      Iterations: <input id="iterations" type="number" value="1" />
     </div>
 
     <div class="l">
-      <button id="run">Run Benchmark</button>
+      <button>spred</button>
+      <button>preact</button>
+      <button>solid</button>
+      <button>whatsup</button>
+      <button>nanostores</button>
     </div>
 
     <div id="result"></div>

@@ -12,6 +12,13 @@ import {
   batch as solidBatch,
 } from 'https://unpkg.com/solid-js@1.8.0/dist/solid.js';
 
+import {
+  observable as whatsupObservable,
+  computed as whatsupComputed,
+  autorun as whatsupEffect,
+  runInAction as whatsupBatch,
+} from 'https://unpkg.com/@whatsup/core@2.6.0/dist/index.esm.js';
+
 import { batch, signal } from '/dist/index.mjs';
 
 const NUMBER_OF_ITERATIONS = 100_000;
@@ -114,5 +121,16 @@ document.getElementById('solid').onclick = () => {
     },
     (s, f) => solidEffect(() => f(s())),
     solidBatch
+  );
+};
+
+document.getElementById('whatsup').onclick = () => {
+  bench(
+    whatsupObservable,
+    whatsupComputed,
+    (s) => s(),
+    (s, v) => s(v),
+    (s, f) => whatsupEffect(() => f(s())),
+    whatsupBatch
   );
 };

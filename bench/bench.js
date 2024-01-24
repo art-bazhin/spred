@@ -7,7 +7,7 @@ import {
   createSignal as solidCreateSignal,
   createMemo as solidCreateMemo,
   batch as solidBatch,
-} from 'https://unpkg.com/solid-js@1.8.0/dist/solid.js';
+} from 'https://unpkg.com/solid-js@1.8.12/dist/solid.js';
 
 import {
   signal as preactSignal,
@@ -15,6 +15,13 @@ import {
   batch as preactBatch,
   effect as preactEffect,
 } from '../node_modules/@preact/signals-core/dist/signals-core.mjs';
+
+import {
+  observable as whatsupObservable,
+  computed as whatsupComputed,
+  autorun as whatsupEffect,
+  runInAction as whatsupBatch,
+} from 'https://unpkg.com/@whatsup/core@2.6.0/dist/index.esm.js';
 
 import {
   computed,
@@ -35,7 +42,6 @@ window.process = {
 const subscriber = function () {};
 
 const resultDiv = document.getElementById('result');
-const runButton = document.getElementById('run');
 
 const params = getHashParams();
 
@@ -160,6 +166,73 @@ function testPreact(width, layerCount, newValues) {
     end.prop3.value,
     end.prop4.value,
   ];
+
+  report.recalcTime = performance.now() - st;
+
+  return report;
+}
+
+function testWhatsup(width, layerCount, newValues) {
+  const report = { name: 'whatsup' };
+  const initTimestamp = performance.now();
+
+  const start = {
+    prop1: whatsupObservable(1),
+    prop2: whatsupObservable(2),
+    prop3: whatsupObservable(3),
+    prop4: whatsupObservable(4),
+  };
+
+  let layer;
+
+  for (let j = width; j--; ) {
+    layer = start;
+
+    for (let i = layerCount; i--; ) {
+      layer = (function (m) {
+        const s = {
+          prop1: whatsupComputed(function () {
+            return m.prop2();
+          }),
+          prop2: whatsupComputed(function () {
+            return m.prop1() - m.prop3();
+          }),
+          prop3: whatsupComputed(function () {
+            return m.prop2() + m.prop4();
+          }),
+          prop4: whatsupComputed(function () {
+            return m.prop3();
+          }),
+        };
+
+        if (!i) {
+          whatsupEffect(() => s.prop1());
+          whatsupEffect(() => s.prop2());
+          whatsupEffect(() => s.prop3());
+          whatsupEffect(() => s.prop4());
+        }
+
+        return s;
+      })(layer);
+    }
+  }
+
+  report.initTime = performance.now() - initTimestamp;
+
+  const end = layer;
+
+  report.beforeChange = [end.prop1(), end.prop2(), end.prop3(), end.prop4()];
+
+  const st = performance.now();
+
+  whatsupBatch(() => {
+    start.prop1(newValues[0]);
+    start.prop2(newValues[1]);
+    start.prop3(newValues[2]);
+    start.prop4(newValues[3]);
+  });
+
+  report.afterChange = [end.prop1(), end.prop2(), end.prop3(), end.prop4()];
 
   report.recalcTime = performance.now() - st;
 
@@ -505,7 +578,7 @@ function runBenchmark() {
   const iterations = getParameter('iterations');
   const width = getParameter('width');
   const layers = getParameter('layers');
-  const lib = getParameter('lib');
+  const lib = this.textContent;
 
   const newValues = [4, 3, 2, 1];
 
@@ -514,6 +587,7 @@ function runBenchmark() {
       spred: testSpred,
       preact: testPreact,
       solid: testSolid,
+      whatsup: testWhatsup,
       nanostores: testNanostores,
     }[lib];
 
@@ -529,7 +603,9 @@ function runBenchmark() {
   }, 0);
 }
 
-runButton.addEventListener('click', runBenchmark);
+document.querySelectorAll('button').forEach((button) => {
+  button.onclick = runBenchmark;
+});
 
 function expect(value) {
   return {
