@@ -8,7 +8,7 @@ import {
 } from '../core/core';
 
 /**
- * Creates a signal that automatically calculates its value based on other signals.
+ * Create a signal that automatically calculates its value based on other signals.
  * @param compute A function that calculates the signal value and returns it.
  * @param options Signal options.
  * @returns A computed signal.
@@ -19,13 +19,13 @@ export function signal<T>(
 ): Signal<T>;
 
 /**
- * Сreates a writable signal.
+ * Сreate a writable signal.
  * @returns A writable signal.
  */
 export function signal(): WritableSignal<unknown>;
 
 /**
- * Сreates a writable signal.
+ * Сreate a writable signal.
  * @param value An initial value of the signal.
  * @param options Signal options.
  * @returns A writable signal.
