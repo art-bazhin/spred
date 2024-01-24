@@ -19,7 +19,9 @@ describe('signal', () => {
     return cleanup;
   });
 
-  const altSubscriber = jest.fn((value: number) => (x2Num = value * 2));
+  const altSubscriber = jest.fn((value: number) => {
+    x2Num = value * 2;
+  });
 
   it('runs subscribers on subscribe', () => {
     unsubs.push(counter.subscribe(subscriber));
@@ -100,7 +102,9 @@ describe('signal', () => {
       if (gt5.get()) {
         const obj: any = {};
 
-        counter.subscribe((v) => (obj.value = v));
+        counter.subscribe((v) => {
+          obj.value = v;
+        });
         return obj;
       }
 
@@ -128,7 +132,10 @@ describe('signal', () => {
       if (gt5.get()) {
         const obj: any = {};
 
-        counter.subscribe((v) => (obj.value = counter.get()));
+        counter.subscribe((v) => {
+          obj.value = counter.get();
+        });
+
         return obj;
       }
 
@@ -332,9 +339,13 @@ describe('signal', () => {
     const G = signal(
       () => C.get() + (C.get() || E.get() % 2) + D.get() + F.get()
     );
-    const H = G.subscribe((v) => hard(v, 'H'));
+    const H = G.subscribe((v) => {
+      hard(v, 'H');
+    });
     const I = G.subscribe(() => {});
-    const J = F.subscribe((v) => hard(v, 'J'));
+    const J = F.subscribe((v) => {
+      hard(v, 'J');
+    });
 
     res = '';
 

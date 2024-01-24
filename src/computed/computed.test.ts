@@ -73,10 +73,18 @@ describe('computed', () => {
       cSub,
       dSub = 0;
 
-    a2.subscribe((v) => (aSub = v));
-    b2.subscribe((v) => (bSub = v));
-    c2.subscribe((v) => (cSub = v));
-    d2.subscribe((v) => (dSub = v));
+    a2.subscribe((v) => {
+      aSub = v;
+    });
+    b2.subscribe((v) => {
+      bSub = v;
+    });
+    c2.subscribe((v) => {
+      cSub = v;
+    });
+    d2.subscribe((v) => {
+      dSub = v;
+    });
 
     batch(() => {
       a.set(4);
@@ -107,7 +115,9 @@ describe('computed', () => {
 
     let value = '';
 
-    stringCounter.subscribe((v) => (value = v));
+    stringCounter.subscribe((v) => {
+      value = v;
+    });
     x2Counter.subscribe(() => {});
 
     expect(value).toBe('0');
