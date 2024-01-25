@@ -35,7 +35,7 @@ let version = 1;
  * @param exec Determines if the function was executed immediately after subscription.
  * @param returns A cleanup function called after unsubscribing.
  */
-export type Subscriber<T> = (value: T, exec: boolean) => (() => void) | void;
+export type Subscriber<T> = (value: T, exec: boolean) => void;
 
 /**
  * A function that calculates the new value of the signal.
@@ -323,13 +323,11 @@ function subscribe<T>(
   subscriber: Subscriber<T>,
   exec = true
 ) {
-  let cleanup: any = null;
-
   const prevShouldLink = shouldLink;
   const runSubscriber = () => {
     batch(() => {
       try {
-        cleanup = subscriber(value, true);
+        subscriber(this._value, true);
       } catch (e) {
         config.logException(e);
       }
@@ -342,19 +340,6 @@ function subscribe<T>(
 
   shouldLink = prevShouldLink;
 
-  if (this._flags & FROZEN) {
-    if (exec) isolate(runSubscriber);
-
-    if (cleanup) {
-      return () => {
-        if (typeof cleanup === 'function') cleanup();
-        cleanup = null;
-      };
-    }
-
-    return NOOP_FN;
-  }
-
   let node = createTargetNode(this, subscriber, null);
   ++this._subs;
 
@@ -365,7 +350,6 @@ function subscribe<T>(
     removeTargetNode(this, node);
     --this._subs;
     node = null as any;
-    if (typeof cleanup === 'function') cleanup();
   };
 
   const parent = computing || scope;
@@ -575,8 +559,12 @@ function compute<T>(state: SignalState<T>, scheduled: boolean) {
     state._source = null;
   }
 
-  if (state._lastSource) state._lastSource.next = null;
-  else state._flags |= FROZEN;
+  if (state._lastSource) {
+    state._lastSource.next = null;
+  } else {
+    state._flags |= FROZEN;
+    state._firstSource = null;
+  }
 
   state._flags &= ~COMPUTING;
   computing = prevComputing;

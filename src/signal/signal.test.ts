@@ -12,11 +12,8 @@ describe('signal', () => {
   let num: number;
   let x2Num: number;
 
-  const cleanup = jest.fn();
-
   const subscriber = jest.fn((value: number) => {
     num = value;
-    return cleanup;
   });
 
   const altSubscriber = jest.fn((value: number) => {
@@ -54,32 +51,32 @@ describe('signal', () => {
     expect(num).toBe(2);
   });
 
-  it('stops to trigger subscribers after unsubscribe and calls cleanup fn once', () => {
-    expect(cleanup).toHaveBeenCalledTimes(0);
-
+  it('stops to trigger subscribers after unsubscribe', () => {
     unsubs.forEach((fn) => fn());
     counter.set(3);
 
     expect(subscriber).toHaveBeenCalledTimes(4);
     expect(num).toBe(2);
-    expect(cleanup).toHaveBeenCalledTimes(2);
 
     unsubs.forEach((fn) => fn());
-    expect(cleanup).toHaveBeenCalledTimes(2);
+  });
 
-    const frozen = signal(() => 0);
-    (frozen as any).xxx = true;
+  it('correctly handles subscribing and unsubscribing to a signal without dependencies', () => {
+    const frozenSub = jest.fn();
+    const onActivate = jest.fn();
+    const onDeactivate = jest.fn();
 
-    const frozenSub = jest.fn(() => cleanup);
+    const frozen = signal(() => 0, { onActivate, onDeactivate });
 
     const unsubFrozen = frozen.subscribe(frozenSub);
+    expect(onDeactivate).toHaveBeenCalledTimes(0);
+    expect(onActivate).toHaveBeenCalledTimes(1);
     expect(frozenSub).toHaveBeenCalledTimes(1);
 
     unsubFrozen();
-    expect(cleanup).toHaveBeenCalledTimes(3);
-
-    unsubFrozen();
-    expect(cleanup).toHaveBeenCalledTimes(3);
+    expect(onDeactivate).toHaveBeenCalledTimes(1);
+    expect(onActivate).toHaveBeenCalledTimes(1);
+    expect(frozenSub).toHaveBeenCalledTimes(1);
   });
 
   it('correctly handles multiple unsubscribing', () => {
