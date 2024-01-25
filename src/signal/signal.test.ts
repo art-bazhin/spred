@@ -687,6 +687,25 @@ describe('signal', () => {
     expect(str).toBe('OFF');
   });
 
+  it('does not trgiiers subscribers if an exception occured', () => {
+    const spy = jest.fn();
+
+    const a = signal(0);
+    const b = signal(() => {
+      if (a.get() === 0) throw 'ERROR';
+      return a.get();
+    });
+
+    b.subscribe(spy);
+    expect(spy).toHaveBeenCalledTimes(0);
+
+    a.set(1);
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    a.set(0);
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+
   it('has get method which returns current value', () => {
     const test = signal(0);
 

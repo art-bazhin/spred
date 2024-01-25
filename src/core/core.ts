@@ -324,26 +324,26 @@ function subscribe<T>(
   exec = true
 ) {
   const prevShouldLink = shouldLink;
-  const runSubscriber = () => {
-    batch(() => {
-      try {
-        subscriber(this._value, true);
-      } catch (e) {
-        config.logException(e);
-      }
-    });
-  };
 
   shouldLink = true;
 
-  const value = (this.get as any)(false, true);
+  (this.get as any)(false, true);
 
   shouldLink = prevShouldLink;
 
   let node = createTargetNode(this, subscriber, null);
   ++this._subs;
 
-  if (exec) isolate(runSubscriber);
+  if (exec && !(this._flags & HAS_EXCEPTION))
+    isolate(() => {
+      batch(() => {
+        try {
+          subscriber(this._value, true);
+        } catch (e) {
+          config.logException(e);
+        }
+      });
+    });
 
   const dispose = () => {
     if (!node) return;
