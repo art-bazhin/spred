@@ -5,7 +5,6 @@ import {
   FORCED,
   FROZEN,
   HAS_EXCEPTION,
-  NOOP_FN,
   NOTIFIED,
   COMPUTING,
 } from '../common/constants';
@@ -25,7 +24,7 @@ let shouldLink = false;
 
 let providers: SignalState<any>[] = [];
 let consumers: SignalState<any>[] = [];
-let notifications: any[] = [];
+let notifiers: SignalState<any>[] = [];
 
 let version = 1;
 
@@ -376,9 +375,11 @@ function recalc() {
   const q = providers;
   const prevShouldLink = shouldLink;
 
+  shouldLink = true;
+
   providers = [];
   consumers = [];
-  shouldLink = true;
+  notifiers = [];
 
   ++version;
   ++batchLevel;
@@ -398,15 +399,19 @@ function recalc() {
 
   shouldLink = prevShouldLink;
 
-  for (let i = 0; i < notifications.length; i += 2) {
-    try {
-      notifications[i](notifications[i + 1]);
-    } catch (e) {
-      config.logException(e);
+  for (let state of notifiers) {
+    if (state._subs) {
+      for (let node = state._firstTarget; node !== null; node = node.next) {
+        if (typeof node.value === 'function') {
+          try {
+            node.value(state._value, false);
+          } catch (e) {
+            config.logException(e);
+          }
+        }
+      }
     }
   }
-
-  notifications = [];
 
   --batchLevel;
 
@@ -449,13 +454,7 @@ function get<T>(
       this._flags |= CHANGED;
 
       if (this.onUpdate) this.onUpdate(this._value, prevValue);
-
-      if (this._subs) {
-        for (let node = this._firstTarget; node !== null; node = node.next) {
-          if (typeof node.value === 'function')
-            notifications.push(node.value, this._value);
-        }
-      }
+      if (this._subs) notifiers.push(this);
     }
   }
 

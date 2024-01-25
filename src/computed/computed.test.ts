@@ -345,17 +345,17 @@ describe('computed', () => {
     external.set(1);
     expect(innerSpy).toHaveBeenCalledTimes(4);
     expect(externalSpy).toHaveBeenCalledTimes(4);
-    expect(deepSpy).toHaveBeenCalledTimes(5); // because of subscription order
+    expect(deepSpy).toHaveBeenCalledTimes(4);
 
     external.set(2);
     expect(innerSpy).toHaveBeenCalledTimes(5);
     expect(externalSpy).toHaveBeenCalledTimes(5);
-    expect(deepSpy).toHaveBeenCalledTimes(6);
+    expect(deepSpy).toHaveBeenCalledTimes(5);
 
     external.set(3);
     expect(innerSpy).toHaveBeenCalledTimes(6);
     expect(externalSpy).toHaveBeenCalledTimes(6);
-    expect(deepSpy).toHaveBeenCalledTimes(7);
+    expect(deepSpy).toHaveBeenCalledTimes(6);
   });
 
   it('handles automatic unsubscribing in the right order', () => {
