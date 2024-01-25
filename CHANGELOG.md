@@ -2,6 +2,62 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.36.0](https://github.com/art-bazhin/spred/compare/v0.35.2...v0.36.0) (2024-01-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* subscribe doesn't return cleanup function, use onDeactivate hook instead
+* computations don't take previous value as a first argument anymore
+* Remove WritableSignal.set signature with no arguments. Set and update methods
+return void instead of the signal value.
+
+### Features
+
+* add WritableSignal.emit method ([c585266](https://github.com/art-bazhin/spred/commit/c5852667f9b8b7ec0fdb789e9c51c1c1bbc39987))
+* use WritableSignal.update() to update value and notify subscribers ([47cd264](https://github.com/art-bazhin/spred/commit/47cd264f68996edc68758b831063d3ff2c09c83d))
+
+
+### Bug Fixes
+
+* fix error logging of inactive signals ([b6c03a8](https://github.com/art-bazhin/spred/commit/b6c03a8b7a12f61f0dff8311f06d23952dec627b))
+* fix lidecycle hooks of frozen signals ([560cd7d](https://github.com/art-bazhin/spred/commit/560cd7dcfeac46863346f17a406a3d692f46ee46))
+* fix multiple cleanup calls ([83fcc85](https://github.com/art-bazhin/spred/commit/83fcc85e8096c9a21e59af821c733a9b366fddee))
+* fix not calling a cleanup fn on unsubscribing from a frozen signal ([5d40640](https://github.com/art-bazhin/spred/commit/5d406400564d22c679533615841d4065fd191c76))
+* fix subscriber call when subscribing to a signal with an exception ([5fd9ff4](https://github.com/art-bazhin/spred/commit/5fd9ff489efa0620dbcaa887ce5c17235195fdde))
+* fix unnecessary notifications ([49baa36](https://github.com/art-bazhin/spred/commit/49baa36f086c4c85de73d0817c14fbd3444ba7a3))
+
+
+### Performance Improvements
+
+* save the current source node in a signal instead of a closure ([69b61bd](https://github.com/art-bazhin/spred/commit/69b61bd67f7c785e7e61b8b1a5e7ea449da02a0c))
+
+
+### Tests
+
+* add linking benchmark ([6de428c](https://github.com/art-bazhin/spred/commit/6de428cb8dcef572b7a44b835d6c9df79f503cf9))
+* add solid linking benchmark ([3d72409](https://github.com/art-bazhin/spred/commit/3d72409fdc7bc09c9291cfc00e2e1c1a3b6e2be4))
+* add whatsup benchmark ([3ab2d31](https://github.com/art-bazhin/spred/commit/3ab2d3110506b8b956a4e05e1331221ca65c4e05))
+* fix type errors in tests ([15d5c6c](https://github.com/art-bazhin/spred/commit/15d5c6ca195aefaa46c1f3e4efbd6f6cc1a7727a))
+
+
+### Code Refactoring
+
+* add missing finally statements ([e846f42](https://github.com/art-bazhin/spred/commit/e846f421cea0204821f4d09392ce90fa9248d217))
+* improve type inference ([f5052f9](https://github.com/art-bazhin/spred/commit/f5052f976da90b6dcf5cc0caa633a48222545ada))
+* refactor dependencies removal ([54b1437](https://github.com/art-bazhin/spred/commit/54b143719743df135d4faaf7b74d226d2cb74147))
+* refactor subscribing state check ([1bd5ea9](https://github.com/art-bazhin/spred/commit/1bd5ea9e7e315e8c909373d28d77247e27385ac2))
+* remove redundant check ([023f122](https://github.com/art-bazhin/spred/commit/023f12289ee1099944178375bc0cfb12be04d02e))
+* remove redundant code ([ebe0c34](https://github.com/art-bazhin/spred/commit/ebe0c34046c65758b978e23597e7742fcc92d319))
+* rename flag ([286a771](https://github.com/art-bazhin/spred/commit/286a771b2520f50c68e093c33be9873fe1a7d73c))
+
+
+### Docs
+
+* fix typos ([b9444ef](https://github.com/art-bazhin/spred/commit/b9444efd0bc6cf5840a9eabeac6b5ca7c7170848))
+* remove redundant type in example ([9506f2f](https://github.com/art-bazhin/spred/commit/9506f2f13eb20f6cbbe2b891035c455b8db94a85))
+* update docs ([b9cc35b](https://github.com/art-bazhin/spred/commit/b9cc35be079dfdbd9f0c78cfe88131a5fd172d58))
+
 ### [0.35.2](https://github.com/art-bazhin/spred/compare/v0.35.1...v0.35.2) (2024-01-22)
 
 
