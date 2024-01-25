@@ -673,7 +673,6 @@ function linkDependencies(state: SignalState<any>) {
   for (let node = state._firstSource; node !== null; node = node.next) {
     if (!node.link) {
       createTargetNode(node.value, state, node);
-      linkDependencies(node.value);
     }
   }
 }
