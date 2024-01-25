@@ -227,20 +227,18 @@ export function isolate(fn: any, args?: any) {
   const prevScope = scope;
   const prevShouldLink = shouldLink;
 
-  let result: any;
-
   if (computing) scope = computing;
   shouldLink = false;
   computing = null;
 
-  if (args) result = fn(...args);
-  else result = fn();
-
-  computing = prevComputing;
-  scope = prevScope;
-  shouldLink = prevShouldLink;
-
-  return result;
+  try {
+    if (args) return fn(...args);
+    return fn();
+  } finally {
+    computing = prevComputing;
+    scope = prevScope;
+    shouldLink = prevShouldLink;
+  }
 }
 
 /**
@@ -258,13 +256,15 @@ export function collect(fn: () => void) {
   scope = fakeState;
   computing = null;
 
-  fn();
+  try {
+    fn();
+  } finally {
+    computing = prevComputing;
+    scope = prevScope;
+    shouldLink = prevShouldLink;
 
-  computing = prevComputing;
-  scope = prevScope;
-  shouldLink = prevShouldLink;
-
-  return () => cleanupChildren(fakeState);
+    return () => cleanupChildren(fakeState);
+  }
 }
 
 /**
@@ -275,11 +275,15 @@ export function batch(fn: (...args: any) => any) {
   const wrapper = (config as any)._notificationWrapper;
 
   ++batchLevel;
-  fn();
-  --batchLevel;
 
-  if (wrapper) wrapper(recalc);
-  else recalc();
+  try {
+    fn();
+  } finally {
+    --batchLevel;
+
+    if (wrapper) wrapper(recalc);
+    else recalc();
+  }
 }
 
 function set<T>(this: SignalState<T>, value?: any) {
@@ -324,6 +328,7 @@ function subscribe<T>(
   exec = true
 ) {
   const prevShouldLink = shouldLink;
+  const wrapper = (config as any)._notificationWrapper;
 
   shouldLink = true;
 
@@ -334,16 +339,22 @@ function subscribe<T>(
   let node = createTargetNode(this, subscriber, null);
   ++this._subs;
 
-  if (exec && !(this._flags & HAS_EXCEPTION))
+  if (exec && !(this._flags & HAS_EXCEPTION)) {
+    ++batchLevel;
+
     isolate(() => {
-      batch(() => {
-        try {
-          subscriber(this._value, true);
-        } catch (e) {
-          config.logException(e);
-        }
-      });
+      try {
+        subscriber(this._value, true);
+      } catch (e) {
+        config.logException(e);
+      }
     });
+
+    --batchLevel;
+
+    if (wrapper) wrapper(recalc);
+    else recalc();
+  }
 
   const dispose = () => {
     if (!node) return;
