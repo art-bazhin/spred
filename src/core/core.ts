@@ -374,6 +374,7 @@ function recalc() {
 
   const q = providers;
   const prevShouldLink = shouldLink;
+  const nextVersion = version + 1;
 
   shouldLink = true;
 
@@ -383,19 +384,15 @@ function recalc() {
 
   ++batchLevel;
 
-  let updated = false;
-
   for (let state of q) {
     if (
       state._flags & FORCED ||
       !state.equal!(state._nextValue, state._value)
     ) {
-      updated = true;
+      version = nextVersion;
       notify(state);
     }
   }
-
-  if (updated) ++version;
 
   for (let state of consumers) {
     if (state._subs) state.get();
@@ -436,21 +433,30 @@ function get<T>(
   }
 
   if (this._version !== version) {
-    const scheduled = !!(this._flags & NOTIFIED);
-    const sourcesChanged = checkSources(this);
+    let needsToUpdate = true;
 
     this._flags &= ~CHANGED;
 
-    if (this._compute && sourcesChanged) compute(this, scheduled);
+    if (this._compute) {
+      const scheduled = !!(this._flags & NOTIFIED);
 
-    if (this._flags & HAS_EXCEPTION) {
-      if (this._subs || subscribing || (!scheduled && !computing))
-        config.logException(this._exception);
-    } else if (
-      this._flags & FORCED ||
-      (sourcesChanged &&
-        this._nextValue !== undefined &&
-        !this.equal!(this._nextValue, this._value))
+      needsToUpdate = this._firstSource ? checkSources(this) : true;
+      if (needsToUpdate) compute(this, scheduled);
+
+      if (this._flags & HAS_EXCEPTION) {
+        needsToUpdate = false;
+
+        if (this._subs || subscribing || (!scheduled && !computing)) {
+          config.logException(this._exception);
+        }
+      }
+    }
+
+    if (
+      needsToUpdate &&
+      (this._flags & FORCED ||
+        (this._nextValue !== undefined &&
+          !this.equal!(this._nextValue, this._value)))
     ) {
       const prevValue = this._value;
 
@@ -495,32 +501,23 @@ function get<T>(
 }
 
 function checkSources(state: SignalState<any>) {
-  if (state._firstSource) {
-    let sameSources = true;
-    let hasException = false;
+  for (let node = state._firstSource; node !== null; node = node.next!) {
+    const source = node.value;
 
-    for (let node = state._firstSource; node !== null; node = node.next!) {
-      const source = node.value;
-
+    if (source._flags & NOTIFIED || source._version !== version) {
       source.get(false);
-
-      if (source._flags & HAS_EXCEPTION) {
-        hasException = true;
-        state._flags |= HAS_EXCEPTION;
-        state._exception = source._exception;
-        break;
-      } else if (source._flags & CHANGED) {
-        sameSources = false;
-        break;
-      }
     }
 
-    if (sameSources && !hasException) {
-      return false;
+    if (source._flags & HAS_EXCEPTION) {
+      state._flags |= HAS_EXCEPTION;
+      state._exception = source._exception;
+      return true;
+    } else if (source._flags & CHANGED) {
+      return true;
     }
   }
 
-  return true;
+  return false;
 }
 
 function compute<T>(state: SignalState<T>, scheduled: boolean) {
