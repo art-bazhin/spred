@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.36.1](https://github.com/art-bazhin/spred/compare/v0.36.0...v0.36.1) (2024-01-26)
+
+
+### Bug Fixes
+
+* fix redundant computations on pull ([53ee836](https://github.com/art-bazhin/spred/commit/53ee836dd274dfa2ff321fdd6a238bd5a2146492))
+
+
+### Performance Improvements
+
+* optimize sources traversal ([b0a8df0](https://github.com/art-bazhin/spred/commit/b0a8df0a46b1aeb51c4345acb0f3358165108cde))
+
 ## [0.36.0](https://github.com/art-bazhin/spred/compare/v0.35.2...v0.36.0) (2024-01-25)
 
 
