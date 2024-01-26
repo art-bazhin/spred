@@ -583,6 +583,29 @@ describe('signal', () => {
     expect(spy).toHaveBeenCalledTimes(2);
   });
 
+  it('does not make redundant computations on pulling (case 2)', () => {
+    const spy = jest.fn(() => 0);
+
+    const a0 = signal(0);
+    const a1 = signal(0);
+    const a2 = signal(0);
+    const a3 = signal(0);
+
+    const b0 = signal(() => spy() + a0.get() + a1.get());
+    const b1 = signal(() => spy() + a1.get() + a2.get());
+    const b2 = signal(() => spy() + a2.get() + a3.get());
+
+    const c0 = signal(() => spy() + b0.get() + b1.get());
+    const c1 = signal(() => spy() + b1.get() + b2.get());
+
+    c1.get();
+    expect(spy).toHaveBeenCalledTimes(3);
+
+    a0.set(1);
+    c1.get();
+    expect(spy).toHaveBeenCalledTimes(3);
+  });
+
   it('does not make redundant computations on scheduled run', () => {
     const spy = jest.fn();
 

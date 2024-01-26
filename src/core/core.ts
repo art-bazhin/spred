@@ -381,17 +381,21 @@ function recalc() {
   consumers = [];
   notifiers = [];
 
-  ++version;
   ++batchLevel;
+
+  let updated = false;
 
   for (let state of q) {
     if (
       state._flags & FORCED ||
       !state.equal!(state._nextValue, state._value)
     ) {
+      updated = true;
       notify(state);
     }
   }
+
+  if (updated) ++version;
 
   for (let state of consumers) {
     if (state._subs) state.get();
@@ -497,11 +501,6 @@ function checkSources(state: SignalState<any>) {
 
     for (let node = state._firstSource; node !== null; node = node.next!) {
       const source = node.value;
-
-      if (!(state._flags & NOTIFIED) && source._version !== state._version) {
-        sameSources = false;
-        break;
-      }
 
       source.get(false);
 
