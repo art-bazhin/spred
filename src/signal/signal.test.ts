@@ -537,7 +537,7 @@ describe('signal', () => {
     expect(cSpy).toHaveBeenCalledTimes(2);
   });
 
-  it('updates target value after multiple dependency recalculations', () => {
+  it('updates a dependent value after multiple dependency recalculations', () => {
     const a = signal(0);
     const b = signal(() => a.get());
 
@@ -549,6 +549,21 @@ describe('signal', () => {
     a.get();
 
     expect(b.get()).toBe(1);
+  });
+
+  it('updates a dependent value after emitting a dependency', () => {
+    const a = signal(0);
+    const b = signal(() => a.get());
+    const c = signal(() => b.get());
+    const d = signal(() => b.get());
+
+    c.get();
+    d.subscribe(() => {});
+
+    a.set(1);
+    a.emit(1);
+
+    expect(c.get()).toBe(1);
   });
 
   it('does not make redundant computations on pulling', () => {

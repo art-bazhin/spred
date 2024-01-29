@@ -501,6 +501,8 @@ function get<T>(
 }
 
 function checkSources(state: SignalState<any>) {
+  if (!state._firstTarget && version - state._version > 1) return true;
+
   for (let node = state._firstSource; node !== null; node = node.next!) {
     const source = node.value;
 
