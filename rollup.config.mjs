@@ -1,8 +1,14 @@
 import terser from '@rollup/plugin-terser';
-import ts from 'rollup-plugin-ts';
+import ts from '@rollup/plugin-typescript';
+import { dts } from 'rollup-plugin-dts';
 import pkg from './package.json' with { type: 'json' };
 
 export default [
+  {
+    input: 'src/index.ts',
+    output: { file: `${pkg.types}`, format: 'es' },
+    plugins: [dts()],
+  },
   {
     input: 'src/index.ts',
     output: {
@@ -11,13 +17,7 @@ export default [
       format: 'umd',
     },
     plugins: [
-      ts({
-        tsconfig: {
-          target: 'ES2015',
-          module: 'es2015',
-          strict: true,
-        },
-      }),
+      ts(),
       terser({
         compress: {
           reduce_vars: false,
@@ -29,31 +29,13 @@ export default [
 
   {
     input: 'src/index.ts',
-    plugins: [
-      ts({
-        tsconfig: {
-          target: 'ES2015',
-          module: 'es2015',
-          declaration: true,
-          strict: true,
-        },
-      }),
-    ],
+    plugins: [ts()],
     output: { file: pkg.main, format: 'cjs' },
   },
 
   {
     input: 'src/index.ts',
-    plugins: [
-      ts({
-        tsconfig: {
-          target: 'ES2015',
-          module: 'es2015',
-          declaration: true,
-          strict: true,
-        },
-      }),
-    ],
+    plugins: [ts()],
     output: { file: pkg.module, format: 'es' },
   },
 ];
