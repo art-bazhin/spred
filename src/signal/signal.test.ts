@@ -1192,6 +1192,24 @@ describe('signal', () => {
     });
   });
 
+  describe('name option', () => {
+    it('can be set using the name property of signal options and accessed via this', () => {
+      const spy = jest.fn((str) => {});
+
+      const a = signal(0, {
+        name: 'test',
+        onUpdate() {
+          spy(this.name);
+        },
+      });
+
+      a.set(1);
+      a.get();
+
+      expect(spy).toHaveBeenLastCalledWith('test');
+    });
+  });
+
   describe('signal options', () => {
     it('allow to handle activation and deactivation of signals', () => {
       const activateSpy = jest.fn();

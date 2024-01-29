@@ -47,6 +47,11 @@ export type Computation<T> = (scheduled: boolean) => T;
  */
 export interface SignalOptions<T> {
   /**
+   * A name of the signal. Can be accessed inside a lifecycle function via this.
+   */
+  name?: string;
+
+  /**
    * An equality function used to check whether the value of the signal has been changed. Default is Object.is.
    * @param value A new value of the signal.
    * @param prevValue A previous value of the signal.
