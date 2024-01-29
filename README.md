@@ -308,53 +308,14 @@ Under the hood, the effect is simply a computed signal that becomes active at th
 
 Every signal has lifecycle hooks whose handlers can be set in the [signal options](https://art-bazhin.github.io/spred/interfaces/SignalOptions.html).
 
-- `onActivate` - emits when the signal becomes active (has at least one subscriber / dependent signal with a subscriber);
-- `onDectivate` - emits when the signal becomes inactive (doesn't have any subscriber / dependent signal with a subscriber);
-- `onUpdate` - emits when the signal updates its value;
-- `onException` - emits when an unhandled exception occurs during the signal computation.
+- `onCreate` - the signal is created;
+- `onActivate` - the signal becomes active (has at least one subscriber / dependent signal with a subscriber);
+- `onDectivate` - the signal becomes inactive (doesn't have any subscriber / dependent signal with a subscriber);
+- `onUpdate` - the signal updates its value;
+- `onCatch` - an exception was caught using the `catch` method of the signal options;
+- `onException` - an unhandled exception occurs during the signal computation.
 
-```ts
-import { signal } from '@spred/core';
-
-const source = signal(0);
-const result = signal(
-  () => {
-    if (source.get() > 10) throw 'ERROR';
-    return source.get() * 2;
-  },
-  {
-    onActivate() {
-      console.log('ACTIVATE');
-    },
-
-    onUpdate(value, prevValue) {
-      console.log(`UPDATE ${prevValue} -> ${value}`);
-    },
-
-    onException(e) {
-      console.log('EXCEPTION ' + e);
-    },
-
-    onDeactivate() {
-      console.log('DEACTIVATE');
-    },
-  }
-);
-
-const unsub = result.subscribe(() => {});
-// > UPDATE undefined -> 2
-// > ACTIVATE
-
-source.set(1);
-// > UPDATE 0 -> 2
-
-source.set(11);
-// > EXCEPTION ERROR
-// > [X] ERROR
-
-unsub();
-// > DEACTIVATE
-```
+[Example on StackBlitz](https://stackblitz.com/edit/spred-lifecycle-hooks?file=index.ts)
 
 ## Integration
 
