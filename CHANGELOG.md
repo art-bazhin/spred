@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.36.3](https://github.com/art-bazhin/spred/compare/v0.36.2...v0.36.3) (2024-01-29)
+
+
+### Docs
+
+* fix typo ([b4e7400](https://github.com/art-bazhin/spred/commit/b4e74001a6319a57985a3f7130c284111dadd3b0))
+
+
+### Build System
+
+* update typescript plugin ([d1935ae](https://github.com/art-bazhin/spred/commit/d1935aece308ff54a0222616966d748b29e1592e))
+
 ### [0.36.2](https://github.com/art-bazhin/spred/compare/v0.36.1...v0.36.2) (2024-01-29)
 
 
