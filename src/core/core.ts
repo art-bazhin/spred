@@ -68,6 +68,12 @@ export interface SignalOptions<T> {
   catch?: (e: unknown, prevValue?: T) => T;
 
   /**
+   * A function called at the moment the signal is created.
+   * @param value An initial value of the signal.
+   */
+  onCreate?: (value?: T) => void;
+
+  /**
    * A function called when the first subscriber or the first active dependent signal appears.
    * @param value A current value of the signal.
    */
@@ -139,6 +145,8 @@ export function _Signal<T>(
     for (let key in options) {
       (this as any)[key] = (options as any)[key];
     }
+
+    if (this.onCreate && this._compute) this.onCreate(this._value);
   }
 
   if (parent) createChildNode(parent, this);
@@ -180,6 +188,8 @@ export function _WritableSignal<T>(
 
   this._value = value;
   this._nextValue = value;
+
+  if (this.onCreate) this.onCreate(value);
 }
 
 _WritableSignal.prototype = new (_Signal as any)();

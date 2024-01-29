@@ -1046,6 +1046,19 @@ describe('signal', () => {
     });
   });
 
+  describe('onCreate option', () => {
+    it('emits at the moment the signal is created', () => {
+      const writableSpy = jest.fn((arg) => {});
+      const computedSpy = jest.fn((arg) => {});
+
+      const a = signal(0, { onCreate: writableSpy });
+      expect(writableSpy).toHaveBeenCalledWith(0);
+
+      const b = signal(() => {}, { onCreate: computedSpy });
+      expect(computedSpy).toHaveBeenCalledWith(undefined);
+    });
+  });
+
   describe('onUpdate option', () => {
     it('sets signal update listener', () => {
       let res: any = {};
