@@ -93,6 +93,13 @@ export interface SignalOptions<T> {
   onUpdate?: (value: T, prevValue?: T) => void;
 
   /**
+   * A function called whenever an exception was handled using catch method of the {@link SignalOptions}.
+   * @param e An exception.
+   * @param prevValue A previous value of the signal.
+   */
+  onCatch?: (e: unknown, prevValue?: T) => void;
+
+  /**
    * A function called whenever an unhandled exception occurs during the calculation of the signal value.
    * @param e An exception.
    * @param prevValue A previous value of the signal.
@@ -556,6 +563,8 @@ function compute<T>(state: SignalState<T>, scheduled: boolean) {
 
   if (state._flags & HAS_EXCEPTION) {
     if (state.catch) {
+      if (state.onCatch) state.onCatch(state._exception, state._value);
+
       try {
         state._nextValue = state.catch(state._exception, state._value);
         state._flags &= ~HAS_EXCEPTION;

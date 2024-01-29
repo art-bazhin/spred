@@ -1094,6 +1094,45 @@ describe('signal', () => {
     });
   });
 
+  describe('onCatch option', () => {
+    it('called when the signal catches an exception', () => {
+      const onCatch = jest.fn((err, value) => {});
+
+      const a = signal(0);
+      const b = signal(
+        () => {
+          if (a.get() === 0) throw 'ERROR';
+          return a.get();
+        },
+        {
+          onCatch,
+          catch() {
+            return 0;
+          },
+        }
+      );
+
+      expect(onCatch).toHaveBeenCalledTimes(0);
+
+      b.get();
+      expect(onCatch).toHaveBeenCalledTimes(1);
+      expect(onCatch).toHaveBeenCalledWith('ERROR', undefined);
+
+      a.set(1);
+      b.get();
+      expect(onCatch).toHaveBeenCalledTimes(1);
+      expect(onCatch).toHaveBeenCalledWith('ERROR', undefined);
+
+      b.subscribe(() => {});
+      expect(onCatch).toHaveBeenCalledTimes(1);
+      expect(onCatch).toHaveBeenCalledWith('ERROR', undefined);
+
+      a.set(0);
+      expect(onCatch).toHaveBeenCalledTimes(2);
+      expect(onCatch).toHaveBeenCalledWith('ERROR', 1);
+    });
+  });
+
   describe('onException option', () => {
     it('sets signal exception listener', () => {
       configure({
