@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.36.2](https://github.com/art-bazhin/spred/compare/v0.36.1...v0.36.2) (2024-01-29)
+
+
+### Features
+
+* add onCatch lifecycle option ([02254de](https://github.com/art-bazhin/spred/commit/02254de8fbe6307220996eb29927ab00c38e2a5f))
+* add onCreate lifecycle option ([9ad60e2](https://github.com/art-bazhin/spred/commit/9ad60e2ce0f33335e1ba21c5b15212ee121738dd))
+* add signal name ([87c90ea](https://github.com/art-bazhin/spred/commit/87c90ea9cf5f4e6af32ce10f2bdae2ba3be41fef))
+
+
+### Bug Fixes
+
+* fix value update after emitting bug ([41145ed](https://github.com/art-bazhin/spred/commit/41145ed7d16b1e7000fbf61dc213ef1a8a5b4d76))
+
+
+### Docs
+
+* update docs ([8f25035](https://github.com/art-bazhin/spred/commit/8f2503521e86b04495febffc286e989a17e09f2d))
+
 ### [0.36.1](https://github.com/art-bazhin/spred/compare/v0.36.0...v0.36.1) (2024-01-26)
 
 
