@@ -235,7 +235,7 @@ counter.set(2);
 // Nothing
 
 counter.set(3);
-// Odd value is 3
+// > Odd value is 3
 ```
 
 ## Error Handling
