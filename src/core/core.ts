@@ -60,14 +60,6 @@ export interface SignalOptions<T> {
   equal?: (value: T, prevValue?: T) => unknown;
 
   /**
-   * A function that catches exceptions that occurred during the calculation of the signal value. Returns a new signal value and stops the exception propagation.
-   * @param e An exception.
-   * @param prevValue A previous value of the signal.
-   * @returns A new value of the signal.
-   */
-  catch?: (e: unknown, prevValue?: T) => T;
-
-  /**
    * A function called at the moment the signal is created.
    * @param value An initial value of the signal.
    */
@@ -91,13 +83,6 @@ export interface SignalOptions<T> {
    * @param prevValue A previous value of the signal.
    */
   onUpdate?: (value: T, prevValue?: T) => void;
-
-  /**
-   * A function called whenever an exception was handled using catch method of the {@link SignalOptions}.
-   * @param e An exception.
-   * @param prevValue A previous value of the signal.
-   */
-  onCatch?: (e: unknown, prevValue?: T) => void;
 
   /**
    * A function called whenever an unhandled exception occurs during the calculation of the signal value.
@@ -357,7 +342,7 @@ function subscribe<T>(
 
   shouldLink = true;
 
-  (this.get as any)(false, true);
+  (this.get as any)(false);
 
   shouldLink = prevShouldLink;
 
@@ -448,7 +433,7 @@ function recalc() {
 function get<T>(
   this: SignalState<T>,
   trackDependency = true,
-  subscribing = false
+  checking?: boolean
 ): T {
   if (this._compute) {
     if (this._flags & FROZEN) return this._value;
@@ -472,7 +457,7 @@ function get<T>(
       if (this._flags & HAS_EXCEPTION) {
         needsToUpdate = false;
 
-        if (this._subs || subscribing || (!scheduled && !computing)) {
+        if (this._subs || (!scheduled && !computing && !checking)) {
           config.logException(this._exception);
         }
       }
@@ -502,11 +487,6 @@ function get<T>(
   this._flags &= ~FORCED;
 
   if (computing && trackDependency) {
-    if (this._flags & HAS_EXCEPTION && !(computing._flags & HAS_EXCEPTION)) {
-      computing._exception = this._exception;
-      computing._flags |= HAS_EXCEPTION;
-    }
-
     const node = computing._source;
 
     if (node) {
@@ -526,6 +506,8 @@ function get<T>(
     }
   }
 
+  if (computing && this._flags & HAS_EXCEPTION) throw this._exception;
+
   return this._value;
 }
 
@@ -536,7 +518,7 @@ function checkSources(state: SignalState<any>) {
     const source = node.value;
 
     if (source._flags & NOTIFIED || source._version !== version) {
-      source.get(false);
+      (source.get as any)(false, true);
     }
 
     if (source._flags & HAS_EXCEPTION) {
@@ -547,6 +529,8 @@ function checkSources(state: SignalState<any>) {
       return true;
     }
   }
+
+  state._flags &= ~HAS_EXCEPTION;
 
   return false;
 }
@@ -568,24 +552,8 @@ function compute<T>(state: SignalState<T>, scheduled: boolean) {
     state._flags |= HAS_EXCEPTION;
   }
 
-  if (state._flags & HAS_EXCEPTION) {
-    if (state.catch) {
-      if (state.onCatch) {
-        runLifecycle(state, 'onCatch', state._exception, state._value);
-      }
-
-      try {
-        state._nextValue = state.catch(state._exception, state._value);
-        state._flags &= ~HAS_EXCEPTION;
-        state._exception = undefined;
-      } catch (e) {
-        state._exception = e;
-      }
-    }
-
-    if (state._flags & HAS_EXCEPTION && state.onException) {
-      runLifecycle(state, 'onException', state._exception, state._value);
-    }
+  if (state._flags & HAS_EXCEPTION && state.onException) {
+    runLifecycle(state, 'onException', state._exception, state._value);
   }
 
   if (state._source) {

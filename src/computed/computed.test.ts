@@ -161,8 +161,9 @@ describe('computed', () => {
 
     const field = writable('bar');
     const count = computed(() => obj[field.get()]);
+    const count2 = computed(() => count.get());
 
-    count.subscribe(() => {});
+    count2.subscribe(() => {});
 
     expect(spy).toHaveBeenCalledTimes(1);
   });
@@ -214,6 +215,56 @@ describe('computed', () => {
     a.set(10);
     b.get();
     expect(spy).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not make redundant exception logs', () => {
+    const errSpy = jest.fn();
+    const subSpy = jest.fn();
+
+    configure({ logException: errSpy });
+
+    const a = writable(0);
+
+    const b = computed(() => {
+      if (a.get() > 10) (a.get() as any).foo();
+      return a.get();
+    });
+
+    const c = writable(0);
+
+    const sum = computed(() => {
+      return b.get() + c.get();
+    });
+
+    const sum2 = computed(() => {
+      return sum.get();
+    });
+
+    sum2.get();
+    a.set(20);
+    sum2.get();
+    a.set(1);
+    sum2.get();
+
+    expect(errSpy).toHaveBeenCalledTimes(1);
+
+    sum2.subscribe(subSpy);
+    expect(subSpy).toHaveBeenCalledTimes(1);
+
+    a.set(2);
+    expect(subSpy).toHaveBeenCalledTimes(2);
+
+    a.set(155);
+    expect(subSpy).toHaveBeenCalledTimes(2);
+    expect(errSpy).toHaveBeenCalledTimes(2);
+
+    a.set(2);
+    expect(subSpy).toHaveBeenCalledTimes(2);
+    expect(errSpy).toHaveBeenCalledTimes(2);
+
+    a.set(3);
+    expect(subSpy).toHaveBeenCalledTimes(3);
+    expect(errSpy).toHaveBeenCalledTimes(2);
   });
 
   it('unsubscribes inner subscriptions on every calculation', () => {
@@ -726,8 +777,14 @@ describe('computed', () => {
       return count.get();
     });
 
-    const handledError = computed(() => withError.get(), {
-      catch: () => 42,
+    const handledError = computed(() => {
+      let result = 42;
+
+      try {
+        result = withError.get();
+      } finally {
+        return result;
+      }
     });
 
     expect(handledError.get()).toBe(42);
@@ -758,8 +815,14 @@ describe('computed', () => {
 
     expect(errorSpy).toHaveBeenCalledTimes(1);
 
-    const handledError = computed(() => withErrorComp.get(), {
-      catch: () => 42,
+    const handledError = computed(() => {
+      let result = 42;
+
+      try {
+        result = withError.get();
+      } finally {
+        return result;
+      }
     });
     const unsub2 = handledError.subscribe(() => {}, false);
 
@@ -780,47 +843,5 @@ describe('computed', () => {
     handledError.subscribe(() => {}, false);
     count.set(1);
     expect(errorSpy).toHaveBeenCalledTimes(3);
-  });
-
-  it('allows to throw a new exception', () => {
-    const count = writable(0);
-
-    const handledError = computed(
-      () => {
-        if (count.get() < 5) throw 5 - count.get();
-        return count.get();
-      },
-      {
-        catch: (e: any) => {
-          if (e > 5) throw Error();
-          return 42;
-        },
-      }
-    );
-
-    const secondHandledError = computed(() => handledError.get(), {
-      catch: () => 999,
-    });
-
-    handledError.subscribe(() => {}, false);
-
-    expect(handledError.get()).toBe(42);
-    expect(secondHandledError.get()).toBe(42);
-
-    count.set(5);
-    expect(handledError.get()).toBe(5);
-    expect(secondHandledError.get()).toBe(5);
-
-    count.set(4);
-    expect(handledError.get()).toBe(42);
-    expect(secondHandledError.get()).toBe(42);
-
-    count.set(-10);
-    expect(handledError.get()).toBe(42);
-    expect(secondHandledError.get()).toBe(999);
-
-    count.set(7);
-    expect(handledError.get()).toBe(7);
-    expect(secondHandledError.get()).toBe(7);
   });
 });
