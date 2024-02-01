@@ -1247,7 +1247,7 @@ describe('signal', () => {
   });
 
   describe('signal options', () => {
-    it('allow to handle activation and deactivation of signals', () => {
+    it('allows to handle activation and deactivation of signals', () => {
       const activateSpy = jest.fn();
       const deactivateSpy = jest.fn();
 
@@ -1299,5 +1299,88 @@ describe('signal', () => {
       expect(activateSpy).toHaveBeenCalledTimes(2);
       expect(deactivateSpy).toHaveBeenCalledTimes(2);
     });
+
+    it('allows to setup async chains of computations', () => {
+      let res: any;
+
+      const spy = jest.fn((value) => {
+        res = value;
+      });
+
+      const url = signal('foo');
+      const fetched = async((resolve: any) => {
+        const value = url.get();
+        resolve(value);
+      });
+
+      fetched.subscribe(spy);
+      expect(res).toBeDefined();
+      expect(res.data).toBe('foo');
+      expect(spy).toHaveBeenCalledTimes(2);
+
+      url.set('bar');
+      expect(res.data).toBe('bar');
+      expect(spy).toHaveBeenCalledTimes(3);
+    });
   });
 });
+
+function async<T>(computation: any) {
+  let id = 0;
+
+  const data = signal();
+  const error = signal();
+  const rejected = signal(false);
+  const pending = signal(true);
+
+  const source = signal(() => {
+    const selfId = ++id;
+
+    pending.set(true);
+
+    computation(
+      (value: any) => {
+        if (selfId === id) {
+          batch(() => {
+            data.set(value);
+            rejected.set(false);
+            pending.set(false);
+          });
+        }
+      },
+      (e: unknown) => {
+        if (selfId === id) {
+          batch(() => {
+            error.set(e);
+            rejected.set(true);
+            pending.set(false);
+          });
+        }
+      }
+    );
+  });
+
+  let unsub: any = null;
+
+  const target = signal(
+    () => {
+      return {
+        data: data.get(),
+        error: rejected.get() ? error.get() : undefined,
+        pending: pending.get(),
+      };
+    },
+    {
+      onActivate() {
+        unsub = source.subscribe(noop);
+      },
+      onDeactivate() {
+        if (unsub) unsub();
+      },
+    }
+  );
+
+  return target;
+}
+
+const noop = () => {};

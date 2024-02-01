@@ -346,9 +346,6 @@ function subscribe<T>(
 
   shouldLink = prevShouldLink;
 
-  let node = createTargetNode(this, subscriber, null);
-  ++this._subs;
-
   if (exec && !(this._flags & HAS_EXCEPTION)) {
     ++batchLevel;
 
@@ -366,6 +363,9 @@ function subscribe<T>(
     else recalc();
   }
 
+  ++this._subs;
+  let node = createTargetNode(this, subscriber, null);
+
   const dispose = () => {
     if (!node) return;
     removeTargetNode(this, node);
@@ -381,7 +381,7 @@ function subscribe<T>(
 }
 
 function recalc() {
-  if (!providers.length || batchLevel) return;
+  if (!providers.length || batchLevel || computing) return;
 
   const q = providers;
   const prevShouldLink = shouldLink;
