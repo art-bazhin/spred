@@ -282,8 +282,6 @@ export function collect(fn: () => void) {
  * @param fn A function with updates.
  */
 export function batch(fn: (...args: any) => any) {
-  const wrapper = (config as any)._notificationWrapper;
-
   ++batchLevel;
 
   try {
@@ -291,19 +289,14 @@ export function batch(fn: (...args: any) => any) {
   } finally {
     --batchLevel;
 
-    if (wrapper) wrapper(recalc);
-    else recalc();
+    recalc();
   }
 }
 
 function set<T>(this: SignalState<T>, value?: any) {
-  const wrapper = (config as any)._notificationWrapper;
-
   if (value !== undefined) this._nextValue = value;
   providers.push(this);
-
-  if (wrapper) wrapper(recalc);
-  else recalc();
+  recalc();
 }
 
 function update<T>(
@@ -338,12 +331,9 @@ function subscribe<T>(
   exec = true
 ) {
   const prevShouldLink = shouldLink;
-  const wrapper = (config as any)._notificationWrapper;
 
   shouldLink = true;
-
   this.get(false);
-
   shouldLink = prevShouldLink;
 
   if (exec && !(this._flags & HAS_EXCEPTION)) {
@@ -359,8 +349,7 @@ function subscribe<T>(
 
     --batchLevel;
 
-    if (wrapper) wrapper(recalc);
-    else recalc();
+    recalc();
   }
 
   ++this._subs;

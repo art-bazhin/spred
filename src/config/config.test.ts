@@ -1,31 +1,21 @@
-import { writable } from '../writable/writable';
+import { signal } from '../signal/signal';
 import { configure } from './config';
 
 describe('configure function', () => {
-  describe('_notificationWrapper property', () => {
-    it('sets function which wraps all subscriber notifications', () => {
-      const startSpy = jest.fn();
-      const endSpy = jest.fn();
+  describe('logException property', () => {
+    it('sets exception logging function', () => {
+      const logException = jest.fn();
 
-      const wrapper = (fn: () => void) => {
-        startSpy();
-        fn();
-        endSpy();
-      };
+      configure({ logException });
 
-      configure({
-        _notificationWrapper: wrapper,
-      } as any);
+      const comp = signal(() => {
+        throw 'ERRROR';
+      });
 
-      const counter = writable(0);
+      comp.get();
+      expect(logException).toHaveBeenCalledTimes(1);
 
-      counter.subscribe(() => {
-        expect(startSpy).toHaveBeenCalledTimes(1);
-        expect(endSpy).toHaveBeenCalledTimes(0);
-      }, false);
-
-      counter.set(1);
-      expect(endSpy).toHaveBeenCalledTimes(1);
+      configure();
     });
   });
 });
