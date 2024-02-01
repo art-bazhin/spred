@@ -289,14 +289,14 @@ export function batch(fn: (...args: any) => any) {
   } finally {
     --batchLevel;
 
-    recalc();
+    if (providers.length && computing === null && batchLevel === 0) recalc();
   }
 }
 
 function set<T>(this: SignalState<T>, value?: any) {
   if (value !== undefined) this._nextValue = value;
   providers.push(this);
-  recalc();
+  if (providers.length && computing === null && batchLevel === 0) recalc();
 }
 
 function update<T>(
@@ -349,7 +349,7 @@ function subscribe<T>(
 
     --batchLevel;
 
-    recalc();
+    if (providers.length && computing === null && batchLevel === 0) recalc();
   }
 
   ++this._subs;
@@ -370,8 +370,6 @@ function subscribe<T>(
 }
 
 function recalc() {
-  if (!providers.length || batchLevel || computing) return;
-
   const q = providers;
   const prevShouldLink = shouldLink;
   const nextVersion = version + 1;
@@ -416,7 +414,7 @@ function recalc() {
 
   --batchLevel;
 
-  recalc();
+  if (providers.length) recalc();
 }
 
 function get<T>(
@@ -497,7 +495,7 @@ function get<T>(
 
   if (computing) {
     if (this._flags & HAS_EXCEPTION) throw this._exception;
-  } else if (providers.length) recalc();
+  } else if (providers.length && batchLevel === 0) recalc();
 
   return this._value;
 }
