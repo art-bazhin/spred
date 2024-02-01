@@ -153,7 +153,9 @@ export function _Signal<T>(
       (this as any)[key] = (options as any)[key];
     }
 
-    if (this.onCreate && this._compute) this.onCreate(this._value);
+    if (this.onCreate && this._compute) {
+      runLifecycle(this, 'onCreate', this._value);
+    }
   }
 
   if (parent) createChildNode(parent, this);
@@ -196,7 +198,9 @@ export function _WritableSignal<T>(
   this._value = value;
   this._nextValue = value;
 
-  if (this.onCreate) this.onCreate(value);
+  if (this.onCreate) {
+    runLifecycle(this, 'onCreate', value);
+  }
 }
 
 _WritableSignal.prototype = new (_Signal as any)();
@@ -485,7 +489,10 @@ function get<T>(
       this._value = this._nextValue;
       this._flags |= CHANGED;
 
-      if (this.onUpdate) this.onUpdate(this._value, prevValue);
+      if (this.onUpdate) {
+        runLifecycle(this, 'onUpdate', this._value, prevValue);
+      }
+
       if (this._subs) notifiers.push(this);
     }
   }
@@ -563,7 +570,9 @@ function compute<T>(state: SignalState<T>, scheduled: boolean) {
 
   if (state._flags & HAS_EXCEPTION) {
     if (state.catch) {
-      if (state.onCatch) state.onCatch(state._exception, state._value);
+      if (state.onCatch) {
+        runLifecycle(state, 'onCatch', state._exception, state._value);
+      }
 
       try {
         state._nextValue = state.catch(state._exception, state._value);
@@ -575,7 +584,7 @@ function compute<T>(state: SignalState<T>, scheduled: boolean) {
     }
 
     if (state._flags & HAS_EXCEPTION && state.onException) {
-      state.onException(state._exception, state._value);
+      runLifecycle(state, 'onException', state._exception, state._value);
     }
   }
 
@@ -647,7 +656,10 @@ function createTargetNode(
   } else {
     source._firstTarget = node;
     linkDependencies(source);
-    if (source.onActivate) source.onActivate(source._value);
+
+    if (source.onActivate) {
+      runLifecycle(source, 'onActivate', source._value);
+    }
   }
 
   source._lastTarget = node;
@@ -664,7 +676,10 @@ function removeTargetNode(state: SignalState<any>, node: ListNode<any>) {
 
   if (!state._firstTarget) {
     unlinkDependencies(state);
-    if (state.onDeactivate) state.onDeactivate(state._value);
+
+    if (state.onDeactivate) {
+      runLifecycle(state, 'onDeactivate', state._value);
+    }
   }
 }
 
@@ -704,4 +719,21 @@ function unlinkDependencies(state: SignalState<any>) {
     removeTargetNode(node.value, node.link!);
     node.link = null;
   }
+}
+
+function runLifecycle(
+  state: SignalState<any>,
+  name: keyof SignalState<any>,
+  ...args: any[]
+) {
+  const prevComputing = computing;
+  const prevScope = scope;
+
+  computing = null;
+  scope = null;
+
+  state[name](...args);
+
+  computing = prevComputing;
+  scope = prevScope;
 }

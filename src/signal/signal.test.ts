@@ -1003,6 +1003,29 @@ describe('signal', () => {
 
       expect(spy).toHaveBeenCalledTimes(1);
     });
+
+    it('keeps subscribtions made inside the function on parent recalculation', () => {
+      const spy = jest.fn();
+      const a = signal(0);
+      const b = signal(0, {
+        onActivate() {
+          a.subscribe(spy);
+        },
+      });
+      const c = signal(() => b.get());
+
+      c.subscribe(() => {});
+      expect(spy).toHaveBeenCalledTimes(1);
+
+      a.set(1);
+      expect(spy).toHaveBeenCalledTimes(2);
+
+      b.set(1);
+      expect(spy).toHaveBeenCalledTimes(2);
+
+      a.set(2);
+      expect(spy).toHaveBeenCalledTimes(3);
+    });
   });
 
   describe('onDeactivate option', () => {
