@@ -896,8 +896,8 @@ describe('signal', () => {
       c.set(1);
     });
 
-    expect(d.get()).toBe(2);
     expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenLastCalledWith(2, false);
   });
 
   it('catches and logs exceptions in subscribers', () => {

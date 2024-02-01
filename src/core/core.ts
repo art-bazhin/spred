@@ -342,7 +342,7 @@ function subscribe<T>(
 
   shouldLink = true;
 
-  (this.get as any)(false);
+  this.get(false);
 
   shouldLink = prevShouldLink;
 
@@ -506,7 +506,9 @@ function get<T>(
     }
   }
 
-  if (computing && this._flags & HAS_EXCEPTION) throw this._exception;
+  if (computing) {
+    if (this._flags & HAS_EXCEPTION) throw this._exception;
+  } else if (providers.length) recalc();
 
   return this._value;
 }

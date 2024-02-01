@@ -150,6 +150,32 @@ describe('computed', () => {
     expect(c.get()).toBe(16);
   });
 
+  it('can pass values to writable signals during computing (case 3)', () => {
+    const spy = jest.fn();
+
+    const a = writable(0);
+    const b = writable(0);
+    const c = writable(0);
+    const d = computed(() => {
+      return a.get() + b.get();
+    });
+    const e = computed(() => {
+      c.get();
+
+      a.set(1);
+      b.set(1);
+
+      return '123';
+    });
+
+    d.subscribe(spy);
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    e.get();
+    expect(d.get()).toBe(2);
+    expect(spy).toHaveBeenCalledTimes(2);
+  });
+
   it('logs unhandled exceptions', () => {
     const spy = jest.fn();
 
