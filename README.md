@@ -238,44 +238,6 @@ counter.set(3);
 // > Odd value is 3
 ```
 
-## Error Handling
-
-Any signal that have subscribers and an exception ocured during the computation will log the error in the console and will not cause recalculation of its dependents. You can set an exception handler in the [signal options](https://art-bazhin.github.io/spred/interfaces/SignalOptions.html). It will return the new signal value and stop the exception propagation.
-
-```ts
-import { signal } from '@spred/core';
-
-const sub = (value) => console.log('The value is ' + value);
-const source = signal(0);
-const withError = signal(() => {
-  if (source.get() > 10) throw 'bigger than 10';
-  return source.get();
-});
-const result = signal(() => withError.get());
-
-const unsub = result.subscribe(sub);
-// > The value is 0
-
-source.set(11);
-// > [X] bigger than 10
-
-unsub();
-const withCatchedError = signal(() => result.get(), {
-  catch(e) {
-    return e;
-  },
-});
-
-withCatchedError.subscribe(sub);
-// > The value is bigger than 10
-
-source.set(20);
-// Nothing
-
-source.set(5);
-// > The value is 5
-```
-
 ## Effects
 
 [effect](https://art-bazhin.github.io/spred/functions/effect.html) calls the passed function immediately and every time its dependencies change.
@@ -312,7 +274,6 @@ Every signal has lifecycle hooks whose handlers can be set in the [signal option
 - `onActivate` - the signal becomes active (has at least one subscriber / dependent signal with a subscriber);
 - `onDectivate` - the signal becomes inactive (doesn't have any subscriber / dependent signal with a subscriber);
 - `onUpdate` - the signal updates its value;
-- `onCatch` - an exception was caught using the `catch` method of the signal options;
 - `onException` - an unhandled exception occurs during the signal computation.
 
 [Example on StackBlitz](https://stackblitz.com/edit/spred-lifecycle-hooks?file=index.ts)
