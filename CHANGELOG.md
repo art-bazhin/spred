@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.37.1](https://github.com/art-bazhin/spred/compare/v0.37.0...v0.37.1) (2024-02-01)
+
+
+### Bug Fixes
+
+* fix missing recalc while setting signal values inside computations ([6f5170e](https://github.com/art-bazhin/spred/commit/6f5170e5f61b17f0b7fdf19fac6447369b99d340))
+* fix signal chaining bug ([2e26cbb](https://github.com/art-bazhin/spred/commit/2e26cbb60f095440dcc6ff002063630f4f020b03))
+
+
+### Code Refactoring
+
+* refactor recalc calls ([bdfb2b4](https://github.com/art-bazhin/spred/commit/bdfb2b4e649120e17dd65f2712f3fbfd1895ed63))
+* remove notification wrapper ([f27b6b4](https://github.com/art-bazhin/spred/commit/f27b6b4f348d0a38208232f3d59a1fcf3dbfeb72))
+
 ## [0.37.0](https://github.com/art-bazhin/spred/compare/v0.36.3...v0.37.0) (2024-02-01)
 
 
