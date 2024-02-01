@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.37.0](https://github.com/art-bazhin/spred/compare/v0.36.3...v0.37.0) (2024-02-01)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove catch and onCatch signal options
+
+### Bug Fixes
+
+* fix redundant unsubscribing inside onActivate hook ([2c96833](https://github.com/art-bazhin/spred/commit/2c96833a3fd96e17ad39596a5a72eb5ad97103df))
+
+
+### Code Refactoring
+
+* simplify error handling ([01290d8](https://github.com/art-bazhin/spred/commit/01290d81ae0deb32f340d8401f60a4a3527f3cd2))
+
+
+### Docs
+
+* fix typo ([96774d5](https://github.com/art-bazhin/spred/commit/96774d5b29134283db8dc9817962281d622d1257))
+* update docs ([b0ede24](https://github.com/art-bazhin/spred/commit/b0ede24967ac4fb3a88651bc07515dbd04fd7abf))
+
 ### [0.36.3](https://github.com/art-bazhin/spred/compare/v0.36.2...v0.36.3) (2024-01-29)
 
 
