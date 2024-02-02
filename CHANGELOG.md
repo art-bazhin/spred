@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.37.2](https://github.com/art-bazhin/spred/compare/v0.37.1...v0.37.2) (2024-02-02)
+
+
+### Bug Fixes
+
+* fix signal linking bug ([235ddfc](https://github.com/art-bazhin/spred/commit/235ddfc9f414745509d090730b1dac5f760d1f46))
+
 ### [0.37.1](https://github.com/art-bazhin/spred/compare/v0.37.0...v0.37.1) (2024-02-01)
 
 
