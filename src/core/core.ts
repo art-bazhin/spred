@@ -20,7 +20,6 @@ let computing: SignalState<any> | null = null;
 let scope: SignalState<any> | null = null;
 
 let batchLevel = 0;
-let shouldLink = false;
 
 let providers: SignalState<any>[] = [];
 let consumers: SignalState<any>[] = [];
@@ -235,10 +234,8 @@ export function isolate<T, A extends unknown[]>(
 export function isolate(fn: any, args?: any) {
   const prevComputing = computing;
   const prevScope = scope;
-  const prevShouldLink = shouldLink;
 
   if (computing) scope = computing;
-  shouldLink = false;
   computing = null;
 
   try {
@@ -247,7 +244,6 @@ export function isolate(fn: any, args?: any) {
   } finally {
     computing = prevComputing;
     scope = prevScope;
-    shouldLink = prevShouldLink;
   }
 }
 
@@ -259,10 +255,8 @@ export function isolate(fn: any, args?: any) {
 export function collect(fn: () => void) {
   const prevComputing = computing;
   const prevScope = scope;
-  const prevShouldLink = shouldLink;
   const fakeState = {} as any as SignalState<any>;
 
-  shouldLink = false;
   scope = fakeState;
   computing = null;
 
@@ -271,7 +265,6 @@ export function collect(fn: () => void) {
   } finally {
     computing = prevComputing;
     scope = prevScope;
-    shouldLink = prevShouldLink;
 
     return () => cleanupChildren(fakeState);
   }
@@ -330,11 +323,7 @@ function subscribe<T>(
   subscriber: Subscriber<T>,
   exec = true
 ) {
-  const prevShouldLink = shouldLink;
-
-  shouldLink = true;
   this.get(false);
-  shouldLink = prevShouldLink;
 
   if (exec && !(this._flags & HAS_EXCEPTION)) {
     ++batchLevel;
@@ -371,10 +360,7 @@ function subscribe<T>(
 
 function recalc() {
   const q = providers;
-  const prevShouldLink = shouldLink;
   const nextVersion = version + 1;
-
-  shouldLink = true;
 
   providers = [];
   consumers = [];
@@ -395,8 +381,6 @@ function recalc() {
   for (let state of consumers) {
     if (state._subs) state.get();
   }
-
-  shouldLink = prevShouldLink;
 
   for (let state of notifiers) {
     if (state._subs) {
@@ -482,14 +466,14 @@ function get<T>(
 
         node.value = this;
 
-        if (shouldLink) createTargetNode(this, computing, node);
+        if (computing._firstTarget) createTargetNode(this, computing, node);
         else node.link = null;
       }
 
       computing._source = node.next;
     } else {
       const n = createSourceNode(this, computing);
-      if (shouldLink) createTargetNode(this, computing, n);
+      if (computing._firstTarget) createTargetNode(this, computing, n);
     }
   }
 
@@ -663,9 +647,7 @@ function createChildNode(
 
 function linkDependencies(state: SignalState<any>) {
   for (let node = state._firstSource; node !== null; node = node.next) {
-    if (!node.link) {
-      createTargetNode(node.value, state, node);
-    }
+    createTargetNode(node.value, state, node);
   }
 }
 

@@ -1322,6 +1322,61 @@ describe('signal', () => {
       expect(res.data).toBe('bar');
       expect(spy).toHaveBeenCalledTimes(3);
     });
+
+    it('allows to setup async chains of computations (case 2)', () => {
+      let res: any;
+
+      const spy = jest.fn((value) => {
+        res = value;
+      });
+
+      const url = signal('foo');
+      const fetched = async((resolve: any) => {
+        const value = url.get();
+        resolve(value);
+      });
+      const fetchedComp = signal(() => {
+        return fetched.get();
+      });
+
+      fetchedComp.subscribe(spy);
+      expect(res).toBeDefined();
+      expect(res.data).toBe('foo');
+      expect(spy).toHaveBeenCalledTimes(2);
+
+      url.set('bar');
+      expect(res.data).toBe('bar');
+      expect(spy).toHaveBeenCalledTimes(3);
+    });
+
+    it('allows to setup async chains of computations (case 3)', () => {
+      let res: any;
+
+      const spy = jest.fn((value) => {
+        res = value;
+      });
+
+      const url = signal('foo');
+      const fetched = async((resolve: any) => {
+        const value = url.get();
+        resolve(value);
+      });
+      const fetchedComp = signal(() => {
+        return fetched.get();
+      });
+      const fetchedDeepComp = signal(() => {
+        return fetchedComp.get();
+      });
+
+      fetchedDeepComp.subscribe(spy);
+      expect(res).toBeDefined();
+      expect(res.data).toBe('foo');
+      expect(spy).toHaveBeenCalledTimes(2);
+
+      url.set('bar');
+      expect(res.data).toBe('bar');
+      expect(spy).toHaveBeenCalledTimes(3);
+    });
   });
 });
 
