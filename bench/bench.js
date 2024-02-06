@@ -24,6 +24,13 @@ import {
 } from 'https://unpkg.com/@whatsup/core@2.6.0/dist/index.esm.js';
 
 import {
+  signal as maverickSignal,
+  computed as maverickComputed,
+  effect as maverickEffect,
+  tick,
+} from 'https://esm.sh/@maverick-js/signals@5.11.4';
+
+import {
   computed,
   writable,
   batch,
@@ -233,6 +240,74 @@ function testWhatsup(width, layerCount, newValues) {
   });
 
   report.afterChange = [end.prop1(), end.prop2(), end.prop3(), end.prop4()];
+
+  report.recalcTime = performance.now() - st;
+
+  return report;
+}
+
+function testMaverick(width, layerCount, newValues) {
+  const report = { name: 'maverick' };
+  const initTimestamp = performance.now();
+
+  const start = {
+    prop1: maverickSignal(1),
+    prop2: maverickSignal(2),
+    prop3: maverickSignal(3),
+    prop4: maverickSignal(4),
+  };
+
+  let layer;
+
+  for (let j = width; j--; ) {
+    layer = start;
+
+    for (let i = layerCount; i--; ) {
+      layer = (function (m) {
+        const s = {
+          prop1: maverickComputed(function () {
+            return m.prop2();
+          }),
+          prop2: maverickComputed(function () {
+            return m.prop1() - m.prop3();
+          }),
+          prop3: maverickComputed(function () {
+            return m.prop2() + m.prop4();
+          }),
+          prop4: maverickComputed(function () {
+            return m.prop3();
+          }),
+        };
+
+        if (!i) {
+          maverickEffect(() => s.prop1());
+          maverickEffect(() => s.prop2());
+          maverickEffect(() => s.prop3());
+          maverickEffect(() => s.prop4());
+        }
+
+        return s;
+      })(layer);
+    }
+  }
+
+  report.initTime = performance.now() - initTimestamp;
+
+  const end = layer;
+
+  report.beforeChange = [end.prop1(), end.prop2(), end.prop3(), end.prop4()];
+  tick();
+
+  const st = performance.now();
+
+  start.prop1.set(newValues[0]);
+  start.prop2.set(newValues[1]);
+  start.prop3.set(newValues[2]);
+  start.prop4.set(newValues[3]);
+  tick();
+
+  report.afterChange = [end.prop1(), end.prop2(), end.prop3(), end.prop4()];
+  tick();
 
   report.recalcTime = performance.now() - st;
 
@@ -589,6 +664,7 @@ function runBenchmark() {
       solid: testSolid,
       whatsup: testWhatsup,
       nanostores: testNanostores,
+      maverick: testMaverick,
     }[lib];
 
     const report = testLib(testFn, width, layers, iterations, newValues);
