@@ -436,9 +436,8 @@ function get<T>(
 
     if (
       needsToUpdate &&
-      (this._flags & FORCED ||
-        (this._nextValue !== undefined &&
-          !this.equal!(this._nextValue, this._value)))
+      this._nextValue !== undefined &&
+      (this._flags & FORCED || !this.equal!(this._nextValue, this._value))
     ) {
       const prevValue = this._value;
 

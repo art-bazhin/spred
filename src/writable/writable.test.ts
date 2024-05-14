@@ -166,6 +166,28 @@ describe('writable', () => {
     expect(subscriber).toHaveBeenCalledTimes(4);
   });
 
+  it('do not force trigger subscribers using update method if the next value is undefined', () => {
+    const s = writable<number>();
+
+    let value: any;
+    const subscriber = jest.fn((v) => (value = v));
+
+    s.subscribe(subscriber);
+
+    expect(subscriber).toHaveBeenCalledTimes(1);
+    expect(value).toBe(undefined);
+
+    s.update();
+
+    expect(subscriber).toHaveBeenCalledTimes(1);
+    expect(value).toBe(undefined);
+
+    s.update(() => 1);
+
+    expect(subscriber).toHaveBeenCalledTimes(2);
+    expect(value).toBe(1);
+  });
+
   it('force triggers subscribers using emit method', () => {
     const s = writable(
       {} as {
