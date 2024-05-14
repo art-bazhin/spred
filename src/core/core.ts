@@ -27,6 +27,9 @@ let notifiers: SignalState<any>[] = [];
 
 let version = 1;
 
+// TODO DOCS
+export type TrackingGetter = <T>(signal: Signal<T>) => T;
+
 /**
  * A function subscribed to updates of a signal.
  * @param value A new value of the signal.
@@ -37,9 +40,10 @@ export type Subscriber<T> = (value: T, exec: boolean) => void;
 
 /**
  * A function that calculates the new value of the signal.
+ * @param get Tracking function to get values of other signals.
  * @param scheduled Determines if the recalculation was caused by a dependency update.
  */
-export type Computation<T> = (scheduled: boolean) => T;
+export type Computation<T> = (get: TrackingGetter, scheduled: boolean) => T;
 
 /**
  * An object that stores the options of the signal to be created.
@@ -145,7 +149,9 @@ export function _Signal<T>(
   if (parent) createChildNode(parent, this);
 }
 
-_Signal.prototype.get = get;
+_Signal.prototype.get = function (...args: any) {
+  return get(this, ...args);
+};
 _Signal.prototype.subscribe = subscribe;
 _Signal.prototype.equal = Object.is;
 
@@ -323,7 +329,7 @@ function subscribe<T>(
   subscriber: Subscriber<T>,
   exec = true
 ) {
-  this.get(false);
+  get(this, false);
 
   if (exec && !(this._flags & HAS_EXCEPTION)) {
     ++batchLevel;
@@ -379,7 +385,7 @@ function recalc() {
   }
 
   for (let state of consumers) {
-    if (state._subs) state.get();
+    if (state._subs) get(state);
   }
 
   for (let state of notifiers) {
@@ -402,85 +408,86 @@ function recalc() {
 }
 
 function get<T>(
-  this: SignalState<T>,
+  signal: SignalState<T>,
   trackDependency = true,
   checking?: boolean
 ): T {
-  if (this._compute) {
-    if (this._flags & FROZEN) return this._value;
+  if (signal._compute) {
+    if (signal._flags & FROZEN) return signal._value;
 
-    if (this._flags & COMPUTING) {
+    if (signal._flags & COMPUTING) {
       throw new CircularDependencyError();
     }
   }
 
-  if (this._version !== version) {
+  if (signal._version !== version) {
     let needsToUpdate = true;
 
-    this._flags &= ~CHANGED;
+    signal._flags &= ~CHANGED;
 
-    if (this._compute) {
-      const scheduled = !!(this._flags & NOTIFIED);
+    if (signal._compute) {
+      const scheduled = !!(signal._flags & NOTIFIED);
 
-      needsToUpdate = this._firstSource ? checkSources(this) : true;
-      if (needsToUpdate) compute(this, scheduled);
+      needsToUpdate = signal._firstSource ? checkSources(signal) : true;
+      if (needsToUpdate) compute(signal, scheduled);
 
-      if (this._flags & HAS_EXCEPTION) {
+      if (signal._flags & HAS_EXCEPTION) {
         needsToUpdate = false;
 
-        if (this._subs || (!scheduled && !computing && !checking)) {
-          config.logException(this._exception);
+        if (signal._subs || (!scheduled && !computing && !checking)) {
+          config.logException(signal._exception);
         }
       }
     }
 
     if (
       needsToUpdate &&
-      this._nextValue !== undefined &&
-      (this._flags & FORCED || !this.equal!(this._nextValue, this._value))
+      signal._nextValue !== undefined &&
+      (signal._flags & FORCED ||
+        !signal.equal!(signal._nextValue, signal._value))
     ) {
-      const prevValue = this._value;
+      const prevValue = signal._value;
 
-      this._value = this._nextValue;
-      this._flags |= CHANGED;
+      signal._value = signal._nextValue;
+      signal._flags |= CHANGED;
 
-      if (this.onUpdate) {
-        runLifecycle(this, 'onUpdate', this._value, prevValue);
+      if (signal.onUpdate) {
+        runLifecycle(signal, 'onUpdate', signal._value, prevValue);
       }
 
-      if (this._subs) notifiers.push(this);
+      if (signal._subs) notifiers.push(signal);
     }
   }
 
-  this._version = version;
-  this._flags &= ~NOTIFIED;
-  this._flags &= ~FORCED;
+  signal._version = version;
+  signal._flags &= ~NOTIFIED;
+  signal._flags &= ~FORCED;
 
   if (computing && trackDependency) {
     const node = computing._source;
 
     if (node) {
-      if (node.value !== this) {
+      if (node.value !== signal) {
         if (node.link) removeTargetNode(node.value, node.link);
 
-        node.value = this;
+        node.value = signal;
 
-        if (computing._firstTarget) createTargetNode(this, computing, node);
+        if (computing._firstTarget) createTargetNode(signal, computing, node);
         else node.link = null;
       }
 
       computing._source = node.next;
     } else {
-      const n = createSourceNode(this, computing);
-      if (computing._firstTarget) createTargetNode(this, computing, n);
+      const n = createSourceNode(signal, computing);
+      if (computing._firstTarget) createTargetNode(signal, computing, n);
     }
   }
 
   if (computing) {
-    if (this._flags & HAS_EXCEPTION) throw this._exception;
+    if (signal._flags & HAS_EXCEPTION) throw signal._exception;
   } else if (providers.length && batchLevel === 0) recalc();
 
-  return this._value;
+  return signal._value;
 }
 
 function checkSources(state: SignalState<any>) {
@@ -490,7 +497,7 @@ function checkSources(state: SignalState<any>) {
     const source = node.value;
 
     if (source._flags & NOTIFIED || source._version !== version) {
-      (source.get as any)(false, true);
+      (get as any)(source, false, true);
     }
 
     if (source._flags & HAS_EXCEPTION) {
@@ -518,7 +525,7 @@ function compute<T>(state: SignalState<T>, scheduled: boolean) {
 
   try {
     if (state._firstChild) cleanupChildren(state);
-    state._nextValue = state._compute!(scheduled);
+    state._nextValue = state._compute!(get as TrackingGetter, scheduled);
   } catch (e: any) {
     state._exception = e;
     state._flags |= HAS_EXCEPTION;

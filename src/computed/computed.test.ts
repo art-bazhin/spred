@@ -529,7 +529,7 @@ describe('computed', () => {
     expect(spy).toHaveBeenCalledTimes(6);
   });
 
-  it('passes true as the first compute fn argument if computation was scheduled', () => {
+  it('passes true as the second compute fn argument if computation was scheduled', () => {
     let lastScheduled = false;
     let lastMedScheduled = false;
 
@@ -538,13 +538,13 @@ describe('computed', () => {
 
     const source = writable(0);
 
-    const med = computed((scheduled) => {
+    const med = computed((get, scheduled) => {
       lastMedScheduled = scheduled;
       medSpy();
       return source.get() * 2;
     });
 
-    const result = computed((scheduled) => {
+    const result = computed((get, scheduled) => {
       lastScheduled = scheduled;
       spy();
       return source.get() < 5 ? source.get() : med.get();
