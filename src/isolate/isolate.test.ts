@@ -7,7 +7,7 @@ describe('isolate', () => {
     const spy = jest.fn();
     const count = writable(0);
 
-    const comp = computed(() => {
+    const comp = computed((get) => {
       isolate(() => {
         spy();
         count.get();
@@ -29,22 +29,22 @@ describe('isolate', () => {
     const source = writable(0);
     const external = writable(0);
 
-    const comp = computed(() => {
+    const comp = computed((get) => {
       isolate(() => {
-        const inner = computed(() => {
+        const inner = computed((get) => {
           isolate(() => {
-            const deep = computed(() => external.get());
+            const deep = computed((get) => get(external));
             deep.subscribe(() => deepSpy());
           });
 
-          return external.get();
+          return get(external);
         });
 
         external.subscribe(() => externalSpy());
         inner.subscribe(() => innerSpy());
       });
 
-      return source.get();
+      return get(source);
     });
 
     comp.subscribe(() => {});
@@ -102,15 +102,15 @@ describe('isolate', () => {
       return res;
     };
 
-    const comp = computed(() => {
+    const comp = computed((get) => {
       isolate(() => {
         const innerToggle = writable(true);
-        const innerComp = computed(() => innerToggle.get() && innerFn2());
+        const innerComp = computed((get) => get(innerToggle) && innerFn2());
 
         innerComp.subscribe(() => {});
       });
 
-      return source.get();
+      return get(source);
     });
 
     comp.subscribe(() => {});
@@ -150,15 +150,15 @@ describe('isolate', () => {
       return res;
     };
 
-    const comp = computed(() => {
+    const comp = computed((get) => {
       isolate(() => {
         const innerToggle = writable(true);
-        const innerComp = computed(() => innerToggle.get() && innerFn2());
+        const innerComp = computed((get) => get(innerToggle) && innerFn2());
 
         innerComp.get();
       });
 
-      return source.get();
+      return get(source);
     });
 
     comp.subscribe(() => {});

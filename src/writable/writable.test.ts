@@ -131,7 +131,7 @@ describe('writable', () => {
         a?: number;
       }
     );
-    const comp = computed(() => s.get().a || null, {
+    const comp = computed((get) => get(s).a || null, {
       equal: () => false,
     });
 

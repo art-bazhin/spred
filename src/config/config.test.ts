@@ -8,7 +8,7 @@ describe('configure function', () => {
 
       configure({ logException });
 
-      const comp = signal(() => {
+      const comp = signal((get) => {
         throw 'ERRROR';
       });
 

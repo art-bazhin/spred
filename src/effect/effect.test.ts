@@ -9,15 +9,15 @@ describe('watch', () => {
   const onException = jest.fn();
 
   const counter = writable(0);
-  const x2Counter = computed(() => {
-    const res = counter.get() * 2;
+  const x2Counter = computed((get) => {
+    const res = get(counter) * 2;
 
     if (res > 4) throw new Error();
 
     return res;
   });
 
-  const fn = jest.fn(() => x2Counter.get());
+  const fn = jest.fn((get: any) => get(x2Counter));
 
   let unsub: () => any;
 

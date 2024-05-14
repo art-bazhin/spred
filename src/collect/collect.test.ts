@@ -8,12 +8,12 @@ describe('collect function', () => {
     const a = writable(0);
     const b = writable(0);
 
-    const comp = computed(() => {
+    const comp = computed((get) => {
       collect(() => {
         b.get();
       });
 
-      return a.get();
+      return get(a);
     });
 
     comp.subscribe(spy);
@@ -41,9 +41,9 @@ describe('collect function', () => {
 
       const b = writable(0);
 
-      const comp = computed(() => {
+      const comp = computed((get) => {
         b.subscribe(spyInner);
-        return a.get();
+        return get(a);
       });
 
       comp.subscribe(spyComp);
