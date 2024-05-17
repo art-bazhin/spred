@@ -7,6 +7,7 @@ import {
   HAS_EXCEPTION,
   NOTIFIED,
   COMPUTING,
+  HAS_STALE_DEPS,
 } from '../common/constants';
 
 interface ListNode<T> {
@@ -14,6 +15,7 @@ interface ListNode<T> {
   prev: ListNode<T> | null;
   next: ListNode<T> | null;
   link?: ListNode<T> | null;
+  stale: ListNode<T> | null;
 }
 
 let computing: SignalState<any> | null = null;
@@ -468,7 +470,18 @@ function get<T>(
 
     if (node) {
       if (node.value !== signal) {
-        if (node.link) removeTargetNode(node.value, node.link);
+        computing._flags |= HAS_STALE_DEPS;
+
+        if (node.link) {
+          // removeTargetNode(node.value, node.link);
+          node.stale = {
+            value: node.value,
+            link: node.link,
+            prev: null,
+            next: null,
+            stale: null,
+          };
+        }
 
         node.value = signal;
 
@@ -547,6 +560,15 @@ function compute<T>(state: SignalState<T>, scheduled: boolean) {
     state._source = null;
   }
 
+  if (state._flags & HAS_STALE_DEPS) {
+    for (let node = state._firstSource; node !== null; node = node.next!) {
+      if (node.stale) {
+        removeTargetNode(node.stale.value, node.stale.link!);
+        node.stale = null;
+      }
+    }
+  }
+
   if (state._lastSource) {
     state._lastSource.next = null;
   } else {
@@ -555,6 +577,7 @@ function compute<T>(state: SignalState<T>, scheduled: boolean) {
   }
 
   state._flags &= ~COMPUTING;
+  state._flags &= ~HAS_STALE_DEPS;
   computing = prevComputing;
 }
 
@@ -574,6 +597,7 @@ function createSourceNode(source: SignalState<any>, target: SignalState<any>) {
     prev: target._lastSource,
     next: null,
     link: null,
+    stale: null,
   };
 
   if (!target._lastSource) {
@@ -596,6 +620,7 @@ function createTargetNode(
     value: target,
     prev: source._lastTarget,
     next: null,
+    stale: null,
   };
 
   if (source._lastTarget) {
@@ -638,6 +663,7 @@ function createChildNode(
     value: child,
     prev: parent._lastChild || null,
     next: null,
+    stale: null,
   };
 
   if (parent._lastChild) {
