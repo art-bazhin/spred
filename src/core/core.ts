@@ -24,6 +24,7 @@ let batchLevel = 0;
 let providers: SignalState<any>[] = [];
 let consumers: SignalState<any>[] = [];
 let notifiers: SignalState<any>[] = [];
+let staleNodes: { value: SignalState<any>; link: ListNode<any> }[] = [];
 
 let version = 1;
 
@@ -371,6 +372,7 @@ function recalc() {
   providers = [];
   consumers = [];
   notifiers = [];
+  staleNodes = [];
 
   ++batchLevel;
 
@@ -386,6 +388,10 @@ function recalc() {
 
   for (let state of consumers) {
     if (state._subs) get(state);
+  }
+
+  for (let node of staleNodes) {
+    removeTargetNode(node.value, node.link);
   }
 
   for (let state of notifiers) {
@@ -468,7 +474,7 @@ function get<T>(
 
     if (node) {
       if (node.value !== signal) {
-        if (node.link) removeTargetNode(node.value, node.link);
+        if (node.link) staleNodes.push({ value: node.value, link: node.link });
 
         node.value = signal;
 
@@ -602,7 +608,10 @@ function createTargetNode(
     source._lastTarget.next = node;
   } else {
     source._firstTarget = node;
-    linkDependencies(source);
+
+    for (let n = source._firstSource; n !== null; n = n.next) {
+      createTargetNode(n.value, source, n);
+    }
 
     if (source.onActivate) {
       runLifecycle(source, 'onActivate', source._value);
@@ -622,7 +631,12 @@ function removeTargetNode(state: SignalState<any>, node: ListNode<any>) {
   if (node.next) node.next.prev = node.prev;
 
   if (!state._firstTarget) {
-    unlinkDependencies(state);
+    state._flags &= ~NOTIFIED;
+
+    for (let n = state._firstSource; n !== null; n = n.next) {
+      removeTargetNode(n.value, n.link!);
+      n.link = null;
+    }
 
     if (state.onDeactivate) {
       runLifecycle(state, 'onDeactivate', state._value);
@@ -649,21 +663,6 @@ function createChildNode(
   parent._lastChild = node;
 
   return node;
-}
-
-function linkDependencies(state: SignalState<any>) {
-  for (let node = state._firstSource; node !== null; node = node.next) {
-    createTargetNode(node.value, state, node);
-  }
-}
-
-function unlinkDependencies(state: SignalState<any>) {
-  state._flags &= ~NOTIFIED;
-
-  for (let node = state._firstSource; node !== null; node = node.next) {
-    removeTargetNode(node.value, node.link!);
-    node.link = null;
-  }
 }
 
 function runLifecycle(
