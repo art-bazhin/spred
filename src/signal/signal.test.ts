@@ -1067,6 +1067,23 @@ describe('signal', () => {
       a.set(0);
       expect(spy).toHaveBeenCalledTimes(1);
     });
+
+    it('is not triggered if dependency reappears during same calculation cycle', () => {
+      const onDeactivate = jest.fn();
+
+      const a = signal(1);
+      const b = signal(1, { onDeactivate });
+      const c = signal((get) => (get(a) ? get(b) + get(a) : get(a) + get(b)));
+
+      c.subscribe(() => {});
+
+      expect(onDeactivate).toHaveBeenCalledTimes(0);
+
+      a.set(0);
+      a.set(1);
+
+      expect(onDeactivate).toHaveBeenCalledTimes(0);
+    });
   });
 
   describe('onCreate option', () => {
