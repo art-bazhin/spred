@@ -7,7 +7,6 @@ import {
   HAS_EXCEPTION,
   NOTIFIED,
   COMPUTING,
-  HAS_STALE_DEPS,
 } from '../common/constants';
 
 interface ListNode<T> {
@@ -15,7 +14,6 @@ interface ListNode<T> {
   prev: ListNode<T> | null;
   next: ListNode<T> | null;
   link?: ListNode<T> | null;
-  stale: ListNode<T> | null;
 }
 
 let computing: SignalState<any> | null = null;
@@ -26,6 +24,7 @@ let batchLevel = 0;
 let providers: SignalState<any>[] = [];
 let consumers: SignalState<any>[] = [];
 let notifiers: SignalState<any>[] = [];
+let staleNodes: { value: SignalState<any>; link: ListNode<any> }[] = [];
 
 let version = 1;
 
@@ -373,6 +372,7 @@ function recalc() {
   providers = [];
   consumers = [];
   notifiers = [];
+  staleNodes = [];
 
   ++batchLevel;
 
@@ -388,6 +388,10 @@ function recalc() {
 
   for (let state of consumers) {
     if (state._subs) get(state);
+  }
+
+  for (let node of staleNodes) {
+    removeTargetNode(node.value, node.link);
   }
 
   for (let state of notifiers) {
@@ -470,18 +474,7 @@ function get<T>(
 
     if (node) {
       if (node.value !== signal) {
-        computing._flags |= HAS_STALE_DEPS;
-
-        if (node.link) {
-          // removeTargetNode(node.value, node.link);
-          node.stale = {
-            value: node.value,
-            link: node.link,
-            prev: null,
-            next: null,
-            stale: null,
-          };
-        }
+        if (node.link) staleNodes.push({ value: node.value, link: node.link });
 
         node.value = signal;
 
@@ -560,15 +553,6 @@ function compute<T>(state: SignalState<T>, scheduled: boolean) {
     state._source = null;
   }
 
-  if (state._flags & HAS_STALE_DEPS) {
-    for (let node = state._firstSource; node !== null; node = node.next!) {
-      if (node.stale) {
-        removeTargetNode(node.stale.value, node.stale.link!);
-        node.stale = null;
-      }
-    }
-  }
-
   if (state._lastSource) {
     state._lastSource.next = null;
   } else {
@@ -577,7 +561,6 @@ function compute<T>(state: SignalState<T>, scheduled: boolean) {
   }
 
   state._flags &= ~COMPUTING;
-  state._flags &= ~HAS_STALE_DEPS;
   computing = prevComputing;
 }
 
@@ -597,7 +580,6 @@ function createSourceNode(source: SignalState<any>, target: SignalState<any>) {
     prev: target._lastSource,
     next: null,
     link: null,
-    stale: null,
   };
 
   if (!target._lastSource) {
@@ -620,14 +602,16 @@ function createTargetNode(
     value: target,
     prev: source._lastTarget,
     next: null,
-    stale: null,
   };
 
   if (source._lastTarget) {
     source._lastTarget.next = node;
   } else {
     source._firstTarget = node;
-    linkDependencies(source);
+
+    for (let n = source._firstSource; n !== null; n = n.next) {
+      createTargetNode(n.value, source, n);
+    }
 
     if (source.onActivate) {
       runLifecycle(source, 'onActivate', source._value);
@@ -647,7 +631,12 @@ function removeTargetNode(state: SignalState<any>, node: ListNode<any>) {
   if (node.next) node.next.prev = node.prev;
 
   if (!state._firstTarget) {
-    unlinkDependencies(state);
+    state._flags &= ~NOTIFIED;
+
+    for (let n = state._firstSource; n !== null; n = n.next) {
+      removeTargetNode(n.value, n.link!);
+      n.link = null;
+    }
 
     if (state.onDeactivate) {
       runLifecycle(state, 'onDeactivate', state._value);
@@ -663,7 +652,6 @@ function createChildNode(
     value: child,
     prev: parent._lastChild || null,
     next: null,
-    stale: null,
   };
 
   if (parent._lastChild) {
@@ -675,21 +663,6 @@ function createChildNode(
   parent._lastChild = node;
 
   return node;
-}
-
-function linkDependencies(state: SignalState<any>) {
-  for (let node = state._firstSource; node !== null; node = node.next) {
-    createTargetNode(node.value, state, node);
-  }
-}
-
-function unlinkDependencies(state: SignalState<any>) {
-  state._flags &= ~NOTIFIED;
-
-  for (let node = state._firstSource; node !== null; node = node.next) {
-    removeTargetNode(node.value, node.link!);
-    node.link = null;
-  }
 }
 
 function runLifecycle(
