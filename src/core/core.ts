@@ -113,9 +113,8 @@ export interface Signal<T> {
 
   /**
    * Calculates and returns the current value of the signal.
-   * @param track Determines whether the signal should be tracked as a dependency. Default is true.
    */
-  get(track?: boolean): T;
+  get(): T;
 }
 
 export function _Signal<T>(
@@ -150,8 +149,8 @@ export function _Signal<T>(
   if (parent) createChildNode(parent, this);
 }
 
-_Signal.prototype.get = function (...args: any) {
-  return get(this, ...args);
+_Signal.prototype.get = function () {
+  return get(this, false);
 };
 _Signal.prototype.subscribe = subscribe;
 _Signal.prototype.equal = Object.is;
