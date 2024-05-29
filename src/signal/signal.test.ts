@@ -748,7 +748,12 @@ describe('signal', () => {
     const test = signal(0);
 
     expect(test.get()).toBe(0);
-    expect(test.get()).toBe(test.get());
+  });
+
+  it('has value getter', () => {
+    const test = signal(0);
+
+    expect(test.value).toBe(0);
   });
 
   it('returns previous value if an exception occured', () => {

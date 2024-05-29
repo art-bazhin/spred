@@ -115,6 +115,11 @@ export interface Signal<T> {
    * Calculates and returns the current value of the signal.
    */
   get(): T;
+
+  /**
+   * The current value of the signal.
+   */
+  readonly value: T;
 }
 
 export function _Signal<T>(
@@ -154,6 +159,12 @@ _Signal.prototype.get = function () {
 };
 _Signal.prototype.subscribe = subscribe;
 _Signal.prototype.equal = Object.is;
+
+Object.defineProperty(_Signal.prototype, 'value', {
+  get() {
+    return this.get();
+  },
+});
 
 /**
  * A {@link Signal} whose value can be set.

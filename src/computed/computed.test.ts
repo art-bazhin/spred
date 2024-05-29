@@ -456,14 +456,14 @@ describe('computed', () => {
   });
 
   it('handles deep nested automatic unsubscribing in the right order', () => {
-    const onDeactivateSpy = jest.fn();
+    const onDeactivate = jest.fn();
 
     const source = writable(0);
     const comp = computed((get) => {
-      source.get();
+      get(source);
 
       const res = computed((get) => get(source) * 2, {
-        onDeactivate: () => onDeactivateSpy(),
+        onDeactivate,
       });
 
       return res;
@@ -475,10 +475,10 @@ describe('computed', () => {
     });
 
     parent.subscribe(() => {});
-    expect(onDeactivateSpy).toHaveBeenCalledTimes(0);
+    expect(onDeactivate).toHaveBeenCalledTimes(0);
 
     source.set(1);
-    expect(onDeactivateSpy).toHaveBeenCalledTimes(1);
+    expect(onDeactivate).toHaveBeenCalledTimes(1);
   });
 
   it('keeps subscriptions made inside a subscriber', () => {
