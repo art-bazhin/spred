@@ -34,14 +34,14 @@ const hard = (n, l) => n + fib(2);
 function bench(writable, computed, get, set, subscribe, batch) {
   const A = writable(0);
   const B = writable(0);
-  const C = computed(() => (get(A) % 2) + (get(B) % 2));
-  const D = computed(() =>
-    numbers.map((i) => ({ x: i + (get(A) % 2) - (get(B) % 2) }))
+  const C = computed((g) => (get(A, g) % 2) + (get(B, g) % 2));
+  const D = computed((g) =>
+    numbers.map((i) => ({ x: i + (get(A, g) % 2) - (get(B, g) % 2) }))
   );
-  const E = computed(() => hard(get(C) + get(A) + get(D)[0].x, 'E'));
-  const F = computed(() => hard(get(D)[2].x || get(B), 'F'));
+  const E = computed((g) => hard(get(C, g) + get(A, g) + get(D, g)[0].x, 'E'));
+  const F = computed((g) => hard(get(D, g)[2].x || get(B, g), 'F'));
   const G = computed(
-    () => get(C) + (get(C) || get(E) % 2) + get(D)[4].x + get(F)
+    (g) => get(C, g) + (get(C, g) || get(E, g) % 2) + get(D, g)[4].x + get(F, g)
   );
 
   const H = subscribe(G, (v) => {
@@ -91,7 +91,7 @@ document.getElementById('spred').onclick = () => {
   bench(
     signal,
     signal,
-    (s) => s.get(),
+    (s, g) => g(s),
     (s, v) => s.set(v),
     (s, f) => s.subscribe(f),
     batch

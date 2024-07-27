@@ -333,17 +333,17 @@ function testSpred(width, layerCount, newValues) {
     for (let i = layerCount; i--; ) {
       layer = (function (m) {
         const s = {
-          prop1: signal(function () {
-            return m.prop2.get();
+          prop1: signal(function (get) {
+            return get(m.prop2);
           }),
-          prop2: signal(function () {
-            return m.prop1.get() - m.prop3.get();
+          prop2: signal(function (get) {
+            return get(m.prop1) - get(m.prop3);
           }),
-          prop3: signal(function () {
-            return m.prop2.get() + m.prop4.get();
+          prop3: signal(function (get) {
+            return get(m.prop2) + get(m.prop4);
           }),
-          prop4: signal(function () {
-            return m.prop3.get();
+          prop4: signal(function (get) {
+            return get(m.prop3);
           }),
         };
 
