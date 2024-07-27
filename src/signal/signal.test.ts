@@ -130,7 +130,7 @@ describe('signal', () => {
         const obj: any = {};
 
         counter.subscribe((v) => {
-          obj.value = get(counter);
+          obj.value = counter.value;
         });
 
         return obj;

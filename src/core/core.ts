@@ -231,40 +231,6 @@ export interface SignalState<T> extends SignalOptions<T>, Signal<T> {
 }
 
 /**
- * Calls the passed function without tracking dependencies.
- * @param fn A function to call.
- * @returns A result of the function call.
- */
-export function isolate<T>(fn: () => T): T;
-
-/**
- * Calls the passed function without tracking dependencies.
- * @param fn A function to call.
- * @param args Function arguments.
- * @returns A result of the function call.
- */
-export function isolate<T, A extends unknown[]>(
-  fn: (...args: A) => T,
-  args: A
-): T;
-
-export function isolate(fn: any, args?: any) {
-  const prevComputing = computing;
-  const prevScope = scope;
-
-  if (computing) scope = computing;
-  computing = null;
-
-  try {
-    if (args) return fn(...args);
-    return fn();
-  } finally {
-    computing = prevComputing;
-    scope = prevScope;
-  }
-}
-
-/**
  * Calls the passed function and returns the unsubscribe function from all signals and subscriptions created within it.
  * @param fn A function to call.
  * @returns A cleanup function.
@@ -345,13 +311,11 @@ function subscribe<T>(
   if (exec && !(this._flags & HAS_EXCEPTION)) {
     ++batchLevel;
 
-    isolate(() => {
-      try {
-        subscriber(this._value, true);
-      } catch (e) {
-        config.logException(e);
-      }
-    });
+    try {
+      subscriber(this._value, true);
+    } catch (e) {
+      config.logException(e);
+    }
 
     --batchLevel;
 

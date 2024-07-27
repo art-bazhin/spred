@@ -7,7 +7,6 @@ import { on } from './on/on';
 import { signal } from './signal/signal';
 import { effect } from './effect/effect';
 import { isSignal, isWritableSignal } from './guards/guards';
-import { isolate } from './isolate/isolate';
 import { collect } from './collect/collect';
 
 export {
@@ -26,6 +25,5 @@ export {
   configure,
   isSignal,
   isWritableSignal,
-  isolate,
   collect,
 };
