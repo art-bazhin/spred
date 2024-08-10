@@ -2,6 +2,60 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.38.0](https://github.com/art-bazhin/spred/compare/v0.37.2...v0.38.0) (2024-08-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* equal option renamed to equals
+* remove isolate fn
+* Implicit dependency tracking is turned off. Use tracking getter passed as the first
+argument of a computation to track dependency.
+
+### Features
+
+* add onCleanup lifecycle fn ([b06ef69](https://github.com/art-bazhin/spred/commit/b06ef69a999c36002d9e2b6d4c94d4015e8074ce))
+* add value getter ([4c7dc88](https://github.com/art-bazhin/spred/commit/4c7dc88352f0619e08c5fcad839fa1d8ab359c5b))
+* pass tracking getter as first computation argument ([58e92e4](https://github.com/art-bazhin/spred/commit/58e92e43ae444ced3761348df2870ee057ddc4cd))
+* remove isolate fn as redundant in new api ([91bfde6](https://github.com/art-bazhin/spred/commit/91bfde6b7931a7b3824085f888f2bd77a488c9d4))
+* turn off dependency tracking in get method ([8ab78ec](https://github.com/art-bazhin/spred/commit/8ab78ec80b70a96a67b2e66501424b4c20b195e5))
+* update effect signature to new api ([af99815](https://github.com/art-bazhin/spred/commit/af9981551e5ab4d3471ec832030c172537c45f36))
+* use false as equals option value ([5f5c453](https://github.com/art-bazhin/spred/commit/5f5c453e69a711e569fe6118471e56ce3b3c4697))
+
+
+### Bug Fixes
+
+* fix emitting undefined value ([75e1e85](https://github.com/art-bazhin/spred/commit/75e1e859e9dcf47fdc85ae86fc76d943168eb846))
+
+
+### Reverts
+
+* revert equal fn name change ([4044462](https://github.com/art-bazhin/spred/commit/4044462ca63cbf4acf964470f72210ed3521c31a))
+
+
+### Tests
+
+* add maverick-js benchmark ([2309ccb](https://github.com/art-bazhin/spred/commit/2309ccbeb037d799dbd939f8c574a67b5812eabf))
+* add missing signal deactivation test ([c0289fd](https://github.com/art-bazhin/spred/commit/c0289fd1a59fe66133d03c7b396cb92456b00f78))
+* update benchmarks to new api ([4e48b38](https://github.com/art-bazhin/spred/commit/4e48b38b4d761d215971f6694552a6d55df7ae55))
+* update test cases to tracking getter api ([dd32afa](https://github.com/art-bazhin/spred/commit/dd32afa16b0e140e5d8ebb66e043e4e6ff5d752d))
+
+
+### Code Refactoring
+
+* refactor stale dependency cleanup ([3c9abd8](https://github.com/art-bazhin/spred/commit/3c9abd8c7a41ecc3964032e562a2c368debd8754))
+* refactor temp node usage ([2c20cfa](https://github.com/art-bazhin/spred/commit/2c20cfab4d6652339af2fe2dd01830f3e1cca034))
+
+
+### Build System
+
+* update dependencies ([7c392fc](https://github.com/art-bazhin/spred/commit/7c392fc25963590d0465b45725b06bfc62959e24))
+
+
+### Docs
+
+* update docs ([6266fb5](https://github.com/art-bazhin/spred/commit/6266fb554a17195202585dcdc5911c05b626b747))
+
 ### [0.37.2](https://github.com/art-bazhin/spred/compare/v0.37.1...v0.37.2) (2024-02-02)
 
 
