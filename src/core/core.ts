@@ -29,7 +29,10 @@ let staleNodes: { value: SignalState<any>; link: ListNode<any> }[] = [];
 
 let version = 1;
 
-// TODO DOCS
+/**
+ * Tracking function that gets the value of the passed signal.
+ * @param signal A signal to track.
+ */
 export type TrackingGetter = <T>(signal: Signal<T>) => T;
 
 /**
