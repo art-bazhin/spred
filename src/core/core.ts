@@ -18,6 +18,7 @@ interface ListNode<T> {
 
 let computing: SignalState<any> | null = null;
 let scope: SignalState<any> | null = null;
+let tempNode: ListNode<SignalState<any>> | null = null;
 
 let batchLevel = 0;
 
@@ -137,7 +138,6 @@ export function _Signal<T>(
   this._version = 0;
   this._firstSource = null;
   this._lastSource = null;
-  this._source = null;
   this._firstTarget = null;
   this._lastTarget = null;
 
@@ -221,7 +221,6 @@ export interface SignalState<T> extends SignalOptions<T>, Signal<T> {
 
   _firstSource: ListNode<SignalState<any>> | null;
   _lastSource: ListNode<SignalState<any>> | null;
-  _source: ListNode<SignalState<any>> | null;
 
   _firstTarget: ListNode<SignalState<any> | Subscriber<any>> | null;
   _lastTarget: ListNode<SignalState<any> | Subscriber<any>> | null;
@@ -444,19 +443,19 @@ function get<T>(
   signal._flags &= ~FORCED;
 
   if (computing && trackDependency) {
-    const node = computing._source;
+    if (tempNode) {
+      if (tempNode.value !== signal) {
+        if (tempNode.link)
+          staleNodes.push({ value: tempNode.value, link: tempNode.link });
 
-    if (node) {
-      if (node.value !== signal) {
-        if (node.link) staleNodes.push({ value: node.value, link: node.link });
+        tempNode.value = signal;
 
-        node.value = signal;
-
-        if (computing._firstTarget) createTargetNode(signal, computing, node);
-        else node.link = null;
+        if (computing._firstTarget)
+          createTargetNode(signal, computing, tempNode);
+        else tempNode.link = null;
       }
 
-      computing._source = node.next;
+      tempNode = tempNode.next;
     } else {
       const n = createSourceNode(signal, computing);
       if (computing._firstTarget) createTargetNode(signal, computing, n);
@@ -496,9 +495,10 @@ function checkSources(state: SignalState<any>) {
 
 function compute<T>(state: SignalState<T>, scheduled: boolean) {
   const prevComputing = computing;
+  const prevTempNode = tempNode;
 
   computing = state;
-  state._source = state._firstSource;
+  tempNode = state._firstSource;
 
   state._flags |= COMPUTING;
   state._flags &= ~HAS_EXCEPTION;
@@ -515,16 +515,14 @@ function compute<T>(state: SignalState<T>, scheduled: boolean) {
     runLifecycle(state, 'onException', state._exception, state._value);
   }
 
-  if (state._source) {
-    state._lastSource = state._source.prev;
+  if (tempNode) {
+    state._lastSource = tempNode.prev;
 
-    if (state._source.link) {
-      for (let node = state._source; node !== null; node = node.next!) {
+    if (tempNode.link) {
+      for (let node = tempNode; node !== null; node = node.next!) {
         removeTargetNode(node.value, node.link!);
       }
     }
-
-    state._source = null;
   }
 
   if (state._lastSource) {
@@ -536,6 +534,7 @@ function compute<T>(state: SignalState<T>, scheduled: boolean) {
 
   state._flags &= ~COMPUTING;
   computing = prevComputing;
+  tempNode = prevTempNode;
 }
 
 function cleanupChildren(state: SignalState<any>) {
