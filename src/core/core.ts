@@ -90,6 +90,13 @@ export interface SignalOptions<T> {
   onUpdate?: (value: T, prevValue?: T) => void;
 
   /**
+   * A function called each time before the signal value is calculated and when the signal is going to be deactivated.
+   * Useful to cleanup subscriptions and timers created during computation.
+   * @param value A current value of the signal.
+   */
+  onCleanup?: (value: T) => void;
+
+  /**
    * A function called whenever an unhandled exception occurs during the calculation of the signal value.
    * @param e An exception.
    * @param prevValue A previous value of the signal.
@@ -506,7 +513,12 @@ function compute<T>(state: SignalState<T>, scheduled: boolean) {
   state._flags &= ~HAS_EXCEPTION;
 
   try {
+    if (state.onCleanup) {
+      runLifecycle(state, 'onCleanup', state._value);
+    }
+
     if (state._firstChild) cleanupChildren(state);
+
     state._nextValue = state._compute!(get as TrackingGetter, scheduled);
   } catch (e: any) {
     state._exception = e;
@@ -611,6 +623,10 @@ function removeTargetNode(state: SignalState<any>, node: ListNode<any>) {
     for (let n = state._firstSource; n !== null; n = n.next) {
       removeTargetNode(n.value, n.link!);
       n.link = null;
+    }
+
+    if (state.onCleanup) {
+      runLifecycle(state, 'onCleanup', state._value);
     }
 
     if (state.onDeactivate) {

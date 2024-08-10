@@ -1139,6 +1139,93 @@ describe('signal', () => {
     });
   });
 
+  describe('onCleanup option', () => {
+    it('triggers before every computation of the signal value', () => {
+      let res: any = {};
+      let unsub: any;
+
+      const listener = jest.fn((v) => {
+        res.value = v;
+      });
+
+      const counter = signal(0);
+      const computedCounter = signal((get) => get(counter), {
+        onCleanup: listener,
+      });
+
+      expect(res.value).toBeUndefined();
+      expect(listener).toHaveBeenCalledTimes(0);
+
+      unsub = computedCounter.subscribe(() => {});
+      expect(res.value).toBeUndefined();
+      expect(listener).toHaveBeenCalledTimes(1);
+
+      counter.set(1);
+      expect(res.value).toBe(0);
+      expect(listener).toHaveBeenCalledTimes(2);
+
+      unsub();
+      expect(res.value).toBe(1);
+      expect(listener).toHaveBeenCalledTimes(3);
+    });
+
+    it('triggers on the signal deactivation', () => {
+      let value: any;
+      let unsub: any;
+
+      const listener = jest.fn((v) => (value = v));
+      const counter = signal(0, { onCleanup: (v) => listener(v) });
+
+      expect(value).toBeUndefined();
+      expect(listener).toHaveBeenCalledTimes(0);
+
+      unsub = counter.subscribe(() => {});
+      expect(value).toBeUndefined();
+      expect(listener).toHaveBeenCalledTimes(0);
+
+      counter.set(1);
+      expect(value).toBeUndefined();
+      expect(listener).toHaveBeenCalledTimes(0);
+
+      unsub();
+      expect(value).toBe(1);
+      expect(listener).toHaveBeenCalledTimes(1);
+    });
+
+    it('correctly reacts to deactivation of dependency', () => {
+      const spy = jest.fn();
+
+      const a = signal(1);
+      const b = signal(1, { onCleanup: () => spy() });
+      const c = signal((get) => get(a) && get(b));
+      const d = signal((get) => get(c));
+
+      d.subscribe(() => {});
+
+      expect(spy).toHaveBeenCalledTimes(0);
+
+      a.set(0);
+      expect(spy).toHaveBeenCalledTimes(1);
+    });
+
+    it('is not triggered if dependency reappears during same calculation cycle', () => {
+      const onCleanup = jest.fn();
+
+      const a = signal(1);
+      const b = signal(1, { onCleanup });
+      const c = signal((get) => (get(a) ? get(b) + get(a) : get(a) + get(b)));
+
+      c.subscribe(() => {});
+
+      expect(onCleanup).toHaveBeenCalledTimes(0);
+
+      a.set(0);
+      a.set(1);
+
+      expect(onCleanup).toHaveBeenCalledTimes(0);
+    });
+  });
+
   describe('onException option', () => {
     it('sets signal exception listener', () => {
       configure({
