@@ -132,7 +132,7 @@ describe('writable', () => {
       }
     );
     const comp = computed((get) => get(s).a || null, {
-      equals: () => false,
+      equal: () => false,
     });
 
     let value: any;
@@ -290,7 +290,7 @@ describe('writable', () => {
 
   it('does not ignore any new value if the second arg returns false', () => {
     const a = writable(0, {
-      equals: () => false,
+      equal: () => false,
     });
     const spy = jest.fn();
 
@@ -310,9 +310,9 @@ describe('writable', () => {
     expect(spy).toHaveBeenCalledTimes(5);
   });
 
-  it('can use custom equals function', () => {
+  it('can use custom equal function', () => {
     const a = writable(0, {
-      equals(value) {
+      equal(value) {
         return value >= 5;
       },
     });

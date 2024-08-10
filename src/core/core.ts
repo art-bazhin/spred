@@ -62,7 +62,7 @@ export interface SignalOptions<T> {
    * @param prevValue A previous value of the signal.
    * @returns Truthy if the values are equal, falsy otherwise.
    */
-  equals?: false | ((value: T, prevValue?: T) => unknown);
+  equal?: false | ((value: T, prevValue?: T) => unknown);
 
   /**
    * A function called at the moment the signal is created.
@@ -165,7 +165,7 @@ _Signal.prototype.get = function () {
   return get(this, false);
 };
 _Signal.prototype.subscribe = subscribe;
-_Signal.prototype.equals = Object.is;
+_Signal.prototype.equal = Object.is;
 
 Object.defineProperty(_Signal.prototype, 'value', {
   get() {
@@ -359,8 +359,8 @@ function recalc() {
   for (let state of q) {
     if (
       state._flags & FORCED ||
-      !state.equals ||
-      !state.equals(state._nextValue, state._value)
+      !state.equal ||
+      !state.equal(state._nextValue, state._value)
     ) {
       version = nextVersion;
       notify(state);
@@ -431,8 +431,8 @@ function get<T>(
       needsToUpdate &&
       signal._nextValue !== undefined &&
       (signal._flags & FORCED ||
-        !signal.equals ||
-        !signal.equals(signal._nextValue, signal._value))
+        !signal.equal ||
+        !signal.equal(signal._nextValue, signal._value))
     ) {
       const prevValue = signal._value;
 
