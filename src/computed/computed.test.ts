@@ -714,12 +714,12 @@ describe('computed', () => {
     expect(spy).toHaveBeenCalledTimes(3);
   });
 
-  it('does not ignore any new value if the second arg returns true', () => {
+  it('does not ignore any new value if equals option set to false', () => {
     const a = writable(0, {
-      equal: () => false,
+      equals: false,
     });
     const b = computed((get) => get(a), {
-      equal: () => false,
+      equals: false,
     });
     const spy = jest.fn();
 
@@ -741,10 +741,10 @@ describe('computed', () => {
 
   it('can use custom compare function', () => {
     const a = writable(0, {
-      equal: () => false,
+      equals: () => false,
     });
     const b = computed((get) => get(a), {
-      equal: (value) => value >= 5,
+      equals: (value) => value >= 5,
     });
     const spy = jest.fn();
 
@@ -766,7 +766,7 @@ describe('computed', () => {
 
   it('can filter values using undefined value', () => {
     const a = writable(0, {
-      equal: () => false,
+      equals: () => false,
     });
     const b = computed(
       (get) => {
@@ -774,7 +774,7 @@ describe('computed', () => {
         if (value < 5) return value;
       },
       {
-        equal: () => false,
+        equals: () => false,
       }
     );
     const spy = jest.fn();
