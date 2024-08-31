@@ -19,6 +19,13 @@ import {
   runInAction as whatsupBatch,
 } from 'https://unpkg.com/@whatsup/core@2.6.0/dist/index.esm.js';
 
+import {
+  signal as maverickSignal,
+  computed as maverickComputed,
+  effect as maverickEffect,
+  tick,
+} from 'https://esm.sh/@maverick-js/signals@5.11.4';
+
 import { batch, signal } from '/dist/index.mjs';
 
 const NUMBER_OF_ITERATIONS = 100_000;
@@ -108,6 +115,22 @@ document.getElementById('preact').onclick = () => {
     },
     (s, f) => preactEffect(() => f(s.value)),
     preactBatch
+  );
+};
+
+document.getElementById('maverick').onclick = () => {
+  bench(
+    maverickSignal,
+    maverickComputed,
+    (s) => s(),
+    (s, v) => {
+      s.set(v);
+    },
+    (s, f) => maverickEffect(() => f(s())),
+    (cb) => {
+      cb();
+      tick();
+    }
   );
 };
 
