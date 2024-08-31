@@ -34,8 +34,8 @@
     "size-limit": "^11.0.1",
     "standard-version": "^9.5.0",
     "tslib": "^2.6.2",
-    "typedoc": "^0.25.7",
-    "typescript": "^5.3.3"
+    "typedoc": "^0.26.6",
+    "typescript": "^5.5.4"
   },
   "scripts": {
     "build": "rollup -c",
