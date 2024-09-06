@@ -353,9 +353,6 @@ function recalc() {
   const nextVersion = version + 1;
 
   providers = [];
-  consumers = [];
-  notifiers = [];
-  staleNodes = [];
 
   ++batchLevel;
 
@@ -393,6 +390,10 @@ function recalc() {
   }
 
   --batchLevel;
+
+  consumers = [];
+  notifiers = [];
+  staleNodes = [];
 
   if (providers.length) recalc();
 }
