@@ -152,11 +152,13 @@ export function _Signal<T>(
   this._lastTarget = null;
 
   if (options) {
-    for (let key in options) {
-      (this as any)[key] = (options as any)[key];
+    this._options = Object.assign({}, options);
+
+    if (options.hasOwnProperty('equal')) {
+      this._equal = options.equal;
     }
 
-    if (this.onCreate && this._compute) {
+    if (this._options?.onCreate && this._compute) {
       runLifecycle(this, 'onCreate', this._value);
     }
   }
@@ -168,7 +170,7 @@ _Signal.prototype.get = function () {
   return get(this, false);
 };
 _Signal.prototype.subscribe = subscribe;
-_Signal.prototype.equal = Object.is;
+_Signal.prototype._equal = Object.is;
 
 Object.defineProperty(_Signal.prototype, 'value', {
   get() {
@@ -209,7 +211,7 @@ export function _WritableSignal<T>(
   this._value = value;
   this._nextValue = value;
 
-  if (this.onCreate) {
+  if (this._options?.onCreate) {
     runLifecycle(this, 'onCreate', value);
   }
 }
@@ -220,7 +222,7 @@ _WritableSignal.prototype.set = set;
 _WritableSignal.prototype.update = update;
 _WritableSignal.prototype.emit = emit;
 
-export interface SignalState<T> extends SignalOptions<T>, Signal<T> {
+export interface SignalState<T> extends Signal<T> {
   _value: T;
   _nextValue: T;
   _compute?: Computation<T>;
@@ -237,6 +239,9 @@ export interface SignalState<T> extends SignalOptions<T>, Signal<T> {
 
   _firstChild?: ListNode<SignalState<any> | (() => any)> | null;
   _lastChild?: ListNode<SignalState<any> | (() => any)> | null;
+
+  _options: SignalOptions<T>;
+  _equal: SignalOptions<T>['equal'];
 }
 
 /**
@@ -359,8 +364,8 @@ function recalc() {
   for (let state of q) {
     if (
       state._flags & FORCED ||
-      !state.equal ||
-      !state.equal(state._nextValue, state._value)
+      !state._equal ||
+      !state._equal(state._nextValue, state._value)
     ) {
       version = nextVersion;
       notify(state);
@@ -435,15 +440,15 @@ function get<T>(
       needsToUpdate &&
       signal._nextValue !== undefined &&
       (signal._flags & FORCED ||
-        !signal.equal ||
-        !signal.equal(signal._nextValue, signal._value))
+        !signal._equal ||
+        !signal._equal(signal._nextValue, signal._value))
     ) {
       const prevValue = signal._value;
 
       signal._value = signal._nextValue;
       signal._flags |= CHANGED;
 
-      if (signal.onUpdate) {
+      if (signal._options?.onUpdate) {
         runLifecycle(signal, 'onUpdate', signal._value, prevValue);
       }
 
@@ -517,7 +522,7 @@ function compute<T>(state: SignalState<T>, scheduled: boolean) {
   state._flags &= ~HAS_EXCEPTION;
 
   try {
-    if (state.onCleanup) {
+    if (state._options?.onCleanup) {
       runLifecycle(state, 'onCleanup', state._value);
     }
 
@@ -529,7 +534,7 @@ function compute<T>(state: SignalState<T>, scheduled: boolean) {
     state._flags |= HAS_EXCEPTION;
   }
 
-  if (state._flags & HAS_EXCEPTION && state.onException) {
+  if (state._flags & HAS_EXCEPTION && state._options?.onException) {
     runLifecycle(state, 'onException', state._exception, state._value);
   }
 
@@ -604,7 +609,7 @@ function createTargetNode(
       createTargetNode(n.value, source, n);
     }
 
-    if (source.onActivate) {
+    if (source._options?.onActivate) {
       runLifecycle(source, 'onActivate', source._value);
     }
   }
@@ -629,11 +634,11 @@ function removeTargetNode(state: SignalState<any>, node: ListNode<any>) {
       n.link = null;
     }
 
-    if (state.onCleanup) {
+    if (state._options?.onCleanup) {
       runLifecycle(state, 'onCleanup', state._value);
     }
 
-    if (state.onDeactivate) {
+    if (state._options?.onDeactivate) {
       runLifecycle(state, 'onDeactivate', state._value);
     }
   }
@@ -662,7 +667,7 @@ function createChildNode(
 
 function runLifecycle(
   state: SignalState<any>,
-  name: keyof SignalState<any>,
+  name: keyof SignalOptions<any>,
   ...args: any[]
 ) {
   const prevComputing = computing;
@@ -671,7 +676,7 @@ function runLifecycle(
   computing = null;
   scope = null;
 
-  state[name](...args);
+  (state._options as any)[name](...args);
 
   computing = prevComputing;
   scope = prevScope;
