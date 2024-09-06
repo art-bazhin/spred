@@ -1,5 +1,4 @@
-import { signal } from '../signal/signal';
-import { on } from './on';
+import { signal, on } from '..';
 
 describe('on function', () => {
   it('subscribes the passed callback to the signal without executing it immediately', () => {

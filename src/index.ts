@@ -1,12 +1,15 @@
 import { Signal, WritableSignal } from './core/core';
-import { writable } from './writable/writable';
-import { computed } from './computed/computed';
 import { configure, Config } from './config/config';
-import { batch, Subscriber, SignalOptions, Computation } from './core/core';
+import {
+  batch,
+  Subscriber,
+  SignalOptions,
+  Computation,
+  TrackingGetter,
+} from './core/core';
 import { on } from './on/on';
 import { signal } from './signal/signal';
 import { effect } from './effect/effect';
-import { isSignal, isWritableSignal } from './guards/guards';
 import { collect } from './collect/collect';
 
 export {
@@ -16,14 +19,11 @@ export {
   Config,
   Subscriber,
   Computation,
-  writable,
-  computed,
+  TrackingGetter,
   signal,
   batch,
   on,
   effect,
   configure,
-  isSignal,
-  isWritableSignal,
   collect,
 };

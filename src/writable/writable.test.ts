@@ -1,9 +1,7 @@
-import { computed } from '../computed/computed';
-import { writable } from './writable';
-import { batch } from '../core/core';
+import { signal, batch, WritableSignal } from '..';
 
 describe('writable', () => {
-  const counter = writable(0);
+  const counter = signal(0);
 
   it('is created with default value', () => {
     expect(counter.get()).toBe(0);
@@ -44,7 +42,7 @@ describe('writable', () => {
   });
 
   it('updates value using update fn right after init', () => {
-    const value = writable(0);
+    const value = signal(0);
 
     value.update((v) => v + 1);
     expect(value.get()).toBe(1);
@@ -56,7 +54,7 @@ describe('writable', () => {
   });
 
   it('force triggers subscribers using update method with a function that returns void', () => {
-    const s = writable(
+    const s = signal(
       {} as {
         a?: number;
       }
@@ -92,7 +90,7 @@ describe('writable', () => {
   });
 
   it('force triggers subscribers using update method without arguments', () => {
-    const s = writable(
+    const s = signal(
       {} as {
         a?: number;
       }
@@ -126,12 +124,12 @@ describe('writable', () => {
   });
 
   it('force triggers dependent subscribers using update method without arguments', () => {
-    const s = writable(
+    const s = signal(
       {} as {
         a?: number;
       }
     );
-    const comp = computed((get) => get(s).a || null, {
+    const comp = signal((get) => get(s).a || null, {
       equal: () => false,
     });
 
@@ -167,7 +165,7 @@ describe('writable', () => {
   });
 
   it('do not force trigger subscribers using update method if the next value is undefined', () => {
-    const s = writable<number>();
+    const s = signal<number>();
 
     let value: any;
     const subscriber = jest.fn((v) => (value = v));
@@ -189,7 +187,7 @@ describe('writable', () => {
   });
 
   it('force triggers subscribers using emit method', () => {
-    const s = writable(
+    const s = signal(
       {} as {
         a?: number;
       }
@@ -224,7 +222,7 @@ describe('writable', () => {
 
   it('force triggers subscribers using emit method without arguments', () => {
     const spy = jest.fn();
-    const event = writable();
+    const event = signal();
 
     event.subscribe(spy);
     expect(spy).toHaveBeenCalledTimes(1);
@@ -238,8 +236,8 @@ describe('writable', () => {
 
   it('keeps subscriptions made inside a subscriber', () => {
     const spy = jest.fn();
-    const a = writable(0);
-    const b = writable(0);
+    const a = signal(0);
+    const b = signal(0);
 
     a.subscribe(() => {
       b.subscribe(() => spy());
@@ -260,7 +258,7 @@ describe('writable', () => {
   it('can have fn value', () => {
     const a = () => {};
     const b = () => {};
-    const fn = writable(a);
+    const fn = new WritableSignal(a);
 
     expect(fn.get()).toBe(a);
 
@@ -269,7 +267,7 @@ describe('writable', () => {
   });
 
   it('ignores a new value if it is equal to the current value', () => {
-    const a = writable(0);
+    const a = signal(0);
     const spy = jest.fn();
 
     a.subscribe(spy);
@@ -289,7 +287,7 @@ describe('writable', () => {
   });
 
   it('does not ignore any new value if the second arg returns false', () => {
-    const a = writable(0, {
+    const a = signal(0, {
       equal: () => false,
     });
     const spy = jest.fn();
@@ -311,7 +309,7 @@ describe('writable', () => {
   });
 
   it('can use custom equal function', () => {
-    const a = writable(0, {
+    const a = signal(0, {
       equal(value) {
         return value >= 5;
       },

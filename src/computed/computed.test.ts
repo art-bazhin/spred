@@ -1,23 +1,20 @@
-import { computed } from './computed';
-import { writable } from '../writable/writable';
-import { configure } from '../config/config';
-import { batch } from '../core/core';
+import { signal, configure, batch } from '..';
 
 describe('computed', () => {
-  const a = writable(1);
-  const b = writable(2);
-  const c = writable(3);
-  const d = writable(4);
+  const a = signal(1);
+  const b = signal(2);
+  const c = signal(3);
+  const d = signal(4);
 
-  const a1 = computed((get) => get(b));
-  const b1 = computed((get) => get(a) - get(c));
-  const c1 = computed((get) => get(b) + get(d));
-  const d1 = computed((get) => get(c));
+  const a1 = signal((get) => get(b));
+  const b1 = signal((get) => get(a) - get(c));
+  const c1 = signal((get) => get(b) + get(d));
+  const d1 = signal((get) => get(c));
 
-  const a2 = computed((get) => get(b1));
-  const b2 = computed((get) => get(a1) - get(c1));
-  const c2 = computed((get) => get(b1) + get(d1));
-  const d2 = computed((get) => get(c1));
+  const a2 = signal((get) => get(b1));
+  const b2 = signal((get) => get(a1) - get(c1));
+  const c2 = signal((get) => get(b1) + get(d1));
+  const d2 = signal((get) => get(c1));
 
   it('is calculates value properly after creation', () => {
     expect(a2.get()).toBe(-2);
@@ -53,20 +50,20 @@ describe('computed', () => {
   });
 
   it('updates value properly on subscribers run', () => {
-    const a = writable(1);
-    const b = writable(2);
-    const c = writable(3);
-    const d = writable(4);
+    const a = signal(1);
+    const b = signal(2);
+    const c = signal(3);
+    const d = signal(4);
 
-    const a1 = computed((get) => get(b));
-    const b1 = computed((get) => get(a) - get(c));
-    const c1 = computed((get) => get(b) + get(d));
-    const d1 = computed((get) => get(c));
+    const a1 = signal((get) => get(b));
+    const b1 = signal((get) => get(a) - get(c));
+    const c1 = signal((get) => get(b) + get(d));
+    const d1 = signal((get) => get(c));
 
-    const a2 = computed((get) => get(b1));
-    const b2 = computed((get) => get(a1) - get(c1));
-    const c2 = computed((get) => get(b1) + get(d1));
-    const d2 = computed((get) => get(c1));
+    const a2 = signal((get) => get(b1));
+    const b2 = signal((get) => get(a1) - get(c1));
+    const c2 = signal((get) => get(b1) + get(d1));
+    const d2 = signal((get) => get(c1));
 
     let aSub,
       bSub,
@@ -105,10 +102,10 @@ describe('computed', () => {
   });
 
   it('can pass values to writable signals during computing', () => {
-    const counter = writable(0);
-    const stringCounter = writable('0');
+    const counter = signal(0);
+    const stringCounter = signal('0');
 
-    const x2Counter = computed((get) => {
+    const x2Counter = signal((get) => {
       stringCounter.set(counter.get() + '');
       return get(counter) * 2;
     });
@@ -130,9 +127,9 @@ describe('computed', () => {
   });
 
   it('can pass values to writable signals during computing (case 2)', () => {
-    const a = writable(0);
-    const b = writable(0);
-    const c = computed((get) => {
+    const a = signal(0);
+    const b = signal(0);
+    const c = signal((get) => {
       if (get(a) > 5) b.set(10);
       return get(a) + get(b);
     });
@@ -153,13 +150,13 @@ describe('computed', () => {
   it('can pass values to writable signals during computing (case 3)', () => {
     const spy = jest.fn();
 
-    const a = writable(0);
-    const b = writable(0);
-    const c = writable(0);
-    const d = computed((get) => {
+    const a = signal(0);
+    const b = signal(0);
+    const c = signal(0);
+    const d = signal((get) => {
       return get(a) + get(b);
     });
-    const e = computed((get) => {
+    const e = signal((get) => {
       c.get();
 
       a.set(1);
@@ -185,9 +182,9 @@ describe('computed', () => {
 
     const obj = null as any;
 
-    const field = writable('bar');
-    const count = computed((get) => obj[get(field)]);
-    const count2 = computed((get) => get(count));
+    const field = signal('bar');
+    const count = signal((get) => obj[get(field)]);
+    const count2 = signal((get) => get(count));
 
     count2.subscribe(() => {});
 
@@ -203,10 +200,10 @@ describe('computed', () => {
 
     const obj = null as any;
 
-    const field = writable('bar');
-    const count = computed((get) => obj[get(field)]);
+    const field = signal('bar');
+    const count = signal((get) => obj[get(field)]);
 
-    const parent = computed((get) => get(count));
+    const parent = signal((get) => get(count));
 
     parent.subscribe(() => {});
 
@@ -220,9 +217,9 @@ describe('computed', () => {
       logException: spy,
     });
 
-    const a = writable(0);
+    const a = signal(0);
 
-    const b = computed((get) => {
+    const b = signal((get) => {
       const value = get(a);
       if (value < 10) throw 'ERROR';
       return value;
@@ -249,20 +246,20 @@ describe('computed', () => {
 
     configure({ logException: errSpy });
 
-    const a = writable(0);
+    const a = signal(0);
 
-    const b = computed((get) => {
+    const b = signal((get) => {
       if (get(a) > 10) (get(a) as any).foo();
       return get(a);
     });
 
-    const c = writable(0);
+    const c = signal(0);
 
-    const sum = computed((get) => {
+    const sum = signal((get) => {
       return get(b) + get(c);
     });
 
-    const sum2 = computed((get) => {
+    const sum2 = signal((get) => {
       return get(sum);
     });
 
@@ -296,10 +293,10 @@ describe('computed', () => {
   it('unsubscribes inner subscriptions on every calculation', () => {
     const spy = jest.fn();
 
-    const source = writable(0);
-    const ext = writable(0);
+    const source = signal(0);
+    const ext = signal(0);
 
-    const comp = computed((get) => {
+    const comp = signal((get) => {
       ext.subscribe(() => spy());
       return get(source);
     });
@@ -323,11 +320,11 @@ describe('computed', () => {
   it('unsubscribes nested inner subscriptions on every calculation', () => {
     const spy = jest.fn();
 
-    const source = writable(0);
-    const wrap = writable(0);
-    const ext = writable(0);
+    const source = signal(0);
+    const wrap = signal(0);
+    const ext = signal(0);
 
-    const comp = computed((get) => {
+    const comp = signal((get) => {
       wrap.subscribe(() => {
         ext.subscribe(() => spy());
       });
@@ -353,11 +350,11 @@ describe('computed', () => {
   it('unsubscribes inner subscriptions in nested computeds on every calculation', () => {
     const spy = jest.fn();
 
-    const source = writable(0);
-    const ext = writable(0);
+    const source = signal(0);
+    const ext = signal(0);
 
-    const comp = computed((get) => {
-      const wrap = computed((get) => {
+    const comp = signal((get) => {
+      const wrap = signal((get) => {
         ext.subscribe(() => spy());
       });
 
@@ -387,12 +384,12 @@ describe('computed', () => {
     const externalSpy = jest.fn();
     const deepSpy = jest.fn();
 
-    const source = writable(0);
-    const external = writable(0);
+    const source = signal(0);
+    const external = signal(0);
 
-    const comp = computed((get) => {
-      const inner = computed((get) => {
-        const deep = computed((get) => get(external));
+    const comp = signal((get) => {
+      const inner = signal((get) => {
+        const deep = signal((get) => get(external));
         deep.subscribe(() => deepSpy());
 
         return get(external);
@@ -438,12 +435,12 @@ describe('computed', () => {
   it('handles automatic unsubscribing in the right order', () => {
     const onDeactivateSpy = jest.fn();
 
-    const source = writable(0);
-    const ext = writable(0, {
+    const source = signal(0);
+    const ext = signal(0, {
       onDeactivate: () => onDeactivateSpy(),
     });
 
-    const comp = computed((get) => {
+    const comp = signal((get) => {
       ext.subscribe(() => {});
       return get(source);
     });
@@ -458,18 +455,18 @@ describe('computed', () => {
   it('handles deep nested automatic unsubscribing in the right order', () => {
     const onDeactivate = jest.fn();
 
-    const source = writable(0);
-    const comp = computed((get) => {
+    const source = signal(0);
+    const comp = signal((get) => {
       get(source);
 
-      const res = computed((get) => get(source) * 2, {
+      const res = signal((get) => get(source) * 2, {
         onDeactivate,
       });
 
       return res;
     });
 
-    const parent = computed((get) => {
+    const parent = signal((get) => {
       const res = get(comp);
       res.subscribe(() => {});
     });
@@ -483,9 +480,9 @@ describe('computed', () => {
 
   it('keeps subscriptions made inside a subscriber', () => {
     const spy = jest.fn();
-    const a = writable(0);
-    const aComp = computed((get) => get(a));
-    const b = writable(0);
+    const a = signal(0);
+    const aComp = signal((get) => get(a));
+    const b = signal(0);
 
     aComp.subscribe(() => {
       b.subscribe(() => spy());
@@ -505,11 +502,11 @@ describe('computed', () => {
 
   it('keeps subscriptions made inside a deep nested subscriber', () => {
     const spy = jest.fn();
-    const a = writable(0);
-    const aComp = computed((get) => get(a));
-    const b = writable(0);
+    const a = signal(0);
+    const aComp = signal((get) => get(a));
+    const b = signal(0);
 
-    const wrap = computed((get) => {
+    const wrap = signal((get) => {
       aComp.subscribe(() => {
         b.subscribe(() => spy());
       });
@@ -536,15 +533,15 @@ describe('computed', () => {
     const spy = jest.fn();
     const medSpy = jest.fn();
 
-    const source = writable(0);
+    const source = signal(0);
 
-    const med = computed((get, scheduled) => {
+    const med = signal((get, scheduled) => {
       lastMedScheduled = scheduled;
       medSpy();
       return get(source) * 2;
     });
 
-    const result = computed((get, scheduled) => {
+    const result = signal((get, scheduled) => {
       lastScheduled = scheduled;
       spy();
       return get(source) < 5 ? get(source) : get(med);
@@ -608,16 +605,16 @@ describe('computed', () => {
 
     const spy = jest.fn();
 
-    const a = writable(0);
-    const b = writable(0);
+    const a = signal(0);
+    const b = signal(0);
 
-    const c = computed((get: any, scheduled?: boolean) => {
+    const c = signal((get: any, scheduled?: boolean) => {
       lastScheduled = scheduled;
       spy();
       return get(a);
     });
 
-    const d = computed((get) => {
+    const d = signal((get) => {
       if (get(b)) c.subscribe(() => {});
       return get(b);
     });
@@ -632,10 +629,10 @@ describe('computed', () => {
   it('does not recalculates if became inactive during previous calculations', () => {
     const spy = jest.fn();
 
-    const source = writable(0);
+    const source = signal(0);
     let unsub: any;
 
-    const a = computed((get) => {
+    const a = signal((get) => {
       const v = get(source);
 
       if (v > 10 && unsub) unsub();
@@ -644,12 +641,12 @@ describe('computed', () => {
 
     a.subscribe(() => {});
 
-    const b = computed((get) => {
+    const b = signal((get) => {
       spy();
       return get(source);
     });
 
-    const c = computed((get) => get(b));
+    const c = signal((get) => get(b));
 
     unsub = c.subscribe(() => {});
     expect(spy).toHaveBeenCalledTimes(1);
@@ -662,8 +659,8 @@ describe('computed', () => {
   });
 
   it('does not trigger dependants until its value is changed by default', () => {
-    const counter = writable(0);
-    const x2Counter = computed((get) => get(counter) * 2);
+    const counter = signal(0);
+    const x2Counter = signal((get) => get(counter) * 2);
     const spy = jest.fn();
 
     x2Counter.subscribe(spy, false);
@@ -694,8 +691,8 @@ describe('computed', () => {
   });
 
   it('ignores a new value if it is equal to the current value', () => {
-    const a = writable(0);
-    const b = computed((get) => get(a));
+    const a = signal(0);
+    const b = signal((get) => get(a));
     const spy = jest.fn();
 
     b.subscribe(spy);
@@ -715,10 +712,10 @@ describe('computed', () => {
   });
 
   it('does not ignore any new value if equal option set to false', () => {
-    const a = writable(0, {
+    const a = signal(0, {
       equal: false,
     });
-    const b = computed((get) => get(a), {
+    const b = signal((get) => get(a), {
       equal: false,
     });
     const spy = jest.fn();
@@ -740,10 +737,10 @@ describe('computed', () => {
   });
 
   it('can use custom compare function', () => {
-    const a = writable(0, {
+    const a = signal(0, {
       equal: () => false,
     });
-    const b = computed((get) => get(a), {
+    const b = signal((get) => get(a), {
       equal: (value) => value >= 5,
     });
     const spy = jest.fn();
@@ -765,10 +762,10 @@ describe('computed', () => {
   });
 
   it('can filter values using undefined value', () => {
-    const a = writable(0, {
+    const a = signal(0, {
       equal: () => false,
     });
-    const b = computed(
+    const b = signal(
       (get) => {
         const value = get(a);
         if (value < 5) return value;
@@ -796,14 +793,14 @@ describe('computed', () => {
   });
 
   it('allows to handle inactive signal exceptions', () => {
-    const count = writable(0);
+    const count = signal(0);
 
-    const withError = computed((get) => {
+    const withError = signal((get) => {
       if (get(count) < 5) throw Error();
       return get(count);
     });
 
-    const handledError = computed((get) => {
+    const handledError = signal((get) => {
       let result = 42;
 
       try {
@@ -829,19 +826,19 @@ describe('computed', () => {
       logException: errorSpy,
     });
 
-    const count = writable(0);
+    const count = signal(0);
 
-    const withError = computed((get) => {
+    const withError = signal((get) => {
       if (get(count) < 5) throw Error();
       return get(count);
     });
 
-    const withErrorComp = computed((get) => get(withError));
+    const withErrorComp = signal((get) => get(withError));
     const unsub1 = withErrorComp.subscribe(() => {}, false);
 
     expect(errorSpy).toHaveBeenCalledTimes(1);
 
-    const handledError = computed((get) => {
+    const handledError = signal((get) => {
       let result = 42;
 
       try {

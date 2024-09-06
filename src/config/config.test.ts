@@ -1,5 +1,4 @@
-import { signal } from '../signal/signal';
-import { configure } from './config';
+import { signal, configure } from '..';
 
 describe('configure function', () => {
   describe('logException property', () => {

@@ -1,6 +1,5 @@
-import { computed } from '../computed/computed';
 import { NOOP_FN } from '../common/constants';
-import { Computation, SignalOptions } from '../core/core';
+import { Signal, Computation, SignalOptions } from '../core/core';
 
 /**
  * Call the passed function immediately and every time the signals it depends on are updated.
@@ -12,5 +11,5 @@ export function effect<T>(
   fn: Computation<T>,
   options?: SignalOptions<T>
 ): () => void {
-  return computed(fn, options).subscribe(NOOP_FN);
+  return new Signal(fn, options).subscribe(NOOP_FN);
 }

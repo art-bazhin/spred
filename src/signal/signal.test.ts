@@ -1,6 +1,4 @@
-import { signal } from './signal';
-import { configure } from '../config/config';
-import { batch } from '../core/core';
+import { signal, configure, batch } from '..';
 
 describe('signal', () => {
   configure({

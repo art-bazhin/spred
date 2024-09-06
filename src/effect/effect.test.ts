@@ -1,5 +1,4 @@
-import { writable, computed, configure } from '..';
-import { effect } from './effect';
+import { signal, configure, effect } from '..';
 
 describe('watch', () => {
   configure({
@@ -8,8 +7,8 @@ describe('watch', () => {
 
   const onException = jest.fn();
 
-  const counter = writable(0);
-  const x2Counter = computed((get) => {
+  const counter = signal(0);
+  const x2Counter = signal((get) => {
     const res = get(counter) * 2;
 
     if (res > 4) throw new Error();

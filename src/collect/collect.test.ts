@@ -1,14 +1,12 @@
-import { computed } from '../computed/computed';
-import { collect } from '../core/core';
-import { writable } from '../writable/writable';
+import { signal, collect } from '..';
 
 describe('collect function', () => {
   it('isolates passed fn from outer dependency tracking', () => {
     const spy = jest.fn();
-    const a = writable(0);
-    const b = writable(0);
+    const a = signal(0);
+    const b = signal(0);
 
-    const comp = computed((get) => {
+    const comp = signal((get) => {
       collect(() => {
         b.get();
       });
@@ -34,14 +32,14 @@ describe('collect function', () => {
     const spyInner = jest.fn();
     const spyComp = jest.fn();
 
-    const a = writable(0);
+    const a = signal(0);
 
     const cleanup = collect(() => {
       a.subscribe(spy);
 
-      const b = writable(0);
+      const b = signal(0);
 
-      const comp = computed((get) => {
+      const comp = signal((get) => {
         b.subscribe(spyInner);
         return get(a);
       });

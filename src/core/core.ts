@@ -38,10 +38,10 @@ export type TrackingGetter = <T>(signal: Signal<T>) => T;
 /**
  * A function subscribed to updates of a signal.
  * @param value A new value of the signal.
- * @param exec Determines if the function was executed immediately after subscription.
+ * @param immediate Determines if the function was executed immediately after subscription.
  * @param returns A cleanup function called after unsubscribing.
  */
-export type Subscriber<T> = (value: T, exec: boolean) => void;
+export type Subscriber<T> = (value: T, immediate: boolean) => void;
 
 /**
  * A function that calculates the new value of the signal.
@@ -122,12 +122,12 @@ declare class Signal<T> {
   /**
    * Subscribes the passed function to updates of the signal value.
    * @param subscriber A function subscribed to updates.
-   * @param exec Determines whether the function should be executed immediately after subscription. Default is true.
+   * @param immediate Determines whether the function should be executed immediately after subscription. Default is true.
    * @returns An unsubscribe function.
    */
   subscribe<E extends boolean>(
     subscriber: Subscriber<true extends E ? T : Exclude<T, undefined>>,
-    exec?: E
+    immediate?: E
   ): () => void;
 
   /**
