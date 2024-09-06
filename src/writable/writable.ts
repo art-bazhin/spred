@@ -1,4 +1,4 @@
-import { _WritableSignal, WritableSignal, SignalOptions } from '../core/core';
+import { WritableSignal, SignalOptions } from '../core/core';
 
 /**
  * Сreate a writable signal.
@@ -18,5 +18,5 @@ export function writable<T>(
 ): WritableSignal<T>;
 
 export function writable(value?: any, options?: any) {
-  return new (_WritableSignal as any)(value, options);
+  return new (WritableSignal as any)(value, options);
 }

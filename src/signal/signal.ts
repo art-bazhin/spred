@@ -2,8 +2,6 @@ import {
   Computation,
   Signal,
   WritableSignal,
-  _Signal,
-  _WritableSignal,
   SignalOptions,
 } from '../core/core';
 
@@ -36,6 +34,6 @@ export function signal<T>(
 ): WritableSignal<T>;
 
 export function signal(value?: any, options?: any) {
-  if (typeof value === 'function') return new (_Signal as any)(value, options);
-  return new (_WritableSignal as any)(value, options);
+  if (typeof value === 'function') return new (Signal as any)(value, options);
+  return new (WritableSignal as any)(value, options);
 }

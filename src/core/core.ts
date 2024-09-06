@@ -110,7 +110,15 @@ export interface SignalOptions<T> {
 /**
  * A basic reactive primitive. Notifies consumers of a change in the stored value and triggers them to recalculate.
  */
-export interface Signal<T> {
+declare class Signal<T> {
+  /**
+   * Create a signal that automatically calculates its value based on other signals.
+   * @param compute A function that calculates the signal value and returns it.
+   * @param options Signal options.
+   * @returns A computed signal.
+   */
+  constructor(compute: Computation<T>, options?: SignalOptions<T>);
+
   /**
    * Subscribes the passed function to updates of the signal value.
    * @param subscriber A function subscribed to updates.
@@ -133,7 +141,8 @@ export interface Signal<T> {
   readonly value: T;
 }
 
-export function _Signal<T>(
+/** @internal */
+function Signal<T>(
   this: SignalState<T>,
   compute?: Computation<T>,
   options?: SignalOptions<T>
@@ -166,13 +175,13 @@ export function _Signal<T>(
   if (parent) createChildNode(parent, this);
 }
 
-_Signal.prototype.get = function () {
-  return get(this, false);
+Signal.prototype.get = function () {
+  return get(this as any, false);
 };
-_Signal.prototype.subscribe = subscribe;
-_Signal.prototype._equal = Object.is;
+Signal.prototype.subscribe = subscribe;
+(Signal.prototype as any)._equal = Object.is;
 
-Object.defineProperty(_Signal.prototype, 'value', {
+Object.defineProperty(Signal.prototype, 'value', {
   get() {
     return this.get();
   },
@@ -181,7 +190,14 @@ Object.defineProperty(_Signal.prototype, 'value', {
 /**
  * A {@link Signal} whose value can be set.
  */
-export interface WritableSignal<T> extends Signal<T> {
+declare class WritableSignal<T> extends Signal<T> {
+  /**
+   * @param value An initial value of the signal.
+   * @param options Signal options.
+   * @returns A writable signal.
+   */
+  constructor(value: T, options?: SignalOptions<T>);
+
   /**
    * Set the signal value and notify dependents if it was changed.
    * @param value A new value of the signal.
@@ -201,12 +217,13 @@ export interface WritableSignal<T> extends Signal<T> {
   update(updateFn?: (lastValue: T) => T | void): void;
 }
 
-export function _WritableSignal<T>(
+/** @internal */
+function WritableSignal<T>(
   this: SignalState<T>,
   value: T,
   options?: SignalOptions<T>
 ) {
-  _Signal.call(this as any, undefined, options as any);
+  Signal.call(this as any, undefined, options as any);
 
   this._value = value;
   this._nextValue = value;
@@ -216,11 +233,11 @@ export function _WritableSignal<T>(
   }
 }
 
-_WritableSignal.prototype = new (_Signal as any)();
-_WritableSignal.prototype.constructor = _WritableSignal;
-_WritableSignal.prototype.set = set;
-_WritableSignal.prototype.update = update;
-_WritableSignal.prototype.emit = emit;
+WritableSignal.prototype = new (Signal as any)();
+WritableSignal.prototype.constructor = WritableSignal;
+WritableSignal.prototype.set = set;
+WritableSignal.prototype.update = update;
+WritableSignal.prototype.emit = emit;
 
 export interface SignalState<T> extends Signal<T> {
   _value: T;
@@ -681,3 +698,5 @@ function runLifecycle(
   computing = prevComputing;
   scope = prevScope;
 }
+
+export { Signal, WritableSignal };
