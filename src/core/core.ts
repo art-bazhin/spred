@@ -76,8 +76,9 @@ export interface SignalOptions<T> {
   /**
    * A function called when the first subscriber or the first active dependent signal appears.
    * @param value A current value of the signal.
+   * @returns A function to override onDeactivate option.
    */
-  onActivate?: (value: T) => void;
+  onActivate?: ((value: T) => void) | ((value: T) => (value: T) => void);
 
   /**
    * A function called when the last subscriber or the last active dependent signal disappears.
@@ -693,7 +694,11 @@ function runLifecycle(
   computing = null;
   scope = null;
 
-  (state._options as any)[name](...args);
+  const res = (state._options as any)[name](...args);
+
+  if (res && name === 'onActivate' && typeof res === 'function') {
+    (state._options as any).onDeactivate = res;
+  }
 
   computing = prevComputing;
   scope = prevScope;

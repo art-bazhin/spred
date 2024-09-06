@@ -30,15 +30,7 @@ import {
   tick,
 } from 'https://esm.sh/@maverick-js/signals@5.11.4';
 
-import {
-  computed,
-  writable,
-  batch,
-  signal,
-  configure,
-  isWritableSignal,
-  isSignal,
-} from '/dist/index.mjs';
+import { batch, signal, Signal } from '/dist/index.mjs';
 
 window.process = {
   env: {

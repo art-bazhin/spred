@@ -1053,6 +1053,7 @@ describe('signal', () => {
       unsub();
       expect(value).toBe(1);
       expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith(1);
     });
 
     it('correctly reacts to deactivation of dependency', () => {
@@ -1086,6 +1087,30 @@ describe('signal', () => {
       a.set(1);
 
       expect(onDeactivate).toHaveBeenCalledTimes(0);
+    });
+
+    it('can be overriden by the return value of onActivate option', () => {
+      const onDeactivate = jest.fn();
+      const onDeactivateOverride = jest.fn();
+
+      const a = signal(0, {
+        onActivate() {
+          return onDeactivateOverride;
+        },
+        onDeactivate,
+      });
+
+      const unsub = a.subscribe(() => {});
+
+      expect(onDeactivate).toHaveBeenCalledTimes(0);
+      expect(onDeactivateOverride).toHaveBeenCalledTimes(0);
+
+      a.set(1);
+      unsub();
+
+      expect(onDeactivate).toHaveBeenCalledTimes(0);
+      expect(onDeactivateOverride).toHaveBeenCalledTimes(1);
+      expect(onDeactivateOverride).toHaveBeenLastCalledWith(1);
     });
   });
 
