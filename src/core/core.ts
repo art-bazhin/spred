@@ -269,10 +269,21 @@ declare class Signal<T> {
   _firstChild?: ListNode<Signal<any> | (() => any)> | null;
   /** @internal */
   _lastChild?: ListNode<Signal<any> | (() => any)> | null;
+
   /** @internal */
-  _options: SignalOptions<T>;
+  equal: SignalOptions<T>['equal'];
   /** @internal */
-  _equal: SignalOptions<T>['equal'];
+  onCreate: SignalOptions<T>['onDeactivate'];
+  /** @internal */
+  onActivate: SignalOptions<T>['onActivate'];
+  /** @internal */
+  onDeactivate: SignalOptions<T>['onDeactivate'];
+  /** @internal */
+  onCleanup: SignalOptions<T>['onCleanup'];
+  /** @internal */
+  onUpdate: SignalOptions<T>['onUpdate'];
+  /** @internal */
+  onException: SignalOptions<T>['onException'];
 }
 
 /** @internal */
@@ -295,13 +306,11 @@ function Signal<T>(
   this._lastTarget = null;
 
   if (options) {
-    this._options = Object.assign({}, options);
-
-    if (options.hasOwnProperty('equal')) {
-      this._equal = options.equal;
+    for (let key in options) {
+      (this as any)[key] = (options as any)[key];
     }
 
-    if (this._options?.onCreate && this._compute) {
+    if (this.onCreate && this._compute) {
       runLifecycle(this, 'onCreate', this._value);
     }
   }
@@ -314,7 +323,7 @@ Signal.prototype.get = function () {
 };
 Signal.prototype.subscribe = subscribe;
 Signal.prototype.pipe = pipe;
-(Signal.prototype as any)._equal = Object.is;
+(Signal.prototype as any).equal = Object.is;
 
 Object.defineProperty(Signal.prototype, 'value', {
   get() {
@@ -363,7 +372,7 @@ function WritableSignal<T>(
   this._value = value;
   this._nextValue = value;
 
-  if (this._options?.onCreate) {
+  if (this.onCreate) {
     runLifecycle(this, 'onCreate', value);
   }
 }
@@ -500,8 +509,8 @@ function recalc() {
   for (let signal of q) {
     if (
       signal._flags & FORCED ||
-      !signal._equal ||
-      !signal._equal(signal._nextValue, signal._value)
+      !signal.equal ||
+      !signal.equal(signal._nextValue, signal._value)
     ) {
       version = nextVersion;
       notify(signal);
@@ -576,15 +585,15 @@ function get<T>(
       needsToUpdate &&
       signal._nextValue !== undefined &&
       (signal._flags & FORCED ||
-        !signal._equal ||
-        !signal._equal(signal._nextValue, signal._value))
+        !signal.equal ||
+        !signal.equal(signal._nextValue, signal._value))
     ) {
       const prevValue = signal._value;
 
       signal._value = signal._nextValue;
       signal._flags |= CHANGED;
 
-      if (signal._options?.onUpdate) {
+      if (signal.onUpdate) {
         runLifecycle(signal, 'onUpdate', signal._value, prevValue);
       }
 
@@ -658,7 +667,7 @@ function compute<T>(signal: Signal<T>, scheduled: boolean) {
   signal._flags &= ~HAS_EXCEPTION;
 
   try {
-    if (signal._options?.onCleanup) {
+    if (signal.onCleanup) {
       runLifecycle(signal, 'onCleanup', signal._value);
     }
 
@@ -670,7 +679,7 @@ function compute<T>(signal: Signal<T>, scheduled: boolean) {
     signal._flags |= HAS_EXCEPTION;
   }
 
-  if (signal._flags & HAS_EXCEPTION && signal._options?.onException) {
+  if (signal._flags & HAS_EXCEPTION && signal.onException) {
     runLifecycle(signal, 'onException', signal._exception, signal._value);
   }
 
@@ -745,7 +754,7 @@ function createTargetNode(
       createTargetNode(n.value, source, n);
     }
 
-    if (source._options?.onActivate) {
+    if (source.onActivate) {
       runLifecycle(source, 'onActivate', source._value);
     }
   }
@@ -770,11 +779,11 @@ function removeTargetNode(signal: Signal<any>, node: ListNode<any>) {
       n.link = null;
     }
 
-    if (signal._options?.onCleanup) {
+    if (signal.onCleanup) {
       runLifecycle(signal, 'onCleanup', signal._value);
     }
 
-    if (signal._options?.onDeactivate) {
+    if (signal.onDeactivate) {
       runLifecycle(signal, 'onDeactivate', signal._value);
     }
   }
@@ -812,10 +821,10 @@ function runLifecycle(
   computing = null;
   scope = null;
 
-  const res = (signal._options as any)[name](...args);
+  const res = (signal as any)[name](...args);
 
   if (res && name === 'onActivate' && typeof res === 'function') {
-    (signal._options as any).onDeactivate = res;
+    (signal as any).onDeactivate = res;
   }
 
   computing = prevComputing;
