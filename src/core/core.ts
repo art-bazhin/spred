@@ -30,8 +30,9 @@ let staleNodes: { value: SignalState<any>; link: ListNode<any> }[] = [];
 let version = 1;
 
 /**
- * Tracking function that gets the value of the passed signal.
+ * A function that gets the value of the passed signal and handles dependency tracking.
  * @param signal A signal to track.
+ * @returns The value of the passed signal.
  */
 export type TrackingGetter = <T>(signal: Signal<T>) => T;
 
@@ -39,7 +40,6 @@ export type TrackingGetter = <T>(signal: Signal<T>) => T;
  * A function subscribed to updates of a signal.
  * @param value A new value of the signal.
  * @param immediate Determines if the function was executed immediately after subscription.
- * @param returns A cleanup function called after unsubscribing.
  */
 export type Subscriber<T> = (value: T, immediate: boolean) => void;
 
@@ -47,8 +47,16 @@ export type Subscriber<T> = (value: T, immediate: boolean) => void;
  * A function that calculates the new value of the signal.
  * @param get Tracking function to get values of other signals.
  * @param scheduled Determines if the recalculation was caused by a dependency update.
+ * @returns The value of the signal.
  */
 export type Computation<T> = (get: TrackingGetter, scheduled: boolean) => T;
+
+/**
+ * A function that creates a new entity based on the source.
+ * @param source A source entity.
+ * @returns The newly created entity.
+ */
+export type Operator<S, T> = (source: S) => T;
 
 /**
  * An object that stores the options of the signal to be created.
@@ -132,12 +140,106 @@ declare class Signal<T> {
   ): () => void;
 
   /**
+   * Sequentially creates new entities by passing the result of the operator
+   * execution from the previous one to the next one
+   * @returns The result of the last operator execution.
+   */
+  pipe<A>(op1: Operator<Signal<T>, A>): A;
+
+  pipe<A, B>(op1: Operator<Signal<T>, A>, op2: Operator<A, B>): B;
+
+  pipe<A, B, C>(
+    op1: Operator<Signal<T>, A>,
+    op2: Operator<A, B>,
+    op3: Operator<B, C>
+  ): C;
+
+  pipe<A, B, C, D>(
+    op1: Operator<Signal<T>, A>,
+    op2: Operator<A, B>,
+    op3: Operator<B, C>,
+    op4: Operator<C, D>
+  ): D;
+
+  pipe<A, B, C, D, E>(
+    op1: Operator<Signal<T>, A>,
+    op2: Operator<A, B>,
+    op3: Operator<B, C>,
+    op4: Operator<C, D>,
+    op5: Operator<D, E>
+  ): E;
+
+  pipe<A, B, C, D, E, F>(
+    op1: Operator<Signal<T>, A>,
+    op2: Operator<A, B>,
+    op3: Operator<B, C>,
+    op4: Operator<C, D>,
+    op5: Operator<D, E>,
+    op6: Operator<E, F>
+  ): F;
+
+  pipe<A, B, C, D, E, F, G>(
+    op1: Operator<Signal<T>, A>,
+    op2: Operator<A, B>,
+    op3: Operator<B, C>,
+    op4: Operator<C, D>,
+    op5: Operator<D, E>,
+    op6: Operator<E, F>,
+    op7: Operator<F, G>
+  ): G;
+
+  pipe<A, B, C, D, E, F, G, H>(
+    op1: Operator<Signal<T>, A>,
+    op2: Operator<A, B>,
+    op3: Operator<B, C>,
+    op4: Operator<C, D>,
+    op5: Operator<D, E>,
+    op6: Operator<E, F>,
+    op7: Operator<F, G>,
+    op8: Operator<G, H>
+  ): H;
+
+  pipe<A, B, C, D, E, F, G, H, I>(
+    op1: Operator<Signal<T>, A>,
+    op2: Operator<A, B>,
+    op3: Operator<B, C>,
+    op4: Operator<C, D>,
+    op5: Operator<D, E>,
+    op6: Operator<E, F>,
+    op7: Operator<F, G>,
+    op8: Operator<G, H>,
+    op9: Operator<H, I>
+  ): I;
+
+  pipe<A, B, C, D, E, F, G, H, I, J>(
+    op1: Operator<Signal<T>, A>,
+    op2: Operator<A, B>,
+    op3: Operator<B, C>,
+    op4: Operator<C, D>,
+    op5: Operator<D, E>,
+    op6: Operator<E, F>,
+    op7: Operator<F, G>,
+    op8: Operator<G, H>,
+    op9: Operator<H, I>,
+    op10: Operator<I, J>,
+    op11?: Operator<J, any>,
+    ...rest: Operator<any, any>[]
+  ): J;
+
+  /**
+   * Empty operator pipe. Returns the signal itself.
+   * @returns The signal.
+   */
+  pipe(): typeof this;
+
+  /**
    * Calculates and returns the current value of the signal.
+   * @returns The current value of the signal.
    */
   get(): T;
 
   /**
-   * The current value of the signal.
+   * The current value of the signal. A getter variant of {@link Signal.get}.
    */
   readonly value: T;
 }
@@ -180,6 +282,7 @@ Signal.prototype.get = function () {
   return get(this as any, false);
 };
 Signal.prototype.subscribe = subscribe;
+Signal.prototype.pipe = pipe;
 (Signal.prototype as any)._equal = Object.is;
 
 Object.defineProperty(Signal.prototype, 'value', {
@@ -333,14 +436,20 @@ function notify(state: SignalState<any>) {
   }
 }
 
+function pipe(this: Signal<any>, ...operators: Operator<any, any>[]) {
+  let result = this;
+  for (let op of operators) result = op(result);
+  return result;
+}
+
 function subscribe<T>(
   this: SignalState<T>,
   subscriber: Subscriber<T>,
-  exec = true
+  immediate = true
 ) {
   get(this, false);
 
-  if (exec && !(this._flags & HAS_EXCEPTION)) {
+  if (immediate && !(this._flags & HAS_EXCEPTION)) {
     ++batchLevel;
 
     try {

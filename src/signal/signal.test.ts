@@ -1,4 +1,4 @@
-import { signal, configure, batch } from '..';
+import { signal, configure, batch, Signal } from '..';
 
 describe('signal', () => {
   configure({
@@ -1375,6 +1375,30 @@ describe('signal', () => {
       a.get();
 
       expect(spy).toHaveBeenLastCalledWith('test');
+    });
+  });
+
+  describe('pipe method', () => {
+    it('returns the signal itself if the method was called without arguments', () => {
+      const s = signal(0);
+      expect(s.pipe()).toBe(s);
+    });
+
+    it('correctly handles a chain of operators', () => {
+      const double = (source: Signal<any>) => signal((get) => get(source) * 2);
+      const increment = (source: Signal<any>) =>
+        signal((get) => get(source) + 1);
+
+      const source = signal(0);
+      const piped = source.pipe(double, increment, double);
+
+      expect(source.value).toBe(0);
+      expect(piped.value).toBe(2);
+
+      source.set(1);
+
+      expect(source.value).toBe(1);
+      expect(piped.value).toBe(6);
     });
   });
 

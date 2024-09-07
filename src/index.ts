@@ -1,4 +1,4 @@
-import { Signal, WritableSignal } from './core/core';
+import { Signal, WritableSignal, Operator } from './core/core';
 import { configure, Config } from './config/config';
 import {
   batch,
@@ -18,6 +18,7 @@ export {
   SignalOptions,
   Config,
   Subscriber,
+  Operator,
   Computation,
   TrackingGetter,
   signal,
