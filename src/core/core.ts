@@ -30,6 +30,16 @@ let staleNodes: { value: Signal<any>; link: ListNode<any> }[] = [];
 let version = 1;
 
 /**
+ * The default filter used if {@link SignalOptions.filter} is not defined.
+ * @param value The new value of the signal.
+ * @param prevValue The previous value of the signal.
+ * @returns False if the values are strictly equal, true otherwise.
+ */
+export function defaultFilter<T>(value: T, prevValue?: T) {
+  return value !== prevValue;
+}
+
+/**
  * A function that gets the value of the passed signal and handles dependency tracking.
  * @param signal A signal to track.
  * @returns The value of the passed signal.
@@ -38,7 +48,7 @@ export type TrackingGetter = <T>(signal: Signal<T>) => T;
 
 /**
  * A function subscribed to updates of a signal.
- * @param value A new value of the signal.
+ * @param value The new value of the signal.
  * @param immediate Determines if the function was executed immediately after subscription.
  */
 export type Subscriber<T> = (value: T, immediate: boolean) => void;
@@ -68,12 +78,14 @@ export interface SignalOptions<T> {
   name?: string;
 
   /**
-   * An equality function used to check whether the value of the signal has been changed. Default is Object.is.
-   * @param value A new value of the signal.
-   * @param prevValue A previous value of the signal.
+   * A filter function used to define if the new signal value should be commited.
+   * By default, a strict inequality check between the new and previous values is used.
+   * Set to null to disable filtering.
+   * @param value The new value of the signal.
+   * @param prevValue The previous value of the signal.
    * @returns Truthy if the values are equal, falsy otherwise.
    */
-  equal?: false | ((value: T, prevValue?: T) => unknown);
+  filter?: null | ((value: T, prevValue?: T) => unknown);
 
   /**
    * A function called at the moment the signal is created.
@@ -83,35 +95,35 @@ export interface SignalOptions<T> {
 
   /**
    * A function called when the first subscriber or the first active dependent signal appears.
-   * @param value A current value of the signal.
+   * @param value The current value of the signal.
    * @returns A function to override onDeactivate option.
    */
   onActivate?: ((value: T) => void) | ((value: T) => (value: T) => void);
 
   /**
    * A function called when the last subscriber or the last active dependent signal disappears.
-   * @param value A current value of the signal.
+   * @param value The current value of the signal.
    */
   onDeactivate?: (value: T) => void;
 
   /**
    * A function called each time the signal value is updated.
-   * @param value A new value of the signal.
-   * @param prevValue A previous value of the signal.
+   * @param value The new value of the signal.
+   * @param prevValue The previous value of the signal.
    */
   onUpdate?: (value: T, prevValue?: T) => void;
 
   /**
    * A function called each time before the signal value is calculated and when the signal is going to be deactivated.
    * Useful to cleanup subscriptions and timers created during computation.
-   * @param value A current value of the signal.
+   * @param value The current value of the signal.
    */
   onCleanup?: (value: T) => void;
 
   /**
    * A function called whenever an unhandled exception occurs during the calculation of the signal value.
    * @param e An exception.
-   * @param prevValue A previous value of the signal.
+   * @param prevValue The previous value of the signal.
    */
   onException?: (e: unknown, prevValue?: T) => void;
 }
@@ -121,7 +133,6 @@ export interface SignalOptions<T> {
  */
 declare class Signal<T> {
   /**
-   * Create a signal that automatically calculates its value based on other signals.
    * @param compute A function that calculates the signal value and returns it.
    * @param options Signal options.
    * @returns A computed signal.
@@ -129,18 +140,15 @@ declare class Signal<T> {
   constructor(compute: Computation<T>, options?: SignalOptions<T>);
 
   /**
-   * Subscribes the passed function to updates of the signal value.
+   * Subscribe the passed function to updates of the signal value.
    * @param subscriber A function subscribed to updates.
    * @param immediate Determines whether the function should be executed immediately after subscription. Default is true.
    * @returns An unsubscribe function.
    */
-  subscribe<E extends boolean>(
-    subscriber: Subscriber<true extends E ? T : Exclude<T, undefined>>,
-    immediate?: E
-  ): () => void;
+  subscribe(subscriber: Subscriber<T>, immediate?: boolean): () => void;
 
   /**
-   * Sequentially creates new entities by passing the result of the operator
+   * Sequentially create new entities by passing the result of the operator
    * execution from the previous one to the next one
    * @returns The result of the last operator execution.
    */
@@ -265,7 +273,7 @@ declare class Signal<T> {
   _lastChild?: ListNode<Signal<any> | (() => any)> | null;
 
   /** @internal */
-  equal: SignalOptions<T>['equal'];
+  filter: SignalOptions<T>['filter'];
   /** @internal */
   onCreate: SignalOptions<T>['onDeactivate'];
   /** @internal */
@@ -314,7 +322,7 @@ function Signal<T>(
 
 Signal.prototype.subscribe = subscribe;
 Signal.prototype.pipe = pipe;
-Signal.prototype.equal = Object.is;
+Signal.prototype.filter = defaultFilter;
 
 Object.defineProperty(Signal.prototype, 'value', {
   get() {
@@ -335,21 +343,26 @@ declare class WritableSignal<T> extends Signal<T> {
 
   /**
    * Set the signal value and notify dependents if it was changed.
-   * @param value A new value of the signal.
+   * @param value The new value of the signal.
    */
   set(value: T): void;
 
   /**
-   * Set the signal value and force notify dependents.
-   * @param value A new value of the signal.
+   * Force notify dependents.
    */
-  emit(value: unknown extends T ? void : T): void;
+  emit(): void;
 
   /**
-   * Update the signal value if an update function was passed and force notify dependents.
+   * Set the signal value and force notify dependents.
+   * @param value The new value of the signal.
+   */
+  emit(value: T): void;
+
+  /**
+   * Update the signal value and force notify dependents.
    * @param updateFn A function that updates the current value or returns a new value.
    */
-  update(updateFn?: (lastValue: T) => T | void): void;
+  update(updateFn: (lastValue: T) => T | void): void;
 }
 
 /** @internal */
@@ -432,23 +445,23 @@ export function action<T extends Function>(fn: T) {
 }
 
 function set<T>(this: Signal<T>, value?: any) {
-  if (value !== undefined) this._nextValue = value;
+  this._nextValue = value;
   providers.push(this);
   recalc();
 }
 
-function update<T>(
-  this: WritableSignal<T> & Signal<T>,
-  updateFn: (value: T) => T
-) {
+function emit<T>(this: WritableSignal<T> & Signal<T>, value?: T) {
   this._flags |= FORCED;
-  this.set(updateFn && updateFn(this._nextValue));
+  this.set(arguments.length ? value : (this._nextValue as any));
 }
 
-function emit<T>(this: WritableSignal<T> & Signal<T>, value: T) {
-  this._flags |= FORCED;
-  if (arguments.length) this.set(value);
-  else this.set(null as any);
+function update<T>(
+  this: WritableSignal<T> & Signal<T>,
+  updateFn: (value: T) => T | void
+) {
+  const value = updateFn(this._nextValue);
+  if (value === undefined) this.emit();
+  else this.emit(value);
 }
 
 function notify(signal: Signal<any>) {
@@ -519,8 +532,8 @@ function recalc() {
   for (let signal of q) {
     if (
       signal._flags & FORCED ||
-      !signal.equal ||
-      !signal.equal(signal._nextValue, signal._value)
+      !signal.filter ||
+      signal.filter(signal._nextValue, signal._value)
     ) {
       version = nextVersion;
       notify(signal);
@@ -593,10 +606,9 @@ function get<T>(
 
     if (
       needsToUpdate &&
-      signal._nextValue !== undefined &&
       (signal._flags & FORCED ||
-        !signal.equal ||
-        !signal.equal(signal._nextValue, signal._value))
+        !signal.filter ||
+        signal.filter(signal._nextValue, signal._value))
     ) {
       const prevValue = signal._value;
 

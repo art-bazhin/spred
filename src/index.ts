@@ -3,6 +3,7 @@ import { configure, Config } from './config/config';
 import {
   batch,
   action,
+  defaultFilter,
   Subscriber,
   SignalOptions,
   Computation,
@@ -29,4 +30,5 @@ export {
   effect,
   configure,
   collect,
+  defaultFilter,
 };

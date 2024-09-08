@@ -23,7 +23,7 @@ describe('writable', () => {
   });
 
   it('returns void value after notifiing', () => {
-    const value = counter.update();
+    const value = counter.emit();
     expect(value).toBeUndefined();
   });
 
@@ -65,31 +65,29 @@ describe('writable', () => {
 
     s.subscribe(subscriber);
 
-    s.update();
-
-    expect(subscriber).toHaveBeenCalledTimes(2);
+    expect(subscriber).toHaveBeenCalledTimes(1);
     expect(value).toBe(undefined);
 
     s.update((value) => {
       value.a = 1;
     });
 
-    expect(subscriber).toHaveBeenCalledTimes(3);
+    expect(subscriber).toHaveBeenCalledTimes(2);
     expect(value).toBe(1);
 
     s.update((value) => {
       value.a = 2;
     });
 
-    expect(subscriber).toHaveBeenCalledTimes(4);
+    expect(subscriber).toHaveBeenCalledTimes(3);
     expect(value).toBe(2);
 
     s.set(s.value);
 
-    expect(subscriber).toHaveBeenCalledTimes(4);
+    expect(subscriber).toHaveBeenCalledTimes(3);
   });
 
-  it('force triggers subscribers using update method without arguments', () => {
+  it('force triggers subscribers using emit method without arguments', () => {
     const s = signal(
       {} as {
         a?: number;
@@ -101,19 +99,19 @@ describe('writable', () => {
 
     s.subscribe(subscriber);
 
-    s.update();
+    s.emit();
 
     expect(subscriber).toHaveBeenCalledTimes(2);
     expect(value).toBe(undefined);
 
     s.value.a = 1;
-    s.update();
+    s.emit();
 
     expect(subscriber).toHaveBeenCalledTimes(3);
     expect(value).toBe(1);
 
     s.value.a = 2;
-    s.update();
+    s.emit();
 
     expect(subscriber).toHaveBeenCalledTimes(4);
     expect(value).toBe(2);
@@ -123,14 +121,14 @@ describe('writable', () => {
     expect(subscriber).toHaveBeenCalledTimes(4);
   });
 
-  it('force triggers dependent subscribers using update method without arguments', () => {
+  it('force triggers dependent subscribers using emit method without arguments', () => {
     const s = signal(
       {} as {
         a?: number;
       }
     );
     const comp = signal((get) => get(s).a || null, {
-      equal: () => false,
+      filter: null,
     });
 
     let value: any;
@@ -141,19 +139,19 @@ describe('writable', () => {
 
     comp.subscribe(subscriber);
 
-    s.update();
+    s.emit();
 
     expect(subscriber).toHaveBeenCalledTimes(2);
     expect(value).toBe(null);
 
     s.value.a = 1;
-    s.update();
+    s.emit();
 
     expect(subscriber).toHaveBeenCalledTimes(3);
     expect(value).toBe(1);
 
     s.value.a = 2;
-    s.update();
+    s.emit();
 
     expect(subscriber).toHaveBeenCalledTimes(4);
     expect(value).toBe(2);
@@ -162,28 +160,6 @@ describe('writable', () => {
 
     expect(value).toBe(2);
     expect(subscriber).toHaveBeenCalledTimes(4);
-  });
-
-  it('do not force trigger subscribers using update method if the next value is undefined', () => {
-    const s = signal<number>();
-
-    let value: any;
-    const subscriber = jest.fn((v) => (value = v));
-
-    s.subscribe(subscriber);
-
-    expect(subscriber).toHaveBeenCalledTimes(1);
-    expect(value).toBe(undefined);
-
-    s.update();
-
-    expect(subscriber).toHaveBeenCalledTimes(1);
-    expect(value).toBe(undefined);
-
-    s.update(() => 1);
-
-    expect(subscriber).toHaveBeenCalledTimes(2);
-    expect(value).toBe(1);
   });
 
   it('force triggers subscribers using emit method', () => {
@@ -198,7 +174,7 @@ describe('writable', () => {
 
     s.subscribe(subscriber);
 
-    s.update();
+    s.emit();
 
     expect(subscriber).toHaveBeenCalledTimes(2);
     expect(value).toBe(undefined);
@@ -286,9 +262,9 @@ describe('writable', () => {
     expect(spy).toHaveBeenCalledTimes(3);
   });
 
-  it('does not ignore any new value if the second arg returns false', () => {
+  it('does not ignore any new value if the filter is set to null', () => {
     const a = signal(0, {
-      equal: () => false,
+      filter: null,
     });
     const spy = jest.fn();
 
@@ -308,10 +284,10 @@ describe('writable', () => {
     expect(spy).toHaveBeenCalledTimes(5);
   });
 
-  it('can use custom equal function', () => {
+  it('can use custom filter function', () => {
     const a = signal(0, {
-      equal(value) {
-        return value >= 5;
+      filter(value) {
+        return value < 5;
       },
     });
 

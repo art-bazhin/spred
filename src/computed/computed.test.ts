@@ -711,12 +711,12 @@ describe('computed', () => {
     expect(spy).toHaveBeenCalledTimes(3);
   });
 
-  it('does not ignore any new value if equal option set to false', () => {
+  it('commits any new value if filter option set to null', () => {
     const a = signal(0, {
-      equal: false,
+      filter: null,
     });
     const b = signal((get) => get(a), {
-      equal: false,
+      filter: null,
     });
     const spy = jest.fn();
 
@@ -736,44 +736,13 @@ describe('computed', () => {
     expect(spy).toHaveBeenCalledTimes(5);
   });
 
-  it('can use custom compare function', () => {
+  it('can use custom filter', () => {
     const a = signal(0, {
-      equal: () => false,
+      filter: () => true,
     });
     const b = signal((get) => get(a), {
-      equal: (value) => value >= 5,
+      filter: (value) => value < 5,
     });
-    const spy = jest.fn();
-
-    b.subscribe(spy);
-    expect(spy).toHaveBeenCalledTimes(1);
-
-    a.set(0);
-    expect(spy).toHaveBeenCalledTimes(2);
-
-    a.set(1);
-    expect(spy).toHaveBeenCalledTimes(3);
-
-    a.set(5);
-    expect(spy).toHaveBeenCalledTimes(3);
-
-    a.set(2);
-    expect(spy).toHaveBeenCalledTimes(4);
-  });
-
-  it('can filter values using undefined value', () => {
-    const a = signal(0, {
-      equal: () => false,
-    });
-    const b = signal(
-      (get) => {
-        const value = get(a);
-        if (value < 5) return value;
-      },
-      {
-        equal: () => false,
-      }
-    );
     const spy = jest.fn();
 
     b.subscribe(spy);
