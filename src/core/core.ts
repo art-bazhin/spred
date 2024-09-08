@@ -417,8 +417,7 @@ export function batch(fn: (...args: any) => any) {
     fn();
   } finally {
     --batchLevel;
-
-    if (providers.length && computing === null && batchLevel === 0) recalc();
+    recalc();
   }
 }
 
@@ -436,8 +435,7 @@ export function action<T extends Function>(fn: T) {
       return fn.apply(this, args);
     } finally {
       --batchLevel;
-
-      if (providers.length && computing === null && batchLevel === 0) recalc();
+      recalc();
     }
   } as any as typeof fn;
 }
@@ -445,7 +443,7 @@ export function action<T extends Function>(fn: T) {
 function set<T>(this: Signal<T>, value?: any) {
   if (value !== undefined) this._nextValue = value;
   providers.push(this);
-  if (providers.length && computing === null && batchLevel === 0) recalc();
+  recalc();
 }
 
 function update<T>(
@@ -497,8 +495,7 @@ function subscribe<T>(
     }
 
     --batchLevel;
-
-    if (providers.length && computing === null && batchLevel === 0) recalc();
+    recalc();
   }
 
   ++this._subs;
@@ -519,6 +516,8 @@ function subscribe<T>(
 }
 
 function recalc() {
+  if (providers.length === 0 || computing || batchLevel) return;
+
   const q = providers;
   const nextVersion = version + 1;
 
@@ -565,7 +564,7 @@ function recalc() {
   notifiers = [];
   staleNodes = [];
 
-  if (providers.length) recalc();
+  recalc();
 }
 
 function get<T>(
@@ -655,7 +654,7 @@ function get<T>(
 
   if (computing) {
     if (signal._flags & HAS_EXCEPTION) throw signal._exception;
-  } else if (providers.length && batchLevel === 0) recalc();
+  } else recalc();
 
   return signal._value;
 }
