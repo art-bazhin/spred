@@ -45,7 +45,7 @@
     "commit": "git-cz",
     "size": "size-limit",
     "release": "standard-version",
-    "docs": "npx typedoc src/index.ts",
+    "docs": "npx typedoc dist/index.d.ts",
     "bench": "npx http-server"
   },
   "files": [

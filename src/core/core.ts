@@ -40,7 +40,7 @@ export function defaultFilter<T>(value: T, prevValue?: T) {
 }
 
 /**
- * A function that gets the value of the passed signal and handles dependency tracking.
+ * A function that returns the value of the passed signal and handles dependency tracking.
  * @param signal A signal to track.
  * @returns The value of the passed signal.
  */
@@ -83,9 +83,9 @@ export interface SignalOptions<T> {
    * Set to null to disable filtering.
    * @param value The new value of the signal.
    * @param prevValue The previous value of the signal.
-   * @returns Truthy if the values are equal, falsy otherwise.
+   * @returns Truthy if the new value of the signal should be commited.
    */
-  filter?: null | ((value: T, prevValue?: T) => unknown);
+  filter?: ((value: T, prevValue?: T) => unknown) | null;
 
   /**
    * A function called at the moment the signal is created.
@@ -140,7 +140,7 @@ declare class Signal<T> {
   constructor(compute: Computation<T>, options?: SignalOptions<T>);
 
   /**
-   * Subscribe the passed function to updates of the signal value.
+   * Subscribes the passed function to updates of the signal value.
    * @param subscriber A function subscribed to updates.
    * @param immediate Determines whether the function should be executed immediately after subscription. Default is true.
    * @returns An unsubscribe function.
@@ -148,8 +148,8 @@ declare class Signal<T> {
   subscribe(subscriber: Subscriber<T>, immediate?: boolean): () => void;
 
   /**
-   * Sequentially create new entities by passing the result of the operator
-   * execution from the previous one to the next one
+   * Sequentially creates new entities by passing the result of the operator
+   * execution from the previous one to the next one.
    * @returns The result of the last operator execution.
    */
   pipe<A>(op1: Operator<Signal<T>, A>): A;
@@ -342,24 +342,24 @@ declare class WritableSignal<T> extends Signal<T> {
   constructor(value: T, options?: SignalOptions<T>);
 
   /**
-   * Set the signal value and notify dependents if it was changed.
+   * Sets the signal value and notify dependents if it was changed.
    * @param value The new value of the signal.
    */
   set(value: T): void;
 
   /**
-   * Force notify dependents.
+   * Force notifies dependents.
    */
   emit(): void;
 
   /**
-   * Set the signal value and force notify dependents.
+   * Sets the signal value and force notifies dependents.
    * @param value The new value of the signal.
    */
   emit(value: T): void;
 
   /**
-   * Update the signal value and force notify dependents.
+   * Updates the signal value and force notifies dependents.
    * @param updateFn A function that updates the current value or returns a new value.
    */
   update(updateFn: (lastValue: T) => T | void): void;

@@ -3,6 +3,7 @@ import { configure, Config } from './config/config';
 import {
   batch,
   action,
+  collect,
   defaultFilter,
   Subscriber,
   SignalOptions,
@@ -12,7 +13,6 @@ import {
 import { on } from './on/on';
 import { signal } from './signal/signal';
 import { effect } from './effect/effect';
-import { collect } from './collect/collect';
 
 export {
   Signal,
