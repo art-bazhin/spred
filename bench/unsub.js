@@ -1,4 +1,4 @@
-import { computed, writable } from '/dist/index.mjs';
+import { signal } from '/dist/index.mjs';
 
 const COUNT = 20000;
 
@@ -10,12 +10,12 @@ const unsubs = [];
 
 const subscriber = () => {};
 
-const value = writable(0);
+const value = signal(0);
 
 for (let i = 0; i < COUNT; i++) {
-  const x2Value = computed(() => value.get() * 2);
-  const x4Value = computed(() => x2Value.get() * 2);
-  const x8Value = computed(() => x4Value.get() * 2);
+  const x2Value = signal((get) => get(value) * 2);
+  const x4Value = signal((get) => get(x2Value) * 2);
+  const x8Value = signal((get) => get(x4Value) * 2);
 
   x8Value.get();
 
@@ -42,7 +42,7 @@ function bench() {
   unsubs.length = 0;
 
   resultEl.textContent = `SUB TIME: ${Math.round(
-    subTime,
+    subTime
   )}; UNSUB TIME: ${Math.round(unsubTime)}`;
 }
 
