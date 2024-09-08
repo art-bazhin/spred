@@ -422,6 +422,26 @@ export function batch(fn: (...args: any) => any) {
   }
 }
 
+/**
+ * Creates a copy of the passed function which batches updates made during its execution.
+ * @param fn A function to copy.
+ * @returns A copy of the passed function with batched updates.
+ */
+export function action<T extends Function>(fn: T) {
+  return function (...args: any) {
+    ++batchLevel;
+
+    try {
+      // @ts-ignore
+      return fn.apply(this, args);
+    } finally {
+      --batchLevel;
+
+      if (providers.length && computing === null && batchLevel === 0) recalc();
+    }
+  } as any as typeof fn;
+}
+
 function set<T>(this: Signal<T>, value?: any) {
   if (value !== undefined) this._nextValue = value;
   providers.push(this);

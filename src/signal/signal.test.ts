@@ -1,4 +1,4 @@
-import { signal, configure, batch, Signal } from '..';
+import { signal, configure, batch, action, Signal } from '..';
 
 describe('signal', () => {
   configure({
@@ -863,6 +863,23 @@ describe('signal', () => {
       counter.set(2);
       counter.set(3);
     });
+
+    expect(subscriber).toHaveBeenCalledTimes(1);
+  });
+
+  it('batches updates made inside actions', () => {
+    const subscriber = jest.fn();
+    const counter = signal(0);
+
+    counter.subscribe(subscriber, false);
+
+    const someAction = action(() => {
+      counter.set(1);
+      counter.set(2);
+      counter.set(3);
+    });
+
+    someAction();
 
     expect(subscriber).toHaveBeenCalledTimes(1);
   });

@@ -2,6 +2,7 @@ import { Signal, WritableSignal, Operator } from './core/core';
 import { configure, Config } from './config/config';
 import {
   batch,
+  action,
   Subscriber,
   SignalOptions,
   Computation,
@@ -23,6 +24,7 @@ export {
   TrackingGetter,
   signal,
   batch,
+  action,
   on,
   effect,
   configure,

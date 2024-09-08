@@ -1,6 +1,6 @@
 import { signal, configure, effect } from '..';
 
-describe('watch', () => {
+describe('effect', () => {
   configure({
     logException: () => {},
   });
