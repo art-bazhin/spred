@@ -7,6 +7,7 @@ import {
   HAS_EXCEPTION,
   NOTIFIED,
   COMPUTING,
+  TRACKED,
 } from '../common/constants';
 
 interface ListNode<T> {
@@ -18,7 +19,6 @@ interface ListNode<T> {
 
 let computing: Signal<any> | null = null;
 let scope: Signal<any> | null = null;
-let tempNode: ListNode<Signal<any>> | null = null;
 
 let batchLevel = 0;
 
@@ -319,15 +319,15 @@ function Signal<T>(
 }
 
 Signal.prototype.get = function () {
-  return get(this as any, false);
+  return get(this, false);
 };
 Signal.prototype.subscribe = subscribe;
 Signal.prototype.pipe = pipe;
-(Signal.prototype as any).equal = Object.is;
+Signal.prototype.equal = Object.is;
 
 Object.defineProperty(Signal.prototype, 'value', {
   get() {
-    return this.get();
+    return get(this, false);
   },
 });
 
@@ -602,23 +602,31 @@ function get<T>(
   }
 
   signal._version = version;
-  signal._flags &= ~NOTIFIED;
-  signal._flags &= ~FORCED;
+  signal._flags &= ~NOTIFIED & ~FORCED;
 
   if (computing && trackDependency) {
-    if (tempNode) {
-      if (tempNode.value !== signal) {
-        if (tempNode.link)
-          staleNodes.push({ value: tempNode.value, link: tempNode.link });
+    const source = computing._lastSource!;
+    const hasSource = !(computing._flags & TRACKED);
 
-        tempNode.value = signal;
+    if (hasSource) {
+      if (source.value !== signal) {
+        if (source.link)
+          staleNodes.push({
+            value: source.value,
+            link: source.link,
+          });
 
-        if (computing._firstTarget)
-          createTargetNode(signal, computing, tempNode);
-        else tempNode.link = null;
+        source.value = signal;
+
+        if (computing._firstTarget) createTargetNode(signal, computing, source);
+        else source.link = null;
       }
 
-      tempNode = tempNode.next;
+      if (source.next) {
+        computing._lastSource = source.next;
+      } else {
+        computing._flags |= TRACKED;
+      }
     } else {
       const n = createSourceNode(signal, computing);
       if (computing._firstTarget) createTargetNode(signal, computing, n);
@@ -658,13 +666,18 @@ function checkSources(signal: Signal<any>) {
 
 function compute<T>(signal: Signal<T>, scheduled: boolean) {
   const prevComputing = computing;
-  const prevTempNode = tempNode;
 
   computing = signal;
-  tempNode = signal._firstSource;
+  signal._lastSource = signal._firstSource;
 
   signal._flags |= COMPUTING;
   signal._flags &= ~HAS_EXCEPTION;
+
+  if (signal._lastSource) {
+    signal._flags &= ~TRACKED;
+  } else {
+    signal._flags |= TRACKED;
+  }
 
   try {
     if (signal.onCleanup) {
@@ -683,11 +696,14 @@ function compute<T>(signal: Signal<T>, scheduled: boolean) {
     runLifecycle(signal, 'onException', signal._exception, signal._value);
   }
 
-  if (tempNode) {
-    signal._lastSource = tempNode.prev;
+  const source = computing._lastSource!;
+  const hasSource = !(computing._flags & TRACKED);
 
-    if (tempNode.link) {
-      for (let node = tempNode; node !== null; node = node.next!) {
+  if (hasSource) {
+    signal._lastSource = source.prev;
+
+    if (source.link) {
+      for (let node = source; node !== null; node = node.next!) {
         removeTargetNode(node.value, node.link!);
       }
     }
@@ -702,7 +718,6 @@ function compute<T>(signal: Signal<T>, scheduled: boolean) {
 
   signal._flags &= ~COMPUTING;
   computing = prevComputing;
-  tempNode = prevTempNode;
 }
 
 function cleanupChildren(signal: Signal<any>) {
