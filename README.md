@@ -24,14 +24,14 @@ const name = signal('Paul');
 const instrument = signal('bass');
 const birthday = signal('1942-06-18');
 
-const formattedBirthday = signal(() =>
-  formatter.format(new Date(birthday.get()))
+const formattedBirthday = signal((get) =>
+  formatter.format(new Date(get(birthday)))
 );
 
-effect(() =>
+effect((get) =>
   console.log(
-    `Hello. My name is ${name.get()}, I play ${instrument.get()} ` +
-      `and I was born on ${formattedBirthday.get()}.`
+    `Hello. My name is ${get(name)}, I play ${get(instrument)} ` +
+      `and I was born on ${get(formattedBirthday)}.`
   )
 );
 // > Hello. My name is Paul, I play bass and I was born on 18/06/1942.
@@ -67,7 +67,7 @@ To get the current value of the signal, you need to call the [get](https://art-b
 ```ts
 /*...*/
 
-console.log(counter.get());
+console.log(counter.value);
 // > 0
 ```
 
@@ -77,17 +77,17 @@ To set a new value of a writable signal, you should call the [set](https://art-b
 /*...*/
 
 counter.set(1);
-console.log(counter.get());
+console.log(counter.value);
 // > 1
 ```
 
-A call of the [signal](https://art-bazhin.github.io/spred/functions/signal-1.html) function with a function argument will create a computed signal that automatically tracks dependencies and recalculates its own value when they change. The return value of the passed computation function must only depend on other signals.
+A call of the [signal](https://art-bazhin.github.io/spred/functions/signal-1.html) function with a function argument creates a computed signal. That signal tracks the dependencies accessed by the passed getter and recalculates its own value when the dependencies change. The return value of the passed computation function must depend only on other signals accessed by the getter.
 
 ```ts
 /*...*/
 
-const doubleCounter = signal(() => counter.get() * 2);
-console.log(doubleCounter.get());
+const doubleCounter = signal((get) => get(counter) * 2);
+console.log(doubleCounter.value);
 // > 2
 ```
 
@@ -108,7 +108,7 @@ unsub();
 counter.set(3);
 // Nothing
 
-console.log(doubleCounter.get());
+console.log(doubleCounter.value);
 // > 6
 ```
 
@@ -124,18 +124,18 @@ counter.set(4);
 // > Double value is 8
 ```
 
-Computed signals initialize their values lazily. That means that the calculation function triggers only when the signal has at least one subscriber / dependent signal with a subscriber.
+Computed signals initialize their values lazily. That means that the calculation function triggers only when the signal has at least one subscriber or dependent signal with a subscriber.
 
 ## Batching Updates
 
 Writable signal updates are immediate and synchronous.
 
 ```ts
-import { signal, batch, on } from '@spred/core';
+import { signal, batch, on, action } from '@spred/core';
 
 const a = signal(0);
 const b = signal(0);
-const sum = signal(() => a.get() + b.get());
+const sum = signal((get) => get(a) + get(b));
 
 sum.subscribe((s) => console.log('a + b = ' + s));
 // > a + b = 0
@@ -159,18 +159,32 @@ batch(() => {
 // > a + b = 4
 ```
 
-All updates inside subscriber functions and computations are batched by default.
+You can also wrap your function in [action](https://art-bazhin.github.io/spred/functions/action.html) to batch the updates made during its execution.
+
+```ts
+/*...*/
+
+const act = action(() => {
+  a.set(3);
+  b.set(3);
+});
+
+act();
+// > a + b = 6
+```
+
+All updates made inside subscribers and computations are batched too.
 
 ```ts
 const trigger = signal(0);
 
 on(trigger, () => {
-  a.set(3);
-  b.set(3);
+  a.set(4);
+  b.set(4);
 });
 
 trigger.set(1);
-// > a + b = 6
+// > a + b = 8
 ```
 
 ## Change Detection
@@ -181,7 +195,7 @@ By default all signals trigger their dependents and subscribers only if its valu
 import { signal } from '@spred/core';
 
 const counter = signal(0);
-const doubleCounter = signal(() => counter.get() * 2);
+const doubleCounter = signal((get) => get(counter) * 2);
 
 const unsub = doubleCounter.subscribe((value) =>
   console.log('Double value is ' + value)
@@ -205,7 +219,9 @@ Signals use [Object.is](https://developer.mozilla.org/en-US/docs/Web/JavaScript/
 const obj = signal(
   { value: 1 },
   {
-    equal: (a, b) => a.value === (b && b.value),
+    equal(a, b) {
+      return a.value === (b && b.value);
+    },
   }
 );
 
@@ -224,8 +240,8 @@ Undefined values are ignored and can be used for filtering.
 ```ts
 /*...*/
 
-const oddCounter = signal(() => {
-  if (counter.get() % 2) return counter.get();
+const oddCounter = signal((get) => {
+  if (get(counter) % 2) return get(counter);
 });
 
 oddCounter.subscribe((value) => console.log('Odd value is ' + value));
@@ -248,8 +264,8 @@ import { signal, effect, batch } from '@spred/core';
 const a = signal('Hello');
 const b = signal('World');
 
-const dispose = effect(() => {
-  console.log(`${a.get()} ${b.get()}!`);
+const dispose = effect((get) => {
+  console.log(`${get(a)} ${get(b)}!`);
 });
 // > Hello World!
 
@@ -271,9 +287,10 @@ Under the hood, the effect is simply a computed signal that becomes active at th
 Every signal has lifecycle hooks whose handlers can be set in the [signal options](https://art-bazhin.github.io/spred/interfaces/SignalOptions.html).
 
 - `onCreate` - the signal is created;
-- `onActivate` - the signal becomes active (has at least one subscriber / dependent signal with a subscriber);
-- `onDectivate` - the signal becomes inactive (doesn't have any subscriber / dependent signal with a subscriber);
+- `onActivate` - the signal becomes active (has at least one subscriber or dependent signal with a subscriber);
+- `onDectivate` - the signal becomes inactive (doesn't have any subscriber or dependent signal with a subscriber);
 - `onUpdate` - the signal updates its value;
+- `onCleanup` - the signal value is going to be computed or the signal becomes inactive;
 - `onException` - an unhandled exception occurs during the signal computation.
 
 [Example on StackBlitz](https://stackblitz.com/edit/spred-lifecycle-hooks?file=index.ts)
@@ -282,7 +299,7 @@ Every signal has lifecycle hooks whose handlers can be set in the [signal option
 
 ### Svelte
 
-Spred signals implement [Svelte store contract](https://svelte.dev/docs#run-time-svelte-store) so you don't need any additional package to use them in Svelte apps.
+Spred signals implement [Svelte store contract](https://svelte.dev/docs/svelte-components#script-4-prefix-stores-with-$-to-access-their-values) so you don't need any additional package to use them in Svelte apps.
 
 [Example on StackBlitz](https://stackblitz.com/edit/spred-svelte?file=src/lib/Counter.svelte)
 
