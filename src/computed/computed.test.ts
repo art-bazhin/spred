@@ -17,10 +17,10 @@ describe('computed', () => {
   const d2 = signal((get) => get(c1));
 
   it('is calculates value properly after creation', () => {
-    expect(a2.get()).toBe(-2);
-    expect(b2.get()).toBe(-4);
-    expect(c2.get()).toBe(1);
-    expect(d2.get()).toBe(6);
+    expect(a2.value).toBe(-2);
+    expect(b2.value).toBe(-4);
+    expect(c2.value).toBe(1);
+    expect(d2.value).toBe(6);
   });
 
   it('updates value after dependency value change', () => {
@@ -29,10 +29,10 @@ describe('computed', () => {
     c.set(2);
     d.set(1);
 
-    expect(a2.get()).toBe(2);
-    expect(b2.get()).toBe(-1);
-    expect(c2.get()).toBe(4);
-    expect(d2.get()).toBe(4);
+    expect(a2.value).toBe(2);
+    expect(b2.value).toBe(-1);
+    expect(c2.value).toBe(4);
+    expect(d2.value).toBe(4);
   });
 
   it('updates value properly using batching', () => {
@@ -43,10 +43,10 @@ describe('computed', () => {
       d.set(4);
     });
 
-    expect(a2.get()).toBe(-2);
-    expect(b2.get()).toBe(-4);
-    expect(c2.get()).toBe(1);
-    expect(d2.get()).toBe(6);
+    expect(a2.value).toBe(-2);
+    expect(b2.value).toBe(-4);
+    expect(c2.value).toBe(1);
+    expect(d2.value).toBe(6);
   });
 
   it('updates value properly on subscribers run', () => {
@@ -97,8 +97,8 @@ describe('computed', () => {
   });
 
   it('has Signal methods', () => {
-    expect(a.get).toBeDefined;
     expect(a.subscribe).toBeDefined;
+    expect(a.pipe).toBeDefined;
   });
 
   it('can pass values to writable signals during computing', () => {
@@ -106,7 +106,7 @@ describe('computed', () => {
     const stringCounter = signal('0');
 
     const x2Counter = signal((get) => {
-      stringCounter.set(counter.get() + '');
+      stringCounter.set(counter.value + '');
       return get(counter) * 2;
     });
 
@@ -135,16 +135,16 @@ describe('computed', () => {
     });
 
     c.subscribe(() => {});
-    expect(c.get()).toBe(0);
+    expect(c.value).toBe(0);
 
     a.set(1);
-    expect(c.get()).toBe(1);
+    expect(c.value).toBe(1);
 
     a.set(6);
-    expect(c.get()).toBe(16);
+    expect(c.value).toBe(16);
 
     b.set(5);
-    expect(c.get()).toBe(16);
+    expect(c.value).toBe(16);
   });
 
   it('can pass values to writable signals during computing (case 3)', () => {
@@ -157,7 +157,7 @@ describe('computed', () => {
       return get(a) + get(b);
     });
     const e = signal((get) => {
-      c.get();
+      c.value;
 
       a.set(1);
       b.set(1);
@@ -168,8 +168,8 @@ describe('computed', () => {
     d.subscribe(spy);
     expect(spy).toHaveBeenCalledTimes(1);
 
-    e.get();
-    expect(d.get()).toBe(2);
+    e.value;
+    expect(d.value).toBe(2);
     expect(spy).toHaveBeenCalledTimes(2);
   });
 
@@ -225,18 +225,18 @@ describe('computed', () => {
       return value;
     });
 
-    b.get();
+    b.value;
     expect(spy).toHaveBeenCalledTimes(1);
 
-    b.get();
+    b.value;
     expect(spy).toHaveBeenCalledTimes(1);
 
     a.set(1);
-    b.get();
+    b.value;
     expect(spy).toHaveBeenCalledTimes(2);
 
     a.set(10);
-    b.get();
+    b.value;
     expect(spy).toHaveBeenCalledTimes(2);
   });
 
@@ -263,11 +263,11 @@ describe('computed', () => {
       return get(sum);
     });
 
-    sum2.get();
+    sum2.value;
     a.set(20);
-    sum2.get();
+    sum2.value;
     a.set(1);
-    sum2.get();
+    sum2.value;
 
     expect(errSpy).toHaveBeenCalledTimes(1);
 
@@ -512,7 +512,7 @@ describe('computed', () => {
       });
     });
 
-    wrap.get();
+    wrap.value;
 
     expect(spy).toHaveBeenCalledTimes(1);
 
@@ -561,11 +561,11 @@ describe('computed', () => {
     expect(spy).toHaveBeenCalledTimes(3);
 
     unsub();
-    result.get();
+    result.value;
     expect(spy).toHaveBeenCalledTimes(3);
 
     source.set(3);
-    result.get();
+    result.value;
     expect(lastScheduled).toBe(false);
     expect(spy).toHaveBeenCalledTimes(4);
 
@@ -591,7 +591,7 @@ describe('computed', () => {
     expect(medSpy).toHaveBeenCalledTimes(2);
     expect(spy).toHaveBeenCalledTimes(7);
 
-    med.get();
+    med.value;
     expect(lastMedScheduled).toBe(false);
 
     source.set(11);
@@ -665,28 +665,28 @@ describe('computed', () => {
 
     x2Counter.subscribe(spy, false);
 
-    expect(counter.get()).toBe(0);
-    expect(x2Counter.get()).toBe(0);
+    expect(counter.value).toBe(0);
+    expect(x2Counter.value).toBe(0);
     expect(spy).toHaveBeenCalledTimes(0);
 
     counter.set(0);
-    expect(counter.get()).toBe(0);
-    expect(x2Counter.get()).toBe(0);
+    expect(counter.value).toBe(0);
+    expect(x2Counter.value).toBe(0);
     expect(spy).toHaveBeenCalledTimes(0);
 
     counter.set(1);
-    expect(counter.get()).toBe(1);
-    expect(x2Counter.get()).toBe(2);
+    expect(counter.value).toBe(1);
+    expect(x2Counter.value).toBe(2);
     expect(spy).toHaveBeenCalledTimes(1);
 
     counter.set(2);
-    expect(counter.get()).toBe(2);
-    expect(x2Counter.get()).toBe(4);
+    expect(counter.value).toBe(2);
+    expect(x2Counter.value).toBe(4);
     expect(spy).toHaveBeenCalledTimes(2);
 
     counter.set(2);
-    expect(counter.get()).toBe(2);
-    expect(x2Counter.get()).toBe(4);
+    expect(counter.value).toBe(2);
+    expect(x2Counter.value).toBe(4);
     expect(spy).toHaveBeenCalledTimes(2);
   });
 
@@ -810,13 +810,13 @@ describe('computed', () => {
       }
     });
 
-    expect(handledError.get()).toBe(42);
+    expect(handledError.value).toBe(42);
 
     count.set(5);
-    expect(handledError.get()).toBe(5);
+    expect(handledError.value).toBe(5);
 
     count.set(4);
-    expect(handledError.get()).toBe(42);
+    expect(handledError.value).toBe(42);
   });
 
   it('allows to handle active signal exceptions', () => {
@@ -849,13 +849,13 @@ describe('computed', () => {
     });
     const unsub2 = handledError.subscribe(() => {}, false);
 
-    expect(handledError.get()).toBe(42);
+    expect(handledError.value).toBe(42);
 
     count.set(5);
-    expect(handledError.get()).toBe(5);
+    expect(handledError.value).toBe(5);
 
     count.set(4);
-    expect(handledError.get()).toBe(42);
+    expect(handledError.value).toBe(42);
     expect(errorSpy).toHaveBeenCalledTimes(2); // check logging on middle computed with subs and dependants
 
     unsub2();

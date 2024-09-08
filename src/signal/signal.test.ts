@@ -81,13 +81,13 @@ describe('signal', () => {
     const x2Counter = signal((get) => 2 * get(counter));
     const x2Unsub = x2Counter.subscribe(() => {});
 
-    expect(x2Counter.get()).toBe(6);
+    expect(x2Counter.value).toBe(6);
 
     x2Unsub();
     x2Unsub();
 
     counter.set(4);
-    expect(x2Counter.get()).toBe(8);
+    expect(x2Counter.value).toBe(8);
   });
 
   it('does not track itself on subscribing', () => {
@@ -181,7 +181,7 @@ describe('signal', () => {
 
     a.set(1);
 
-    expect(e.get()).toBe(6);
+    expect(e.value).toBe(6);
     expect(subscriber).toHaveBeenCalledTimes(1);
   });
 
@@ -214,7 +214,7 @@ describe('signal', () => {
 
     a.set(1);
 
-    expect(d.get()).toBe(6);
+    expect(d.value).toBe(6);
     expect(subscriber).toHaveBeenCalledTimes(1);
   });
 
@@ -228,10 +228,10 @@ describe('signal', () => {
 
     result.subscribe(subscriber, false);
 
-    expect(result.get()).toBe('FALSE');
+    expect(result.value).toBe('FALSE');
 
     counter.set(1);
-    expect(result.get()).toBe('FALSE');
+    expect(result.value).toBe('FALSE');
     expect(subscriber).toHaveBeenCalledTimes(0);
 
     batch(() => {
@@ -239,28 +239,28 @@ describe('signal', () => {
       counter.set(2);
     });
 
-    expect(result.get()).toBe(4);
+    expect(result.value).toBe(4);
     expect(subscriber).toHaveBeenCalledTimes(1);
 
     tumbler.set(false);
     counter.set(3);
-    expect(result.get()).toBe('FALSE');
+    expect(result.value).toBe('FALSE');
     expect(subscriber).toHaveBeenCalledTimes(2);
 
     counter.set(4);
-    expect(result.get()).toBe('FALSE');
+    expect(result.value).toBe('FALSE');
     expect(subscriber).toHaveBeenCalledTimes(2);
 
     tumbler.set(true);
-    expect(result.get()).toBe(8);
+    expect(result.value).toBe(8);
     expect(subscriber).toHaveBeenCalledTimes(3);
 
     counter.set(5);
-    expect(result.get()).toBe(10);
+    expect(result.value).toBe(10);
     expect(subscriber).toHaveBeenCalledTimes(4);
 
     counter.set(6);
-    expect(result.get()).toBe(12);
+    expect(result.value).toBe(12);
     expect(subscriber).toHaveBeenCalledTimes(5);
   });
 
@@ -387,7 +387,7 @@ describe('signal', () => {
 
     unsub();
     a.set(11);
-    expect(d.get()).toBe(12);
+    expect(d.value).toBe(12);
 
     d.subscribe(spy);
     expect(spy).toHaveBeenCalledTimes(4);
@@ -428,7 +428,7 @@ describe('signal', () => {
 
     unsub();
     a.set(3);
-    expect(d.get()).toBe(-1); // d is frozen after it has lost its dependencies
+    expect(d.value).toBe(-1); // d is frozen after it has lost its dependencies
   });
 
   it('does not recalc a dependant if it is not active', () => {
@@ -447,7 +447,7 @@ describe('signal', () => {
       return get(b) * 2;
     });
 
-    c.get();
+    c.value;
     expect(bSpy).toHaveBeenCalledTimes(1);
     expect(cSpy).toHaveBeenCalledTimes(1);
 
@@ -480,8 +480,8 @@ describe('signal', () => {
       return get(b) * 2;
     });
 
-    c.get();
-    c.get();
+    c.value;
+    c.value;
     expect(bSpy).toHaveBeenCalledTimes(1);
     expect(cSpy).toHaveBeenCalledTimes(1);
 
@@ -514,10 +514,10 @@ describe('signal', () => {
       return get(b) * 2;
     });
 
-    c.get();
-    c.get();
+    c.value;
+    c.value;
     a.set(0);
-    c.get();
+    c.value;
 
     expect(bSpy).toHaveBeenCalledTimes(2);
     expect(cSpy).toHaveBeenCalledTimes(2);
@@ -539,14 +539,14 @@ describe('signal', () => {
     const a = signal(0);
     const b = signal((get) => get(a));
 
-    expect(b.get()).toBe(0);
+    expect(b.value).toBe(0);
 
     a.set(1);
-    a.get();
+    a.value;
     a.set(1);
-    a.get();
+    a.value;
 
-    expect(b.get()).toBe(1);
+    expect(b.value).toBe(1);
   });
 
   it('updates a dependent value after emitting a dependency', () => {
@@ -555,13 +555,13 @@ describe('signal', () => {
     const c = signal((get) => get(b));
     const d = signal((get) => get(b));
 
-    c.get();
+    c.value;
     d.subscribe(() => {});
 
     a.set(1);
     a.emit(1);
 
-    expect(c.get()).toBe(1);
+    expect(c.value).toBe(1);
   });
 
   it('does not make redundant computations on pulling', () => {
@@ -577,18 +577,18 @@ describe('signal', () => {
 
     expect(spy).toHaveBeenCalledTimes(0);
 
-    c.get();
+    c.value;
     expect(spy).toHaveBeenCalledTimes(1);
 
-    c.get();
+    c.value;
     expect(spy).toHaveBeenCalledTimes(1);
 
     a.set(1);
-    c.get();
+    c.value;
     expect(spy).toHaveBeenCalledTimes(2);
 
     b.set(1);
-    c.get();
+    c.value;
     expect(spy).toHaveBeenCalledTimes(2);
 
     b.set(2);
@@ -611,11 +611,11 @@ describe('signal', () => {
     const c0 = signal((get) => spy() + get(b0) + get(b1));
     const c1 = signal((get) => spy() + get(b1) + get(b2));
 
-    c1.get();
+    c1.value;
     expect(spy).toHaveBeenCalledTimes(3);
 
     a0.set(1);
-    c1.get();
+    c1.value;
     expect(spy).toHaveBeenCalledTimes(3);
   });
 
@@ -667,21 +667,21 @@ describe('signal', () => {
 
     x2Sum.subscribe(subscriber);
 
-    expect(sum.get()).toBe(2);
-    expect(x2Sum.get()).toBe(4);
+    expect(sum.value).toBe(2);
+    expect(x2Sum.value).toBe(4);
 
     batch(() => {
       obj.set(null);
       num.set(5);
     });
 
-    expect(num.get()).toBe(5);
-    expect(sum.get()).toBe(2);
-    expect(x2Sum.get()).toBe(4);
+    expect(num.value).toBe(5);
+    expect(sum.value).toBe(2);
+    expect(x2Sum.value).toBe(4);
 
     obj.set({ a: 5 });
-    expect(sum.get()).toBe(10);
-    expect(x2Sum.get()).toBe(20);
+    expect(sum.value).toBe(10);
+    expect(x2Sum.value).toBe(20);
   });
 
   it('continues to trigger dependants after error eliminated', () => {
@@ -742,12 +742,6 @@ describe('signal', () => {
     expect(spy).toHaveBeenCalledTimes(1);
   });
 
-  it('has get method which returns current value', () => {
-    const test = signal(0);
-
-    expect(test.get()).toBe(0);
-  });
-
   it('has value getter', () => {
     const test = signal(0);
 
@@ -764,10 +758,10 @@ describe('signal', () => {
 
     const x4Counter = signal((get) => get(x2Counter) * 2);
 
-    expect(x4Counter.get()).toBe(0);
+    expect(x4Counter.value).toBe(0);
 
     counter.set(20);
-    expect(x4Counter.get()).toBe(0);
+    expect(x4Counter.value).toBe(0);
   });
 
   it('does not run subscribers if an exception occured', () => {
@@ -785,11 +779,11 @@ describe('signal', () => {
     x4Counter.subscribe(subscriber, false);
 
     counter.set(1);
-    expect(x4Counter.get()).toBe(4);
+    expect(x4Counter.value).toBe(4);
     expect(subscriber).toHaveBeenCalledTimes(1);
 
     counter.set(20);
-    expect(x4Counter.get()).toBe(4);
+    expect(x4Counter.value).toBe(4);
     expect(subscriber).toHaveBeenCalledTimes(1);
   });
 
@@ -811,12 +805,12 @@ describe('signal', () => {
       return get(b);
     });
 
-    expect(c.get()).toBe(0);
+    expect(c.value).toBe(0);
     expect(counter).toBe(0);
 
     a.set(1);
 
-    expect(c.get()).toBe(0);
+    expect(c.value).toBe(0);
     expect(counter).toBeLessThan(2);
 
     counter = 0;
@@ -824,7 +818,7 @@ describe('signal', () => {
 
     a.set(10);
 
-    expect(c.get()).toBe(0);
+    expect(c.value).toBe(0);
     expect(counter).toBeLessThan(2);
   });
 
@@ -836,7 +830,7 @@ describe('signal', () => {
 
     counter.set(1);
 
-    expect(x2Counter.get()).toBe(2);
+    expect(x2Counter.value).toBe(2);
   });
 
   it('can use actual signal state in subscribers', () => {
@@ -846,7 +840,7 @@ describe('signal', () => {
     x2Counter.subscribe(() => {});
 
     counter.subscribe((value) => {
-      expect(value * 2).toBe(x2Counter.get());
+      expect(value * 2).toBe(x2Counter.value);
     });
 
     counter.set(1);
@@ -891,14 +885,14 @@ describe('signal', () => {
     const d = signal((get) => get(b) + get(c));
     const spy = jest.fn();
 
-    a.subscribe(() => b.set(b.get() + 1), false);
-    a.subscribe(() => c.set(c.get() + 1), false);
+    a.subscribe(() => b.set(b.value + 1), false);
+    a.subscribe(() => c.set(c.value + 1), false);
     d.subscribe(spy, false);
 
     expect(spy).toHaveBeenCalledTimes(0);
 
     a.set(1);
-    expect(d.get()).toBe(2);
+    expect(d.value).toBe(2);
     expect(spy).toHaveBeenCalledTimes(1);
   });
 
@@ -1001,7 +995,7 @@ describe('signal', () => {
       const c = signal((get) => get(b) * 2);
       const d = signal((get) => get(c) * 2);
 
-      d.get();
+      d.value;
       d.subscribe(() => {});
 
       expect(spy).toHaveBeenCalledTimes(1);
@@ -1389,7 +1383,7 @@ describe('signal', () => {
       });
 
       a.set(1);
-      a.get();
+      a.value;
 
       expect(spy).toHaveBeenLastCalledWith('test');
     });

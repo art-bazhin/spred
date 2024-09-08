@@ -233,13 +233,7 @@ declare class Signal<T> {
   pipe(): typeof this;
 
   /**
-   * Calculates and returns the current value of the signal.
-   * @returns The current value of the signal.
-   */
-  get(): T;
-
-  /**
-   * The current value of the signal. A getter variant of {@link Signal.get}.
+   * The current value of the signal.
    */
   readonly value: T;
 
@@ -318,9 +312,6 @@ function Signal<T>(
   if (parent) createChildNode(parent, this);
 }
 
-Signal.prototype.get = function () {
-  return get(this, false);
-};
 Signal.prototype.subscribe = subscribe;
 Signal.prototype.pipe = pipe;
 Signal.prototype.equal = Object.is;

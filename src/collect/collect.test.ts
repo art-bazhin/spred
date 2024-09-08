@@ -8,7 +8,7 @@ describe('collect function', () => {
 
     const comp = signal((get) => {
       collect(() => {
-        b.get();
+        b.value;
       });
 
       return get(a);

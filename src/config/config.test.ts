@@ -11,7 +11,7 @@ describe('configure function', () => {
         throw 'ERRROR';
       });
 
-      comp.get();
+      comp.value;
       expect(logException).toHaveBeenCalledTimes(1);
 
       configure();

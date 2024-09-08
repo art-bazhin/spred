@@ -4,17 +4,17 @@ describe('writable', () => {
   const counter = signal(0);
 
   it('is created with default value', () => {
-    expect(counter.get()).toBe(0);
+    expect(counter.value).toBe(0);
   });
 
   it('updates value', () => {
     counter.set(1);
-    expect(counter.get()).toBe(1);
+    expect(counter.value).toBe(1);
   });
 
   it('updates value using set method', () => {
     counter.set(2);
-    expect(counter.get()).toBe(2);
+    expect(counter.value).toBe(2);
   });
 
   it('returns void after set', () => {
@@ -29,7 +29,7 @@ describe('writable', () => {
 
   it('updates value using update fn', () => {
     counter.update((value) => value + 1);
-    expect(counter.get()).toBe(4);
+    expect(counter.value).toBe(4);
 
     batch(() => {
       counter.update((value) => value + 1);
@@ -38,19 +38,19 @@ describe('writable', () => {
       counter.update((value) => value + 1);
     });
 
-    expect(counter.get()).toBe(8);
+    expect(counter.value).toBe(8);
   });
 
   it('updates value using update fn right after init', () => {
     const value = signal(0);
 
     value.update((v) => v + 1);
-    expect(value.get()).toBe(1);
+    expect(value.value).toBe(1);
   });
 
   it('has Signal methods', () => {
-    expect(counter.get).toBeDefined;
     expect(counter.subscribe).toBeDefined;
+    expect(counter.pipe).toBeDefined;
   });
 
   it('force triggers subscribers using update method with a function that returns void', () => {
@@ -84,7 +84,7 @@ describe('writable', () => {
     expect(subscriber).toHaveBeenCalledTimes(4);
     expect(value).toBe(2);
 
-    s.set(s.get());
+    s.set(s.value);
 
     expect(subscriber).toHaveBeenCalledTimes(4);
   });
@@ -106,19 +106,19 @@ describe('writable', () => {
     expect(subscriber).toHaveBeenCalledTimes(2);
     expect(value).toBe(undefined);
 
-    s.get().a = 1;
+    s.value.a = 1;
     s.update();
 
     expect(subscriber).toHaveBeenCalledTimes(3);
     expect(value).toBe(1);
 
-    s.get().a = 2;
+    s.value.a = 2;
     s.update();
 
     expect(subscriber).toHaveBeenCalledTimes(4);
     expect(value).toBe(2);
 
-    s.set(s.get());
+    s.set(s.value);
 
     expect(subscriber).toHaveBeenCalledTimes(4);
   });
@@ -146,19 +146,19 @@ describe('writable', () => {
     expect(subscriber).toHaveBeenCalledTimes(2);
     expect(value).toBe(null);
 
-    s.get().a = 1;
+    s.value.a = 1;
     s.update();
 
     expect(subscriber).toHaveBeenCalledTimes(3);
     expect(value).toBe(1);
 
-    s.get().a = 2;
+    s.value.a = 2;
     s.update();
 
     expect(subscriber).toHaveBeenCalledTimes(4);
     expect(value).toBe(2);
 
-    s.set(s.get());
+    s.set(s.value);
 
     expect(value).toBe(2);
     expect(subscriber).toHaveBeenCalledTimes(4);
@@ -203,19 +203,19 @@ describe('writable', () => {
     expect(subscriber).toHaveBeenCalledTimes(2);
     expect(value).toBe(undefined);
 
-    s.get().a = 1;
-    s.emit(s.get());
+    s.value.a = 1;
+    s.emit(s.value);
 
     expect(subscriber).toHaveBeenCalledTimes(3);
     expect(value).toBe(1);
 
-    s.get().a = 2;
-    s.emit(s.get());
+    s.value.a = 2;
+    s.emit(s.value);
 
     expect(subscriber).toHaveBeenCalledTimes(4);
     expect(value).toBe(2);
 
-    s.set(s.get());
+    s.set(s.value);
 
     expect(subscriber).toHaveBeenCalledTimes(4);
   });
@@ -260,10 +260,10 @@ describe('writable', () => {
     const b = () => {};
     const fn = new WritableSignal(a);
 
-    expect(fn.get()).toBe(a);
+    expect(fn.value).toBe(a);
 
     fn.set(b);
-    expect(fn.get()).toBe(b);
+    expect(fn.value).toBe(b);
   });
 
   it('ignores a new value if it is equal to the current value', () => {
@@ -328,7 +328,7 @@ describe('writable', () => {
 
     a.set(5);
     expect(spy).toHaveBeenCalledTimes(3);
-    expect(a.get()).toBe(1);
+    expect(a.value).toBe(1);
 
     a.set(2);
     expect(spy).toHaveBeenCalledTimes(4);
