@@ -1,7 +1,7 @@
-import {
-  atom,
-  computed as computedNano,
-} from 'https://unpkg.com/nanostores@0.9.5/index.js';
+// import {
+//   atom,
+//   computed as computedNano,
+// } from 'https://unpkg.com/nanostores@0.9.5/index.js';
 
 import {
   createSignal as solidCreateSignal,
@@ -16,45 +16,196 @@ import {
   effect as preactEffect,
 } from '../node_modules/@preact/signals-core/dist/signals-core.mjs';
 
-import {
-  observable as whatsupObservable,
-  computed as whatsupComputed,
-  autorun as whatsupEffect,
-  runInAction as whatsupBatch,
-} from 'https://unpkg.com/@whatsup/core@2.6.0/dist/index.esm.js';
-
-import {
-  signal as maverickSignal,
-  computed as maverickComputed,
-  effect as maverickEffect,
-  tick,
-} from 'https://esm.sh/@maverick-js/signals@5.11.4';
-
 import { batch, signal, Signal } from '/dist/index.mjs';
 
-window.process = {
-  env: {
-    NODE_ENV: 'production',
+const LIB_CONFIGS = {
+  spred: {
+    lib: 'spred',
+    track: (s, g) => g(s),
+    get: (s) => s.value,
+    set: (s, v) => s.set(v),
+    subscribe: (s, cb) => s.subscribe(cb),
+    writable: signal,
+    computed: signal,
+    batch,
+  },
+
+  preact: {
+    lib: 'preact',
+    track: (s) => s.value,
+    get: (s) => s.value,
+    set: (s, v) => (s.value = v),
+    subscribe: (s, cb) => s.subscribe(cb),
+    writable: preactSignal,
+    computed: preactComputed,
+    batch: preactBatch,
+  },
+
+  solid: {
+    lib: 'solid',
+    track: (s) => s(),
+    get: (s) => s(),
+    set: (s, v) => s[1](v),
+    subscribe: () => {},
+    writable: solidCreateSignal,
+    computed: solidCreateMemo,
+    batch: solidBatch,
+    mapWritableToComputed: (tuple) => tuple[0],
   },
 };
 
 const subscriber = function () {};
-
 const resultDiv = document.getElementById('result');
+const hashParams = getHashParams();
 
-const params = getHashParams();
+init();
 
-document.querySelectorAll('input[type="number"]').forEach((input) => {
-  if (params[input.id]) input.value = params[input.id];
-  else params[input.id] = input.value;
+function benchIteration({
+  lib,
+  track,
+  get,
+  set,
+  subscribe,
+  writable,
+  computed,
+  batch,
+  width,
+  depth,
+  mapWritableToComputed,
+}) {
+  const report = { lib };
+  const initTimestamp = performance.now();
 
-  input.addEventListener('input', ({ target }) => {
-    params[target.id] = target.value;
-    setHashParams(params);
+  const source = {
+    prop1: writable(1),
+    prop2: writable(2),
+    prop3: writable(3),
+    prop4: writable(4),
+  };
+
+  const start = mapWritableToComputed
+    ? {
+        prop1: mapWritableToComputed(source.prop1),
+        prop2: mapWritableToComputed(source.prop2),
+        prop3: mapWritableToComputed(source.prop3),
+        prop4: mapWritableToComputed(source.prop4),
+      }
+    : source;
+
+  let layer;
+
+  for (let j = width; j--; ) {
+    layer = start;
+
+    for (let i = depth; i--; ) {
+      layer = (function (m) {
+        const s = {
+          prop1: computed(function (get) {
+            return track(m.prop2, get);
+          }),
+          prop2: computed(function (get) {
+            return track(m.prop1, get) - track(m.prop3, get);
+          }),
+          prop3: computed(function (get) {
+            return track(m.prop2, get) + track(m.prop4, get);
+          }),
+          prop4: computed(function (get) {
+            return track(m.prop3, get);
+          }),
+        };
+
+        if (!i) {
+          subscribe(s.prop1, subscriber);
+          subscribe(s.prop2, subscriber);
+          subscribe(s.prop3, subscriber);
+          subscribe(s.prop4, subscriber);
+        }
+
+        return s;
+      })(layer);
+    }
+  }
+
+  const end = layer;
+
+  report.initResult = [
+    get(end.prop1),
+    get(end.prop2),
+    get(end.prop3),
+    get(end.prop4),
+  ];
+
+  const recalcTimestamp = performance.now();
+
+  report.init = recalcTimestamp - initTimestamp;
+
+  batch(() => {
+    set(source.prop1, 4);
+    set(source.prop2, 3);
+    set(source.prop3, 2);
+    set(source.prop4, 1);
   });
 
-  setHashParams(params);
-});
+  report.recalcResult = [
+    get(end.prop1),
+    get(end.prop2),
+    get(end.prop3),
+    get(end.prop4),
+  ];
+
+  const relinkTimestamp = performance.now();
+
+  report.recalc = relinkTimestamp - recalcTimestamp;
+
+  report.total = relinkTimestamp - initTimestamp;
+
+  return report;
+}
+
+function benchLib(config) {
+  const { iterations, lib } = config;
+
+  const stats = ['total', 'init', 'recalc'].reduce((acc, period) => {
+    acc[period] = {
+      lib,
+      data: [],
+      time: 0,
+    };
+
+    return acc;
+  }, {});
+
+  let report;
+
+  for (let i = 0; i < iterations; i++) {
+    report = benchIteration(config);
+
+    for (let period in stats) {
+      const periodStats = stats[period];
+
+      periodStats.data.push(report[period]);
+      periodStats.time += report[period];
+    }
+  }
+
+  const middle = Math.floor(iterations / 2);
+
+  for (let period in stats) {
+    const data = stats[period].data;
+    const time = stats[period].time;
+
+    data.sort((a, b) => a - b);
+
+    stats[period].result = report[period + 'Result'];
+    stats[period].min = data[0];
+    stats[period].max = data[iterations - 1];
+    stats[period].med = data[middle];
+    stats[period].avg = time / iterations;
+    stats[period].freq = (1000 * iterations) / time;
+  }
+
+  return stats;
+}
 
 function getHashParams() {
   const str = location.hash.substring(1);
@@ -82,10 +233,6 @@ function setHashParams(obj) {
 }
 
 function getParameter(inputId) {
-  if (inputId === 'lib') {
-    return document.querySelector('input:checked').value;
-  }
-
   const input = document.getElementById(inputId);
 
   const value = input.value || 1;
@@ -94,526 +241,20 @@ function getParameter(inputId) {
   return value;
 }
 
-function testPreact(width, layerCount, newValues) {
-  const report = { name: 'preact' };
-  const initTimestamp = performance.now();
-
-  const start = {
-    prop1: preactSignal(1),
-    prop2: preactSignal(2),
-    prop3: preactSignal(3),
-    prop4: preactSignal(4),
-  };
-
-  let layer;
-
-  for (let j = width; j--; ) {
-    layer = start;
-
-    for (let i = layerCount; i--; ) {
-      layer = (function (m) {
-        const s = {
-          prop1: preactComputed(function () {
-            return m.prop2.value;
-          }),
-          prop2: preactComputed(function () {
-            return m.prop1.value - m.prop3.value;
-          }),
-          prop3: preactComputed(function () {
-            return m.prop2.value + m.prop4.value;
-          }),
-          prop4: preactComputed(function () {
-            return m.prop3.value;
-          }),
-        };
-
-        if (!i) {
-          preactEffect(() => s.prop1.value);
-          preactEffect(() => s.prop2.value);
-          preactEffect(() => s.prop3.value);
-          preactEffect(() => s.prop4.value);
-        }
-
-        return s;
-      })(layer);
-    }
-  }
-
-  report.initTime = performance.now() - initTimestamp;
-
-  const end = layer;
-
-  report.beforeChange = [
-    end.prop1.value,
-    end.prop2.value,
-    end.prop3.value,
-    end.prop4.value,
-  ];
-
-  const st = performance.now();
-
-  preactBatch(() => {
-    start.prop1.value = newValues[0];
-    start.prop2.value = newValues[1];
-    start.prop3.value = newValues[2];
-    start.prop4.value = newValues[3];
-  });
-
-  report.afterChange = [
-    end.prop1.value,
-    end.prop2.value,
-    end.prop3.value,
-    end.prop4.value,
-  ];
-
-  report.recalcTime = performance.now() - st;
-
-  return report;
-}
-
-function testWhatsup(width, layerCount, newValues) {
-  const report = { name: 'whatsup' };
-  const initTimestamp = performance.now();
-
-  const start = {
-    prop1: whatsupObservable(1),
-    prop2: whatsupObservable(2),
-    prop3: whatsupObservable(3),
-    prop4: whatsupObservable(4),
-  };
-
-  let layer;
-
-  for (let j = width; j--; ) {
-    layer = start;
-
-    for (let i = layerCount; i--; ) {
-      layer = (function (m) {
-        const s = {
-          prop1: whatsupComputed(function () {
-            return m.prop2();
-          }),
-          prop2: whatsupComputed(function () {
-            return m.prop1() - m.prop3();
-          }),
-          prop3: whatsupComputed(function () {
-            return m.prop2() + m.prop4();
-          }),
-          prop4: whatsupComputed(function () {
-            return m.prop3();
-          }),
-        };
-
-        if (!i) {
-          whatsupEffect(() => s.prop1());
-          whatsupEffect(() => s.prop2());
-          whatsupEffect(() => s.prop3());
-          whatsupEffect(() => s.prop4());
-        }
-
-        return s;
-      })(layer);
-    }
-  }
-
-  report.initTime = performance.now() - initTimestamp;
-
-  const end = layer;
-
-  report.beforeChange = [end.prop1(), end.prop2(), end.prop3(), end.prop4()];
-
-  const st = performance.now();
-
-  whatsupBatch(() => {
-    start.prop1(newValues[0]);
-    start.prop2(newValues[1]);
-    start.prop3(newValues[2]);
-    start.prop4(newValues[3]);
-  });
-
-  report.afterChange = [end.prop1(), end.prop2(), end.prop3(), end.prop4()];
-
-  report.recalcTime = performance.now() - st;
-
-  return report;
-}
-
-function testMaverick(width, layerCount, newValues) {
-  const report = { name: 'maverick' };
-  const initTimestamp = performance.now();
-
-  const start = {
-    prop1: maverickSignal(1),
-    prop2: maverickSignal(2),
-    prop3: maverickSignal(3),
-    prop4: maverickSignal(4),
-  };
-
-  let layer;
-
-  for (let j = width; j--; ) {
-    layer = start;
-
-    for (let i = layerCount; i--; ) {
-      layer = (function (m) {
-        const s = {
-          prop1: maverickComputed(function () {
-            return m.prop2();
-          }),
-          prop2: maverickComputed(function () {
-            return m.prop1() - m.prop3();
-          }),
-          prop3: maverickComputed(function () {
-            return m.prop2() + m.prop4();
-          }),
-          prop4: maverickComputed(function () {
-            return m.prop3();
-          }),
-        };
-
-        if (!i) {
-          maverickEffect(() => s.prop1());
-          maverickEffect(() => s.prop2());
-          maverickEffect(() => s.prop3());
-          maverickEffect(() => s.prop4());
-        }
-
-        return s;
-      })(layer);
-    }
-  }
-
-  report.initTime = performance.now() - initTimestamp;
-
-  const end = layer;
-
-  report.beforeChange = [end.prop1(), end.prop2(), end.prop3(), end.prop4()];
-  tick();
-
-  const st = performance.now();
-
-  start.prop1.set(newValues[0]);
-  start.prop2.set(newValues[1]);
-  start.prop3.set(newValues[2]);
-  start.prop4.set(newValues[3]);
-  tick();
-
-  report.afterChange = [end.prop1(), end.prop2(), end.prop3(), end.prop4()];
-  tick();
-
-  report.recalcTime = performance.now() - st;
-
-  return report;
-}
-
-function testSpred(width, layerCount, newValues) {
-  const report = { name: 'spred' };
-  const initTimestamp = performance.now();
-
-  const start = {
-    prop1: signal(1),
-    prop2: signal(2),
-    prop3: signal(3),
-    prop4: signal(4),
-  };
-
-  let layer;
-
-  for (let j = width; j--; ) {
-    layer = start;
-
-    for (let i = layerCount; i--; ) {
-      layer = (function (m) {
-        const s = {
-          prop1: signal(function (get) {
-            return get(m.prop2);
-          }),
-          prop2: signal(function (get) {
-            return get(m.prop1) - get(m.prop3);
-          }),
-          prop3: signal(function (get) {
-            return get(m.prop2) + get(m.prop4);
-          }),
-          prop4: signal(function (get) {
-            return get(m.prop3);
-          }),
-        };
-
-        if (!i) {
-          s.prop1.subscribe(subscriber);
-          s.prop2.subscribe(subscriber);
-          s.prop3.subscribe(subscriber);
-          s.prop4.subscribe(subscriber);
-        }
-
-        return s;
-      })(layer);
-    }
-  }
-
-  report.initTime = performance.now() - initTimestamp;
-
-  const end = layer;
-
-  report.beforeChange = [
-    end.prop1.value,
-    end.prop2.value,
-    end.prop3.value,
-    end.prop4.value,
-  ];
-
-  const st = performance.now();
-
-  batch(() => {
-    start.prop1.set(newValues[0]);
-    start.prop2.set(newValues[1]);
-    start.prop3.set(newValues[2]);
-    start.prop4.set(newValues[3]);
-  });
-
-  report.afterChange = [
-    end.prop1.value,
-    end.prop2.value,
-    end.prop3.value,
-    end.prop4.value,
-  ];
-
-  report.recalcTime = performance.now() - st;
-
-  return report;
-}
-
-function testNanostores(width, layerCount, newValues) {
-  const report = { name: 'nanostores' };
-  const initTimestamp = performance.now();
-
-  const start = {
-    prop1: atom(1),
-    prop2: atom(2),
-    prop3: atom(3),
-    prop4: atom(4),
-  };
-
-  let layer;
-
-  for (let j = width; j--; ) {
-    layer = start;
-
-    for (let i = layerCount; i--; ) {
-      layer = (function (m) {
-        const s = {
-          prop1: computedNano([m.prop2], function (prop2) {
-            return prop2;
-          }),
-          prop2: computedNano([m.prop1, m.prop3], function (prop1, prop3) {
-            return prop1 - prop3;
-          }),
-          prop3: computedNano([m.prop2, m.prop4], function (prop2, prop4) {
-            return prop2 + prop4;
-          }),
-          prop4: computedNano([m.prop3], function (prop3) {
-            return prop3;
-          }),
-        };
-
-        if (!i) {
-          s.prop1.subscribe(subscriber);
-          s.prop2.subscribe(subscriber);
-          s.prop3.subscribe(subscriber);
-          s.prop4.subscribe(subscriber);
-        }
-
-        return s;
-      })(layer);
-    }
-  }
-
-  report.initTime = performance.now() - initTimestamp;
-
-  const end = layer;
-
-  report.beforeChange = [
-    end.prop1.get(),
-    end.prop2.get(),
-    end.prop3.get(),
-    end.prop4.get(),
-  ];
-
-  const st = performance.now();
-
-  start.prop1.set(newValues[0]);
-  start.prop2.set(newValues[1]);
-  start.prop3.set(newValues[2]);
-  start.prop4.set(newValues[3]);
-
-  report.afterChange = [
-    end.prop1.get(),
-    end.prop2.get(),
-    end.prop3.get(),
-    end.prop4.get(),
-  ];
-
-  report.recalcTime = performance.now() - st;
-
-  return report;
-}
-
-function testSolid(width, layerCount, newValues) {
-  const report = { name: 'solid' };
-  const initTimestamp = performance.now();
-
-  const signals = {
-    prop1: solidCreateSignal(1),
-    prop2: solidCreateSignal(2),
-    prop3: solidCreateSignal(3),
-    prop4: solidCreateSignal(4),
-  };
-
-  const start = {
-    prop1: signals.prop1[0],
-    prop2: signals.prop2[0],
-    prop3: signals.prop3[0],
-    prop4: signals.prop4[0],
-  };
-
-  let layer;
-
-  for (let j = width; j--; ) {
-    layer = start;
-
-    for (let i = layerCount; i--; ) {
-      layer = (function (m) {
-        const s = {
-          prop1: solidCreateMemo(function () {
-            return m.prop2();
-          }),
-          prop2: solidCreateMemo(function () {
-            return m.prop1() - m.prop3();
-          }),
-          prop3: solidCreateMemo(function () {
-            return m.prop2() + m.prop4();
-          }),
-          prop4: solidCreateMemo(function () {
-            return m.prop3();
-          }),
-        };
-
-        // if (!i) {
-        // solidCreateComputed(s.prop1);
-        // solidCreateComputed(s.prop2);
-        // solidCreateComputed(s.prop3);
-        // solidCreateComputed(s.prop4);
-        // }
-
-        return s;
-      })(layer);
-    }
-  }
-
-  report.initTime = performance.now() - initTimestamp;
-
-  const end = layer;
-
-  report.beforeChange = [end.prop1(), end.prop2(), end.prop3(), end.prop4()];
-
-  const st = performance.now();
-
-  solidBatch(() => {
-    signals.prop1[1](newValues[0]);
-    signals.prop2[1](newValues[1]);
-    signals.prop3[1](newValues[2]);
-    signals.prop4[1](newValues[3]);
-  });
-
-  report.afterChange = [end.prop1(), end.prop2(), end.prop3(), end.prop4()];
-
-  report.recalcTime = performance.now() - st;
-
-  return report;
-}
-
-function testLib(testFn, width, layers, iterations, newValues) {
-  let totalTimeRecalc = 0;
-  let resultRecalc = null;
-
-  let totalTimeInit = 0;
-  let resultInit = null;
-  let name;
-
-  const initArr = [];
-  const recalcArr = [];
-
-  for (let i = 0; i < iterations; i++) {
-    const report = testFn(width, layers, newValues);
-    const recalcTime = report.recalcTime;
-    const initTime = report.initTime;
-
-    initArr.push(initTime);
-    recalcArr.push(recalcTime);
-
-    totalTimeRecalc += report.recalcTime;
-    resultRecalc = report.afterChange;
-
-    totalTimeInit += report.initTime;
-    resultInit = report.beforeChange;
-
-    name = report.name;
-  }
-
-  initArr.sort((a, b) => a - b);
-  recalcArr.sort((a, b) => a - b);
-
-  const middle = Math.floor(iterations / 2);
-
-  return {
-    init: {
-      name,
-      result: resultInit,
-      min: initArr[0],
-      max: initArr[iterations - 1],
-      med: initArr[middle],
-      avg: totalTimeInit / iterations,
-    },
-
-    recalc: {
-      name,
-      result: resultRecalc,
-      min: recalcArr[0],
-      max: recalcArr[iterations - 1],
-      med: recalcArr[middle],
-      avg: totalTimeRecalc / iterations,
-    },
-  };
-}
-
-function drawTables() {
-  resultDiv.innerHTML = `
+function getTableHTML(period) {
+  return `
     <div class="m">
-      <b>Initialization</b>
+      <b>${period}</b>
     </div>
     
-    <table id="initTable" class="l">
+    <table id="${period}" class="l">
       <tr>
         <th>Lib</th>
         <th>Avg</th>
         <th>Med</th>
         <th>Min</th>
         <th>Max</th>
-        <th>Values</th>
-      </tr>
-    </table>
-
-    <div class="m">
-      <b>Recalculation</b>
-    </div>
-    
-    <table id="recalcTable">
-      <tr>
-        <th>Lib</th>
-        <th>Avg</th>
-        <th>Med</th>
-        <th>Min</th>
-        <th>Max</th>
+        <th>Freq</th>
         <th>Values</th>
       </tr>
     </table>
@@ -624,11 +265,12 @@ function createTableRow(libReport) {
   const row = document.createElement('tr');
 
   row.innerHTML = `
-    <td>${libReport.name}</td>
+    <td>${libReport.lib}</td>
     <td>${formatTime(libReport.avg)}</td>
     <td>${formatTime(libReport.med)}</td>
     <td>${formatTime(libReport.min)}</td>
     <td>${formatTime(libReport.max)}</td>
+    <td>${formatNumber(libReport.freq)}</td>
     <td>${libReport.result}</td>`;
 
   return row;
@@ -639,48 +281,71 @@ function formatTime(time) {
   return result.toFixed(2);
 }
 
+function formatNumber(num) {
+  return Math.round(num);
+}
+
 function runBenchmark() {
   resultDiv.innerHTML = 'BENCHMARKING...';
 
-  const iterations = getParameter('iterations');
-  const width = getParameter('width');
-  const layers = getParameter('layers');
-  const lib = this.textContent;
-
-  const newValues = [4, 3, 2, 1];
+  const params = {
+    lib: this.textContent,
+    iterations: getParameter('iterations'),
+    width: getParameter('width'),
+    depth: getParameter('layers'),
+  };
 
   setTimeout(() => {
-    const testFn = {
-      spred: testSpred,
-      preact: testPreact,
-      solid: testSolid,
-      whatsup: testWhatsup,
-      nanostores: testNanostores,
-      maverick: testMaverick,
-    }[lib];
+    const config = Object.assign({}, params, LIB_CONFIGS[params.lib]);
+    const stats = benchLib(config);
 
-    const report = testLib(testFn, width, layers, iterations, newValues);
+    resultDiv.innerHTML = Object.keys(stats).reduce(
+      (html, period) => (html += getTableHTML(period)),
+      ''
+    );
 
-    drawTables();
+    for (let period in stats) {
+      document
+        .getElementById(period)
+        .appendChild(createTableRow(stats[period]));
+    }
 
-    const recalcTable = document.getElementById('recalcTable');
-    const initTable = document.getElementById('initTable');
-
-    recalcTable.appendChild(createTableRow(report.recalc));
-    initTable.appendChild(createTableRow(report.init));
+    console.log(stats);
   }, 0);
 }
 
-document.querySelectorAll('button').forEach((button) => {
-  button.onclick = runBenchmark;
-});
-
-function expect(value) {
-  return {
-    toBe(v) {
-      if (value !== v) {
-        console.log(value + ' != ' + v);
-      }
+function init() {
+  window.process = {
+    env: {
+      NODE_ENV: 'production',
     },
   };
+
+  document.querySelectorAll('input[type="number"]').forEach((input) => {
+    if (hashParams[input.id]) input.value = hashParams[input.id];
+    else hashParams[input.id] = input.value;
+
+    input.addEventListener('input', ({ target }) => {
+      hashParams[target.id] = target.value;
+      setHashParams(hashParams);
+    });
+
+    setHashParams(hashParams);
+  });
+
+  document.querySelectorAll('button').forEach((button) => {
+    button.onclick = runBenchmark;
+  });
+
+  for (let lib in LIB_CONFIGS) {
+    const button = document.createElement('button');
+
+    button.textContent = lib;
+    button.onclick = runBenchmark;
+
+    document.getElementById('buttons').appendChild(button);
+    document
+      .getElementById('buttons')
+      .appendChild(document.createTextNode(' '));
+  }
 }
