@@ -42,10 +42,17 @@ describe('writable', () => {
   });
 
   it('updates value using update fn right after init', () => {
-    const value = signal(0);
+    const counter = signal(0);
 
-    value.update((v) => v + 1);
-    expect(value.value).toBe(1);
+    counter.update((v) => v + 1);
+    expect(counter.value).toBe(1);
+  });
+
+  it('fully ignores undefined values', () => {
+    const s = signal<any>(0);
+
+    s.set(undefined);
+    s.update((v) => expect(v).toBe(0));
   });
 
   it('has Signal methods', () => {
@@ -128,7 +135,7 @@ describe('writable', () => {
       }
     );
     const comp = signal((get) => get(s).a || null, {
-      filter: null,
+      equal: false,
     });
 
     let value: any;
@@ -198,7 +205,7 @@ describe('writable', () => {
 
   it('force triggers subscribers using emit method without arguments', () => {
     const spy = jest.fn();
-    const event = signal();
+    const event = signal(null);
 
     event.subscribe(spy);
     expect(spy).toHaveBeenCalledTimes(1);
@@ -208,6 +215,16 @@ describe('writable', () => {
 
     event.emit();
     expect(spy).toHaveBeenCalledTimes(3);
+  });
+
+  it('can not emit undefined value', () => {
+    const s = signal<any>();
+    const spy = jest.fn();
+
+    s.subscribe(spy, false);
+    s.emit(undefined);
+
+    expect(spy).toHaveBeenCalledTimes(0);
   });
 
   it('keeps subscriptions made inside a subscriber', () => {
@@ -262,9 +279,9 @@ describe('writable', () => {
     expect(spy).toHaveBeenCalledTimes(3);
   });
 
-  it('does not ignore any new value if the filter is set to null', () => {
+  it('does not ignore any new value if the equal is set to false', () => {
     const a = signal(0, {
-      filter: null,
+      equal: false,
     });
     const spy = jest.fn();
 
@@ -284,10 +301,10 @@ describe('writable', () => {
     expect(spy).toHaveBeenCalledTimes(5);
   });
 
-  it('can use custom filter function', () => {
+  it('can use custom equality function', () => {
     const a = signal(0, {
-      filter(value) {
-        return value < 5;
+      equal(value) {
+        return value >= 5;
       },
     });
 

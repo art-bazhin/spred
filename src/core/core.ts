@@ -30,16 +30,6 @@ let staleNodes: { value: Signal<any>; link: ListNode<any> }[] = [];
 let version = 1;
 
 /**
- * The default filter used if {@link SignalOptions.filter} is not defined.
- * @param value The new value of the signal.
- * @param prevValue The previous value of the signal.
- * @returns False if the values are strictly equal, true otherwise.
- */
-export function defaultFilter<T>(value: T, prevValue?: T) {
-  return value !== prevValue;
-}
-
-/**
  * A function that returns the value of the passed signal and handles dependency tracking.
  * @param signal A signal to track.
  * @returns The value of the passed signal.
@@ -78,14 +68,12 @@ export interface SignalOptions<T> {
   name?: string;
 
   /**
-   * A filter function used to define if the new signal value should be commited.
-   * By default, a strict inequality check between the new and previous values is used.
-   * Set to null to disable filtering.
-   * @param value The new value of the signal.
-   * @param prevValue The previous value of the signal.
-   * @returns Truthy if the new value of the signal should be commited.
+   * An equality function used to check whether the value of the signal has been changed. Default is Object.is.
+   * @param value A new value of the signal.
+   * @param prevValue A previous value of the signal.
+   * @returns Truthy if the values are equal, falsy otherwise.
    */
-  filter?: ((value: T, prevValue?: T) => unknown) | null;
+  equal?: ((value: T, prevValue?: T) => unknown) | false;
 
   /**
    * A function called at the moment the signal is created.
@@ -145,7 +133,10 @@ declare class Signal<T> {
    * @param immediate Determines whether the function should be executed immediately after subscription. Default is true.
    * @returns An unsubscribe function.
    */
-  subscribe(subscriber: Subscriber<T>, immediate?: boolean): () => void;
+  subscribe<I extends boolean>(
+    subscriber: Subscriber<true extends I ? T : Exclude<T, undefined>>,
+    immediate?: I
+  ): () => void;
 
   /**
    * Sequentially creates new entities by passing the result of the operator
@@ -273,7 +264,7 @@ declare class Signal<T> {
   _lastChild?: ListNode<Signal<any> | (() => any)> | null;
 
   /** @internal */
-  filter: SignalOptions<T>['filter'];
+  equal: SignalOptions<T>['equal'];
   /** @internal */
   onCreate: SignalOptions<T>['onDeactivate'];
   /** @internal */
@@ -322,7 +313,7 @@ function Signal<T>(
 
 Signal.prototype.subscribe = subscribe;
 Signal.prototype.pipe = pipe;
-Signal.prototype.filter = defaultFilter;
+Signal.prototype.equal = Object.is;
 
 Object.defineProperty(Signal.prototype, 'value', {
   get() {
@@ -445,7 +436,7 @@ export function action<T extends Function>(fn: T) {
 }
 
 function set<T>(this: Signal<T>, value?: any) {
-  this._nextValue = value;
+  if (value !== undefined) this._nextValue = value;
   providers.push(this);
   recalc();
 }
@@ -532,8 +523,8 @@ function recalc() {
   for (let signal of q) {
     if (
       signal._flags & FORCED ||
-      !signal.filter ||
-      signal.filter(signal._nextValue, signal._value)
+      !signal.equal ||
+      !signal.equal(signal._nextValue, signal._value)
     ) {
       version = nextVersion;
       notify(signal);
@@ -606,9 +597,10 @@ function get<T>(
 
     if (
       needsToUpdate &&
+      signal._nextValue !== undefined &&
       (signal._flags & FORCED ||
-        !signal.filter ||
-        signal.filter(signal._nextValue, signal._value))
+        !signal.equal ||
+        !signal.equal(signal._nextValue, signal._value))
     ) {
       const prevValue = signal._value;
 

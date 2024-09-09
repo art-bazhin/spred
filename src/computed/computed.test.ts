@@ -711,12 +711,12 @@ describe('computed', () => {
     expect(spy).toHaveBeenCalledTimes(3);
   });
 
-  it('commits any new value if filter option set to null', () => {
+  it('commits any new value if the equal option is set to false', () => {
     const a = signal(0, {
-      filter: null,
+      equal: false,
     });
     const b = signal((get) => get(a), {
-      filter: null,
+      equal: false,
     });
     const spy = jest.fn();
 
@@ -736,13 +736,44 @@ describe('computed', () => {
     expect(spy).toHaveBeenCalledTimes(5);
   });
 
-  it('can use custom filter', () => {
+  it('can use custom equality check', () => {
     const a = signal(0, {
-      filter: () => true,
+      equal: () => false,
     });
     const b = signal((get) => get(a), {
-      filter: (value) => value < 5,
+      equal: (value) => value >= 5,
     });
+    const spy = jest.fn();
+
+    b.subscribe(spy);
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    a.set(0);
+    expect(spy).toHaveBeenCalledTimes(2);
+
+    a.set(1);
+    expect(spy).toHaveBeenCalledTimes(3);
+
+    a.set(5);
+    expect(spy).toHaveBeenCalledTimes(3);
+
+    a.set(2);
+    expect(spy).toHaveBeenCalledTimes(4);
+  });
+
+  it('can filter values using undefined value', () => {
+    const a = signal(0, {
+      equal: () => false,
+    });
+    const b = signal(
+      (get) => {
+        const value = get(a);
+        if (value < 5) return value;
+      },
+      {
+        equal: () => false,
+      }
+    );
     const spy = jest.fn();
 
     b.subscribe(spy);

@@ -211,7 +211,7 @@ counter.set(1);
 unsub();
 ```
 
-By default, the strict inequality check is used, but you can set a custom filter in [signal options](https://art-bazhin.github.io/spred/interfaces/SignalOptions.html).
+Signals use [Object.is](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/is) to compare values, but you can set custom equality function in [signal options](https://art-bazhin.github.io/spred/interfaces/SignalOptions.html).
 
 ```ts
 /*...*/
@@ -219,8 +219,8 @@ By default, the strict inequality check is used, but you can set a custom filter
 const obj = signal(
   { value: 1 },
   {
-    filter(a, b) {
-      return a.value !== (b && b.value);
+    equal(a, b) {
+      return a.value === (b && b.value);
     },
   }
 );
@@ -233,6 +233,25 @@ obj.set({ value: 1 });
 
 obj.set({ value: 2 });
 // > Object value is 2
+```
+
+Undefined values are ignored and can be used for filtering.
+
+```ts
+/*...*/
+
+const oddCounter = signal((get) => {
+  if (get(counter) % 2) return get(counter);
+});
+
+oddCounter.subscribe((value) => console.log('Odd value is ' + value));
+// > Odd value is 1
+
+counter.set(2);
+// Nothing
+
+counter.set(3);
+// > Odd value is 3
 ```
 
 ## Effects

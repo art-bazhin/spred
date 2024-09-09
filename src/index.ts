@@ -4,7 +4,6 @@ import {
   batch,
   action,
   collect,
-  defaultFilter,
   Subscriber,
   SignalOptions,
   Computation,
@@ -30,5 +29,4 @@ export {
   effect,
   configure,
   collect,
-  defaultFilter,
 };
