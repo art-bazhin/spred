@@ -6,7 +6,7 @@ import {
 } from '../core/core';
 
 /**
- * Create a signal that automatically calculates its value based on other signals.
+ * Сreates a signal that automatically calculates its value based on other signals.
  * @param compute A function that calculates the signal value and returns it.
  * @param options Signal options.
  * @returns A computed signal.
@@ -17,13 +17,13 @@ export function signal<T>(
 ): Signal<T>;
 
 /**
- * Сreate a writable signal.
+ * Сreates a writable signal.
  * @returns A writable signal.
  */
 export function signal<T>(): WritableSignal<T | undefined>;
 
 /**
- * Сreate a writable signal.
+ * Сreates a writable signal.
  * @param value An initial value of the signal.
  * @param options Signal options.
  * @returns A writable signal.
