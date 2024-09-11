@@ -71,6 +71,7 @@ function benchIteration({
   batch,
   width,
   depth,
+  relinkRate,
   mapWritableToComputed,
 }) {
   const report = { lib };
@@ -82,6 +83,12 @@ function benchIteration({
     prop3: writable(3),
     prop4: writable(4),
   };
+
+  const tumblerSource = writable(false);
+
+  const tumbler = mapWritableToComputed
+    ? mapWritableToComputed(tumblerSource)
+    : tumblerSource;
 
   const start = mapWritableToComputed
     ? {
@@ -98,18 +105,24 @@ function benchIteration({
     layer = start;
 
     for (let i = depth; i--; ) {
+      const shouldRelink = (depth - i) % relinkRate === 0;
+
       layer = (function (m) {
         const s = {
           prop1: computed(function (get) {
+            if (shouldRelink && track(tumbler, get)) return track(m.prop1, get);
             return track(m.prop2, get);
           }),
           prop2: computed(function (get) {
+            if (shouldRelink && track(tumbler, get)) return track(m.prop2, get);
             return track(m.prop1, get) - track(m.prop3, get);
           }),
           prop3: computed(function (get) {
+            if (shouldRelink && track(tumbler, get)) return track(m.prop3, get);
             return track(m.prop2, get) + track(m.prop4, get);
           }),
           prop4: computed(function (get) {
+            if (shouldRelink && track(tumbler, get)) return track(m.prop4, get);
             return track(m.prop3, get);
           }),
         };
@@ -157,7 +170,19 @@ function benchIteration({
 
   report.recalc = relinkTimestamp - recalcTimestamp;
 
-  report.total = relinkTimestamp - initTimestamp;
+  set(tumblerSource, true);
+
+  report.relinkResult = [
+    get(end.prop1),
+    get(end.prop2),
+    get(end.prop3),
+    get(end.prop4),
+  ];
+
+  const endTimestamp = performance.now();
+
+  report.relink = endTimestamp - relinkTimestamp;
+  report.total = endTimestamp - initTimestamp;
 
   return report;
 }
@@ -165,7 +190,7 @@ function benchIteration({
 function benchLib(config) {
   const { iterations, lib } = config;
 
-  const stats = ['total', 'init', 'recalc'].reduce((acc, period) => {
+  const stats = ['total', 'init', 'recalc', 'relink'].reduce((acc, period) => {
     acc[period] = {
       lib,
       data: [],
@@ -292,7 +317,8 @@ function runBenchmark() {
     lib: this.textContent,
     iterations: getParameter('iterations'),
     width: getParameter('width'),
-    depth: getParameter('layers'),
+    depth: getParameter('depth'),
+    relinkRate: getParameter('relinkRate'),
   };
 
   setTimeout(() => {
