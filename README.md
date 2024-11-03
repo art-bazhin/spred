@@ -54,7 +54,7 @@ npm install @spred/core --save
 
 ## Signals
 
-[Signal](https://art-bazhin.github.io/spred/interfaces/Signal.html) is the basic reactive primitive of the library. A signal stores a value and notifies its subscribers when it changes. To create a [writable signal](https://art-bazhin.github.io/spred/interfaces/WritableSignal.html) you should call the [signal](https://art-bazhin.github.io/spred/functions/signal-1.html) function with an initial value that is not a function.
+[Signal](https://art-bazhin.github.io/spred/classes/Signal.html) is the basic reactive primitive of the library. A signal stores a value and notifies its subscribers when it changes. To create a [writable signal](https://art-bazhin.github.io/spred/classes/WritableSignal.html) you should call the [signal](https://art-bazhin.github.io/spred/functions/signal-1.html) function with an initial value that is not a function.
 
 ```ts
 import { signal, on } from '@spred/core';
@@ -62,7 +62,7 @@ import { signal, on } from '@spred/core';
 const counter = signal(0);
 ```
 
-To get the current value of the signal, you need to call the [get](https://art-bazhin.github.io/spred/interfaces/Signal.html#get) method.
+You can get the current value of a signal by the [value](https://art-bazhin.github.io/spred/classes/Signal.html#value) field.
 
 ```ts
 /*...*/
@@ -71,7 +71,7 @@ console.log(counter.value);
 // > 0
 ```
 
-To set a new value of a writable signal, you should call the [set](https://art-bazhin.github.io/spred/interfaces/WritableSignal.html#set) method with the new value.
+To set a new value of a writable signal, you should call the [set](https://art-bazhin.github.io/spred/classes/WritableSignal.html#set) method with the new value.
 
 ```ts
 /*...*/
@@ -91,7 +91,7 @@ console.log(doubleCounter.value);
 // > 2
 ```
 
-Signal value updates can be subscribed to using the [subscribe](https://art-bazhin.github.io/spred/interfaces/Signal.html#subscribe) method. The second argument of the method specifies whether the function should be called immediately after subscribing, and defaults to true. The method returns the unsubscribe function.
+Signal value updates can be subscribed to using the [subscribe](https://art-bazhin.github.io/spred/classes/Signal.html#subscribe) method. The second argument of the method specifies whether the function should be called immediately after subscribing, and defaults to true. The method returns the unsubscribe function.
 
 ```ts
 /*...*/
@@ -211,7 +211,7 @@ counter.set(1);
 unsub();
 ```
 
-Signals use [Object.is](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/is) to compare values, but you can set custom equality function in [signal options](https://art-bazhin.github.io/spred/interfaces/SignalOptions.html).
+Signals use [Object.is](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/is) to compare values, but you can set custom equality function in [signal options](https://art-bazhin.github.io/spred/classes/SignalOptions.html).
 
 ```ts
 /*...*/
@@ -284,7 +284,7 @@ Under the hood, the effect is simply a computed signal that becomes active at th
 
 ## Lifecycle Hooks
 
-Every signal has lifecycle hooks whose handlers can be set in the [signal options](https://art-bazhin.github.io/spred/interfaces/SignalOptions.html).
+Every signal has lifecycle hooks whose handlers can be set in the [signal options](https://art-bazhin.github.io/spred/classes/SignalOptions.html).
 
 - `onCreate` - the signal is created;
 - `onActivate` - the signal becomes active (has at least one subscriber or dependent signal with a subscriber);
