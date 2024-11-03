@@ -1,8 +1,3 @@
-// import {
-//   atom,
-//   computed as computedNano,
-// } from 'https://unpkg.com/nanostores@0.9.5/index.js';
-
 import {
   createSignal as solidCreateSignal,
   createMemo as solidCreateMemo,
@@ -16,7 +11,21 @@ import {
   effect as preactEffect,
 } from '../node_modules/@preact/signals-core/dist/signals-core.mjs';
 
+import {
+  signal as alienSignal,
+  computed as alienComputed,
+  effect as alienEffect,
+  startBatch,
+  endBatch,
+} from '../node_modules/alien-signals/esm/index.mjs';
+
 import { batch, signal, Signal } from '/dist/index.mjs';
+
+const alienBatch = (cb) => {
+  startBatch();
+  cb();
+  endBatch();
+};
 
 const LIB_CONFIGS = {
   spred: {
@@ -51,6 +60,17 @@ const LIB_CONFIGS = {
     computed: solidCreateMemo,
     batch: solidBatch,
     mapWritableToComputed: (tuple) => tuple[0],
+  },
+
+  alien: {
+    lib: 'alien',
+    track: (s) => s.get(),
+    get: (s) => s.get(),
+    set: (s, v) => s.set(v),
+    subscribe: (s, cb) => alienEffect(() => cb(s.get())),
+    writable: alienSignal,
+    computed: alienComputed,
+    batch: alienBatch,
   },
 };
 
