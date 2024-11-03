@@ -2,6 +2,81 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.40.0](https://github.com/art-bazhin/spred/compare/v0.38.0...v0.40.0) (2024-11-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* use filter signal option instead of equal
+* removed Signal.get method, use Signal.value instead
+* writable, computed, isSignal, isWritableSignal were removed
+
+### Features
+
+* add ability to return destructor from onActivate option ([85e0428](https://github.com/art-bazhin/spred/commit/85e0428d6c6a82ab4cfdeddf408c76d9264a78ce))
+* add actions ([3f9315d](https://github.com/art-bazhin/spred/commit/3f9315d3658b915172f128f4a5995659a3222950))
+* add pipes ([07e91b8](https://github.com/art-bazhin/spred/commit/07e91b8b3d3623cce2e6ac669d20b40ef6e11d0c))
+* allow to use undefined values ([5924d06](https://github.com/art-bazhin/spred/commit/5924d06209fc91dfb02c85216fde7c9b8de0b785))
+* remove get method ([a5a3683](https://github.com/art-bazhin/spred/commit/a5a36834af882d4858697de62df6d2e253d303d5))
+
+
+### Performance Improvements
+
+* fix temp data cleanup ([bf99a42](https://github.com/art-bazhin/spred/commit/bf99a42930dbb90ab6fb931f99f3b826446b0b44))
+
+
+### Reverts
+
+* disallow undefined values ([1ec58d8](https://github.com/art-bazhin/spred/commit/1ec58d838bbfe4677b46121771ba95f3d69dd83b))
+
+
+### Code Refactoring
+
+* refactor options store ([7258ad7](https://github.com/art-bazhin/spred/commit/7258ad7a6fcc527c99ce73751cda7009a7c2db7c))
+* refactor recalculation checks ([fe068ed](https://github.com/art-bazhin/spred/commit/fe068ed69b69779fc1571cec225e3556de5d65af))
+* refactor signal options handling ([486d79f](https://github.com/art-bazhin/spred/commit/486d79f15cf6e171e3aa50a342b3de724f709175))
+* refactor to remove temp nodes ([de53f04](https://github.com/art-bazhin/spred/commit/de53f0446e3244ad25796b148236f8bca39ffb8f))
+* remove redundant api methods ([e444ffc](https://github.com/art-bazhin/spred/commit/e444ffc70b621d7c181e5ed3d6dc41641d429ca2))
+* update internal types and naming ([e9a4cd0](https://github.com/art-bazhin/spred/commit/e9a4cd0a45ae8895e3257e6a0a6ba9aad06f79cb))
+* use class declaration instead of interface ([3dbb4bd](https://github.com/art-bazhin/spred/commit/3dbb4bd78f5e94769e16f0333fbd09d2c13d4dad))
+
+
+### Others
+
+* fix changelog ([e101237](https://github.com/art-bazhin/spred/commit/e101237564114c1c305476b5203c4e111beabe3e))
+* fix changelog ([8f6830f](https://github.com/art-bazhin/spred/commit/8f6830fc22b078b0dfdea3c6451e9ce5cfd71a45))
+* **release:** 0.39.0 ([5ff8bed](https://github.com/art-bazhin/spred/commit/5ff8bed201e9063eee6a13acfa8ad668d06223df))
+
+
+### Tests
+
+* add alien-signals benchmark ([88d483e](https://github.com/art-bazhin/spred/commit/88d483eab4d1e2403183fdab6ed6ba779844a2e8))
+* add alien-signals linking bench ([eff48b4](https://github.com/art-bazhin/spred/commit/eff48b4970e62939c23cbac70df55a344f3111ea))
+* add maverick linking benchmark ([bbf24ac](https://github.com/art-bazhin/spred/commit/bbf24ace4bcc8d32d9c422a47206d3514196a6a0))
+* refactor benchmark ([25f648f](https://github.com/art-bazhin/spred/commit/25f648f00da99912aeec1b678414de312deca6ac))
+* update benchmark ([15da0e1](https://github.com/art-bazhin/spred/commit/15da0e1ddd311c2de82bd86d8229e3322053151f))
+* update unsub benchmark ([30da4cb](https://github.com/art-bazhin/spred/commit/30da4cbbfe66ab843eb48b195f252cf203c6503e))
+
+
+### Styling
+
+* use export from in index file ([18cb4c3](https://github.com/art-bazhin/spred/commit/18cb4c3573e6e21780484f176c8ed93146a6b96e))
+
+
+### Build System
+
+* add unpkg field in package.json ([28c1304](https://github.com/art-bazhin/spred/commit/28c1304f22b5bb4b7d20bfa3dbc94b8b153ffe67))
+* update dependencies ([aa84bc9](https://github.com/art-bazhin/spred/commit/aa84bc9833744407dd935e338942dcb707f3f2bc))
+
+
+### Docs
+
+* fix readme ([c7d51d8](https://github.com/art-bazhin/spred/commit/c7d51d8bdd0e0d840b456af9da2b73284b44b563))
+* update and rebuild docs ([adc7195](https://github.com/art-bazhin/spred/commit/adc7195928a82a76dc66fa5181501d3ce8027eb3))
+* update doc comments ([58f9a1a](https://github.com/art-bazhin/spred/commit/58f9a1a616e3712c83d24da378148768d7c5c0b6))
+* update docs index ([90e8a6d](https://github.com/art-bazhin/spred/commit/90e8a6d9ed11fc3c9ebb817c3b8fc6f10eb53272))
+* update readme ([e84613d](https://github.com/art-bazhin/spred/commit/e84613d96433fde5b1d7316ba5b68832bc35e6f2))
+
 ## [0.39.0](https://github.com/art-bazhin/spred/compare/v0.38.0...v0.39.0) (2024-09-11)
 
 ### ⚠ BREAKING CHANGES
