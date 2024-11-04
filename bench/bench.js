@@ -19,7 +19,7 @@ import {
   endBatch,
 } from '../node_modules/alien-signals/esm/index.mjs';
 
-import { batch, signal, Signal } from '/dist/index.mjs';
+import { batch, signal, v2 } from '/dist/index.mjs';
 
 const alienBatch = (cb) => {
   startBatch();
@@ -37,6 +37,17 @@ const LIB_CONFIGS = {
     writable: signal,
     computed: signal,
     batch,
+  },
+
+  v2: {
+    lib: 'v2',
+    track: (s, g) => g(s),
+    get: (s) => s.value,
+    set: (s, v) => s.set(v),
+    subscribe: (s, cb) => s.subscribe(cb),
+    writable: v2.signal,
+    computed: v2.signal,
+    batch: v2.batch,
   },
 
   preact: {
@@ -395,3 +406,30 @@ function init() {
       .appendChild(document.createTextNode(' '));
   }
 }
+
+const a = v2.signal(1);
+const b = v2.signal(2);
+const c = v2.signal(3);
+const d = v2.signal(4);
+
+const ab = v2.signal((get) => {
+  console.log('ab');
+  return get(a) * get(b);
+});
+
+const ab2 = v2.signal((get) => {
+  console.log('ab2');
+  return get(ab) * 2;
+});
+
+const cd = v2.signal((get) => {
+  console.log('cd');
+  return get(c) * get(d);
+});
+
+const cd2 = v2.signal((get) => {
+  console.log('cd2');
+  return get(cd) * 2;
+});
+
+window.test = { a, b, c, d, ab, cd, ab2, cd2 };
