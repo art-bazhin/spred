@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.40.2](https://github.com/art-bazhin/spred/compare/v0.40.1...v0.40.2) (2024-11-04)
+
+
+### Build System
+
+* move alien-signals to dev dependencies ([98eb090](https://github.com/art-bazhin/spred/commit/98eb090e3488c295867bca4e9700ae29fb952bfb))
+
 ### [0.40.1](https://github.com/art-bazhin/spred/compare/v0.40.0...v0.40.1) (2024-11-03)
 
 
