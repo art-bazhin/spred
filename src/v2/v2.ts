@@ -32,55 +32,57 @@ class Signal<T> {
     this.value;
     return () => {};
   }
+}
 
-  _recalc() {
-    if (this._version !== globalVersion) {
-      let shouldCompute = false;
+function recalc(signal: Signal<any>) {
+  if (signal._version !== globalVersion) {
+    let shouldCompute = false;
 
-      for (
-        let link: Link<Signal<any>> | null = this._source;
-        link!.value !== null;
-        link = link!.next
-      ) {
-        const source = link!.value!;
+    for (
+      let link: Link<Signal<any>> | null = signal._source;
+      link!.value !== null;
+      link = link!.next
+    ) {
+      const source = link!.value!;
 
-        source._recalc();
+      recalc(source);
 
-        if (source._updated === globalVersion) {
-          shouldCompute = true;
-          break;
-        }
-      }
-
-      if (this._source.value === null) {
+      if (source._updated === globalVersion) {
         shouldCompute = true;
+        break;
       }
-
-      if (shouldCompute) {
-        const tempTracking = tracking;
-        const firstSource = this?._source;
-
-        tracking = this;
-
-        const nextValue = this._compute ? this._compute!(get) : this._nextValue;
-
-        if (nextValue !== this._value) {
-          this._value = nextValue;
-          this._updated = globalVersion;
-        }
-
-        this._source.value = null;
-        this._source.next = null;
-        this._source = firstSource;
-
-        tracking = tempTracking;
-      }
-
-      this._version = globalVersion;
     }
 
-    return this._value;
+    if (signal._source.value === null) {
+      shouldCompute = true;
+    }
+
+    if (shouldCompute) {
+      const tempTracking = tracking;
+      const firstSource = signal?._source;
+
+      tracking = signal;
+
+      const nextValue = signal._compute
+        ? signal._compute!(get)
+        : signal._nextValue;
+
+      if (nextValue !== signal._value) {
+        signal._value = nextValue;
+        signal._updated = globalVersion;
+      }
+
+      signal._source.value = null;
+      signal._source.next = null;
+      signal._source = firstSource;
+
+      tracking = tempTracking;
+    }
+
+    signal._version = globalVersion;
   }
+
+  return signal._value;
 }
 
 class WritableSignal<T> extends Signal<T> {
@@ -120,7 +122,7 @@ function get<T>(signal: Signal<T>, track = true) {
     tracking._source = tracking._source.next;
   }
 
-  return signal._recalc();
+  return recalc(signal);
 }
 
 export const v2 = {
