@@ -1,8 +1,8 @@
-import {
-  createSignal as solidCreateSignal,
-  createMemo as solidCreateMemo,
-  batch as solidBatch,
-} from 'https://unpkg.com/solid-js@1.8.12/dist/solid.js';
+// import {
+//   createSignal as solidCreateSignal,
+//   createMemo as solidCreateMemo,
+//   batch as solidBatch,
+// } from 'https://unpkg.com/solid-js@1.8.12/dist/solid.js';
 
 import {
   signal as preactSignal,
@@ -61,17 +61,17 @@ const LIB_CONFIGS = {
     batch: preactBatch,
   },
 
-  solid: {
-    lib: 'solid',
-    track: (s) => s(),
-    get: (s) => s(),
-    set: (s, v) => s[1](v),
-    subscribe: () => {},
-    writable: solidCreateSignal,
-    computed: solidCreateMemo,
-    batch: solidBatch,
-    mapWritableToComputed: (tuple) => tuple[0],
-  },
+  // solid: {
+  //   lib: 'solid',
+  //   track: (s) => s(),
+  //   get: (s) => s(),
+  //   set: (s, v) => s[1](v),
+  //   subscribe: () => {},
+  //   writable: solidCreateSignal,
+  //   computed: solidCreateMemo,
+  //   batch: solidBatch,
+  //   mapWritableToComputed: (tuple) => tuple[0],
+  // },
 
   alien: {
     lib: 'alien',
@@ -163,6 +163,10 @@ function benchIteration({
           subscribe(s.prop2, subscriber);
           subscribe(s.prop3, subscriber);
           subscribe(s.prop4, subscriber);
+          // get(s.prop1);
+          // get(s.prop2);
+          // get(s.prop3);
+          // get(s.prop4);
         }
 
         return s;
@@ -432,4 +436,20 @@ const cd2 = v2.signal((get) => {
   return get(cd) * 2;
 });
 
+cd2.subscribe((v) => console.log('CD2 ' + v));
+
 window.test = { a, b, c, d, ab, cd, ab2, cd2 };
+
+const counter = v2.signal(0);
+const gt5 = v2.signal((get) => get(counter) > 5);
+
+gt5.subscribe((v) => console.log(v));
+
+counter.set(1);
+counter.set(2);
+counter.set(3);
+counter.set(4);
+counter.set(5);
+counter.set(6);
+counter.set(7);
+counter.set(8);
