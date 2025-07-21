@@ -238,6 +238,8 @@ declare class Signal<T> {
   /** @internal */
   _version: number;
   /** @internal */
+  _updated: number;
+  /** @internal */
   _notified: number;
   /** @internal */
   _compute?: Computation<T>;
@@ -273,6 +275,7 @@ function Signal<T>(
   this._value = undefined as any;
 
   this._version = 0;
+  this._updated = 0;
   this._notified = 0;
 
   this._source = {
@@ -397,8 +400,6 @@ Object.defineProperty(Signal.prototype, 'value', {
 
       let shouldCompute = false;
 
-      this._version = globalVersion;
-
       for (
         let link: Link | null = this._source;
         link!.source !== null;
@@ -408,11 +409,13 @@ Object.defineProperty(Signal.prototype, 'value', {
 
         source.value;
 
-        if (source._version === globalVersion + 1) {
+        if (source._updated > this._version) {
           shouldCompute = true;
           break;
         }
       }
+
+      this._version = globalVersion;
 
       if (this._source.source === null) {
         shouldCompute = true;
@@ -430,7 +433,7 @@ Object.defineProperty(Signal.prototype, 'value', {
 
         if (nextValue !== this._value) {
           this._value = nextValue;
-          ++this._version;
+          this._updated = globalVersion;
         }
 
         this._source.source = null;
@@ -580,13 +583,11 @@ function sync() {
   const s = sources;
   sources = [];
 
-  globalVersion += 2;
-
-  const updated = globalVersion + 1;
+  ++globalVersion;
 
   for (let source of s) {
     source.value;
-    if (source._version === updated) notify(source);
+    if (source._updated === globalVersion) notify(source);
   }
 
   for (let target of targets) {
@@ -596,7 +597,7 @@ function sync() {
   ++batchLevel;
 
   for (let link of reactions) {
-    if (link.source?._version === updated)
+    if (link.source?._updated === globalVersion)
       (link.target as any)(link.source._value, false);
   }
 
@@ -623,6 +624,13 @@ function get<T>(signal: Signal<T>) {
       tracking._source.source = signal;
       // if (source) removeTarget(source, tracking._source);
       // addTarget(signal, tracking._source);
+      // addTarget(signal, {
+      //   source: signal,
+      //   target: tracking,
+      //   ns: null,
+      //   pt: null,
+      //   nt: null,
+      // });
     }
 
     if (!tracking._source.ns) {

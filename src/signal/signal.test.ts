@@ -265,305 +265,305 @@ describe('signal', () => {
     expect(subscriber).toHaveBeenCalledTimes(5);
   });
 
-  // it('dynamically updates dependencies (case 2)', () => {
-  //   const tumbler = signal(true);
-  //   const a = signal('a');
-  //   const b = signal('b');
-
-  //   const sum = signal((get) => {
-  //     if (get(tumbler)) return get(a) + get(b);
-  //     return get(b) + get(a);
-  //   });
-
-  //   const subSum = jest.fn();
-
-  //   sum.subscribe(subSum);
-
-  //   expect(subSum).toHaveBeenCalledTimes(1);
-
-  //   tumbler.set(false);
-  //   expect(subSum).toHaveBeenCalledTimes(2);
-
-  //   tumbler.set(true);
-  //   expect(subSum).toHaveBeenCalledTimes(3);
-  // });
-
-  // it('dynamically updates dependencies (case 3)', () => {
-  //   const spy = jest.fn();
-  //   const a = signal(11);
-  //   const b = signal(2);
-  //   const bComp = signal((get) => {
-  //     spy();
-  //     return get(b);
-  //   });
-
-  //   const value = signal((get) => {
-  //     if (get(a) > 10) return get(bComp) + get(bComp) + get(bComp);
-  //     return get(a);
-  //   });
-
-  //   value.subscribe(() => {});
-  //   expect(spy).toHaveBeenCalledTimes(1);
-
-  //   a.set(1);
-  //   expect(spy).toHaveBeenCalledTimes(1);
-
-  //   b.set(2);
-  //   b.set(3);
-  //   b.set(4);
-  //   b.set(5);
-  //   expect(spy).toHaveBeenCalledTimes(1);
-  // });
-
-  // it('dynamically updates dependencies (case 4)', () => {
-  //   let res = '';
+  it('dynamically updates dependencies (case 2)', () => {
+    const tumbler = signal(true);
+    const a = signal('a');
+    const b = signal('b');
+
+    const sum = signal((get) => {
+      if (get(tumbler)) return get(a) + get(b);
+      return get(b) + get(a);
+    });
+
+    const subSum = jest.fn();
+
+    sum.subscribe(subSum);
+
+    expect(subSum).toHaveBeenCalledTimes(1);
+
+    tumbler.set(false);
+    expect(subSum).toHaveBeenCalledTimes(2);
+
+    tumbler.set(true);
+    expect(subSum).toHaveBeenCalledTimes(3);
+  });
+
+  it('dynamically updates dependencies (case 3)', () => {
+    const spy = jest.fn();
+    const a = signal(11);
+    const b = signal(2);
+    const bComp = signal((get) => {
+      spy();
+      return get(b);
+    });
+
+    const value = signal((get) => {
+      if (get(a) > 10) return get(bComp) + get(bComp) + get(bComp);
+      return get(a);
+    });
+
+    value.subscribe(() => {});
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    a.set(1);
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    b.set(2);
+    b.set(3);
+    b.set(4);
+    b.set(5);
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+
+  it('dynamically updates dependencies (case 4)', () => {
+    let res = '';
 
-  //   const fib: (n: number) => number = (n: number) =>
-  //     n < 2 ? 1 : fib(n - 1) + fib(n - 2);
+    const fib: (n: number) => number = (n: number) =>
+      n < 2 ? 1 : fib(n - 1) + fib(n - 2);
 
-  //   const hard = (n: number, l: string) => {
-  //     res += l;
-  //     return n + fib(16);
-  //   };
+    const hard = (n: number, l: string) => {
+      res += l;
+      return n + fib(16);
+    };
 
-  //   const A = signal(0);
-  //   const B = signal(0);
-  //   const C = signal((get) => (get(A) % 2) + (get(B) % 2));
-  //   const D = signal((get) => (get(A) % 2) - (get(B) % 2));
-  //   const E = signal((get) => hard(get(C) + get(A) + get(D), 'E'));
-  //   const F = signal((get) => hard(get(D) && get(B), 'F'));
-  //   const G = signal(
-  //     (get) => get(C) + (get(C) || get(E) % 2) + get(D) + get(F)
-  //   );
-  //   const H = G.subscribe((v) => {
-  //     hard(v, 'H');
-  //   });
-  //   const I = G.subscribe(() => {});
-  //   const J = F.subscribe((v) => {
-  //     hard(v, 'J');
-  //   });
-
-  //   res = '';
+    const A = signal(0);
+    const B = signal(0);
+    const C = signal((get) => (get(A) % 2) + (get(B) % 2));
+    const D = signal((get) => (get(A) % 2) - (get(B) % 2));
+    const E = signal((get) => hard(get(C) + get(A) + get(D), 'E'));
+    const F = signal((get) => hard(get(D) && get(B), 'F'));
+    const G = signal(
+      (get) => get(C) + (get(C) || get(E) % 2) + get(D) + get(F)
+    );
+    const H = G.subscribe((v) => {
+      hard(v, 'H');
+    });
+    const I = G.subscribe(() => {});
+    const J = F.subscribe((v) => {
+      hard(v, 'J');
+    });
+
+    res = '';
 
-  //   batch(() => {
-  //     B.set(1);
-  //     A.set(3);
-  //   });
+    batch(() => {
+      B.set(1);
+      A.set(3);
+    });
 
-  //   expect(res).toBe('H');
-
-  //   res = '';
+    expect(res).toBe('H');
+
+    res = '';
 
-  //   batch(() => {
-  //     A.set(4);
-  //     B.set(2);
-  //   });
-
-  //   expect(res).toBe('EH');
-  // });
+    batch(() => {
+      A.set(4);
+      B.set(2);
+    });
+
+    expect(res).toBe('EH');
+  });
 
-  // it('dynamically updates dependencies (case 5)', () => {
-  //   const spy = jest.fn();
-
-  //   const a = signal(0);
-  //   const b = signal(0);
-  //   const c = signal(0);
+  it('dynamically updates dependencies (case 5)', () => {
+    const spy = jest.fn();
+
+    const a = signal(0);
+    const b = signal(0);
+    const c = signal(0);
 
-  //   const d = signal((get) => {
-  //     if (get(a) < 10) return get(a) + get(b);
-  //     return get(c) + get(a);
-  //   });
+    const d = signal((get) => {
+      if (get(a) < 10) return get(a) + get(b);
+      return get(c) + get(a);
+    });
 
-  //   const unsub = d.subscribe(spy);
-  //   expect(spy).toHaveBeenCalledTimes(1);
+    const unsub = d.subscribe(spy);
+    expect(spy).toHaveBeenCalledTimes(1);
 
-  //   a.set(1);
-  //   expect(spy).toHaveBeenCalledTimes(2);
+    a.set(1);
+    expect(spy).toHaveBeenCalledTimes(2);
 
-  //   b.set(1);
-  //   expect(spy).toHaveBeenCalledTimes(3);
+    b.set(1);
+    expect(spy).toHaveBeenCalledTimes(3);
 
-  //   c.set(1);
-  //   expect(spy).toHaveBeenCalledTimes(3);
+    c.set(1);
+    expect(spy).toHaveBeenCalledTimes(3);
 
-  //   unsub();
-  //   a.set(11);
-  //   expect(d.value).toBe(12);
+    unsub();
+    a.set(11);
+    expect(d.value).toBe(12);
 
-  //   d.subscribe(spy);
-  //   expect(spy).toHaveBeenCalledTimes(4);
+    d.subscribe(spy);
+    expect(spy).toHaveBeenCalledTimes(4);
 
-  //   a.set(12);
-  //   expect(spy).toHaveBeenCalledTimes(5);
+    a.set(12);
+    expect(spy).toHaveBeenCalledTimes(5);
 
-  //   b.set(2);
-  //   expect(spy).toHaveBeenCalledTimes(5);
+    b.set(2);
+    expect(spy).toHaveBeenCalledTimes(5);
 
-  //   c.set(2);
-  //   expect(spy).toHaveBeenCalledTimes(6);
-  // });
+    c.set(2);
+    expect(spy).toHaveBeenCalledTimes(6);
+  });
 
-  // it('dynamically updates dependencies (case 6)', () => {
-  //   const spy = jest.fn();
+  it('dynamically updates dependencies (case 6)', () => {
+    const spy = jest.fn();
 
-  //   let tumbler = true;
+    let tumbler = true;
 
-  //   const a = signal(0);
-  //   const b = signal(0);
-  //   const c = signal(0);
+    const a = signal(0);
+    const b = signal(0);
+    const c = signal(0);
 
-  //   const d = signal((get) => {
-  //     if (tumbler) return get(a) + get(b) + get(c);
-  //     return -1;
-  //   });
+    const d = signal((get) => {
+      if (tumbler) return get(a) + get(b) + get(c);
+      return -1;
+    });
 
-  //   const unsub = d.subscribe(spy);
-  //   expect(spy).toHaveBeenCalledTimes(1);
+    const unsub = d.subscribe(spy);
+    expect(spy).toHaveBeenCalledTimes(1);
 
-  //   tumbler = false;
-  //   a.set(1);
-  //   expect(spy).toHaveBeenCalledTimes(2);
+    tumbler = false;
+    a.set(1);
+    expect(spy).toHaveBeenCalledTimes(2);
 
-  //   a.set(2);
-  //   expect(spy).toHaveBeenCalledTimes(2);
+    a.set(2);
+    expect(spy).toHaveBeenCalledTimes(2);
 
-  //   unsub();
-  //   a.set(3);
-  //   expect(d.value).toBe(-1); // d is frozen after it has lost its dependencies
-  // });
+    unsub();
+    a.set(3);
+    expect(d.value).toBe(-1); // d is frozen after it has lost its dependencies
+  });
 
-  // it('does not recalc a dependant if it is not active', () => {
-  //   const bSpy = jest.fn();
-  //   const cSpy = jest.fn();
+  it('does not recalc a dependant if it is not active', () => {
+    const bSpy = jest.fn();
+    const cSpy = jest.fn();
 
-  //   const a = signal(1);
+    const a = signal(1);
 
-  //   const b = signal((get) => {
-  //     bSpy();
-  //     return get(a) * 2;
-  //   });
+    const b = signal((get) => {
+      bSpy();
+      return get(a) * 2;
+    });
 
-  //   const c = signal((get) => {
-  //     cSpy();
-  //     return get(b) * 2;
-  //   });
+    const c = signal((get) => {
+      cSpy();
+      return get(b) * 2;
+    });
 
-  //   c.value;
-  //   expect(bSpy).toHaveBeenCalledTimes(1);
-  //   expect(cSpy).toHaveBeenCalledTimes(1);
+    c.value;
+    expect(bSpy).toHaveBeenCalledTimes(1);
+    expect(cSpy).toHaveBeenCalledTimes(1);
 
-  //   a.set(2);
-  //   expect(bSpy).toHaveBeenCalledTimes(1);
-  //   expect(cSpy).toHaveBeenCalledTimes(1);
+    a.set(2);
+    expect(bSpy).toHaveBeenCalledTimes(1);
+    expect(cSpy).toHaveBeenCalledTimes(1);
 
-  //   b.subscribe(() => {});
-  //   expect(bSpy).toHaveBeenCalledTimes(2);
-  //   expect(cSpy).toHaveBeenCalledTimes(1);
+    b.subscribe(() => {});
+    expect(bSpy).toHaveBeenCalledTimes(2);
+    expect(cSpy).toHaveBeenCalledTimes(1);
 
-  //   a.set(3);
-  //   expect(bSpy).toHaveBeenCalledTimes(3);
-  //   expect(cSpy).toHaveBeenCalledTimes(1);
-  // });
+    a.set(3);
+    expect(bSpy).toHaveBeenCalledTimes(3);
+    expect(cSpy).toHaveBeenCalledTimes(1);
+  });
 
-  // it('does not recalc a dependant if it is not active (case 2)', () => {
-  //   const bSpy = jest.fn();
-  //   const cSpy = jest.fn();
+  it('does not recalc a dependant if it is not active (case 2)', () => {
+    const bSpy = jest.fn();
+    const cSpy = jest.fn();
 
-  //   const a = signal(1);
+    const a = signal(1);
 
-  //   const b = signal((get) => {
-  //     bSpy();
-  //     return get(a) * 2;
-  //   });
+    const b = signal((get) => {
+      bSpy();
+      return get(a) * 2;
+    });
 
-  //   const c = signal((get) => {
-  //     cSpy();
-  //     return get(b) * 2;
-  //   });
+    const c = signal((get) => {
+      cSpy();
+      return get(b) * 2;
+    });
 
-  //   c.value;
-  //   c.value;
-  //   expect(bSpy).toHaveBeenCalledTimes(1);
-  //   expect(cSpy).toHaveBeenCalledTimes(1);
+    c.value;
+    c.value;
+    expect(bSpy).toHaveBeenCalledTimes(1);
+    expect(cSpy).toHaveBeenCalledTimes(1);
 
-  //   a.set(2);
-  //   expect(bSpy).toHaveBeenCalledTimes(1);
-  //   expect(cSpy).toHaveBeenCalledTimes(1);
+    a.set(2);
+    expect(bSpy).toHaveBeenCalledTimes(1);
+    expect(cSpy).toHaveBeenCalledTimes(1);
 
-  //   b.subscribe(() => {});
-  //   expect(bSpy).toHaveBeenCalledTimes(2);
-  //   expect(cSpy).toHaveBeenCalledTimes(1);
+    b.subscribe(() => {});
+    expect(bSpy).toHaveBeenCalledTimes(2);
+    expect(cSpy).toHaveBeenCalledTimes(1);
 
-  //   a.set(3);
-  //   expect(bSpy).toHaveBeenCalledTimes(3);
-  //   expect(cSpy).toHaveBeenCalledTimes(1);
-  // });
+    a.set(3);
+    expect(bSpy).toHaveBeenCalledTimes(3);
+    expect(cSpy).toHaveBeenCalledTimes(1);
+  });
 
-  // it('does not recalc a dependant if it is not active (case 3)', () => {
-  //   const bSpy = jest.fn();
-  //   const cSpy = jest.fn();
+  it('does not recalc a dependant if it is not active (case 3)', () => {
+    const bSpy = jest.fn();
+    const cSpy = jest.fn();
 
-  //   const a = signal(1);
+    const a = signal(1);
 
-  //   const b = signal((get) => {
-  //     bSpy();
-  //     return get(a) * 2;
-  //   });
+    const b = signal((get) => {
+      bSpy();
+      return get(a) * 2;
+    });
 
-  //   const c = signal((get) => {
-  //     cSpy();
-  //     return get(b) * 2;
-  //   });
+    const c = signal((get) => {
+      cSpy();
+      return get(b) * 2;
+    });
 
-  //   c.value;
-  //   c.value;
-  //   a.set(0);
-  //   c.value;
+    c.value;
+    c.value;
+    a.set(0);
+    c.value;
 
-  //   expect(bSpy).toHaveBeenCalledTimes(2);
-  //   expect(cSpy).toHaveBeenCalledTimes(2);
+    expect(bSpy).toHaveBeenCalledTimes(2);
+    expect(cSpy).toHaveBeenCalledTimes(2);
 
-  //   a.set(2);
-  //   expect(bSpy).toHaveBeenCalledTimes(2);
-  //   expect(cSpy).toHaveBeenCalledTimes(2);
+    a.set(2);
+    expect(bSpy).toHaveBeenCalledTimes(2);
+    expect(cSpy).toHaveBeenCalledTimes(2);
 
-  //   b.subscribe(() => {});
-  //   expect(bSpy).toHaveBeenCalledTimes(3);
-  //   expect(cSpy).toHaveBeenCalledTimes(2);
+    b.subscribe(() => {});
+    expect(bSpy).toHaveBeenCalledTimes(3);
+    expect(cSpy).toHaveBeenCalledTimes(2);
 
-  //   a.set(3);
-  //   expect(bSpy).toHaveBeenCalledTimes(4);
-  //   expect(cSpy).toHaveBeenCalledTimes(2);
-  // });
+    a.set(3);
+    expect(bSpy).toHaveBeenCalledTimes(4);
+    expect(cSpy).toHaveBeenCalledTimes(2);
+  });
 
-  // it('updates a dependent value after multiple dependency recalculations', () => {
-  //   const a = signal(0);
-  //   const b = signal((get) => get(a));
+  it('updates a dependent value after multiple dependency recalculations', () => {
+    const a = signal(0);
+    const b = signal((get) => get(a));
 
-  //   expect(b.value).toBe(0);
+    expect(b.value).toBe(0);
 
-  //   a.set(1);
-  //   a.value;
-  //   a.set(1);
-  //   a.value;
+    a.set(1);
+    a.value;
+    a.set(1);
+    a.value;
 
-  //   expect(b.value).toBe(1);
-  // });
+    expect(b.value).toBe(1);
+  });
 
-  // it('updates a dependent value after emitting a dependency', () => {
-  //   const a = signal(0);
-  //   const b = signal((get) => get(a));
-  //   const c = signal((get) => get(b));
-  //   const d = signal((get) => get(b));
+  it('updates a dependent value after emitting a dependency', () => {
+    const a = signal(0);
+    const b = signal((get) => get(a));
+    const c = signal((get) => get(b));
+    const d = signal((get) => get(b));
 
-  //   c.value;
-  //   d.subscribe(() => {});
+    c.value;
+    d.subscribe(() => {});
 
-  //   a.set(1);
-  //   a.emit(1);
+    a.set(1);
+    a.emit(1);
 
-  //   expect(c.value).toBe(1);
-  // });
+    expect(c.value).toBe(1);
+  });
 
   it('does not make redundant computations on pulling', () => {
     const spy = jest.fn();
@@ -620,23 +620,23 @@ describe('signal', () => {
     expect(spy).toHaveBeenCalledTimes(3);
   });
 
-  // it('does not make redundant computations on scheduled run', () => {
-  //   const spy = jest.fn();
+  it('does not make redundant computations on scheduled run', () => {
+    const spy = jest.fn();
 
-  //   const a = signal(0);
-  //   const b = signal(0);
-  //   const c = signal((get) => {
-  //     spy();
-  //     return get(a);
-  //   });
-  //   const d = signal((get) => get(c) + get(b));
+    const a = signal(0);
+    const b = signal(0);
+    const c = signal((get) => {
+      spy();
+      return get(a);
+    });
+    const d = signal((get) => get(c) + get(b));
 
-  //   d.subscribe(() => {});
-  //   expect(spy).toHaveBeenCalledTimes(1);
+    d.subscribe(() => {});
+    expect(spy).toHaveBeenCalledTimes(1);
 
-  //   b.set(1);
-  //   expect(spy).toHaveBeenCalledTimes(1);
-  // });
+    b.set(1);
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
 
   it('notifies intermidiate signal subscribers', () => {
     const count = signal(0);

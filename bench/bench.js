@@ -411,45 +411,29 @@ function init() {
   }
 }
 
-const a = v2.signal(1);
-const b = v2.signal(2);
-const c = v2.signal(3);
-const d = v2.signal(4);
-
-const ab = v2.signal((get) => {
-  console.log('ab');
-  return get(a) * get(b);
-});
-
-const ab2 = v2.signal((get) => {
-  console.log('ab2');
-  return get(ab) * 2;
-});
-
-const cd = v2.signal((get) => {
-  console.log('cd');
-  return get(c) * get(d);
-});
-
-const cd2 = v2.signal((get) => {
-  console.log('cd2');
-  return get(cd) * 2;
-});
-
-cd2.subscribe((v) => console.log('CD2 ' + v));
-
-window.test = { a, b, c, d, ab, cd, ab2, cd2 };
-
 const counter = v2.signal(0);
-const gt5 = v2.signal((get) => get(counter) > 5);
+const tumbler = v2.signal(false);
+const x2Counter = v2.signal((get) => get(counter) * 2);
+const result = v2.signal((get) => (get(tumbler) ? get(x2Counter) : 'FALSE'), {
+  name: 'result',
+});
 
-gt5.subscribe((v) => console.log(v));
+result.subscribe((v) => console.log('value is', v), false);
 
 counter.set(1);
-counter.set(2);
+
+batch(() => {
+  tumbler.set(true);
+  counter.set(2);
+});
+
+tumbler.set(false);
 counter.set(3);
 counter.set(4);
+tumbler.set(true);
+
 counter.set(5);
-counter.set(6);
-counter.set(7);
-counter.set(8);
+// console.log(result.value, result.value === 10);
+
+console.log(result);
+// expect(reaction).toHaveBeenCalledTimes(3);
