@@ -245,7 +245,7 @@ const userId = signal<string>();
 console.log(userId.value);
 // > undefined
 
-userId.set(123);
+userId.set('123');
 console.log(userId.value);
 // > 123
 ```
@@ -270,7 +270,7 @@ const nullableUserId = signal<string | null>(null);
 console.log(nullableUserId.value);
 // > null
 
-nullableUserId.set(123);
+nullableUserId.set('123');
 console.log(nullableUserId.value);
 // > 123
 
