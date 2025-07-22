@@ -45,6 +45,7 @@ export type Subscriber<T> = (value: T, immediate: boolean) => void;
 
 /**
  * A function that calculates the new value of the signal.
+ * If the return value is undefined, the current value is preserved.
  * @param get Tracking function to get values of other signals.
  * @param scheduled Determines if the recalculation was caused by a dependency update.
  * @returns The value of the signal.
@@ -336,7 +337,7 @@ declare class WritableSignal<T> extends Signal<T> {
    * Sets the signal value and notify dependents if it was changed.
    * @param value The new value of the signal.
    */
-  set(value: T): void;
+  set(value: Exclude<T, undefined>): void;
 
   /**
    * Force notifies dependents.
@@ -347,11 +348,13 @@ declare class WritableSignal<T> extends Signal<T> {
    * Sets the signal value and force notifies dependents.
    * @param value The new value of the signal.
    */
-  emit(value: T): void;
+  emit(value: Exclude<T, undefined>): void;
 
   /**
    * Updates the signal value and force notifies dependents.
-   * @param updateFn A function that updates the current value or returns a new value.
+   * @param updateFn A function that receives the current value.
+   * It may either mutate the value in-place or return a new one.
+   * If the return value is undefined, the current value is preserved.
    */
   update(updateFn: (lastValue: T) => T | void): void;
 }
@@ -452,7 +455,7 @@ function update<T>(
 ) {
   const value = updateFn(this._nextValue);
   if (value === undefined) this.emit();
-  else this.emit(value);
+  else this.emit(value as any);
 }
 
 function notify(signal: Signal<any>) {
