@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.40.3](https://github.com/art-bazhin/spred/compare/v0.40.2...v0.40.3) (2025-07-22)
+
+
+### Features
+
+* improve set and emit method typings ([8d46c9d](https://github.com/art-bazhin/spred/commit/8d46c9d79022ad7ac19486d33d76f2d08d49840a))
+
+
+### Docs
+
+* add undefined assignment case, fix typos ([dae08b1](https://github.com/art-bazhin/spred/commit/dae08b1e139069f4b5cd94a449e27f3718089e97))
+* rebuild docs ([9c058aa](https://github.com/art-bazhin/spred/commit/9c058aa7f2360ef5f7692a047e45bf4655ed8e6c))
+
 ### [0.40.2](https://github.com/art-bazhin/spred/compare/v0.40.1...v0.40.2) (2024-11-04)
 
 
