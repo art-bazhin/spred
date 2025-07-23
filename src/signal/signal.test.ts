@@ -360,6 +360,24 @@ describe('signal', () => {
     });
 
     expect(res).toBe('EH');
+
+    res = '';
+
+    batch(() => {
+      A.set(3);
+      B.set(1);
+    });
+
+    expect(res).toBe('H');
+
+    res = '';
+
+    batch(() => {
+      A.set(4);
+      B.set(2);
+    });
+
+    expect(res).toBe('EH');
   });
 
   it('dynamically updates dependencies (case 5)', () => {

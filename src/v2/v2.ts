@@ -361,14 +361,14 @@ function addTarget(signal: Signal<any>, link: Link) {
 }
 
 function removeTarget(signal: Signal<any>, link: Link) {
-  if (link.pt) {
-    link.pt.nt = link.nt;
-    link.pt = null;
-    link.nt = null;
-    return;
-  }
+  if (signal._target === link) signal._target = link.pt;
+  if (link.pt) link.pt.nt = link.nt;
+  if (link.nt) link.nt.pt = link.pt;
 
-  signal._target = null;
+  link.pt = null;
+  link.nt = null;
+
+  if (signal._target) return;
 
   for (
     let link: Link | null = signal._source;
@@ -434,6 +434,14 @@ Object.defineProperty(Signal.prototype, 'value', {
         if (nextValue !== this._value) {
           this._value = nextValue;
           this._updated = globalVersion;
+        }
+
+        for (
+          let link: Link | null = this._source;
+          link!.source !== null;
+          link = link!.ns
+        ) {
+          removeTarget(link!.source!, link!);
         }
 
         this._source.source = null;
@@ -533,6 +541,7 @@ function notify(signal: Signal<any>) {
 
   for (let link: Link | null = signal._target; link !== null; link = link.pt) {
     const target = link.target;
+
     if (typeof target === 'function') {
       reactions.push(link);
 
@@ -621,16 +630,9 @@ function get<T>(signal: Signal<T>) {
     const source = tracking._source.source;
 
     if (source !== signal) {
+      if (source) removeTarget(source, tracking._source);
       tracking._source.source = signal;
-      // if (source) removeTarget(source, tracking._source);
-      // addTarget(signal, tracking._source);
-      // addTarget(signal, {
-      //   source: signal,
-      //   target: tracking,
-      //   ns: null,
-      //   pt: null,
-      //   nt: null,
-      // });
+      if (tracking._target) addTarget(signal, tracking._source);
     }
 
     if (!tracking._source.ns) {
