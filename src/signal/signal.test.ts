@@ -151,6 +151,23 @@ describe('signal', () => {
     expect(spy).toHaveBeenCalledTimes(1);
   });
 
+  it('runs subscribers in the right order', () => {
+    const a = signal(1);
+    const b = signal((get) => get(a));
+    const c = signal((get) => get(b));
+
+    const res: string[] = [];
+
+    b.subscribe((v) => res.push('b' + v));
+    b.subscribe((v) => res.push('bb' + v));
+    a.subscribe((v) => res.push('a' + v));
+    c.subscribe((v) => res.push('c' + v));
+
+    a.set(2);
+
+    expect(res.join(' ')).toBe('b1 bb1 a1 c1 a2 b2 bb2 c2');
+  });
+
   it('handles diamond problem', () => {
     /*
      *            ┌─────┐
