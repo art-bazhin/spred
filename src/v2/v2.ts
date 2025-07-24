@@ -1,10 +1,11 @@
 let globalVersion = 1;
-let tracking: Signal<any> | null = null;
+let computing: Signal<any> | null = null;
 let batchLevel = 0;
+let checkLevel = 0;
 
 let sources: WritableSignal<any>[] = [];
-let targets: Signal<any>[] = [];
 let reactions: Link[] = [];
+let signalsToDeactivate: Signal<any>[] = [];
 
 interface Link {
   source: Signal<any> | null;
@@ -25,6 +26,8 @@ const OPTIONS: any = {
   onCleanup: 1,
   onException: 1,
 };
+
+const NO_EXCEPTION = {};
 
 /**
  * A function that returns the value of the passed signal and handles dependency tracking.
@@ -248,7 +251,9 @@ declare class Signal<T> {
   /** @internal */
   _source: Link;
   /** @internal */
-  _target: Link | null;
+  _firstTarget: Link | null;
+  /** @internal */
+  _lastTarget: Link | null;
 
   /** @internal */
   equal: SignalOptions<T>['equal'];
@@ -278,6 +283,8 @@ function Signal<T>(
   this._updated = 0;
   this._notified = 0;
 
+  this._exception = NO_EXCEPTION;
+
   this._source = {
     source: null,
     target: this,
@@ -286,7 +293,8 @@ function Signal<T>(
     nt: null,
   };
 
-  this._target = null;
+  this._firstTarget = null;
+  this._lastTarget = null;
 
   this._compute = compute;
 
@@ -295,6 +303,8 @@ function Signal<T>(
       if (OPTIONS[key]) (this as any)[key] = (options as any)[key];
     }
   }
+
+  if (this._compute) this.onCreate?.(this._value);
 }
 
 Signal.prototype.subscribe = function <T>(
@@ -302,11 +312,11 @@ Signal.prototype.subscribe = function <T>(
   subscriber: Subscriber<T>,
   immediate = true
 ) {
-  if (this._version === -1) this._version = 0;
+  // if (this._version === -1) this._version = 0;
 
-  const tempTracking = tracking;
+  const tempComputing = computing;
 
-  tracking = null;
+  computing = null;
   ++batchLevel;
 
   const value = this.value;
@@ -321,9 +331,15 @@ Signal.prototype.subscribe = function <T>(
 
   addTarget(this, link);
 
-  if (immediate) subscriber(value, true);
+  if (immediate && this._exception === NO_EXCEPTION) {
+    try {
+      subscriber(value, true);
+    } catch (e) {
+      config.logException?.(e);
+    }
+  }
 
-  tracking = tempTracking;
+  computing = tempComputing;
   --batchLevel;
 
   sync();
@@ -334,20 +350,22 @@ Signal.prototype.subscribe = function <T>(
     if (source === null) return;
 
     link.source = null;
-    removeTarget(source, link);
+    removeTarget(source, link, true);
   };
 };
 
 function addTarget(signal: Signal<any>, link: Link) {
-  let lt = signal._target;
+  let lt = signal._lastTarget;
 
   link.pt = lt;
-  signal._target = link;
+  signal._lastTarget = link;
 
   if (lt) {
     lt.nt = link;
     return;
   }
+
+  signal._firstTarget = link;
 
   for (
     let link: Link | null = signal._source;
@@ -357,25 +375,39 @@ function addTarget(signal: Signal<any>, link: Link) {
     addTarget(link!.source!, link!);
   }
 
-  signal.onActivate?.(signal._value);
+  const onDeactivate = signal.onActivate?.(signal._value);
+
+  if (typeof onDeactivate === 'function') {
+    signal.onDeactivate = onDeactivate;
+  }
 }
 
-function removeTarget(signal: Signal<any>, link: Link) {
-  if (signal._target === link) signal._target = link.pt;
+function removeTarget(
+  signal: Signal<any>,
+  link: Link,
+  deactivateImmediately?: boolean
+) {
+  if (signal._firstTarget === link) signal._firstTarget = link.nt;
+  if (signal._lastTarget === link) signal._lastTarget = link.pt;
   if (link.pt) link.pt.nt = link.nt;
   if (link.nt) link.nt.pt = link.pt;
 
   link.pt = null;
   link.nt = null;
 
-  if (signal._target) return;
+  if (deactivateImmediately) deactivate(signal);
+  else signalsToDeactivate.push(signal);
+}
+
+function deactivate(signal: Signal<any>) {
+  if (signal._lastTarget) return;
 
   for (
     let link: Link | null = signal._source;
     link!.source !== null;
     link = link!.ns
   ) {
-    removeTarget(link!.source!, link!);
+    removeTarget(link!.source!, link!, true);
   }
 
   signal.onCleanup?.(signal._value);
@@ -396,44 +428,70 @@ Signal.prototype.equal = Object.is;
 Object.defineProperty(Signal.prototype, 'value', {
   get() {
     if (this._version < globalVersion) {
-      if (this._version === -1) return (this as any)._nextValue;
+      // if (this._version === -1) return (this as any)._nextValue;
 
       let shouldCompute = false;
-
-      for (
-        let link: Link | null = this._source;
-        link!.source !== null;
-        link = link!.ns
-      ) {
-        const source = link!.source!;
-
-        source.value;
-
-        if (source._updated > this._version) {
-          shouldCompute = true;
-          break;
-        }
-      }
-
-      this._version = globalVersion;
+      let sourceException: any = NO_EXCEPTION;
 
       if (this._source.source === null) {
         shouldCompute = true;
       }
 
+      ++checkLevel;
+
+      try {
+        for (
+          let link: Link | null = this._source;
+          link!.source !== null;
+          link = link!.ns
+        ) {
+          const source = link!.source!;
+
+          source.value;
+
+          if (source._updated > this._version) {
+            shouldCompute = true;
+            break;
+          }
+        }
+      } catch (e) {
+        sourceException = e;
+      }
+
+      --checkLevel;
+
+      if (sourceException === NO_EXCEPTION) {
+        if (this._exception !== NO_EXCEPTION) shouldCompute = true;
+      } else {
+        this._exception = sourceException;
+        shouldCompute = false;
+      }
+
+      this._version = globalVersion;
+
       if (shouldCompute) {
-        const tempTracking = tracking;
+        const tempComputing = computing;
         const firstSource = this?._source;
 
-        tracking = this;
+        this._exception = NO_EXCEPTION;
+        computing = this;
 
-        const nextValue = this._compute
-          ? this._compute!(get)
-          : (this as any)._nextValue;
+        if (this._compute) this.onCleanup?.(this._value);
 
-        if (nextValue !== this._value) {
-          this._value = nextValue;
-          this._updated = globalVersion;
+        try {
+          const nextValue = this._compute
+            ? this._compute!(get)
+            : (this as any)._nextValue;
+
+          if (nextValue !== this._value) {
+            const prevValue = this._value;
+
+            this._value = nextValue;
+            this._updated = globalVersion;
+            this.onUpdate?.(nextValue, prevValue);
+          }
+        } catch (e) {
+          this._exception = e;
         }
 
         for (
@@ -448,8 +506,13 @@ Object.defineProperty(Signal.prototype, 'value', {
         this._source.ns = null;
         this._source = firstSource;
 
-        tracking = tempTracking;
+        computing = tempComputing;
       }
+    }
+
+    if (this._exception !== NO_EXCEPTION) {
+      if (computing || checkLevel) throw this._exception;
+      else config.logException?.(this._exception);
     }
 
     return this._value;
@@ -502,8 +565,11 @@ function WritableSignal<T>(
 ) {
   Signal.call(this as any, undefined, options as any);
 
+  this._value = value;
   this._nextValue = value;
-  this._version = -1;
+  // this._version = -1;
+
+  this.onCreate?.(this._value);
 }
 
 WritableSignal.prototype = new (Signal as any)();
@@ -511,7 +577,8 @@ WritableSignal.prototype.constructor = WritableSignal;
 
 WritableSignal.prototype.set = function <T>(value: T) {
   this._nextValue = value;
-  if (this._version === -1) return;
+  // if (this._version === -1) return;
+
   sources.push(this);
   sync();
 };
@@ -537,19 +604,24 @@ function notify(signal: Signal<any>) {
   if (signal._notified === globalVersion) return;
   signal._notified = globalVersion;
 
-  let notInTargets = true;
-
-  for (let link: Link | null = signal._target; link !== null; link = link.pt) {
+  for (
+    let link: Link | null = signal._firstTarget;
+    link !== null;
+    link = link.nt
+  ) {
     const target = link.target;
 
-    if (typeof target === 'function') {
-      reactions.push(link);
+    if (typeof target === 'function') reactions.push(link);
+  }
 
-      if (notInTargets) {
-        targets.push(signal);
-        notInTargets = false;
-      }
-    } else notify(target);
+  for (
+    let link: Link | null = signal._firstTarget;
+    link !== null;
+    link = link.nt
+  ) {
+    const target = link.target;
+
+    if (typeof target !== 'function') notify(target);
   }
 }
 
@@ -593,27 +665,39 @@ function sync() {
   sources = [];
 
   ++globalVersion;
+  ++batchLevel;
 
   for (let source of s) {
     source.value;
     if (source._updated === globalVersion) notify(source);
   }
 
-  for (let target of targets) {
-    target.value;
+  for (let link of reactions) {
+    const signal = link.source;
+
+    if (signal) signal.value;
   }
 
-  ++batchLevel;
+  for (let signal of signalsToDeactivate) deactivate(signal);
 
   for (let link of reactions) {
-    if (link.source?._updated === globalVersion)
-      (link.target as any)(link.source._value, false);
+    const signal = link.source;
+
+    if (!signal) return;
+
+    if (signal._updated === globalVersion) {
+      try {
+        (link.target as any)(signal._value, false);
+      } catch (e) {
+        config.logException?.(e);
+      }
+    }
   }
 
   --batchLevel;
 
-  targets = [];
   reactions = [];
+  signalsToDeactivate = [];
 
   sync();
 }
@@ -626,28 +710,31 @@ export function batch(cb: () => void) {
 }
 
 function get<T>(signal: Signal<T>) {
-  if (tracking) {
-    const source = tracking._source.source;
+  if (computing) {
+    const source = computing._source.source;
 
     if (source !== signal) {
-      if (source) removeTarget(source, tracking._source);
-      tracking._source.source = signal;
-      if (tracking._target) addTarget(signal, tracking._source);
+      if (computing._lastTarget) {
+        if (source) removeTarget(source, computing._source);
+        addTarget(signal, computing._source);
+      }
+
+      computing._source.source = signal;
     }
 
-    if (!tracking._source.ns) {
-      tracking._source.ns = {
+    if (!computing._source.ns) {
+      computing._source.ns = {
         source: null,
-        target: tracking,
+        target: computing,
         ns: null,
         pt: null,
         nt: null,
       };
     }
 
-    tracking._source = tracking._source.ns;
+    computing._source = computing._source.ns;
 
-    if (signal._version === -1) signal._version = 0;
+    // if (signal._version === -1) signal._version = 0;
   }
 
   return signal.value;
@@ -702,4 +789,7 @@ export const v2 = {
   WritableSignal,
   signal,
   batch,
+  configure,
 };
+
+export { Signal, WritableSignal };
