@@ -37,7 +37,7 @@ const alienBatch = (cb) => {
   endBatch();
 };
 
-const NUMBER_OF_ITERATIONS = 100_000;
+const NUMBER_OF_ITERATIONS = 1000_000;
 
 const res = [];
 

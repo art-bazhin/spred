@@ -1,33 +1,38 @@
 import { config } from '../config/config';
 import { CircularDependencyError } from '../common/errors';
-import {
-  CHANGED,
-  FORCED,
-  FROZEN,
-  HAS_EXCEPTION,
-  NOTIFIED,
-  COMPUTING,
-  TRACKED,
-} from '../common/constants';
-
-interface ListNode<T> {
-  value: T;
-  prev: ListNode<T> | null;
-  next: ListNode<T> | null;
-  link?: ListNode<T> | null;
-}
 
 let computing: Signal<any> | null = null;
-let scope: Signal<any> | null = null;
+let scope: any = null;
 
+let globalVersion = 1;
 let batchLevel = 0;
+let checkLevel = 0;
 
-let providers: Signal<any>[] = [];
-let consumers: Signal<any>[] = [];
-let notifiers: Signal<any>[] = [];
-let staleNodes: { value: Signal<any>; link: ListNode<any> }[] = [];
+let triggeredWritables: WritableSignal<any>[] = [];
+let linksToSubscribers: Link[] = [];
+let signalsToDeactivate: Signal<any>[] = [];
 
-let version = 1;
+interface Link {
+  source: Signal<any> | null;
+  target: Signal<any> | Subscriber<any>;
+
+  ns: Link | null;
+  pt: Link | null;
+  nt: Link | null;
+}
+
+const OPTIONS: any = {
+  name: 1,
+  equal: 1,
+  onCreate: 1,
+  onActivate: 1,
+  onDeactivate: 1,
+  onUpdate: 1,
+  onCleanup: 1,
+  onException: 1,
+};
+
+const NO_EXCEPTION = {};
 
 /**
  * A function that returns the value of the passed signal and handles dependency tracking.
@@ -45,7 +50,6 @@ export type Subscriber<T> = (value: T, immediate: boolean) => void;
 
 /**
  * A function that calculates the new value of the signal.
- * If the return value is undefined, the current value is preserved.
  * @param get Tracking function to get values of other signals.
  * @param scheduled Determines if the recalculation was caused by a dependency update.
  * @returns The value of the signal.
@@ -240,29 +244,23 @@ declare class Signal<T> {
   /** @internal */
   _value: T;
   /** @internal */
-  _nextValue: T;
+  _version: number;
+  /** @internal */
+  _updated: number;
+  /** @internal */
+  _notified: number;
   /** @internal */
   _compute?: Computation<T>;
   /** @internal */
-  _flags: number;
-  /** @internal */
   _exception?: unknown;
   /** @internal */
-  _version: number;
+  _source: Link;
   /** @internal */
-  _subs: number;
+  _firstTarget: Link | null;
   /** @internal */
-  _firstSource: ListNode<Signal<any>> | null;
+  _lastTarget: Link | null;
   /** @internal */
-  _lastSource: ListNode<Signal<any>> | null;
-  /** @internal */
-  _firstTarget: ListNode<Signal<any> | Subscriber<any>> | null;
-  /** @internal */
-  _lastTarget: ListNode<Signal<any> | Subscriber<any>> | null;
-  /** @internal */
-  _firstChild?: ListNode<Signal<any> | (() => any)> | null;
-  /** @internal */
-  _lastChild?: ListNode<Signal<any> | (() => any)> | null;
+  _children?: (Signal<any> | (() => void))[];
 
   /** @internal */
   equal: SignalOptions<T>['equal'];
@@ -289,36 +287,279 @@ function Signal<T>(
   const parent = computing || scope;
 
   this._value = undefined as any;
-  this._nextValue = undefined as any;
-  this._compute = compute;
-  this._flags = 0;
-  this._subs = 0;
+
   this._version = 0;
-  this._firstSource = null;
-  this._lastSource = null;
+  this._updated = 0;
+  this._notified = 0;
+
+  this._exception = NO_EXCEPTION;
+
+  this._source = {
+    source: null,
+    target: this,
+    ns: null,
+    pt: null,
+    nt: null,
+  };
+
   this._firstTarget = null;
   this._lastTarget = null;
 
+  this._compute = compute;
+
   if (options) {
     for (let key in options) {
-      (this as any)[key] = (options as any)[key];
-    }
-
-    if (this.onCreate && this._compute) {
-      runLifecycle(this, 'onCreate', this._value);
+      if (OPTIONS[key]) (this as any)[key] = (options as any)[key];
     }
   }
 
-  if (parent) createChildNode(parent, this);
+  if (compute) this.onCreate?.(this._value);
+
+  if (parent) addChild(parent, this);
 }
 
-Signal.prototype.subscribe = subscribe;
-Signal.prototype.pipe = pipe;
+Signal.prototype.subscribe = function <T>(
+  this: Signal<T>,
+  subscriber: Subscriber<T>,
+  immediate = true
+) {
+  ++batchLevel;
+
+  const value = this.value;
+
+  const link: Link = {
+    source: this,
+    target: subscriber,
+    ns: null,
+    pt: null,
+    nt: null,
+  };
+
+  addTarget(this, link);
+
+  if (immediate && this._exception === NO_EXCEPTION) {
+    try {
+      subscriber(value, true);
+    } catch (e) {
+      config.logException?.(e);
+    }
+  }
+
+  --batchLevel;
+
+  sync();
+
+  const dispose = () => {
+    const source = link.source;
+
+    if (source === null) return;
+
+    link.source = null;
+    removeTarget(source, link, true);
+  };
+
+  const parent = computing || scope;
+
+  if (parent) addChild(parent, dispose);
+
+  return dispose;
+};
+
+function addTarget(signal: Signal<any>, link: Link) {
+  let lt = signal._lastTarget;
+
+  link.pt = lt;
+  signal._lastTarget = link;
+
+  if (lt) {
+    lt.nt = link;
+    return;
+  }
+
+  signal._firstTarget = link;
+
+  for (
+    let link: Link | null = signal._source;
+    link!.source !== null;
+    link = link!.ns
+  ) {
+    addTarget(link!.source!, link!);
+  }
+
+  const onDeactivate = signal.onActivate?.(signal._value);
+
+  if (typeof onDeactivate === 'function') {
+    signal.onDeactivate = onDeactivate;
+  }
+}
+
+function removeTarget(
+  signal: Signal<any>,
+  link: Link,
+  deactivateImmediately?: boolean
+) {
+  if (signal._firstTarget === link) signal._firstTarget = link.nt;
+  if (signal._lastTarget === link) signal._lastTarget = link.pt;
+  if (link.pt) link.pt.nt = link.nt;
+  if (link.nt) link.nt.pt = link.pt;
+
+  link.pt = null;
+  link.nt = null;
+
+  if (deactivateImmediately) deactivate(signal);
+  else signalsToDeactivate.push(signal);
+}
+
+function deactivate(signal: Signal<any>) {
+  if (signal._lastTarget) return;
+
+  for (
+    let link: Link | null = signal._source;
+    link!.source !== null;
+    link = link!.ns
+  ) {
+    removeTarget(link!.source!, link!, true);
+  }
+
+  signal.onCleanup?.(signal._value);
+  signal.onDeactivate?.(signal._value);
+}
+
+function addChild(parent: Signal<any>, child: Signal<any> | (() => void)) {
+  if (!parent._children) parent._children = [];
+  parent._children.push(child);
+}
+
+function cleanupChildren(parent: Signal<any>) {
+  for (let child of parent._children!) {
+    if (typeof child === 'function') child();
+    else if (child._children) cleanupChildren(child);
+  }
+
+  parent._children = [];
+}
+
+Signal.prototype.pipe = function (
+  this: Signal<any>,
+  ...operators: Operator<any, any>[]
+) {
+  let result = this;
+  for (let op of operators) result = op(result);
+  return result;
+};
+
 Signal.prototype.equal = Object.is;
 
 Object.defineProperty(Signal.prototype, 'value', {
   get() {
-    return get(this, false);
+    if (this._version < 0) {
+      throw new CircularDependencyError();
+    }
+
+    if (
+      this._version < globalVersion &&
+      (computing ||
+        !this._firstTarget ||
+        !this._compute ||
+        this._notified === globalVersion)
+    ) {
+      const version = this._version;
+      let shouldCompute = false;
+
+      this._version = -1;
+
+      if (this._source.source === null) {
+        shouldCompute = true;
+      }
+
+      ++checkLevel;
+
+      try {
+        for (
+          let link: Link | null = this._source;
+          link!.source !== null;
+          link = link!.ns
+        ) {
+          const source = link!.source!;
+
+          source.value;
+
+          if (source._updated > version) {
+            shouldCompute = true;
+            break;
+          }
+        }
+      } catch (e) {
+        shouldCompute = true;
+      }
+
+      --checkLevel;
+
+      this._exception = NO_EXCEPTION;
+
+      if (shouldCompute) {
+        const tempComputing = computing;
+        const firstSource = this?._source;
+
+        computing = this;
+
+        if (this._compute) {
+          this.onCleanup?.(this._value);
+          if (this._children) {
+            cleanupChildren(this);
+          }
+        }
+
+        try {
+          const nextValue = this._compute
+            ? this._compute!(
+                get,
+                this._firstTarget !== null && this._notified === globalVersion
+              )
+            : (this as any)._nextValue;
+
+          if (
+            nextValue !== undefined &&
+            (!this.equal || !this.equal(nextValue, this._value))
+          ) {
+            const prevValue = this._value;
+
+            this._value = nextValue;
+            this._updated = globalVersion;
+            this.onUpdate?.(nextValue, prevValue);
+          }
+        } catch (e) {
+          this._exception = e;
+        }
+
+        for (
+          let link: Link | null = this._source;
+          link!.source !== null;
+          link = link!.ns
+        ) {
+          removeTarget(link!.source!, link!);
+        }
+
+        this._source.source = null;
+        this._source.ns = null;
+        this._source = firstSource;
+
+        computing = tempComputing;
+      }
+
+      this._version = globalVersion;
+    }
+
+    if (this._exception !== NO_EXCEPTION) {
+      if (computing || checkLevel) throw this._exception;
+      else config.logException?.(this._exception);
+
+      this.onException?.(this._exception, this._value);
+    }
+
+    if (computing === null && triggeredWritables.length) sync();
+
+    return this._value;
   },
 });
 
@@ -357,11 +598,14 @@ declare class WritableSignal<T> extends Signal<T> {
    * If the return value is undefined, the current value is preserved.
    */
   update(updateFn: (lastValue: T) => T | void): void;
+
+  /** @internal */
+  _nextValue: T;
 }
 
 /** @internal */
 function WritableSignal<T>(
-  this: Signal<T>,
+  this: WritableSignal<T>,
   value: T,
   options?: SignalOptions<T>
 ) {
@@ -369,54 +613,146 @@ function WritableSignal<T>(
 
   this._value = value;
   this._nextValue = value;
-
-  if (this.onCreate) {
-    runLifecycle(this, 'onCreate', value);
-  }
+  this.onCreate?.(this._value);
 }
 
 WritableSignal.prototype = new (Signal as any)();
 WritableSignal.prototype.constructor = WritableSignal;
-WritableSignal.prototype.set = set;
-WritableSignal.prototype.update = update;
-WritableSignal.prototype.emit = emit;
 
-/**
- * Calls the passed function and returns the unsubscribe function from all signals and subscriptions created within it.
- * @param fn A function to call.
- * @returns A cleanup function.
- */
-export function collect(fn: () => void) {
-  const prevComputing = computing;
-  const prevScope = scope;
-  const fakeState = {} as any as Signal<any>;
+WritableSignal.prototype.set = function <T>(value: T) {
+  if (value !== undefined) this._nextValue = value;
+  triggeredWritables.push(this);
+  sync();
+};
 
-  scope = fakeState;
-  computing = null;
+WritableSignal.prototype.update = function <T>(
+  this: WritableSignal<T> & Signal<T>,
+  updateFn: (value: T) => T | void
+) {
+  const value = updateFn(this._nextValue);
+  if (value === undefined) this.emit();
+  else this.emit(value as any);
+};
 
-  try {
-    fn();
-  } finally {
-    computing = prevComputing;
-    scope = prevScope;
+WritableSignal.prototype.emit = function <T>(
+  this: WritableSignal<T> & Signal<T>,
+  value?: T
+) {
+  this._updated = globalVersion + 1;
+  this.set(arguments.length ? value : (this._nextValue as any));
+};
 
-    return () => cleanupChildren(fakeState);
+function notify(signal: Signal<any>) {
+  if (signal._notified === globalVersion) return;
+  signal._notified = globalVersion;
+
+  for (
+    let link: Link | null = signal._firstTarget;
+    link !== null;
+    link = link.nt
+  ) {
+    const target = link.target;
+
+    if (typeof target === 'function') linksToSubscribers.push(link);
   }
+
+  for (
+    let link: Link | null = signal._firstTarget;
+    link !== null;
+    link = link.nt
+  ) {
+    const target = link.target;
+
+    if (typeof target !== 'function') notify(target);
+  }
+}
+
+function sync() {
+  if (batchLevel || computing || triggeredWritables.length === 0) return;
+
+  const writables = triggeredWritables;
+  triggeredWritables = [];
+
+  ++globalVersion;
+  ++batchLevel;
+
+  for (let signal of writables) {
+    signal.value;
+    if (signal._updated === globalVersion) notify(signal);
+  }
+
+  for (let link of linksToSubscribers) {
+    const signal = link.source;
+
+    if (signal) signal.value;
+  }
+
+  for (let signal of signalsToDeactivate) deactivate(signal);
+
+  for (let link of linksToSubscribers) {
+    const signal = link.source;
+
+    if (!signal) continue;
+
+    if (signal._updated === globalVersion && signal._value !== undefined) {
+      try {
+        (link.target as any)(signal._value, false);
+      } catch (e) {
+        config.logException?.(e);
+      }
+    }
+  }
+
+  --batchLevel;
+
+  linksToSubscribers = [];
+  signalsToDeactivate = [];
+
+  sync();
 }
 
 /**
  * Commits all writable signal updates made within the passed function as a single transaction.
  * @param fn A function with updates.
  */
-export function batch(fn: (...args: any) => any) {
+export function batch(fn: () => void) {
   ++batchLevel;
 
   try {
     fn();
   } finally {
     --batchLevel;
-    recalc();
+    sync();
   }
+}
+
+function get<T>(signal: Signal<T>) {
+  if (computing) {
+    const source = computing._source.source;
+
+    if (source !== signal) {
+      if (computing._lastTarget) {
+        if (source) removeTarget(source, computing._source);
+        addTarget(signal, computing._source);
+      }
+
+      computing._source.source = signal;
+    }
+
+    if (!computing._source.ns) {
+      computing._source.ns = {
+        source: null,
+        target: computing,
+        ns: null,
+        pt: null,
+        nt: null,
+      };
+    }
+
+    computing._source = computing._source.ns;
+  }
+
+  return signal.value;
 }
 
 /**
@@ -433,434 +769,32 @@ export function action<T extends Function>(fn: T) {
       return fn.apply(this, args);
     } finally {
       --batchLevel;
-      recalc();
+      sync();
     }
   } as any as typeof fn;
 }
 
-function set<T>(this: Signal<T>, value?: any) {
-  if (value !== undefined) this._nextValue = value;
-  providers.push(this);
-  recalc();
-}
+/**
+ * Calls the passed function and returns the unsubscribe function from all signals and subscriptions created within it.
+ * @param fn A function to call.
+ * @returns A cleanup function.
+ */
+export function collect(fn: () => void) {
+  const tempComputing = computing;
+  const tempScope = scope;
+  const fakeState: any = {};
 
-function emit<T>(this: WritableSignal<T> & Signal<T>, value?: T) {
-  this._flags |= FORCED;
-  this.set(arguments.length ? value : (this._nextValue as any));
-}
-
-function update<T>(
-  this: WritableSignal<T> & Signal<T>,
-  updateFn: (value: T) => T | void
-) {
-  const value = updateFn(this._nextValue);
-  if (value === undefined) this.emit();
-  else this.emit(value as any);
-}
-
-function notify(signal: Signal<any>) {
-  signal._flags |= NOTIFIED;
-
-  if (signal._subs) consumers.push(signal);
-
-  for (let node = signal._firstTarget; node !== null; node = node.next) {
-    if (typeof node.value === 'object' && !(node.value._flags & NOTIFIED)) {
-      notify(node.value);
-    }
-  }
-}
-
-function pipe(this: Signal<any>, ...operators: Operator<any, any>[]) {
-  let result = this;
-  for (let op of operators) result = op(result);
-  return result;
-}
-
-function subscribe<T>(
-  this: Signal<T>,
-  subscriber: Subscriber<T>,
-  immediate = true
-) {
-  get(this, false);
-
-  if (immediate && !(this._flags & HAS_EXCEPTION)) {
-    ++batchLevel;
-
-    try {
-      subscriber(this._value, true);
-    } catch (e) {
-      config.logException(e);
-    }
-
-    --batchLevel;
-    recalc();
-  }
-
-  ++this._subs;
-  let node = createTargetNode(this, subscriber, null);
-
-  const dispose = () => {
-    if (!node) return;
-    removeTargetNode(this, node);
-    --this._subs;
-    node = null as any;
-  };
-
-  const parent = computing || scope;
-
-  if (parent) createChildNode(parent, dispose);
-
-  return dispose;
-}
-
-function recalc() {
-  if (providers.length === 0 || computing || batchLevel) return;
-
-  const q = providers;
-  const nextVersion = version + 1;
-
-  providers = [];
-
-  ++batchLevel;
-
-  for (let signal of q) {
-    if (
-      signal._flags & FORCED ||
-      !signal.equal ||
-      !signal.equal(signal._nextValue, signal._value)
-    ) {
-      version = nextVersion;
-      notify(signal);
-    }
-  }
-
-  for (let signal of consumers) {
-    if (signal._subs) get(signal);
-  }
-
-  for (let node of staleNodes) {
-    removeTargetNode(node.value, node.link);
-  }
-
-  for (let signal of notifiers) {
-    if (signal._subs) {
-      for (let node = signal._firstTarget; node !== null; node = node.next) {
-        if (typeof node.value === 'function') {
-          try {
-            node.value(signal._value, false);
-          } catch (e) {
-            config.logException(e);
-          }
-        }
-      }
-    }
-  }
-
-  --batchLevel;
-
-  consumers = [];
-  notifiers = [];
-  staleNodes = [];
-
-  recalc();
-}
-
-function get<T>(
-  signal: Signal<T>,
-  trackDependency = true,
-  checking?: boolean
-): T {
-  if (signal._compute) {
-    if (signal._flags & FROZEN) return signal._value;
-
-    if (signal._flags & COMPUTING) {
-      throw new CircularDependencyError();
-    }
-  }
-
-  if (signal._version !== version) {
-    let needsToUpdate = true;
-
-    signal._flags &= ~CHANGED;
-
-    if (signal._compute) {
-      const scheduled = !!(signal._flags & NOTIFIED);
-
-      needsToUpdate = signal._firstSource ? checkSources(signal) : true;
-      if (needsToUpdate) compute(signal, scheduled);
-
-      if (signal._flags & HAS_EXCEPTION) {
-        needsToUpdate = false;
-
-        if (signal._subs || (!scheduled && !computing && !checking)) {
-          config.logException(signal._exception);
-        }
-      }
-    }
-
-    if (
-      needsToUpdate &&
-      signal._nextValue !== undefined &&
-      (signal._flags & FORCED ||
-        !signal.equal ||
-        !signal.equal(signal._nextValue, signal._value))
-    ) {
-      const prevValue = signal._value;
-
-      signal._value = signal._nextValue;
-      signal._flags |= CHANGED;
-
-      if (signal.onUpdate) {
-        runLifecycle(signal, 'onUpdate', signal._value, prevValue);
-      }
-
-      if (signal._subs) notifiers.push(signal);
-    }
-  }
-
-  signal._version = version;
-  signal._flags &= ~NOTIFIED & ~FORCED;
-
-  if (computing && trackDependency) {
-    const source = computing._lastSource!;
-    const hasSource = !(computing._flags & TRACKED);
-
-    if (hasSource) {
-      if (source.value !== signal) {
-        if (source.link)
-          staleNodes.push({
-            value: source.value,
-            link: source.link,
-          });
-
-        source.value = signal;
-
-        if (computing._firstTarget) createTargetNode(signal, computing, source);
-        else source.link = null;
-      }
-
-      if (source.next) {
-        computing._lastSource = source.next;
-      } else {
-        computing._flags |= TRACKED;
-      }
-    } else {
-      const n = createSourceNode(signal, computing);
-      if (computing._firstTarget) createTargetNode(signal, computing, n);
-    }
-  }
-
-  if (computing) {
-    if (signal._flags & HAS_EXCEPTION) throw signal._exception;
-  } else recalc();
-
-  return signal._value;
-}
-
-function checkSources(signal: Signal<any>) {
-  if (!signal._firstTarget && version - signal._version > 1) return true;
-
-  for (let node = signal._firstSource; node !== null; node = node.next!) {
-    const source = node.value;
-
-    if (source._flags & NOTIFIED || source._version !== version) {
-      (get as any)(source, false, true);
-    }
-
-    if (source._flags & HAS_EXCEPTION) {
-      signal._flags |= HAS_EXCEPTION;
-      signal._exception = source._exception;
-      return true;
-    } else if (source._flags & CHANGED) {
-      return true;
-    }
-  }
-
-  signal._flags &= ~HAS_EXCEPTION;
-
-  return false;
-}
-
-function compute<T>(signal: Signal<T>, scheduled: boolean) {
-  const prevComputing = computing;
-
-  computing = signal;
-  signal._lastSource = signal._firstSource;
-
-  signal._flags |= COMPUTING;
-  signal._flags &= ~HAS_EXCEPTION;
-
-  if (signal._lastSource) {
-    signal._flags &= ~TRACKED;
-  } else {
-    signal._flags |= TRACKED;
-  }
+  scope = fakeState;
+  computing = null;
 
   try {
-    if (signal.onCleanup) {
-      runLifecycle(signal, 'onCleanup', signal._value);
-    }
+    fn();
+  } finally {
+    computing = tempComputing;
+    scope = tempScope;
 
-    if (signal._firstChild) cleanupChildren(signal);
-
-    signal._nextValue = signal._compute!(get as TrackingGetter, scheduled);
-  } catch (e: any) {
-    signal._exception = e;
-    signal._flags |= HAS_EXCEPTION;
+    return () => cleanupChildren(fakeState);
   }
-
-  if (signal._flags & HAS_EXCEPTION && signal.onException) {
-    runLifecycle(signal, 'onException', signal._exception, signal._value);
-  }
-
-  const source = computing._lastSource!;
-  const hasSource = !(computing._flags & TRACKED);
-
-  if (hasSource) {
-    signal._lastSource = source.prev;
-
-    if (source.link) {
-      for (let node = source; node !== null; node = node.next!) {
-        removeTargetNode(node.value, node.link!);
-      }
-    }
-  }
-
-  if (signal._lastSource) {
-    signal._lastSource.next = null;
-  } else {
-    signal._flags |= FROZEN;
-    signal._firstSource = null;
-  }
-
-  signal._flags &= ~COMPUTING;
-  computing = prevComputing;
-}
-
-function cleanupChildren(signal: Signal<any>) {
-  for (let node = signal._firstChild; node; node = node.next) {
-    if (typeof node.value === 'function') node.value();
-    else cleanupChildren(node.value);
-  }
-
-  signal._firstChild = null;
-  signal._lastChild = null;
-}
-
-function createSourceNode(source: Signal<any>, target: Signal<any>) {
-  const node: ListNode<any> = {
-    value: source,
-    prev: target._lastSource,
-    next: null,
-    link: null,
-  };
-
-  if (!target._lastSource) {
-    target._firstSource = node;
-  } else {
-    target._lastSource.next = node;
-  }
-
-  target._lastSource = node;
-
-  return node;
-}
-
-function createTargetNode(
-  source: Signal<any>,
-  target: Signal<any> | Subscriber<any>,
-  sourceNode: ListNode<any> | null
-) {
-  const node: ListNode<any> = {
-    value: target,
-    prev: source._lastTarget,
-    next: null,
-  };
-
-  if (source._lastTarget) {
-    source._lastTarget.next = node;
-  } else {
-    source._firstTarget = node;
-
-    for (let n = source._firstSource; n !== null; n = n.next) {
-      createTargetNode(n.value, source, n);
-    }
-
-    if (source.onActivate) {
-      runLifecycle(source, 'onActivate', source._value);
-    }
-  }
-
-  source._lastTarget = node;
-  if (sourceNode) sourceNode.link = node;
-
-  return node;
-}
-
-function removeTargetNode(signal: Signal<any>, node: ListNode<any>) {
-  if (signal._firstTarget === node) signal._firstTarget = node.next;
-  if (signal._lastTarget === node) signal._lastTarget = node.prev;
-  if (node.prev) node.prev.next = node.next;
-  if (node.next) node.next.prev = node.prev;
-
-  if (!signal._firstTarget) {
-    signal._flags &= ~NOTIFIED;
-
-    for (let n = signal._firstSource; n !== null; n = n.next) {
-      removeTargetNode(n.value, n.link!);
-      n.link = null;
-    }
-
-    if (signal.onCleanup) {
-      runLifecycle(signal, 'onCleanup', signal._value);
-    }
-
-    if (signal.onDeactivate) {
-      runLifecycle(signal, 'onDeactivate', signal._value);
-    }
-  }
-}
-
-function createChildNode(
-  parent: Signal<any>,
-  child: Signal<any> | Subscriber<any>
-) {
-  const node: ListNode<any> = {
-    value: child,
-    prev: parent._lastChild || null,
-    next: null,
-  };
-
-  if (parent._lastChild) {
-    parent._lastChild.next = node;
-  } else {
-    parent._firstChild = node;
-  }
-
-  parent._lastChild = node;
-
-  return node;
-}
-
-function runLifecycle(
-  signal: Signal<any>,
-  name: keyof SignalOptions<any>,
-  ...args: any[]
-) {
-  const prevComputing = computing;
-  const prevScope = scope;
-
-  computing = null;
-  scope = null;
-
-  const res = (signal as any)[name](...args);
-
-  if (res && name === 'onActivate' && typeof res === 'function') {
-    (signal as any).onDeactivate = res;
-  }
-
-  computing = prevComputing;
-  scope = prevScope;
 }
 
 export { Signal, WritableSignal };

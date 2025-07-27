@@ -19,7 +19,7 @@ import {
   endBatch,
 } from '../node_modules/alien-signals/esm/index.mjs';
 
-import { batch, signal, v2 } from '/dist/index.mjs';
+import { batch, signal } from '/dist/index.mjs';
 
 const alienBatch = (cb) => {
   startBatch();
@@ -37,17 +37,6 @@ const LIB_CONFIGS = {
     writable: signal,
     computed: signal,
     batch,
-  },
-
-  v2: {
-    lib: 'v2',
-    track: (s, g) => g(s),
-    get: (s) => s.value,
-    set: (s, v) => s.set(v),
-    subscribe: (s, cb) => s.subscribe(cb),
-    writable: v2.signal,
-    computed: v2.signal,
-    batch: v2.batch,
   },
 
   preact: {
@@ -410,30 +399,3 @@ function init() {
       .appendChild(document.createTextNode(' '));
   }
 }
-
-const counter = v2.signal(0);
-const tumbler = v2.signal(false);
-const x2Counter = v2.signal((get) => get(counter) * 2);
-const result = v2.signal((get) => (get(tumbler) ? get(x2Counter) : 'FALSE'), {
-  name: 'result',
-});
-
-result.subscribe((v) => console.log('value is', v), false);
-
-counter.set(1);
-
-batch(() => {
-  tumbler.set(true);
-  counter.set(2);
-});
-
-tumbler.set(false);
-counter.set(3);
-counter.set(4);
-tumbler.set(true);
-
-counter.set(5);
-// console.log(result.value, result.value === 10);
-
-console.log(result);
-// expect(reaction).toHaveBeenCalledTimes(3);

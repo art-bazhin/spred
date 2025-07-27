@@ -1,5 +1,4 @@
-// import { signal, configure, batch, action, Signal } from '..';
-import { signal, configure, batch, action, Signal } from '../v2/v2';
+import { signal, configure, batch, action, Signal } from '..';
 
 describe('signal', () => {
   configure({
@@ -1377,116 +1376,116 @@ describe('signal', () => {
     });
   });
 
-  // describe('onException option', () => {
-  //   it('sets signal exception listener', () => {
-  //     configure({
-  //       logException: () => {},
-  //     });
+  describe('onException option', () => {
+    it('sets signal exception listener', () => {
+      configure({
+        logException: () => {},
+      });
 
-  //     const listener = jest.fn((e, v) => {
-  //       error = e;
-  //       lastValue = v;
-  //     });
+      const listener = jest.fn((e, v) => {
+        error = e;
+        lastValue = v;
+      });
 
-  //     let error: any;
-  //     let lastValue: any;
-  //     let unsub: any;
+      let error: any;
+      let lastValue: any;
+      let unsub: any;
 
-  //     const counter = signal(0);
-  //     const x2Counter = signal(
-  //       (get) => {
-  //         if (get(counter) > 4) throw 'error';
-  //         return get(counter) * 2;
-  //       },
-  //       {
-  //         onException: (e, v) => listener(e, v),
-  //       }
-  //     );
+      const counter = signal(0);
+      const x2Counter = signal(
+        (get) => {
+          if (get(counter) > 4) throw 'error';
+          return get(counter) * 2;
+        },
+        {
+          onException: (e, v) => listener(e, v),
+        }
+      );
 
-  //     expect(error).toBeUndefined();
-  //     expect(listener).toHaveBeenCalledTimes(0);
+      expect(error).toBeUndefined();
+      expect(listener).toHaveBeenCalledTimes(0);
 
-  //     unsub = x2Counter.subscribe(() => {});
-  //     expect(error).toBeUndefined();
-  //     expect(listener).toHaveBeenCalledTimes(0);
+      unsub = x2Counter.subscribe(() => {});
+      expect(error).toBeUndefined();
+      expect(listener).toHaveBeenCalledTimes(0);
 
-  //     counter.set(2);
-  //     expect(error).toBeUndefined();
-  //     expect(listener).toHaveBeenCalledTimes(0);
-  //     expect(lastValue).toBeUndefined();
+      counter.set(2);
+      expect(error).toBeUndefined();
+      expect(listener).toHaveBeenCalledTimes(0);
+      expect(lastValue).toBeUndefined();
 
-  //     counter.set(5);
-  //     expect(error).toBe('error');
-  //     expect(listener).toHaveBeenCalledTimes(1);
-  //     expect(lastValue).toBe(4);
+      counter.set(5);
+      expect(error).toBe('error');
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(lastValue).toBe(4);
 
-  //     counter.set(6);
-  //     expect(error).toBe('error');
-  //     expect(listener).toHaveBeenCalledTimes(2);
-  //     expect(lastValue).toBe(4);
+      counter.set(6);
+      expect(error).toBe('error');
+      expect(listener).toHaveBeenCalledTimes(2);
+      expect(lastValue).toBe(4);
 
-  //     counter.set(3);
-  //     expect(error).toBe('error');
-  //     expect(listener).toHaveBeenCalledTimes(2);
-  //     expect(lastValue).toBe(4);
+      counter.set(3);
+      expect(error).toBe('error');
+      expect(listener).toHaveBeenCalledTimes(2);
+      expect(lastValue).toBe(4);
 
-  //     unsub();
-  //     expect(error).toBe('error');
-  //     expect(listener).toHaveBeenCalledTimes(2);
-  //     expect(lastValue).toBe(4);
+      unsub();
+      expect(error).toBe('error');
+      expect(listener).toHaveBeenCalledTimes(2);
+      expect(lastValue).toBe(4);
 
-  //     configure();
-  //   });
+      configure();
+    });
 
-  //   it('correctly reacts to exceptions in intermideate signals', () => {
-  //     configure({
-  //       logException: () => {},
-  //     });
+    it('correctly reacts to exceptions in intermideate signals', () => {
+      configure({
+        logException: () => {},
+      });
 
-  //     const listener = jest.fn((v) => (error = v));
+      const listener = jest.fn((v) => (error = v));
 
-  //     let error: any;
-  //     let unsub: any;
+      let error: any;
+      let unsub: any;
 
-  //     const counter = signal(0);
-  //     const x2Counter = signal((get) => {
-  //       if (get(counter) > 4) throw 'error';
-  //       return get(counter) * 2;
-  //     });
-  //     const x4Counter = signal((get) => get(x2Counter) * 2, {
-  //       onException: (v) => listener(v),
-  //     });
+      const counter = signal(0);
+      const x2Counter = signal((get) => {
+        if (get(counter) > 4) throw 'error';
+        return get(counter) * 2;
+      });
+      const x4Counter = signal((get) => get(x2Counter) * 2, {
+        onException: (v) => listener(v),
+      });
 
-  //     expect(error).toBeUndefined();
-  //     expect(listener).toHaveBeenCalledTimes(0);
+      expect(error).toBeUndefined();
+      expect(listener).toHaveBeenCalledTimes(0);
 
-  //     unsub = x4Counter.subscribe(() => {});
-  //     expect(error).toBeUndefined();
-  //     expect(listener).toHaveBeenCalledTimes(0);
+      unsub = x4Counter.subscribe(() => {});
+      expect(error).toBeUndefined();
+      expect(listener).toHaveBeenCalledTimes(0);
 
-  //     counter.set(2);
-  //     expect(error).toBeUndefined();
-  //     expect(listener).toHaveBeenCalledTimes(0);
+      counter.set(2);
+      expect(error).toBeUndefined();
+      expect(listener).toHaveBeenCalledTimes(0);
 
-  //     counter.set(5);
-  //     expect(error).toBe('error');
-  //     expect(listener).toHaveBeenCalledTimes(1);
+      counter.set(5);
+      expect(error).toBe('error');
+      expect(listener).toHaveBeenCalledTimes(1);
 
-  //     counter.set(6);
-  //     expect(error).toBe('error');
-  //     expect(listener).toHaveBeenCalledTimes(2);
+      counter.set(6);
+      expect(error).toBe('error');
+      expect(listener).toHaveBeenCalledTimes(2);
 
-  //     counter.set(3);
-  //     expect(error).toBe('error');
-  //     expect(listener).toHaveBeenCalledTimes(2);
+      counter.set(3);
+      expect(error).toBe('error');
+      expect(listener).toHaveBeenCalledTimes(2);
 
-  //     unsub();
-  //     expect(error).toBe('error');
-  //     expect(listener).toHaveBeenCalledTimes(2);
+      unsub();
+      expect(error).toBe('error');
+      expect(listener).toHaveBeenCalledTimes(2);
 
-  //     configure();
-  //   });
-  // });
+      configure();
+    });
+  });
 
   describe('name option', () => {
     it('can be set using the name property of signal options and accessed via this', () => {
