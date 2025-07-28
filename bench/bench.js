@@ -1,8 +1,8 @@
-import {
-  createSignal as solidCreateSignal,
-  createMemo as solidCreateMemo,
-  batch as solidBatch,
-} from 'https://unpkg.com/solid-js@1.8.12/dist/solid.js';
+// import {
+//   createSignal as solidCreateSignal,
+//   createMemo as solidCreateMemo,
+//   batch as solidBatch,
+// } from 'https://unpkg.com/solid-js@1.8.12/dist/solid.js';
 
 import {
   signal as preactSignal,
@@ -19,7 +19,7 @@ import {
   endBatch,
 } from '../node_modules/alien-signals/esm/index.mjs';
 
-import { batch, signal, Signal } from '/dist/index.mjs';
+import { batch, signal } from '/dist/index.mjs';
 
 const alienBatch = (cb) => {
   startBatch();
@@ -50,24 +50,24 @@ const LIB_CONFIGS = {
     batch: preactBatch,
   },
 
-  solid: {
-    lib: 'solid',
-    track: (s) => s(),
-    get: (s) => s(),
-    set: (s, v) => s[1](v),
-    subscribe: () => {},
-    writable: solidCreateSignal,
-    computed: solidCreateMemo,
-    batch: solidBatch,
-    mapWritableToComputed: (tuple) => tuple[0],
-  },
+  // solid: {
+  //   lib: 'solid',
+  //   track: (s) => s(),
+  //   get: (s) => s(),
+  //   set: (s, v) => s[1](v),
+  //   subscribe: () => {},
+  //   writable: solidCreateSignal,
+  //   computed: solidCreateMemo,
+  //   batch: solidBatch,
+  //   mapWritableToComputed: (tuple) => tuple[0],
+  // },
 
   alien: {
     lib: 'alien',
-    track: (s) => s.get(),
-    get: (s) => s.get(),
-    set: (s, v) => s.set(v),
-    subscribe: (s, cb) => alienEffect(() => cb(s.get())),
+    track: (s) => s(),
+    get: (s) => s(),
+    set: (s, v) => s(v),
+    subscribe: (s, cb) => alienEffect(() => cb(s())),
     writable: alienSignal,
     computed: alienComputed,
     batch: alienBatch,
@@ -152,6 +152,10 @@ function benchIteration({
           subscribe(s.prop2, subscriber);
           subscribe(s.prop3, subscriber);
           subscribe(s.prop4, subscriber);
+          // get(s.prop1);
+          // get(s.prop2);
+          // get(s.prop3);
+          // get(s.prop4);
         }
 
         return s;

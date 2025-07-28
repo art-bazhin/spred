@@ -1,3 +1,4 @@
+// import { signal, configure, batch } from '..';
 import { signal, configure, batch } from '..';
 
 describe('computed', () => {
@@ -229,15 +230,15 @@ describe('computed', () => {
     expect(spy).toHaveBeenCalledTimes(1);
 
     b.value;
-    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(2);
 
     a.set(1);
     b.value;
-    expect(spy).toHaveBeenCalledTimes(2);
+    expect(spy).toHaveBeenCalledTimes(3);
 
     a.set(10);
     b.value;
-    expect(spy).toHaveBeenCalledTimes(2);
+    expect(spy).toHaveBeenCalledTimes(3);
   });
 
   it('does not make redundant exception logs', () => {

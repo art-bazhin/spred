@@ -22,7 +22,7 @@ describe('signal', () => {
     unsubs.push(counter.subscribe(subscriber));
     counter.subscribe(altSubscriber);
 
-    expect(subscriber).toBeCalled();
+    expect(subscriber).toHaveBeenCalledTimes(1);
     expect(num).toBe(0);
     expect(x2Num).toBe(0);
   });
@@ -376,6 +376,24 @@ describe('signal', () => {
     });
 
     expect(res).toBe('EH');
+
+    res = '';
+
+    batch(() => {
+      A.set(3);
+      B.set(1);
+    });
+
+    expect(res).toBe('H');
+
+    res = '';
+
+    batch(() => {
+      A.set(4);
+      B.set(2);
+    });
+
+    expect(res).toBe('EH');
   });
 
   it('dynamically updates dependencies (case 5)', () => {
@@ -446,6 +464,87 @@ describe('signal', () => {
     unsub();
     a.set(3);
     expect(d.value).toBe(-1); // d is frozen after it has lost its dependencies
+  });
+
+  it('dynamically updates dependencies (case 7)', () => {
+    // check rare infinite dependency loop case
+
+    const spy = jest.fn();
+
+    const tumbler = signal(0);
+    const a = signal(1);
+    const b = signal(2);
+    const c = signal(3);
+    const d = signal(4);
+
+    const a1 = signal((get) => {
+      if (get(tumbler)) return get(a);
+      return get(b);
+    });
+
+    const b1 = signal((get) => {
+      if (get(tumbler)) return get(b);
+      return get(a) - get(c);
+    });
+
+    const c1 = signal((get) => {
+      if (get(tumbler)) return get(c);
+      return get(b) + get(d);
+    });
+
+    const d1 = signal((get) => {
+      if (get(tumbler)) return get(d);
+      return get(c);
+    });
+
+    const a2 = signal((get) => {
+      if (get(tumbler)) return get(a1);
+      return get(b1);
+    });
+
+    const b2 = signal((get) => {
+      if (get(tumbler)) return get(b1);
+      return get(a1) - get(c1);
+    });
+
+    const c2 = signal((get) => {
+      if (get(tumbler)) return get(c1);
+      return get(b1) + get(d1);
+    });
+
+    const d2 = signal((get) => {
+      if (get(tumbler)) return get(d1);
+      return get(c1);
+    });
+
+    a2.subscribe(spy);
+    b2.subscribe(spy);
+    c2.subscribe(spy);
+    d2.subscribe(spy);
+
+    expect(a2.value).toBe(-2);
+    expect(b2.value).toBe(-4);
+    expect(c2.value).toBe(1);
+    expect(d2.value).toBe(6);
+
+    batch(() => {
+      a.set(4);
+      b.set(3);
+      c.set(2);
+      d.set(1);
+    });
+
+    expect(a2.value).toBe(2);
+    expect(b2.value).toBe(-1);
+    expect(c2.value).toBe(4);
+    expect(d2.value).toBe(4);
+
+    tumbler.set(1);
+
+    expect(a2.value).toBe(4);
+    expect(b2.value).toBe(3);
+    expect(c2.value).toBe(2);
+    expect(d2.value).toBe(1);
   });
 
   it('does not recalc a dependant if it is not active', () => {

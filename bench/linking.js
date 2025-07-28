@@ -20,13 +20,6 @@ import {
 } from 'https://unpkg.com/@whatsup/core@2.6.0/dist/index.esm.js';
 
 import {
-  signal as maverickSignal,
-  computed as maverickComputed,
-  effect as maverickEffect,
-  tick,
-} from 'https://esm.sh/@maverick-js/signals@5.11.4';
-
-import {
   signal as alienSignal,
   computed as alienComputed,
   effect as alienEffect,
@@ -42,7 +35,7 @@ const alienBatch = (cb) => {
   endBatch();
 };
 
-const NUMBER_OF_ITERATIONS = 100_000;
+const NUMBER_OF_ITERATIONS = 1000_000;
 
 const res = [];
 
@@ -132,22 +125,6 @@ document.getElementById('preact').onclick = () => {
   );
 };
 
-document.getElementById('maverick').onclick = () => {
-  bench(
-    maverickSignal,
-    maverickComputed,
-    (s) => s(),
-    (s, v) => {
-      s.set(v);
-    },
-    (s, f) => maverickEffect(() => f(s())),
-    (cb) => {
-      cb();
-      tick();
-    }
-  );
-};
-
 document.getElementById('solid').onclick = () => {
   bench(
     solidSignal,
@@ -176,9 +153,9 @@ document.getElementById('alien').onclick = () => {
   bench(
     alienSignal,
     alienComputed,
-    (s) => s.get(),
-    (s, v) => s.set(v),
-    (s, f) => alienEffect(() => f(s.get())),
+    (s) => s(),
+    (s, v) => s(v),
+    (s, f) => alienEffect(() => f(s())),
     alienBatch
   );
 };
