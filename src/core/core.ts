@@ -237,6 +237,11 @@ declare class Signal<T> {
   pipe(): typeof this;
 
   /**
+   * Returns the current value of the signal.
+   */
+  get(): T;
+
+  /**
    * The current value of the signal.
    */
   readonly value: T;
@@ -449,6 +454,10 @@ Signal.prototype.pipe = function (
 };
 
 Signal.prototype.equal = Object.is;
+
+Signal.prototype.get = function () {
+  return this.value;
+};
 
 Object.defineProperty(Signal.prototype, 'value', {
   get() {
