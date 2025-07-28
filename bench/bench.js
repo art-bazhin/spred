@@ -64,10 +64,10 @@ const LIB_CONFIGS = {
 
   alien: {
     lib: 'alien',
-    track: (s) => s.get(),
-    get: (s) => s.get(),
-    set: (s, v) => s.set(v),
-    subscribe: (s, cb) => alienEffect(() => cb(s.get())),
+    track: (s) => s(),
+    get: (s) => s(),
+    set: (s, v) => s(v),
+    subscribe: (s, cb) => alienEffect(() => cb(s())),
     writable: alienSignal,
     computed: alienComputed,
     batch: alienBatch,

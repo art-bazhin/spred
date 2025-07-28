@@ -27,9 +27,7 @@ import {
   endBatch,
 } from '../node_modules/alien-signals/esm/index.mjs';
 
-import { v2 } from '/dist/index.mjs';
-
-const { batch, signal } = v2;
+import { batch, signal } from '/dist/index.mjs';
 
 const alienBatch = (cb) => {
   startBatch();
@@ -155,9 +153,9 @@ document.getElementById('alien').onclick = () => {
   bench(
     alienSignal,
     alienComputed,
-    (s) => s.get(),
-    (s, v) => s.set(v),
-    (s, f) => alienEffect(() => f(s.get())),
+    (s) => s(),
+    (s, v) => s(v),
+    (s, f) => alienEffect(() => f(s())),
     alienBatch
   );
 };
