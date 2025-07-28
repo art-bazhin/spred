@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.40.4](https://github.com/art-bazhin/spred/compare/v0.40.3...v0.40.4) (2025-07-28)
+
+
+### Features
+
+* add get method ([2d3e6be](https://github.com/art-bazhin/spred/commit/2d3e6bed4eb5f9c8ab2aec73d050ef90ee898156))
+* improve set and emit method typings ([88c1732](https://github.com/art-bazhin/spred/commit/88c1732b09b63b3cb6781991d6b94e07776e4711))
+
+
+### Others
+
+* v2 wip ([27a8661](https://github.com/art-bazhin/spred/commit/27a8661ed1aab8705897d846c0f0ab58f47f3364))
+
+
+### Code Refactoring
+
+* rewrite library core to get smaller size and better performance ([2a007a3](https://github.com/art-bazhin/spred/commit/2a007a31434fc770063a540a05f103372e421a08))
+
+
+### Tests
+
+* add subscriber order test ([3184bc5](https://github.com/art-bazhin/spred/commit/3184bc5ab47e6211d908e2d4f67e157180130bce))
+* add subscriber order test ([f18cbc0](https://github.com/art-bazhin/spred/commit/f18cbc009838d8db574f4662beea63b7ba6d1899))
+* update benchmark ([9931d9f](https://github.com/art-bazhin/spred/commit/9931d9fba0e3ce2723c840119375751804fb466e))
+
+
+### Docs
+
+* add undefined assignment case, fix typos ([9324637](https://github.com/art-bazhin/spred/commit/9324637f1dc11199a2dbc388c5e4367caafbf029))
+* build docs ([f61304a](https://github.com/art-bazhin/spred/commit/f61304a958a81f1e124daed00acb2920afece272))
+* build docs ([ce4328a](https://github.com/art-bazhin/spred/commit/ce4328ac9862bd6de97da6ed6d6ad72401335191))
+
 ### [0.40.3](https://github.com/art-bazhin/spred/compare/v0.40.2...v0.40.3) (2025-07-22)
 
 
