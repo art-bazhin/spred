@@ -34,7 +34,7 @@ const greeting = signal(
     `and I was born on ${get(formattedBirthday)}.`
 );
 
-greeting.subscribe((value) => console.log(value));
+greeting.subscribe(console.log);
 // > Hello. My name is Paul, I play bass and I was born on 18/06/1942.
 
 batch(() => {

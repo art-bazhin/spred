@@ -52,17 +52,15 @@ export type TrackingGetter = <T>(signal: Signal<T>) => T;
 /**
  * A function subscribed to updates of a signal.
  * @param value The new value of the signal.
- * @param immediate Determines if the function was executed immediately after subscription.
  */
-export type Subscriber<T> = (value: T, immediate: boolean) => void;
+export type Subscriber<T> = (value: T) => void;
 
 /**
  * A function that calculates the new value of the signal.
  * @param get Tracking function to get values of other signals.
- * @param scheduled Determines if the recalculation was caused by a dependency update.
  * @returns The value of the signal.
  */
-export type Computation<T> = (get: TrackingGetter, scheduled: boolean) => T;
+export type Computation<T> = (get: TrackingGetter) => T;
 
 /**
  * A function that creates a new entity based on the source.
@@ -340,7 +338,7 @@ Signal.prototype.subscribe = function <T>(
 
   if (immediate && this._exception === NO_EXCEPTION) {
     try {
-      subscriber(value, true);
+      subscriber(value);
     } catch (e) {
       config.logException?.(e);
     }
@@ -517,16 +515,13 @@ Object.defineProperty(Signal.prototype, 'value', {
 
         try {
           const nextValue = this._compute
-            ? this._compute!(
-                get,
-                this._firstTarget !== null && this._notified === globalVersion
-              )
-            : (this as any)._nextValue;
+            ? this._compute(get)
+            : this._nextValue;
 
           if (
             nextValue !== NONE &&
             (currentValue === NONE ||
-              !(this.equal && this.equal?.(nextValue, currentValue)))
+              !(this.equal && this.equal(nextValue, currentValue)))
           ) {
             this._value = nextValue;
             this._updated = globalVersion;
@@ -697,7 +692,7 @@ function sync() {
 
     if (signal._updated === globalVersion && signal._value !== NONE) {
       try {
-        (link.target as any)(signal._value, false);
+        (link.target as any)(signal._value);
       } catch (e) {
         config.logException?.(e);
       }

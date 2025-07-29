@@ -1033,7 +1033,7 @@ describe('signal', () => {
     });
 
     expect(spy).toHaveBeenCalledTimes(1);
-    expect(spy).toHaveBeenLastCalledWith(2, false);
+    expect(spy).toHaveBeenLastCalledWith(2);
   });
 
   it('catches and logs exceptions in subscribers', () => {
