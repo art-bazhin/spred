@@ -105,7 +105,7 @@ console.log(doubleCounter.value);
 // > 6
 ```
 
-You can also subscribe to a signal value updates without immediately executing the subscriber using [on](https://art-bazhin.github.io/spred/functions/on.html) function, which is a shorthand for `someSignal.subscribe(someFn, false)`.
+You can also subscribe to signal value updates without immediately executing the subscriber using the [on](https://art-bazhin.github.io/spred/functions/on.html) function, which is a shorthand for `someSignal.subscribe(someFn, false)`.
 
 ```ts
 on(doubleCounter, (value) => console.log('Double value is ' + value));
