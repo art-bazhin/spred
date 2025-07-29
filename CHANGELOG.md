@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.41.0](https://github.com/art-bazhin/spred/compare/v0.40.4...v0.41.0) (2025-07-29)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove immediate argument of Subscriber, remove scheduled argument of Computation
+* do not filter undefined values
+
+### Features
+
+* add NONE constant ([dc72164](https://github.com/art-bazhin/spred/commit/dc72164070e162d58e99238072cead8117b547d8))
+
+
+### Code Refactoring
+
+* refactor dependency graph to minimize memory consumption ([1526bf3](https://github.com/art-bazhin/spred/commit/1526bf3f1dc813d99d461f0eb2e2a9741f19ee13))
+* remove redundant arguments of subscriber and computation ([1f64c89](https://github.com/art-bazhin/spred/commit/1f64c89aa8c4867a2d995090cb36e07ec7deb805))
+
+
+### Docs
+
+* update docs ([fbfc61f](https://github.com/art-bazhin/spred/commit/fbfc61f425c6bd7adbc4b1a3e0f38e7616a5dde1))
+
 ### [0.40.4](https://github.com/art-bazhin/spred/compare/v0.40.3...v0.40.4) (2025-07-28)
 
 
