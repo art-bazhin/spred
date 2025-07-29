@@ -260,7 +260,9 @@ declare class Signal<T> {
   /** @internal */
   _exception?: unknown;
   /** @internal */
-  _source: Link;
+  _cursor: Link | null;
+  /** @internal */
+  _firstSource: Link | null;
   /** @internal */
   _firstTarget: Link | null;
   /** @internal */
@@ -290,24 +292,15 @@ function Signal<T>(
   compute?: Computation<T>,
   options?: SignalOptions<T>
 ) {
-  const parent = computing || scope;
-
-  this._value = undefined as any;
-
   this._version = 0;
   this._updated = 0;
   this._notified = 0;
 
+  this._value = undefined as any;
   this._exception = NO_EXCEPTION;
 
-  this._source = {
-    source: null,
-    target: this,
-    ns: null,
-    pt: null,
-    nt: null,
-  };
-
+  this._cursor = null;
+  this._firstSource = null;
   this._firstTarget = null;
   this._lastTarget = null;
 
@@ -321,6 +314,8 @@ function Signal<T>(
 
   if (compute) this.onCreate?.(this._value);
 
+  const parent = computing || scope;
+
   if (parent) addChild(parent, this);
 }
 
@@ -332,14 +327,7 @@ Signal.prototype.subscribe = function <T>(
   ++batchLevel;
 
   const value = this.value;
-
-  const link: Link = {
-    source: this,
-    target: subscriber,
-    ns: null,
-    pt: null,
-    nt: null,
-  };
+  const link: Link = createLink(this, subscriber);
 
   addTarget(this, link);
 
@@ -385,11 +373,11 @@ function addTarget(signal: Signal<any>, link: Link) {
   signal._firstTarget = link;
 
   for (
-    let link: Link | null = signal._source;
-    link!.source !== null;
-    link = link!.ns
+    let link: Link | null = signal._firstSource;
+    link !== null;
+    link = link.ns
   ) {
-    addTarget(link!.source!, link!);
+    addTarget(link.source!, link);
   }
 
   const onDeactivate = signal.onActivate?.(signal._value);
@@ -420,11 +408,11 @@ function deactivate(signal: Signal<any>) {
   if (signal._lastTarget) return;
 
   for (
-    let link: Link | null = signal._source;
-    link!.source !== null;
-    link = link!.ns
+    let link: Link | null = signal._firstSource;
+    link !== null;
+    link = link.ns
   ) {
-    removeTarget(link!.source!, link!, true);
+    removeTarget(link.source!, link, true);
   }
 
   signal.onCleanup?.(signal._value);
@@ -478,7 +466,7 @@ Object.defineProperty(Signal.prototype, 'value', {
 
       this._version = -1;
 
-      if (this._source.source === null) {
+      if (this._firstSource === null) {
         shouldCompute = true;
       }
 
@@ -486,9 +474,9 @@ Object.defineProperty(Signal.prototype, 'value', {
 
       try {
         for (
-          let link: Link | null = this._source;
-          link!.source !== null;
-          link = link!.ns
+          let link: Link | null = this._firstSource;
+          link !== null;
+          link = link.ns
         ) {
           const source = link!.source!;
 
@@ -509,7 +497,6 @@ Object.defineProperty(Signal.prototype, 'value', {
 
       if (shouldCompute) {
         const tempComputing = computing;
-        const firstSource = this?._source;
 
         computing = this;
 
@@ -542,17 +529,17 @@ Object.defineProperty(Signal.prototype, 'value', {
           this._exception = e;
         }
 
-        for (
-          let link: Link | null = this._source;
-          link!.source !== null;
-          link = link!.ns
-        ) {
-          removeTarget(link!.source!, link!);
+        if (this._cursor && this._cursor.ns) {
+          const next = this._cursor.ns;
+
+          this._cursor.ns = null;
+
+          for (let link: Link | null = next; link !== null; link = link.ns) {
+            removeTarget(link.source!, link);
+          }
         }
 
-        this._source.source = null;
-        this._source.ns = null;
-        this._source = firstSource;
+        this._cursor = null;
 
         computing = tempComputing;
       }
@@ -736,30 +723,43 @@ export function batch(fn: () => void) {
   }
 }
 
+function createLink(
+  source: Signal<any> | null,
+  target: Signal<any> | Subscriber<any>
+): Link {
+  return {
+    source,
+    target,
+    ns: null,
+    pt: null,
+    nt: null,
+  };
+}
+
 function get<T>(signal: Signal<T>) {
   if (computing) {
-    const source = computing._source.source;
+    if (computing._cursor) {
+      if (computing._cursor.ns === null)
+        computing._cursor.ns = createLink(null, computing);
+      computing._cursor = computing._cursor.ns;
+    } else {
+      if (computing._firstSource) {
+        computing._cursor = computing._firstSource;
+      } else {
+        computing._cursor = createLink(null, computing);
+        computing._firstSource = computing._cursor;
+      }
+    }
+
+    const source = computing._cursor.source;
 
     if (source !== signal) {
       if (computing._lastTarget) {
-        if (source) removeTarget(source, computing._source);
-        addTarget(signal, computing._source);
+        if (source) removeTarget(source, computing._cursor);
+        addTarget(signal, computing._cursor);
       }
-
-      computing._source.source = signal;
+      computing._cursor.source = signal;
     }
-
-    if (!computing._source.ns) {
-      computing._source.ns = {
-        source: null,
-        target: computing,
-        ns: null,
-        pt: null,
-        nt: null,
-      };
-    }
-
-    computing._source = computing._source.ns;
   }
 
   return signal.value;
