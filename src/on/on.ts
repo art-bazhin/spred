@@ -1,4 +1,4 @@
-import { Signal, Subscriber } from '../core/core';
+import { type NONE, type Signal, Subscriber } from '../core/core';
 
 /**
  * Subscribes the passed function to updates of the signal value without immediate execution.
@@ -8,7 +8,7 @@ import { Signal, Subscriber } from '../core/core';
  */
 export function on<T>(
   signal: Signal<T>,
-  subscriber: Subscriber<Exclude<T, undefined>>
+  subscriber: Subscriber<Exclude<T, typeof NONE>>
 ) {
   return signal.subscribe(subscriber, false);
 }

@@ -16,7 +16,7 @@ Simple and fast JavaScript reactive programming library.
 ## Basic Example
 
 ```ts
-import { signal, effect, batch } from '@spred/core';
+import { signal, batch } from '@spred/core';
 
 const formatter = new Intl.DateTimeFormat('en-GB');
 
@@ -28,12 +28,13 @@ const formattedBirthday = signal((get) =>
   formatter.format(new Date(get(birthday)))
 );
 
-effect((get) =>
-  console.log(
+const greeting = signal(
+  (get) =>
     `Hello. My name is ${get(name)}, I play ${get(instrument)} ` +
-      `and I was born on ${get(formattedBirthday)}.`
-  )
+    `and I was born on ${get(formattedBirthday)}.`
 );
+
+greeting.subscribe((value) => console.log(value));
 // > Hello. My name is Paul, I play bass and I was born on 18/06/1942.
 
 batch(() => {
@@ -219,14 +220,24 @@ obj.set({ value: 2 });
 // > Object value is 2
 ```
 
-Undefined values are ignored and can be used for filtering.
+`NONE` is a special constant indicating no result. Computed signals start as `NONE` until the first successful evaluation. Returning `NONE` from a computation skips the update and doesn’t notify subscribers, so it can be used for filtering.
 
 ```ts
+import { signal, NONE } from '@spred/core';
+
+const counter = signal(0);
 const oddCounter = signal((get) => {
-  if (get(counter) % 2) return get(counter);
+  const value = get(counter);
+  return value % 2 ? value : NONE;
 });
 
-oddCounter.subscribe((value) => console.log('Odd value is ' + value));
+oddCounter.subscribe((value) => {
+  if (value === NONE) console.log('No odd value yet');
+  else console.log('Odd value is ' + value);
+});
+// > No odd value yet
+
+counter.set(1);
 // > Odd value is 1
 
 counter.set(2);
@@ -234,49 +245,6 @@ counter.set(2);
 
 counter.set(3);
 // > Odd value is 3
-```
-
-By design, assigning `undefined` to a writable signal has no effect — such updates are silently ignored.
-However, the initial value of a signal can be `undefined`, so the following is valid:
-
-```ts
-const userId = signal<string>();
-
-console.log(userId.value);
-// > undefined
-
-userId.set('123');
-console.log(userId.value);
-// > 123
-```
-
-In this case, the signal value has the type `string | undefined`, and its initial value is `undefined`.
-
-Assigning `undefined` again later is ignored and won’t trigger updates or propagate changes. To make this behavior clearer and safer, TypeScript prevents calling `someSignal.set(undefined)` altogether.
-
-```ts
-userId.set(undefined);
-// TypeScript error
-
-console.log(userId.value);
-// > 123
-```
-
-If you need a truly "empty" assignable value — for example, to explicitly clear the signal — consider using `null` instead:
-
-```ts
-const nullableUserId = signal<string | null>(null);
-
-console.log(nullableUserId.value);
-// > null
-
-nullableUserId.set('123');
-console.log(nullableUserId.value);
-// > 123
-
-nullableUserId.set(null);
-console.log(nullableUserId.value);
-// > null
 ```
 
 ## Effects
@@ -324,7 +292,7 @@ Every signal has lifecycle hooks whose handlers can be set in the [signal option
 
 ### Svelte
 
-Spred signals implement [Svelte store contract](https://svelte.dev/docs/svelte-components#script-4-prefix-stores-with-$-to-access-their-values) so you don't need any additional package to use them in Svelte apps.
+Spred signals implement [Svelte store contract](https://svelte.dev/docs/svelte/stores#Store-contract) so you don't need any additional package to use them in Svelte apps.
 
 [Example on StackBlitz](https://stackblitz.com/edit/spred-svelte?file=src/lib/Counter.svelte)
 

@@ -1,4 +1,4 @@
-import { signal, configure, batch, action, Signal } from '..';
+import { signal, configure, batch, action, Signal, NONE } from '..';
 
 describe('signal', () => {
   configure({
@@ -864,6 +864,12 @@ describe('signal', () => {
     expect(test.value).toBe(0);
   });
 
+  it('has get() method', () => {
+    const test = signal(0);
+
+    expect(test.get()).toBe(0);
+  });
+
   it('returns previous value if an exception occured', () => {
     const counter = signal(0);
 
@@ -1250,7 +1256,7 @@ describe('signal', () => {
       expect(writableSpy).toHaveBeenCalledWith(0);
 
       const b = signal((get) => {}, { onCreate: computedSpy });
-      expect(computedSpy).toHaveBeenCalledWith(undefined);
+      expect(computedSpy).toHaveBeenCalledWith(NONE);
     });
   });
 
@@ -1307,7 +1313,7 @@ describe('signal', () => {
       expect(listener).toHaveBeenCalledTimes(0);
 
       unsub = computedCounter.subscribe(() => {});
-      expect(res.value).toBeUndefined();
+      expect(res.value).toBe(NONE);
       expect(listener).toHaveBeenCalledTimes(1);
 
       counter.set(1);

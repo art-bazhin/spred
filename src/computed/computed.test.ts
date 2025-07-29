@@ -1,5 +1,4 @@
-// import { signal, configure, batch } from '..';
-import { signal, configure, batch } from '..';
+import { signal, configure, batch, NONE } from '..';
 
 describe('computed', () => {
   const a = signal(1);
@@ -762,7 +761,7 @@ describe('computed', () => {
     expect(spy).toHaveBeenCalledTimes(4);
   });
 
-  it('can filter values using undefined value', () => {
+  it('can filter values using NONE value', () => {
     const a = signal(0, {
       equal: () => false,
     });
@@ -770,6 +769,7 @@ describe('computed', () => {
       (get) => {
         const value = get(a);
         if (value < 5) return value;
+        return NONE;
       },
       {
         equal: () => false,

@@ -32,7 +32,15 @@ const OPTIONS: any = {
   onException: 1,
 };
 
-const NO_EXCEPTION = {};
+const NO_EXCEPTION = Symbol();
+
+/**
+ * Special value indicating no result.
+ *
+ * Return `NONE` from a computation to keep the current value and skip the update.
+ * Computed signals start as `NONE` until the first successful evaluation.
+ */
+export const NONE = Symbol('NONE');
 
 /**
  * A function that returns the value of the passed signal and handles dependency tracking.
@@ -50,7 +58,6 @@ export type Subscriber<T> = (value: T, immediate: boolean) => void;
 
 /**
  * A function that calculates the new value of the signal.
- * If the return value is undefined, the current value is preserved.
  * @param get Tracking function to get values of other signals.
  * @param scheduled Determines if the recalculation was caused by a dependency update.
  * @returns The value of the signal.
@@ -79,7 +86,7 @@ export interface SignalOptions<T> {
    * @param prevValue A previous value of the signal.
    * @returns Truthy if the values are equal, falsy otherwise.
    */
-  equal?: ((value: T, prevValue?: T) => unknown) | false;
+  equal?: ((value: T, prevValue: T) => unknown) | false;
 
   /**
    * A function called at the moment the signal is created.
@@ -105,7 +112,7 @@ export interface SignalOptions<T> {
    * @param value The new value of the signal.
    * @param prevValue The previous value of the signal.
    */
-  onUpdate?: (value: T, prevValue?: T) => void;
+  onUpdate?: (value: T, prevValue: T) => void;
 
   /**
    * A function called each time before the signal value is calculated and when the signal is going to be deactivated.
@@ -119,7 +126,7 @@ export interface SignalOptions<T> {
    * @param e An exception.
    * @param prevValue The previous value of the signal.
    */
-  onException?: (e: unknown, prevValue?: T) => void;
+  onException?: (e: unknown, prevValue: T) => void;
 }
 
 /**
@@ -140,7 +147,7 @@ declare class Signal<T> {
    * @returns An unsubscribe function.
    */
   subscribe<I extends boolean>(
-    subscriber: Subscriber<true extends I ? T : Exclude<T, undefined>>,
+    subscriber: Subscriber<true extends I ? T : Exclude<T, typeof NONE>>,
     immediate?: I
   ): () => void;
 
@@ -296,7 +303,7 @@ function Signal<T>(
   this._updated = 0;
   this._notified = 0;
 
-  this._value = undefined as any;
+  this._value = NONE as any;
   this._exception = NO_EXCEPTION;
 
   this._cursor = null;
@@ -468,40 +475,41 @@ Object.defineProperty(Signal.prototype, 'value', {
 
       if (this._firstSource === null) {
         shouldCompute = true;
-      }
+      } else {
+        ++checkLevel;
 
-      ++checkLevel;
+        try {
+          for (
+            let link: Link | null = this._firstSource;
+            link !== null;
+            link = link.ns
+          ) {
+            const source = link!.source!;
 
-      try {
-        for (
-          let link: Link | null = this._firstSource;
-          link !== null;
-          link = link.ns
-        ) {
-          const source = link!.source!;
+            source.value;
 
-          source.value;
-
-          if (source._updated > version) {
-            shouldCompute = true;
-            break;
+            if (source._updated > version) {
+              shouldCompute = true;
+              break;
+            }
           }
+        } catch (e) {
+          shouldCompute = true;
         }
-      } catch (e) {
-        shouldCompute = true;
-      }
 
-      --checkLevel;
+        --checkLevel;
+      }
 
       this._exception = NO_EXCEPTION;
 
       if (shouldCompute) {
         const tempComputing = computing;
+        const currentValue = this._value;
 
         computing = this;
 
         if (this._compute) {
-          this.onCleanup?.(this._value);
+          this.onCleanup?.(currentValue);
           if (this._children) {
             cleanupChildren(this);
           }
@@ -516,14 +524,13 @@ Object.defineProperty(Signal.prototype, 'value', {
             : (this as any)._nextValue;
 
           if (
-            nextValue !== undefined &&
-            (!this.equal || !this.equal(nextValue, this._value))
+            nextValue !== NONE &&
+            (currentValue === NONE ||
+              !(this.equal && this.equal?.(nextValue, currentValue)))
           ) {
-            const prevValue = this._value;
-
             this._value = nextValue;
             this._updated = globalVersion;
-            this.onUpdate?.(nextValue, prevValue);
+            this.onUpdate?.(nextValue, currentValue);
           }
         } catch (e) {
           this._exception = e;
@@ -575,7 +582,7 @@ declare class WritableSignal<T> extends Signal<T> {
    * Sets the signal value and notify dependents if it was changed.
    * @param value The new value of the signal.
    */
-  set(value: Exclude<T, undefined>): void;
+  set(value: T): void;
 
   /**
    * Force notifies dependents.
@@ -586,15 +593,13 @@ declare class WritableSignal<T> extends Signal<T> {
    * Sets the signal value and force notifies dependents.
    * @param value The new value of the signal.
    */
-  emit(value: Exclude<T, undefined>): void;
+  emit(value: T): void;
 
   /**
    * Updates the signal value and force notifies dependents.
-   * @param updateFn A function that receives the current value.
-   * It may either mutate the value in-place or return a new one.
-   * If the return value is undefined, the current value is preserved.
+   * @param updateFn A function that receives the current value and returnes the new one.
    */
-  update(updateFn: (lastValue: T) => T | void): void;
+  update(updateFn: (lastValue: T) => T): void;
 
   /** @internal */
   _nextValue: T;
@@ -617,18 +622,17 @@ WritableSignal.prototype = new (Signal as any)();
 WritableSignal.prototype.constructor = WritableSignal;
 
 WritableSignal.prototype.set = function <T>(value: T) {
-  if (value !== undefined) this._nextValue = value;
+  if (value === NONE) return;
+  this._nextValue = value;
   triggeredWritables.push(this);
   sync();
 };
 
 WritableSignal.prototype.update = function <T>(
   this: WritableSignal<T> & Signal<T>,
-  updateFn: (value: T) => T | void
+  updateFn: (value: T) => T
 ) {
-  const value = updateFn(this._nextValue);
-  if (value === undefined) this.emit();
-  else this.emit(value as any);
+  this.emit(updateFn(this._nextValue));
 };
 
 WritableSignal.prototype.emit = function <T>(
@@ -691,7 +695,7 @@ function sync() {
 
     if (!signal) continue;
 
-    if (signal._updated === globalVersion && signal._value !== undefined) {
+    if (signal._updated === globalVersion && signal._value !== NONE) {
       try {
         (link.target as any)(signal._value, false);
       } catch (e) {

@@ -8,6 +8,7 @@ export {
   SignalOptions,
   Computation,
   TrackingGetter,
+  NONE,
 } from './core/core';
 export { on } from './on/on';
 export { signal } from './signal/signal';

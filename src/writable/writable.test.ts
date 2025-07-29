@@ -1,4 +1,4 @@
-import { signal, batch, WritableSignal } from '..';
+import { signal, batch, WritableSignal, NONE } from '..';
 
 describe('writable', () => {
   const counter = signal(0);
@@ -48,10 +48,10 @@ describe('writable', () => {
     expect(counter.value).toBe(1);
   });
 
-  it('fully ignores undefined values', () => {
+  it('fully ignores NONE values', () => {
     const s = signal<any>(0);
 
-    s.set(undefined);
+    s.set(NONE);
     s.update((v) => expect(v).toBe(0));
   });
 
@@ -77,6 +77,7 @@ describe('writable', () => {
 
     s.update((value) => {
       value.a = 1;
+      return value;
     });
 
     expect(subscriber).toHaveBeenCalledTimes(2);
@@ -84,6 +85,7 @@ describe('writable', () => {
 
     s.update((value) => {
       value.a = 2;
+      return value;
     });
 
     expect(subscriber).toHaveBeenCalledTimes(3);
@@ -217,12 +219,12 @@ describe('writable', () => {
     expect(spy).toHaveBeenCalledTimes(3);
   });
 
-  it('can not emit undefined value', () => {
+  it('can not emit NONE value', () => {
     const s = signal<any>();
     const spy = jest.fn();
 
     s.subscribe(spy, false);
-    s.emit(undefined);
+    s.emit(NONE);
 
     expect(spy).toHaveBeenCalledTimes(0);
   });
