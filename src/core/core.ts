@@ -15,6 +15,7 @@ let signalsToDeactivate: Signal<any>[] = [];
 interface Link {
   source: Signal<any> | null;
   target: Signal<any> | Subscriber<any>;
+  cache: Signal<any> | null;
 
   ns: Link | null;
   pt: Link | null;
@@ -273,6 +274,8 @@ declare class Signal<T> {
   /** @internal */
   _lastTarget: Link | null;
   /** @internal */
+  _computing: Signal<any> | null;
+  /** @internal */
   _children?: (Signal<any> | (() => void))[];
 
   /** @internal */
@@ -308,6 +311,7 @@ function Signal<T>(
   this._firstSource = null;
   this._firstTarget = null;
   this._lastTarget = null;
+  this._computing = null;
 
   this._compute = compute;
 
@@ -454,7 +458,7 @@ Signal.prototype.get = function () {
 };
 
 Object.defineProperty(Signal.prototype, 'value', {
-  get() {
+  get(this: Signal<any>) {
     if (this._version < 0) {
       throw new CircularDependencyError();
     }
@@ -516,7 +520,7 @@ Object.defineProperty(Signal.prototype, 'value', {
         try {
           const nextValue = this._compute
             ? this._compute(get)
-            : this._nextValue;
+            : (this as any)._nextValue;
 
           if (
             nextValue !== NONE &&
@@ -531,13 +535,24 @@ Object.defineProperty(Signal.prototype, 'value', {
           this._exception = e;
         }
 
-        if (this._cursor && this._cursor.ns) {
+        if (this._cursor) {
           const next = this._cursor.ns;
 
-          this._cursor.ns = null;
+          for (
+            let link: Link | null = this._firstSource;
+            link !== next;
+            link = link!.ns
+          ) {
+            link!.source!._computing = link!.cache;
+            link!.cache = null;
+          }
 
-          for (let link: Link | null = next; link !== null; link = link.ns) {
-            removeTarget(link.source!, link);
+          if (next) {
+            this._cursor.ns = null;
+
+            for (let link: Link | null = next; link !== null; link = link.ns) {
+              removeTarget(link.source!, link);
+            }
           }
         }
 
@@ -729,6 +744,7 @@ function createLink(
   return {
     source,
     target,
+    cache: null,
     ns: null,
     pt: null,
     nt: null,
@@ -737,10 +753,13 @@ function createLink(
 
 function get<T>(signal: Signal<T>) {
   if (computing) {
-    if (computing._cursor) {
-      if (computing._cursor.ns === null)
-        computing._cursor.ns = createLink(null, computing);
-      computing._cursor = computing._cursor.ns;
+    if (signal._computing === computing) return signal._value;
+
+    let cursor = computing._cursor;
+
+    if (cursor) {
+      if (cursor.ns === null) cursor.ns = createLink(null, computing);
+      computing._cursor = cursor.ns;
     } else {
       if (computing._firstSource) {
         computing._cursor = computing._firstSource;
@@ -750,14 +769,18 @@ function get<T>(signal: Signal<T>) {
       }
     }
 
-    const source = computing._cursor.source;
+    cursor = computing._cursor;
+    const source = cursor.source;
+
+    cursor.cache = signal._computing;
+    signal._computing = computing;
 
     if (source !== signal) {
       if (computing._lastTarget) {
-        if (source) removeTarget(source, computing._cursor);
-        addTarget(signal, computing._cursor);
+        if (source) removeTarget(source, cursor);
+        addTarget(signal, cursor);
       }
-      computing._cursor.source = signal;
+      cursor.source = signal;
     }
   }
 

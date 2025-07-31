@@ -399,3 +399,11 @@ function init() {
       .appendChild(document.createTextNode(' '));
   }
 }
+
+const a = signal(0);
+
+const b = signal((get) => get(a) + get(a) + get(a));
+
+b.subscribe(() => {});
+
+console.log(b);
