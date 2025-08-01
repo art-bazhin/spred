@@ -1,6 +1,9 @@
 import { config } from '../config/config';
 import { CircularDependencyError } from '../common/errors';
 
+const IS_COMPUTING = -1;
+const HAS_EXCEPTION = -2;
+
 let computing: Signal<any> | null = null;
 let scope: any = null;
 
@@ -32,8 +35,6 @@ const OPTIONS: any = {
   onCleanup: 1,
   onException: 1,
 };
-
-const NO_EXCEPTION = Symbol();
 
 /**
  * Special value indicating no result.
@@ -305,7 +306,6 @@ function Signal<T>(
   this._notified = 0;
 
   this._value = NONE as any;
-  this._exception = NO_EXCEPTION;
 
   this._cursor = null;
   this._firstSource = null;
@@ -340,7 +340,7 @@ Signal.prototype.subscribe = function <T>(
 
   addTarget(this, link);
 
-  if (immediate && this._exception === NO_EXCEPTION) {
+  if (immediate && this._version !== HAS_EXCEPTION) {
     try {
       subscriber(value);
     } catch (e) {
@@ -459,7 +459,7 @@ Signal.prototype.get = function () {
 
 Object.defineProperty(Signal.prototype, 'value', {
   get(this: Signal<any>) {
-    if (this._version < 0) {
+    if (this._version === IS_COMPUTING) {
       throw new CircularDependencyError();
     }
 
@@ -471,11 +471,13 @@ Object.defineProperty(Signal.prototype, 'value', {
         this._notified === globalVersion)
     ) {
       const version = this._version;
+      const hasException = version === HAS_EXCEPTION;
+
       let shouldCompute = false;
 
-      this._version = -1;
+      this._version = IS_COMPUTING;
 
-      if (this._firstSource === null) {
+      if (this._firstSource === null || hasException) {
         shouldCompute = true;
       } else {
         ++checkLevel;
@@ -501,8 +503,6 @@ Object.defineProperty(Signal.prototype, 'value', {
 
         --checkLevel;
       }
-
-      this._exception = NO_EXCEPTION;
 
       if (shouldCompute) {
         const tempComputing = computing;
@@ -533,6 +533,7 @@ Object.defineProperty(Signal.prototype, 'value', {
           }
         } catch (e) {
           this._exception = e;
+          this._version = HAS_EXCEPTION;
         }
 
         if (this._cursor) {
@@ -561,10 +562,13 @@ Object.defineProperty(Signal.prototype, 'value', {
         computing = tempComputing;
       }
 
-      this._version = globalVersion;
+      if (this._version !== HAS_EXCEPTION) {
+        this._version = globalVersion;
+        if (hasException) this._exception = undefined;
+      }
     }
 
-    if (this._exception !== NO_EXCEPTION) {
+    if (this._version === HAS_EXCEPTION) {
       if (computing || checkLevel) throw this._exception;
       else config.logException?.(this._exception);
 
@@ -705,7 +709,7 @@ function sync() {
 
     if (!signal) continue;
 
-    if (signal._updated === globalVersion && signal._value !== NONE) {
+    if (signal._updated === globalVersion) {
       try {
         (link.target as any)(signal._value);
       } catch (e) {
