@@ -271,8 +271,6 @@ declare class Signal<T> {
   /** @internal */
   _firstSource: Link | null;
   /** @internal */
-  _firstTarget: Link | null;
-  /** @internal */
   _lastTarget: Link | null;
   /** @internal */
   _computing: Signal<any> | null;
@@ -309,7 +307,6 @@ function Signal<T>(
 
   this._cursor = null;
   this._firstSource = null;
-  this._firstTarget = null;
   this._lastTarget = null;
   this._computing = null;
 
@@ -379,8 +376,6 @@ function addTarget(signal: Signal<any>, link: Link) {
     return;
   }
 
-  signal._firstTarget = link;
-
   for (
     let link: Link | null = signal._firstSource;
     link !== null;
@@ -401,7 +396,6 @@ function removeTarget(
   link: Link,
   deactivateImmediately?: boolean
 ) {
-  if (signal._firstTarget === link) signal._firstTarget = link.nt;
   if (signal._lastTarget === link) signal._lastTarget = link.pt;
   if (link.pt) link.pt.nt = link.nt;
   if (link.nt) link.nt.pt = link.pt;
@@ -466,7 +460,7 @@ Object.defineProperty(Signal.prototype, 'value', {
     if (
       this._version < globalVersion &&
       (computing ||
-        !this._firstTarget ||
+        !this._lastTarget ||
         !this._compute ||
         this._notified === globalVersion)
     ) {
@@ -657,44 +651,44 @@ WritableSignal.prototype.emit = function <T>(
   this.set(arguments.length ? value : (this._nextValue as any));
 };
 
-function notify(signal: Signal<any>) {
-  if (signal._notified === globalVersion) return;
-  signal._notified = globalVersion;
+function notify(stack: Signal<any>[]) {
+  for (let signal = stack.pop(); signal !== undefined; signal = stack.pop()) {
+    if (signal._notified === globalVersion) continue;
+    signal._notified = globalVersion;
 
-  for (
-    let link: Link | null = signal._firstTarget;
-    link !== null;
-    link = link.nt
-  ) {
-    const target = link.target;
+    for (let link = signal._lastTarget; link !== null; link = link.pt) {
+      const target = link.target;
 
-    if (typeof target === 'function') linksToSubscribers.push(link);
-  }
+      if (typeof target !== 'function' && target._notified !== globalVersion)
+        stack.push(target);
 
-  for (
-    let link: Link | null = signal._firstTarget;
-    link !== null;
-    link = link.nt
-  ) {
-    const target = link.target;
+      if (link.pt === null) {
+        for (let l = link as Link | null; l !== null; l = l!.nt) {
+          if (typeof l.target === 'function') linksToSubscribers.push(l);
+        }
 
-    if (typeof target !== 'function') notify(target);
+        break;
+      }
+    }
   }
 }
 
 function sync() {
   if (batchLevel || computing || triggeredWritables.length === 0) return;
 
-  const writables = triggeredWritables;
-  triggeredWritables = [];
+  const notifyStack = [];
 
   ++globalVersion;
   ++batchLevel;
 
-  for (let signal of writables) {
+  while (triggeredWritables.length) {
+    const signal = triggeredWritables.pop()!;
+
     signal.value;
-    if (signal._updated === globalVersion) notify(signal);
+    if (signal._updated === globalVersion) notifyStack.push(signal);
   }
+
+  notify(notifyStack);
 
   for (let link of linksToSubscribers) {
     const signal = link.source;
