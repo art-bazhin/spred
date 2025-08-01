@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.41.1](https://github.com/art-bazhin/spred/compare/v0.41.0...v0.41.1) (2025-08-01)
+
+
+### Code Refactoring
+
+* fix duplicate sources ([e2fb1c8](https://github.com/art-bazhin/spred/commit/e2fb1c86701fc19f08a5c53eab6a92d267cb9481))
+* refactor exception flag ([c1618d5](https://github.com/art-bazhin/spred/commit/c1618d541304fb9b1d5ee9779ff922b59dfb28ca))
+
 ## [0.41.0](https://github.com/art-bazhin/spred/compare/v0.40.4...v0.41.0) (2025-07-29)
 
 
