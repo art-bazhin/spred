@@ -656,18 +656,21 @@ function notify(stack: Signal<any>[]) {
     if (signal._notified === globalVersion) continue;
     signal._notified = globalVersion;
 
+    let subs = 0;
+
     for (let link = signal._lastTarget; link !== null; link = link.pt) {
       const target = link.target;
 
-      if (typeof target !== 'function' && target._notified !== globalVersion)
-        stack.push(target);
+      if (typeof target === 'function') ++subs;
+      else if (target._notified !== globalVersion) stack.push(target);
 
       if (link.pt === null) {
-        for (let l = link as Link | null; l !== null; l = l!.nt) {
-          if (typeof l.target === 'function') linksToSubscribers.push(l);
+        for (let l = link as Link | null; subs > 0 && l !== null; l = l!.nt) {
+          if (typeof l.target === 'function') {
+            linksToSubscribers.push(l);
+            --subs;
+          }
         }
-
-        break;
       }
     }
   }
@@ -676,13 +679,15 @@ function notify(stack: Signal<any>[]) {
 function sync() {
   if (batchLevel || computing || triggeredWritables.length === 0) return;
 
+  const writables = triggeredWritables;
   const notifyStack = [];
 
+  triggeredWritables = [];
   ++globalVersion;
   ++batchLevel;
 
-  while (triggeredWritables.length) {
-    const signal = triggeredWritables.pop()!;
+  for (let i = writables.length - 1; i >= 0; i--) {
+    const signal = writables[i];
 
     signal.value;
     if (signal._updated === globalVersion) notifyStack.push(signal);
