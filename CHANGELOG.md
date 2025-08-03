@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.41.2](https://github.com/art-bazhin/spred/compare/v0.41.1...v0.41.2) (2025-08-03)
+
+
+### Code Refactoring
+
+* remove redundant target iteration if there's no subscribers ([146cd77](https://github.com/art-bazhin/spred/commit/146cd771c5c1141e1b5814a0fe426c969515660a))
+* use one target link per signal ([6a42cd7](https://github.com/art-bazhin/spred/commit/6a42cd7c31076a43fb80196ea25427ab27cd3ea5))
+
 ### [0.41.1](https://github.com/art-bazhin/spred/compare/v0.41.0...v0.41.1) (2025-08-01)
 
 
