@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.41.3](https://github.com/art-bazhin/spred/compare/v0.41.2...v0.41.3) (2025-08-12)
+
+
+### Features
+
+* add getInitialValue option ([ad61fe4](https://github.com/art-bazhin/spred/commit/ad61fe4db75d41a427f80d2be55599cd9c7aa430))
+
+
+### Docs
+
+* update docs ([4727647](https://github.com/art-bazhin/spred/commit/4727647bfaad8e0c0eb3dde82dc8ace6210b7a1b))
+
 ### [0.41.2](https://github.com/art-bazhin/spred/compare/v0.41.1...v0.41.2) (2025-08-03)
 
 
