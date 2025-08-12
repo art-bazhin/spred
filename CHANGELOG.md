@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.41.4](https://github.com/art-bazhin/spred/compare/v0.41.3...v0.41.4) (2025-08-12)
+
+
+### Bug Fixes
+
+* fix setting value of inactive writable signal with getInitialValue option ([27645db](https://github.com/art-bazhin/spred/commit/27645db25df04991a08eae4c4bf890fc10be2815))
+
+
+### Docs
+
+* update docs ([6d7c784](https://github.com/art-bazhin/spred/commit/6d7c7842e898311ca26e4c0bffd0c29afb5b20ae))
+
 ### [0.41.3](https://github.com/art-bazhin/spred/compare/v0.41.2...v0.41.3) (2025-08-12)
 
 
