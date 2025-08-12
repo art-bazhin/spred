@@ -3,6 +3,7 @@ import {
   Signal,
   WritableSignal,
   SignalOptions,
+  WritableSignalOptions,
 } from '../core/core';
 
 /**
@@ -30,7 +31,7 @@ export function signal<T>(): WritableSignal<T | undefined>;
  */
 export function signal<T>(
   value: Exclude<T, Function>,
-  options?: SignalOptions<T>
+  options?: WritableSignalOptions<T>
 ): WritableSignal<T>;
 
 export function signal(value?: any, options?: any) {

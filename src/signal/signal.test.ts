@@ -547,6 +547,82 @@ describe('signal', () => {
     expect(d2.value).toBe(1);
   });
 
+  it('dynamically updates dependencies (case 8)', () => {
+    // same as case 4 but with getInitialValue
+    let res = '';
+
+    const fib: (n: number) => number = (n: number) =>
+      n < 2 ? 1 : fib(n - 1) + fib(n - 2);
+
+    const hard = (n: number, l: string) => {
+      res += l;
+      return n + fib(16);
+    };
+
+    const A = signal(-1, {
+      getInitialValue() {
+        return 0;
+      },
+    });
+
+    const B = signal(-1, {
+      getInitialValue() {
+        return 0;
+      },
+    });
+
+    const C = signal((get) => (get(A) % 2) + (get(B) % 2));
+    const D = signal((get) => (get(A) % 2) - (get(B) % 2));
+    const E = signal((get) => hard(get(C) + get(A) + get(D), 'E'));
+    const F = signal((get) => hard(get(D) && get(B), 'F'));
+    const G = signal(
+      (get) => get(C) + (get(C) || get(E) % 2) + get(D) + get(F)
+    );
+    const H = G.subscribe((v) => {
+      hard(v, 'H');
+    });
+    const I = G.subscribe(() => {});
+    const J = F.subscribe((v) => {
+      hard(v, 'J');
+    });
+
+    res = '';
+
+    batch(() => {
+      B.set(1);
+      A.set(3);
+    });
+
+    expect(res).toBe('H');
+
+    res = '';
+
+    batch(() => {
+      A.set(4);
+      B.set(2);
+    });
+
+    expect(res).toBe('EH');
+
+    res = '';
+
+    batch(() => {
+      A.set(3);
+      B.set(1);
+    });
+
+    expect(res).toBe('H');
+
+    res = '';
+
+    batch(() => {
+      A.set(4);
+      B.set(2);
+    });
+
+    expect(res).toBe('EH');
+  });
+
   it('does not recalc a dependant if it is not active', () => {
     const bSpy = jest.fn();
     const cSpy = jest.fn();
@@ -1663,6 +1739,408 @@ describe('signal', () => {
       url.set('bar');
       expect(res.data).toBe('bar');
       expect(spy).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  describe('writable signal with getInitialValue option', () => {
+    it('sets the value of inactive writable signal', () => {
+      const store = { value: 1 };
+
+      const a = signal(0, {
+        getInitialValue() {
+          return store.value;
+        },
+      });
+
+      const b = signal((get) => get(a));
+
+      expect(a.value).toBe(1);
+
+      store.value = 2;
+      expect(a.value).toBe(2);
+
+      store.value = 3;
+      expect(b.value).toBe(3);
+
+      store.value = 4;
+      expect(b.value).toBe(4);
+
+      a.set(0);
+      expect(b.value).toBe(4);
+    });
+
+    it('triggers onUpdate hook', () => {
+      const store = { value: 1 };
+
+      const onUpdate = jest.fn();
+
+      const a = signal(0, {
+        getInitialValue() {
+          return store.value;
+        },
+
+        onUpdate,
+      });
+
+      const b = signal((get) => get(a), { onUpdate });
+
+      expect(a.value).toBe(1);
+      expect(onUpdate).toHaveBeenCalledTimes(1);
+      expect(onUpdate).toHaveBeenLastCalledWith(1, 0);
+
+      expect(a.value).toBe(1);
+      expect(onUpdate).toHaveBeenCalledTimes(1);
+      expect(onUpdate).toHaveBeenLastCalledWith(1, 0);
+
+      store.value = 2;
+      expect(a.value).toBe(2);
+      expect(onUpdate).toHaveBeenCalledTimes(2);
+      expect(onUpdate).toHaveBeenLastCalledWith(2, 1);
+
+      expect(b.value).toBe(2);
+      expect(onUpdate).toHaveBeenCalledTimes(3);
+      expect(onUpdate).toHaveBeenLastCalledWith(2, NONE);
+
+      store.value = 3;
+      expect(b.value).toBe(3);
+      expect(onUpdate).toHaveBeenCalledTimes(5);
+      expect(onUpdate).toHaveBeenLastCalledWith(3, 2);
+    });
+
+    it('triggers onUpdate hook (case 2)', () => {
+      const store = { value: 1 };
+
+      const onUpdate = jest.fn();
+
+      const a = signal(0, {
+        getInitialValue() {
+          return store.value;
+        },
+
+        onUpdate,
+      });
+
+      const b = signal((get) => get(a));
+      const c = signal((get) => get(b), { onUpdate });
+
+      expect(a.value).toBe(1);
+      expect(onUpdate).toHaveBeenCalledTimes(1);
+      expect(onUpdate).toHaveBeenLastCalledWith(1, 0);
+
+      expect(a.value).toBe(1);
+      expect(onUpdate).toHaveBeenCalledTimes(1);
+      expect(onUpdate).toHaveBeenLastCalledWith(1, 0);
+
+      store.value = 2;
+      expect(a.value).toBe(2);
+      expect(onUpdate).toHaveBeenCalledTimes(2);
+      expect(onUpdate).toHaveBeenLastCalledWith(2, 1);
+
+      expect(c.value).toBe(2);
+      expect(onUpdate).toHaveBeenCalledTimes(3);
+      expect(onUpdate).toHaveBeenLastCalledWith(2, NONE);
+
+      store.value = 3;
+      expect(c.value).toBe(3);
+      expect(onUpdate).toHaveBeenCalledTimes(5);
+      expect(onUpdate).toHaveBeenLastCalledWith(3, 2);
+    });
+
+    it('do not cause redundant computations', () => {
+      const store = { value: 1 };
+      const spy = jest.fn();
+
+      const a = signal(0, {
+        getInitialValue() {
+          return store.value;
+        },
+      });
+
+      const b = signal((get) => {
+        spy();
+        return get(a);
+      });
+
+      expect(a.value).toBe(1);
+      expect(a.value).toBe(1);
+
+      store.value = 2;
+      expect(a.value).toBe(2);
+      expect(spy).toHaveBeenCalledTimes(0);
+
+      expect(b.value).toBe(2);
+      expect(spy).toHaveBeenCalledTimes(1);
+
+      expect(b.value).toBe(2);
+      expect(spy).toHaveBeenCalledTimes(1);
+
+      store.value = 3;
+      expect(b.value).toBe(3);
+      expect(spy).toHaveBeenCalledTimes(2);
+    });
+
+    it('do not react on set while inactve', () => {
+      const store = { value: 1 };
+
+      const a = signal(0, {
+        getInitialValue() {
+          return store.value;
+        },
+      });
+
+      expect(a.value).toBe(1);
+
+      a.set(2);
+      expect(a.value).toBe(1);
+    });
+
+    it('do not initialize and use set value while active', () => {
+      const store = { value: 1 };
+
+      const spy = jest.fn();
+      const subscriber = jest.fn();
+
+      const a = signal(0, {
+        getInitialValue() {
+          spy();
+          return store.value;
+        },
+      });
+
+      expect(a.value).toBe(1);
+      expect(spy).toHaveBeenCalledTimes(1);
+
+      expect(a.value).toBe(1);
+      expect(spy).toHaveBeenCalledTimes(2);
+
+      const unsub = a.subscribe(subscriber);
+      expect(spy).toHaveBeenCalledTimes(3);
+      expect(subscriber).toHaveBeenLastCalledWith(1);
+
+      expect(a.value).toBe(1);
+      expect(spy).toHaveBeenCalledTimes(3);
+
+      a.set(2);
+      expect(spy).toHaveBeenCalledTimes(3);
+      expect(subscriber).toHaveBeenLastCalledWith(2);
+      expect(a.value).toBe(2);
+
+      unsub();
+      expect(a.value).toBe(1);
+      expect(spy).toHaveBeenCalledTimes(4);
+
+      expect(a.value).toBe(1);
+      expect(spy).toHaveBeenCalledTimes(5);
+    });
+
+    it('do not initialize and use set value while active (сase 2)', () => {
+      const store = { value: 1 };
+
+      const spy = jest.fn();
+      const subscriber = jest.fn();
+
+      const source = signal(0, {
+        getInitialValue() {
+          spy();
+          return store.value;
+        },
+      });
+
+      const a = signal((get) => get(source));
+
+      expect(a.value).toBe(1);
+      expect(spy).toHaveBeenCalledTimes(1);
+
+      expect(a.value).toBe(1);
+      expect(spy).toHaveBeenCalledTimes(2);
+
+      const unsub = a.subscribe(subscriber);
+      expect(spy).toHaveBeenCalledTimes(3);
+      expect(subscriber).toHaveBeenLastCalledWith(1);
+
+      expect(a.value).toBe(1);
+      expect(spy).toHaveBeenCalledTimes(3);
+
+      source.set(2);
+      expect(spy).toHaveBeenCalledTimes(3);
+      expect(subscriber).toHaveBeenLastCalledWith(2);
+      expect(a.value).toBe(2);
+
+      unsub();
+      expect(a.value).toBe(1);
+      expect(spy).toHaveBeenCalledTimes(4);
+
+      expect(a.value).toBe(1);
+      expect(spy).toHaveBeenCalledTimes(5);
+    });
+
+    it('do not initialize and use set value while active (сase 3)', () => {
+      const store = { value: 1 };
+
+      const spy = jest.fn();
+      const subscriber = jest.fn();
+
+      const source = signal(0, {
+        getInitialValue() {
+          spy();
+          return store.value;
+        },
+      });
+
+      const tumbler = signal(1);
+
+      const a = signal((get) => (get(tumbler) ? 100 : get(source)));
+
+      expect(a.value).toBe(100);
+      expect(spy).toHaveBeenCalledTimes(0);
+
+      const unsub = a.subscribe(subscriber);
+      expect(spy).toHaveBeenCalledTimes(0);
+      expect(subscriber).toHaveBeenCalledTimes(1);
+      expect(subscriber).toHaveBeenLastCalledWith(100);
+      expect(a.value).toBe(100);
+
+      tumbler.set(0);
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(subscriber).toHaveBeenCalledTimes(2);
+      expect(subscriber).toHaveBeenLastCalledWith(1);
+      expect(a.value).toBe(1);
+
+      source.set(2);
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(subscriber).toHaveBeenCalledTimes(3);
+      expect(subscriber).toHaveBeenLastCalledWith(2);
+      expect(a.value).toBe(2);
+
+      unsub();
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(subscriber).toHaveBeenCalledTimes(3);
+      expect(subscriber).toHaveBeenLastCalledWith(2);
+      expect(a.value).toBe(1);
+      expect(spy).toHaveBeenCalledTimes(2);
+    });
+
+    it('do not break change notification', () => {
+      const spy = jest.fn();
+
+      const store = { value: 1 };
+
+      const withInit = signal(0, {
+        getInitialValue() {
+          return store.value;
+        },
+      });
+
+      const a = signal(0);
+      const b = signal((get) => get(a));
+      const c = signal((get) => {
+        withInit.subscribe(() => {});
+        return get(b);
+      });
+
+      b.subscribe(spy);
+      c.subscribe(() => {});
+      expect(spy).toHaveBeenLastCalledWith(0);
+
+      a.set(1);
+      expect(spy).toHaveBeenLastCalledWith(1);
+
+      a.set(2);
+      expect(spy).toHaveBeenLastCalledWith(2);
+    });
+
+    it('can connect to external store using lifecycle hooks', () => {
+      const store = {
+        value: 10,
+        subscribers: [] as ((v: number) => void)[],
+        subscribe(cb: (v: number) => void) {
+          this.subscribers.push(cb);
+          return () => {
+            this.subscribers = this.subscribers.filter(
+              (subscriber) => subscriber !== cb
+            );
+          };
+        },
+        set(v: number) {
+          this.value = v;
+          this.subscribers.forEach((cb) => cb(v));
+        },
+      };
+
+      const connected = signal(0, {
+        getInitialValue() {
+          return store.value;
+        },
+        onActivate() {
+          return store.subscribe((value) => connected.set(value));
+        },
+        onUpdate(value) {
+          store.set(value);
+        },
+      });
+
+      expect(connected.value).toBe(10);
+
+      store.set(20);
+      expect(connected.value).toBe(20);
+
+      const a = signal(0);
+      const b = signal((get) => get(connected));
+      const c = signal((get) => (get(a) ? get(b) : 100));
+      const d = signal((get) => get(c));
+
+      expect(d.value).toBe(100);
+
+      a.set(1);
+      expect(d.value).toBe(20);
+
+      store.set(30);
+      expect(d.value).toBe(30);
+
+      const subscriber = jest.fn();
+
+      const unsub = d.subscribe(subscriber);
+      expect(subscriber).toHaveBeenLastCalledWith(30);
+      expect(subscriber).toHaveBeenCalledTimes(1);
+
+      store.set(40);
+      expect(subscriber).toHaveBeenLastCalledWith(40);
+      expect(subscriber).toHaveBeenCalledTimes(2);
+
+      store.set(40);
+      expect(subscriber).toHaveBeenLastCalledWith(40);
+      expect(subscriber).toHaveBeenCalledTimes(2);
+
+      connected.set(50);
+      expect(subscriber).toHaveBeenLastCalledWith(50);
+      expect(subscriber).toHaveBeenCalledTimes(3);
+      expect(store.value).toBe(50);
+
+      a.set(0);
+      expect(subscriber).toHaveBeenLastCalledWith(100);
+      expect(subscriber).toHaveBeenCalledTimes(4);
+      expect(store.value).toBe(50);
+      expect(connected.value).toBe(50);
+
+      store.set(60);
+      expect(subscriber).toHaveBeenLastCalledWith(100);
+      expect(subscriber).toHaveBeenCalledTimes(4);
+      expect(store.value).toBe(60);
+      expect(connected.value).toBe(60);
+
+      a.set(1);
+      expect(subscriber).toHaveBeenLastCalledWith(60);
+      expect(subscriber).toHaveBeenCalledTimes(5);
+      expect(store.value).toBe(60);
+      expect(connected.value).toBe(60);
+
+      unsub();
+      store.set(70);
+      expect(subscriber).toHaveBeenLastCalledWith(60);
+      expect(subscriber).toHaveBeenCalledTimes(5);
+      expect(store.value).toBe(70);
+      expect(connected.value).toBe(70);
+      expect(store.subscribers.length).toBe(0);
     });
   });
 });
