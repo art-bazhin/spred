@@ -3,6 +3,7 @@ import { CircularDependencyError } from '../common/errors';
 
 const IS_COMPUTING = -1;
 const HAS_EXCEPTION = -2;
+const EMITTED = -3;
 
 let computing: Signal<any> | null = null;
 let scope: any = null;
@@ -145,8 +146,9 @@ export interface WritableSignalOptions<T> extends SignalOptions<T> {
    * - Called on every read while the signal has no subscribers or active dependents.
    * - Called again after the signal becomes inactive (e.g., last subscriber unsubscribed).
    * - Ignored while the signal is active.
-   * - If `set/emit` was called while the signal is inactive, that pending value is
-   *   ignored in favor of the value returned by `getInitialValue()` until activation.
+   * - If `set/emit` is called while the signal is inactive, that update is applied
+   *   immediately (including `onUpdate`), but the **next cold read** will override
+   *   the stored value with `getInitialValue()` until activation.
    */
   getInitialValue?: () => T;
 }
@@ -564,7 +566,7 @@ Signal.prototype.get = function (this: Signal<any>) {
           !this._lastTarget && this.getInitialValue && !this._compute;
 
         if (shouldInit) {
-          this._nextValue = this.getInitialValue!();
+          if (version !== EMITTED) this._nextValue = this.getInitialValue!();
           shouldInvalidate = true;
         }
 
@@ -684,6 +686,7 @@ WritableSignal.prototype.constructor = WritableSignal;
 
 WritableSignal.prototype.set = function <T>(value: T) {
   if (value === NONE) return;
+  this._version = EMITTED;
   this._nextValue = value;
   triggeredWritables.push(this);
   sync();

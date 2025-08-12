@@ -1846,6 +1846,36 @@ describe('signal', () => {
       expect(onUpdate).toHaveBeenLastCalledWith(3, 2);
     });
 
+    it('triggers onUpdate hook (case 3)', () => {
+      const store = { value: 1 };
+
+      const onUpdate = jest.fn();
+
+      const a = signal(0, {
+        getInitialValue() {
+          return store.value;
+        },
+
+        onUpdate,
+      });
+
+      expect(a.value).toBe(1);
+      expect(onUpdate).toHaveBeenCalledTimes(1);
+      expect(onUpdate).toHaveBeenLastCalledWith(1, 0);
+
+      expect(a.value).toBe(1);
+      expect(onUpdate).toHaveBeenCalledTimes(1);
+      expect(onUpdate).toHaveBeenLastCalledWith(1, 0);
+
+      a.set(2);
+      expect(onUpdate).toHaveBeenCalledTimes(2);
+      expect(onUpdate).toHaveBeenLastCalledWith(2, 1);
+
+      expect(a.value).toBe(1);
+      expect(onUpdate).toHaveBeenCalledTimes(3);
+      expect(onUpdate).toHaveBeenLastCalledWith(1, 2);
+    });
+
     it('do not cause redundant computations', () => {
       const store = { value: 1 };
       const spy = jest.fn();
@@ -2081,8 +2111,11 @@ describe('signal', () => {
 
       expect(connected.value).toBe(10);
 
-      store.set(20);
-      expect(connected.value).toBe(20);
+      store.set(15);
+      expect(connected.value).toBe(15);
+
+      connected.set(20);
+      expect(store.value).toBe(20);
 
       const a = signal(0);
       const b = signal((get) => get(connected));
