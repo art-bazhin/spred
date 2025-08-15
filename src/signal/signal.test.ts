@@ -42,6 +42,25 @@ describe('signal', () => {
     expect(x2Num).toBe(4);
   });
 
+  it('passes previous value as second subscriber argument except immediate run', () => {
+    const a = signal(0);
+    const subscriber = jest.fn();
+
+    expect(subscriber).toHaveBeenCalledTimes(0);
+
+    a.subscribe(subscriber);
+    expect(subscriber).toHaveBeenCalledTimes(1);
+    expect(subscriber).toHaveBeenLastCalledWith(0);
+
+    a.set(1);
+    expect(subscriber).toHaveBeenCalledTimes(2);
+    expect(subscriber).toHaveBeenLastCalledWith(1, 0);
+
+    a.set(2);
+    expect(subscriber).toHaveBeenCalledTimes(3);
+    expect(subscriber).toHaveBeenLastCalledWith(2, 1);
+  });
+
   it('allows to subscribe the fn more than once', () => {
     unsubs.push(counter.subscribe(subscriber));
 
@@ -1109,7 +1128,7 @@ describe('signal', () => {
     });
 
     expect(spy).toHaveBeenCalledTimes(1);
-    expect(spy).toHaveBeenLastCalledWith(2);
+    expect(spy).toHaveBeenLastCalledWith(2, 0);
   });
 
   it('catches and logs exceptions in subscribers', () => {
@@ -1952,7 +1971,7 @@ describe('signal', () => {
 
       a.set(2);
       expect(spy).toHaveBeenCalledTimes(3);
-      expect(subscriber).toHaveBeenLastCalledWith(2);
+      expect(subscriber).toHaveBeenLastCalledWith(2, 1);
       expect(a.value).toBe(2);
 
       unsub();
@@ -1993,7 +2012,7 @@ describe('signal', () => {
 
       source.set(2);
       expect(spy).toHaveBeenCalledTimes(3);
-      expect(subscriber).toHaveBeenLastCalledWith(2);
+      expect(subscriber).toHaveBeenLastCalledWith(2, 1);
       expect(a.value).toBe(2);
 
       unsub();
@@ -2033,19 +2052,19 @@ describe('signal', () => {
       tumbler.set(0);
       expect(spy).toHaveBeenCalledTimes(1);
       expect(subscriber).toHaveBeenCalledTimes(2);
-      expect(subscriber).toHaveBeenLastCalledWith(1);
+      expect(subscriber).toHaveBeenLastCalledWith(1, 100);
       expect(a.value).toBe(1);
 
       source.set(2);
       expect(spy).toHaveBeenCalledTimes(1);
       expect(subscriber).toHaveBeenCalledTimes(3);
-      expect(subscriber).toHaveBeenLastCalledWith(2);
+      expect(subscriber).toHaveBeenLastCalledWith(2, 1);
       expect(a.value).toBe(2);
 
       unsub();
       expect(spy).toHaveBeenCalledTimes(1);
       expect(subscriber).toHaveBeenCalledTimes(3);
-      expect(subscriber).toHaveBeenLastCalledWith(2);
+      expect(subscriber).toHaveBeenLastCalledWith(2, 1);
       expect(a.value).toBe(1);
       expect(spy).toHaveBeenCalledTimes(2);
     });
@@ -2073,10 +2092,10 @@ describe('signal', () => {
       expect(spy).toHaveBeenLastCalledWith(0);
 
       a.set(1);
-      expect(spy).toHaveBeenLastCalledWith(1);
+      expect(spy).toHaveBeenLastCalledWith(1, 0);
 
       a.set(2);
-      expect(spy).toHaveBeenLastCalledWith(2);
+      expect(spy).toHaveBeenLastCalledWith(2, 1);
     });
 
     it('can connect to external store using lifecycle hooks', () => {
@@ -2137,39 +2156,39 @@ describe('signal', () => {
       expect(subscriber).toHaveBeenCalledTimes(1);
 
       store.set(40);
-      expect(subscriber).toHaveBeenLastCalledWith(40);
+      expect(subscriber).toHaveBeenLastCalledWith(40, 30);
       expect(subscriber).toHaveBeenCalledTimes(2);
 
       store.set(40);
-      expect(subscriber).toHaveBeenLastCalledWith(40);
+      expect(subscriber).toHaveBeenLastCalledWith(40, 30);
       expect(subscriber).toHaveBeenCalledTimes(2);
 
       connected.set(50);
-      expect(subscriber).toHaveBeenLastCalledWith(50);
+      expect(subscriber).toHaveBeenLastCalledWith(50, 40);
       expect(subscriber).toHaveBeenCalledTimes(3);
       expect(store.value).toBe(50);
 
       a.set(0);
-      expect(subscriber).toHaveBeenLastCalledWith(100);
+      expect(subscriber).toHaveBeenLastCalledWith(100, 50);
       expect(subscriber).toHaveBeenCalledTimes(4);
       expect(store.value).toBe(50);
       expect(connected.value).toBe(50);
 
       store.set(60);
-      expect(subscriber).toHaveBeenLastCalledWith(100);
+      expect(subscriber).toHaveBeenLastCalledWith(100, 50);
       expect(subscriber).toHaveBeenCalledTimes(4);
       expect(store.value).toBe(60);
       expect(connected.value).toBe(60);
 
       a.set(1);
-      expect(subscriber).toHaveBeenLastCalledWith(60);
+      expect(subscriber).toHaveBeenLastCalledWith(60, 100);
       expect(subscriber).toHaveBeenCalledTimes(5);
       expect(store.value).toBe(60);
       expect(connected.value).toBe(60);
 
       unsub();
       store.set(70);
-      expect(subscriber).toHaveBeenLastCalledWith(60);
+      expect(subscriber).toHaveBeenLastCalledWith(60, 100);
       expect(subscriber).toHaveBeenCalledTimes(5);
       expect(store.value).toBe(70);
       expect(connected.value).toBe(70);

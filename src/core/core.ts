@@ -22,7 +22,7 @@ let signalsToDeactivate: Signal<any>[] = [];
 interface Link {
   source: Signal<any> | null;
   target: Signal<any> | Subscriber<any>;
-  cache: Signal<any> | null;
+  cache: any;
 
   ns: Link | null;
   pt: Link | null;
@@ -59,8 +59,9 @@ export type TrackingGetter = <T>(signal: Signal<T>) => T;
 /**
  * A function subscribed to updates of a signal.
  * @param value The new value of the signal.
+ * @param prevValue The signal's value at this subscriber's previous invocation. Not provided on the immediate call.
  */
-export type Subscriber<T> = (value: T) => void;
+export type Subscriber<T> = (value: T, prevValue?: T) => void;
 
 /**
  * A function that calculates the new value of the signal.
@@ -363,6 +364,8 @@ Signal.prototype.subscribe = function <T>(
   const value = this.get();
   const link: Link = createLink(this, subscriber);
 
+  link.cache = value;
+
   addTarget(this, link);
 
   if (immediate && this._version !== HAS_EXCEPTION) {
@@ -383,6 +386,8 @@ Signal.prototype.subscribe = function <T>(
     if (source === null) return;
 
     link.source = null;
+    link.cache = null;
+
     removeTarget(source, link, true);
   };
 
@@ -767,9 +772,11 @@ function sync() {
 
     if (signal._updated === globalVersion) {
       try {
-        (link.target as any)(signal._value);
+        (link.target as any)(signal._value, link.cache);
       } catch (e) {
         config.logException?.(e);
+      } finally {
+        link.cache = signal._value;
       }
     }
   }
