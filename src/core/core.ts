@@ -3,15 +3,17 @@ import { CircularDependencyError } from '../common/errors';
 
 const IS_COMPUTING = -1;
 const HAS_EXCEPTION = -2;
-const EMITTED = -3;
+const WAS_SET = -3;
 
 let computing: Signal<any> | null = null;
 let scope: any = null;
 
 let globalVersion = 1;
+let notificationVersion = 1;
 let batchLevel = 0;
 let checkLevel = 0;
 let deactivateLevel = 0;
+let lastTriggeredWritablesLength = 0;
 
 let shouldInvalidate = false;
 
@@ -468,9 +470,8 @@ function deactivate(signal: Signal<any>) {
     shouldInvalidate = true;
   }
 
-  if (shouldInvalidate && deactivateLevel === 0) {
-    if (batchLevel === 0) ++globalVersion;
-    else shouldInvalidate = true;
+  if (shouldInvalidate && deactivateLevel === 0 && batchLevel === 0) {
+    ++globalVersion;
   }
 }
 
@@ -510,6 +511,11 @@ Signal.prototype.get = function (this: Signal<any>) {
     throw new CircularDependencyError();
   }
 
+  if (triggeredWritables.length > lastTriggeredWritablesLength) {
+    ++globalVersion;
+    lastTriggeredWritablesLength = triggeredWritables.length;
+  }
+
   if (computing === null) shouldInvalidate = false;
 
   if (
@@ -517,7 +523,8 @@ Signal.prototype.get = function (this: Signal<any>) {
     (computing ||
       !this._lastTarget ||
       !this._compute ||
-      this._notified === globalVersion)
+      this._notified === globalVersion ||
+      triggeredWritables.length)
   ) {
     const version = this._version;
     const hasException = version === HAS_EXCEPTION;
@@ -571,7 +578,7 @@ Signal.prototype.get = function (this: Signal<any>) {
           !this._lastTarget && this.getInitialValue && !this._compute;
 
         if (shouldInit) {
-          if (version !== EMITTED) this._nextValue = this.getInitialValue!();
+          if (version !== WAS_SET) this._nextValue = this.getInitialValue!();
           shouldInvalidate = true;
         }
 
@@ -691,7 +698,7 @@ WritableSignal.prototype.constructor = WritableSignal;
 
 WritableSignal.prototype.set = function <T>(value: T) {
   if (value === NONE) return;
-  this._version = EMITTED;
+  this._version = WAS_SET;
   this._nextValue = value;
   triggeredWritables.push(this);
   sync();
@@ -745,15 +752,19 @@ function sync() {
 
   shouldInvalidate = false;
   triggeredWritables = [];
-  ++globalVersion;
   ++batchLevel;
+
+  if (lastTriggeredWritablesLength === 0) ++globalVersion;
+  lastTriggeredWritablesLength = 0;
 
   for (let i = writables.length - 1; i >= 0; i--) {
     const signal = writables[i];
 
     signal.get();
-    if (signal._updated === globalVersion) notifyStack.push(signal);
+    if (signal._updated > notificationVersion) notifyStack.push(signal);
   }
+
+  notificationVersion = globalVersion;
 
   notify(notifyStack);
 

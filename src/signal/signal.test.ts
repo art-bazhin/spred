@@ -1131,6 +1131,101 @@ describe('signal', () => {
     expect(spy).toHaveBeenLastCalledWith(2, 0);
   });
 
+  it('do not get stale writable signal value in subscribers', () => {
+    const counter = signal(0);
+    const event = signal();
+
+    let value: any;
+
+    event.subscribe(() => {
+      counter.set(1);
+      value = counter.value;
+    }, false);
+
+    event.emit();
+
+    expect(value).toBe(1);
+  });
+
+  it('do not get stale computed signal value in subscribers', () => {
+    const counter = signal(0);
+    const x2Counter = signal((get) => get(counter) * 2);
+    const event = signal();
+
+    let value: any;
+
+    x2Counter.subscribe(() => {});
+
+    event.subscribe(() => {
+      counter.set(1);
+      value = x2Counter.value;
+    }, false);
+
+    event.emit();
+
+    expect(value).toBe(2);
+  });
+
+  it('do not get stale signal value in subscribers after multiple updates', () => {
+    const counter = signal(0);
+    const x2Counter = signal((get) => get(counter) * 2);
+    const x4Counter = signal((get) => get(x2Counter) * 2);
+    const x5Counter = signal((get) => get(counter) * 5);
+
+    const bigCounter = signal(100);
+    const x2BigCounter = signal((get) => get(bigCounter) * 2);
+
+    const event = signal();
+
+    const logs: number[] = [];
+
+    x5Counter.subscribe((value) => {
+      bigCounter.set(300);
+      logs.push(value);
+    }, false);
+
+    x2BigCounter.subscribe((value) => {
+      logs.push(value);
+    }, false);
+
+    event.subscribe(() => {
+      counter.set(2);
+      bigCounter.set(200);
+
+      logs.push(bigCounter.value);
+      logs.push(x4Counter.value);
+
+      counter.set(3);
+
+      logs.push(x4Counter.value);
+    }, false);
+
+    event.emit();
+
+    expect(logs).toEqual([200, 8, 12, 15, 400, 600]);
+  });
+
+  it('do not miss subscriber if the value was updated in another subscriber', () => {
+    const a = signal(0);
+    const b = signal(0);
+    const bComputed = signal((get) => get(b));
+    const spy = jest.fn();
+
+    bComputed.subscribe(spy, false);
+
+    a.subscribe(() => {
+      b.set(1);
+      bComputed.get();
+      b.set(2);
+      bComputed.get();
+    }, false);
+
+    a.set(1);
+
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenLastCalledWith(2, 0);
+  });
+
   it('catches and logs exceptions in subscribers', () => {
     const spy = jest.fn();
 
