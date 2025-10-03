@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.41.5](https://github.com/art-bazhin/spred/compare/v0.41.4...v0.41.5) (2025-10-03)
+
+
+### Features
+
+* pass the previous value as the second argument of a subscriber ([197990a](https://github.com/art-bazhin/spred/commit/197990a46abfb48662000575ad6eeecb14a3b395))
+
+
+### Bug Fixes
+
+* fix updating values inside subscribers ([8678d33](https://github.com/art-bazhin/spred/commit/8678d3354c865b60e0f7400dec496909bd15b474))
+
 ### [0.41.4](https://github.com/art-bazhin/spred/compare/v0.41.3...v0.41.4) (2025-08-12)
 
 
