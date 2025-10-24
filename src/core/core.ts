@@ -1,5 +1,4 @@
 import { config } from '../config/config';
-import { CircularDependencyError } from '../common/errors';
 
 const IS_COMPUTING = -1;
 const HAS_EXCEPTION = -2;
@@ -21,27 +20,28 @@ let triggeredWritables: WritableSignal<any>[] = [];
 let linksToSubscribers: Link[] = [];
 let signalsToDeactivate: Signal<any>[] = [];
 
+const _value = Symbol();
+const _nextValue = Symbol();
+const _version = Symbol();
+const _updated = Symbol();
+const _notified = Symbol();
+const _compute = Symbol();
+const _exception = Symbol();
+const _cursor = Symbol();
+const _firstSource = Symbol();
+const _lastTarget = Symbol();
+const _computing = Symbol();
+const _children = Symbol();
+const _options = Symbol();
+
 interface Link {
-  source: Signal<any> | null;
-  target: Signal<any> | Subscriber<any>;
-  cache: any;
-
-  ns: Link | null;
-  pt: Link | null;
-  nt: Link | null;
+  s: Signal<any> | null; // source
+  t: Signal<any> | Subscriber<any>; // target
+  ns: Link | null; // next source
+  pt: Link | null; // previous target
+  nt: Link | null; // next target
+  c: any; // cache
 }
-
-const OPTIONS: any = {
-  name: 1,
-  equal: 1,
-  onCreate: 1,
-  onActivate: 1,
-  onDeactivate: 1,
-  onUpdate: 1,
-  onCleanup: 1,
-  onException: 1,
-  getInitialValue: 1,
-};
 
 /**
  * Special value indicating no result.
@@ -282,46 +282,31 @@ declare class Signal<T> {
   readonly value: T;
 
   /** @internal */
-  _value: T;
+  [_value]: T;
   /** @internal */
-  _nextValue: T;
+  [_nextValue]: T;
   /** @internal */
-  _version: number;
+  [_version]: number;
   /** @internal */
-  _updated: number;
+  [_updated]: number;
   /** @internal */
-  _notified: number;
+  [_notified]: number;
   /** @internal */
-  _compute?: Computation<T>;
+  [_compute]?: Computation<T>;
   /** @internal */
-  _exception?: unknown;
+  [_exception]?: unknown;
   /** @internal */
-  _cursor: Link | null;
+  [_cursor]: Link | null;
   /** @internal */
-  _firstSource: Link | null;
+  [_firstSource]: Link | null;
   /** @internal */
-  _lastTarget: Link | null;
+  [_lastTarget]: Link | null;
   /** @internal */
-  _computing: Signal<any> | null;
+  [_computing]: Signal<any> | null;
   /** @internal */
-  _children?: (Signal<any> | (() => void))[];
-
+  [_children]?: (Signal<any> | (() => void))[];
   /** @internal */
-  equal: SignalOptions<T>['equal'];
-  /** @internal */
-  onCreate: SignalOptions<T>['onDeactivate'];
-  /** @internal */
-  onActivate: SignalOptions<T>['onActivate'];
-  /** @internal */
-  onDeactivate: SignalOptions<T>['onDeactivate'];
-  /** @internal */
-  onCleanup: SignalOptions<T>['onCleanup'];
-  /** @internal */
-  onUpdate: SignalOptions<T>['onUpdate'];
-  /** @internal */
-  onException: SignalOptions<T>['onException'];
-  /** @internal */
-  getInitialValue: WritableSignalOptions<T>['getInitialValue'];
+  [_options]?: WritableSignalOptions<any>;
 }
 
 /** @internal */
@@ -330,26 +315,21 @@ function Signal<T>(
   compute?: Computation<T>,
   options?: SignalOptions<T>
 ) {
-  this._version = 0;
-  this._updated = 0;
-  this._notified = 0;
+  this[_version] = 0;
+  this[_updated] = 0;
+  this[_notified] = 0;
 
-  this._value = NONE as any;
+  this[_value] = NONE as any;
 
-  this._cursor = null;
-  this._firstSource = null;
-  this._lastTarget = null;
-  this._computing = null;
+  this[_cursor] = null;
+  this[_firstSource] = null;
+  this[_lastTarget] = null;
+  this[_computing] = null;
 
-  this._compute = compute;
+  this[_compute] = compute;
+  this[_options] = options;
 
-  if (options) {
-    for (let key in options) {
-      if (OPTIONS[key]) (this as any)[key] = (options as any)[key];
-    }
-  }
-
-  if (compute) this.onCreate?.(this._value);
+  if (compute) this[_options]?.onCreate?.(this[_value]);
 
   const parent = computing || scope;
 
@@ -366,11 +346,11 @@ Signal.prototype.subscribe = function <T>(
   const value = this.get();
   const link: Link = createLink(this, subscriber);
 
-  link.cache = value;
+  link.c = value;
 
   addTarget(this, link);
 
-  if (immediate && this._version !== HAS_EXCEPTION) {
+  if (immediate && this[_version] !== HAS_EXCEPTION) {
     try {
       subscriber(value);
     } catch (e) {
@@ -383,12 +363,12 @@ Signal.prototype.subscribe = function <T>(
   sync();
 
   const dispose = () => {
-    const source = link.source;
+    const source = link.s;
 
-    if (source === null) return;
+    if (!source) return;
 
-    link.source = null;
-    link.cache = null;
+    link.s = null;
+    link.c = null;
 
     removeTarget(source, link, true);
   };
@@ -401,28 +381,25 @@ Signal.prototype.subscribe = function <T>(
 };
 
 function addTarget(signal: Signal<any>, link: Link) {
-  let lt = signal._lastTarget;
+  let lt = signal[_lastTarget];
 
   link.pt = lt;
-  signal._lastTarget = link;
+  signal[_lastTarget] = link;
 
   if (lt) {
     lt.nt = link;
     return;
   }
 
-  for (
-    let link: Link | null = signal._firstSource;
-    link !== null;
-    link = link.ns
-  ) {
-    addTarget(link.source!, link);
+  for (let link: Link | null = signal[_firstSource]; link; link = link.ns) {
+    addTarget(link.s!, link);
   }
 
-  const onDeactivate = signal.onActivate?.(signal._value);
+  const onDeactivate = signal[_options]?.onActivate?.(signal[_value]);
 
   if (typeof onDeactivate === 'function') {
-    signal.onDeactivate = onDeactivate;
+    if (!signal[_options]) signal[_options] = {};
+    signal[_options]!.onDeactivate = onDeactivate;
   }
 }
 
@@ -431,7 +408,7 @@ function removeTarget(
   link: Link,
   deactivateImmediately?: boolean
 ) {
-  if (signal._lastTarget === link) signal._lastTarget = link.pt;
+  if (signal[_lastTarget] === link) signal[_lastTarget] = link.pt;
   if (link.pt) link.pt.nt = link.nt;
   if (link.nt) link.nt.pt = link.pt;
 
@@ -443,50 +420,46 @@ function removeTarget(
 }
 
 function deactivate(signal: Signal<any>) {
-  if (signal._lastTarget) return;
+  if (signal[_lastTarget]) return;
   if (deactivateLevel === 0) shouldInvalidate = false;
 
   ++deactivateLevel;
 
-  for (
-    let link: Link | null = signal._firstSource;
-    link !== null;
-    link = link.ns
-  ) {
-    removeTarget(link.source!, link, true);
+  for (let link: Link | null = signal[_firstSource]; link; link = link.ns) {
+    removeTarget(link.s!, link, true);
   }
 
   --deactivateLevel;
 
   try {
-    signal.onCleanup?.(signal._value);
-    signal.onDeactivate?.(signal._value);
+    signal[_options]?.onCleanup?.(signal[_value]);
+    signal[_options]?.onDeactivate?.(signal[_value]);
   } catch (e) {
     config.logException?.(e);
   }
 
-  if (!signal._compute && signal.getInitialValue) {
-    signal._updated = globalVersion + 1;
+  if (!signal[_compute] && signal[_options]?.getInitialValue) {
+    signal[_updated] = globalVersion + 1;
     shouldInvalidate = true;
   }
 
-  if (shouldInvalidate && deactivateLevel === 0 && batchLevel === 0) {
+  if (shouldInvalidate && !deactivateLevel && !batchLevel) {
     ++globalVersion;
   }
 }
 
 function addChild(parent: Signal<any>, child: Signal<any> | (() => void)) {
-  if (!parent._children) parent._children = [];
-  parent._children.push(child);
+  if (!parent[_children]) parent[_children] = [];
+  parent[_children].push(child);
 }
 
 function cleanupChildren(parent: Signal<any>) {
-  for (let child of parent._children!) {
+  for (let child of parent[_children]!) {
     if (typeof child === 'function') child();
-    else if (child._children) cleanupChildren(child);
+    else if (child[_children]) cleanupChildren(child);
   }
 
-  parent._children = [];
+  parent[_children] = [];
 }
 
 Signal.prototype.pipe = function (
@@ -498,8 +471,6 @@ Signal.prototype.pipe = function (
   return result;
 };
 
-Signal.prototype.equal = Object.is;
-
 Object.defineProperty(Signal.prototype, 'value', {
   get(this: Signal<any>) {
     return this.get();
@@ -507,8 +478,8 @@ Object.defineProperty(Signal.prototype, 'value', {
 });
 
 Signal.prototype.get = function (this: Signal<any>) {
-  if (this._version === IS_COMPUTING) {
-    throw new CircularDependencyError();
+  if (this[_version] === IS_COMPUTING) {
+    throw new Error('Circular dependency');
   }
 
   if (triggeredWritables.length > lastTriggeredWritablesLength) {
@@ -516,39 +487,35 @@ Signal.prototype.get = function (this: Signal<any>) {
     lastTriggeredWritablesLength = triggeredWritables.length;
   }
 
-  if (computing === null) shouldInvalidate = false;
+  if (!computing) shouldInvalidate = false;
 
   if (
-    this._version < globalVersion &&
+    this[_version] < globalVersion &&
     (computing ||
-      !this._lastTarget ||
-      !this._compute ||
-      this._notified === globalVersion ||
+      !this[_lastTarget] ||
+      !this[_compute] ||
+      this[_notified] === globalVersion ||
       triggeredWritables.length)
   ) {
-    const version = this._version;
+    const version = this[_version];
     const hasException = version === HAS_EXCEPTION;
 
     let shouldCompute = false;
 
-    this._version = IS_COMPUTING;
+    this[_version] = IS_COMPUTING;
 
-    if (this._firstSource === null || hasException) {
+    if (!this[_firstSource] || hasException) {
       shouldCompute = true;
     } else {
       ++checkLevel;
 
       try {
-        for (
-          let link: Link | null = this._firstSource;
-          link !== null;
-          link = link.ns
-        ) {
-          const source = link!.source!;
+        for (let link: Link | null = this[_firstSource]; link; link = link.ns) {
+          const source = link!.s!;
 
-          if (source._updated <= version) source.get();
+          if (source[_updated] <= version) source.get();
 
-          if (source._updated > version) {
+          if (source[_updated] > version) {
             shouldCompute = true;
             break;
           }
@@ -562,87 +529,95 @@ Signal.prototype.get = function (this: Signal<any>) {
 
     if (shouldCompute) {
       const tempComputing = computing;
-      const currentValue = this._value;
+      const currentValue = this[_value];
 
       computing = this;
 
-      if (this._compute) {
-        this.onCleanup?.(currentValue);
-        if (this._children) {
+      if (this[_compute]) {
+        this[_options]?.onCleanup?.(currentValue);
+        if (this[_children]) {
           cleanupChildren(this);
         }
       }
 
       try {
         const shouldInit =
-          !this._lastTarget && this.getInitialValue && !this._compute;
+          !this[_lastTarget] &&
+          this[_options]?.getInitialValue &&
+          !this[_compute];
 
         if (shouldInit) {
-          if (version !== WAS_SET) this._nextValue = this.getInitialValue!();
+          if (version !== WAS_SET)
+            this[_nextValue] = this[_options]?.getInitialValue!();
           shouldInvalidate = true;
         }
 
-        const nextValue = this._compute ? this._compute(get) : this._nextValue;
+        const nextValue = this[_compute]
+          ? this[_compute](get)
+          : this[_nextValue];
+
+        const equal = this[_options]?.equal;
 
         if (
           nextValue !== NONE &&
-          (currentValue === NONE ||
-            !(this.equal && this.equal(nextValue, currentValue)))
+          (equal === false ||
+            currentValue === NONE ||
+            !(equal || Object.is)(nextValue, currentValue))
         ) {
-          this._value = nextValue;
-          this._updated = shouldInit ? globalVersion + 1 : globalVersion;
-          this.onUpdate?.(nextValue, currentValue);
+          this[_value] = nextValue;
+          this[_updated] = shouldInit ? globalVersion + 1 : globalVersion;
+          this[_options]?.onUpdate?.(nextValue, currentValue);
         }
       } catch (e) {
-        this._exception = e;
-        this._version = HAS_EXCEPTION;
+        this[_exception] = e;
+        this[_version] = HAS_EXCEPTION;
       }
 
-      if (this._cursor) {
-        const next = this._cursor.ns;
+      if (this[_cursor]) {
+        const next = this[_cursor].ns;
 
         for (
-          let link: Link | null = this._firstSource;
+          let link: Link | null = this[_firstSource];
           link !== next;
           link = link!.ns
         ) {
-          link!.source!._computing = link!.cache;
-          link!.cache = null;
+          link!.s![_computing] = link!.c;
+          link!.c = null;
         }
 
         if (next) {
-          this._cursor.ns = null;
+          this[_cursor].ns = null;
 
-          for (let link: Link | null = next; link !== null; link = link.ns) {
-            removeTarget(link.source!, link);
+          for (let link: Link | null = next; link; link = link.ns) {
+            removeTarget(link.s!, link);
           }
         }
       }
 
-      this._cursor = null;
+      this[_cursor] = null;
 
       computing = tempComputing;
     }
 
-    if (this._version !== HAS_EXCEPTION) {
-      this._version = globalVersion;
-      if (hasException) this._exception = undefined;
+    if (this[_version] !== HAS_EXCEPTION) {
+      this[_version] = globalVersion;
+      if (hasException) this[_exception] = undefined;
     }
   }
 
-  if (this._version === HAS_EXCEPTION) {
-    if (computing || checkLevel) throw this._exception;
-    else config.logException?.(this._exception);
+  if (this[_version] === HAS_EXCEPTION) {
+    if (computing || checkLevel) throw this[_exception];
+    else config.logException?.(this[_exception]);
 
-    this.onException?.(this._exception, this._value);
+    this[_options]?.onException?.(this[_exception], this[_value]);
   }
 
-  if (computing === null) {
-    if (shouldInvalidate && !this._lastTarget) ++globalVersion;
+  if (!computing) {
+    if (shouldInvalidate && !this[_lastTarget]) ++globalVersion;
     if (triggeredWritables.length) sync();
   }
 
-  return this._value;
+  return this[_value];
 };
 
 /**
@@ -688,9 +663,9 @@ function WritableSignal<T>(
 ) {
   Signal.call(this as any, undefined, options as any);
 
-  this._value = value;
-  this._nextValue = value;
-  this.onCreate?.(this._value);
+  this[_value] = value;
+  this[_nextValue] = value;
+  this[_options]?.onCreate?.(this[_value]);
 }
 
 WritableSignal.prototype = new (Signal as any)();
@@ -698,8 +673,8 @@ WritableSignal.prototype.constructor = WritableSignal;
 
 WritableSignal.prototype.set = function <T>(value: T) {
   if (value === NONE) return;
-  this._version = WAS_SET;
-  this._nextValue = value;
+  this[_version] = WAS_SET;
+  this[_nextValue] = value;
   triggeredWritables.push(this);
   sync();
 };
@@ -708,33 +683,33 @@ WritableSignal.prototype.update = function <T>(
   this: WritableSignal<T> & Signal<T>,
   updateFn: (value: T) => T
 ) {
-  this.emit(updateFn(this._nextValue));
+  this.emit(updateFn(this[_nextValue]));
 };
 
 WritableSignal.prototype.emit = function <T>(
   this: WritableSignal<T> & Signal<T>,
   value?: T
 ) {
-  this._updated = globalVersion + 1;
-  this.set(arguments.length ? value : (this._nextValue as any));
+  this[_updated] = globalVersion + 1;
+  this.set(arguments.length ? value : (this[_nextValue] as any));
 };
 
 function notify(stack: Signal<any>[]) {
-  for (let signal = stack.pop(); signal !== undefined; signal = stack.pop()) {
-    if (signal._notified === globalVersion) continue;
-    signal._notified = globalVersion;
+  for (let signal = stack.pop(); signal; signal = stack.pop()) {
+    if (signal[_notified] === globalVersion) continue;
+    signal[_notified] = globalVersion;
 
     let subs = 0;
 
-    for (let link = signal._lastTarget; link !== null; link = link.pt) {
-      const target = link.target;
+    for (let link = signal[_lastTarget]; link; link = link.pt) {
+      const target = link.t;
 
       if (typeof target === 'function') ++subs;
-      else if (target._notified !== globalVersion) stack.push(target);
+      else if (target[_notified] !== globalVersion) stack.push(target);
 
-      if (link.pt === null) {
-        for (let l = link as Link | null; subs > 0 && l !== null; l = l!.nt) {
-          if (typeof l.target === 'function') {
+      if (!link.pt) {
+        for (let l = link as Link | null; subs > 0 && l; l = l!.nt) {
+          if (typeof l.t === 'function') {
             linksToSubscribers.push(l);
             --subs;
           }
@@ -745,7 +720,7 @@ function notify(stack: Signal<any>[]) {
 }
 
 function sync() {
-  if (batchLevel || computing || triggeredWritables.length === 0) return;
+  if (batchLevel || computing || !triggeredWritables.length) return;
 
   const writables = triggeredWritables;
   const notifyStack = [];
@@ -754,14 +729,14 @@ function sync() {
   triggeredWritables = [];
   ++batchLevel;
 
-  if (lastTriggeredWritablesLength === 0) ++globalVersion;
+  if (!lastTriggeredWritablesLength) ++globalVersion;
   lastTriggeredWritablesLength = 0;
 
   for (let i = writables.length - 1; i >= 0; i--) {
     const signal = writables[i];
 
     signal.get();
-    if (signal._updated > notificationVersion) notifyStack.push(signal);
+    if (signal[_updated] > notificationVersion) notifyStack.push(signal);
   }
 
   notificationVersion = globalVersion;
@@ -769,7 +744,7 @@ function sync() {
   notify(notifyStack);
 
   for (let link of linksToSubscribers) {
-    const signal = link.source;
+    const signal = link.s;
 
     if (signal) signal.get();
   }
@@ -777,17 +752,17 @@ function sync() {
   for (let signal of signalsToDeactivate) deactivate(signal);
 
   for (let link of linksToSubscribers) {
-    const signal = link.source;
+    const signal = link.s;
 
     if (!signal) continue;
 
-    if (signal._updated === globalVersion) {
+    if (signal[_updated] === globalVersion) {
       try {
-        (link.target as any)(signal._value, link.cache);
+        (link.t as any)(signal[_value], link.c);
       } catch (e) {
         config.logException?.(e);
       } finally {
-        link.cache = signal._value;
+        link.c = signal[_value];
       }
     }
   }
@@ -821,13 +796,13 @@ export function batch(fn: () => void) {
 }
 
 function createLink(
-  source: Signal<any> | null,
-  target: Signal<any> | Subscriber<any>
+  s: Signal<any> | null,
+  t: Signal<any> | Subscriber<any>
 ): Link {
   return {
-    source,
-    target,
-    cache: null,
+    s,
+    t,
+    c: null,
     ns: null,
     pt: null,
     nt: null,
@@ -838,40 +813,39 @@ function get<T>(signal: Signal<T>) {
   let shouldAddTarget = false;
 
   if (computing) {
-    if (signal._computing === computing) return signal._value;
-
-    let cursor = computing._cursor;
+    if (signal[_computing] === computing) return signal[_value];
+    let cursor = computing[_cursor];
 
     if (cursor) {
-      if (cursor.ns === null) cursor.ns = createLink(null, computing);
-      computing._cursor = cursor.ns;
+      if (!cursor.ns) cursor.ns = createLink(null, computing);
+      computing[_cursor] = cursor.ns;
     } else {
-      if (computing._firstSource) {
-        computing._cursor = computing._firstSource;
+      if (computing[_firstSource]) {
+        computing[_cursor] = computing[_firstSource];
       } else {
-        computing._cursor = createLink(null, computing);
-        computing._firstSource = computing._cursor;
+        computing[_cursor] = createLink(null, computing);
+        computing[_firstSource] = computing[_cursor];
       }
     }
 
-    cursor = computing._cursor;
-    const source = cursor.source;
+    cursor = computing[_cursor];
+    const source = cursor.s;
 
-    cursor.cache = signal._computing;
-    signal._computing = computing;
+    cursor.c = signal[_computing];
+    signal[_computing] = computing;
 
     if (source !== signal) {
-      if (computing._lastTarget) {
+      if (computing[_lastTarget]) {
         if (source) removeTarget(source, cursor);
         shouldAddTarget = true;
       }
-      cursor.source = signal;
+      cursor.s = signal;
     }
   }
 
   const value = signal.get();
 
-  if (shouldAddTarget) addTarget(signal, computing!._cursor!);
+  if (shouldAddTarget) addTarget(signal, computing![_cursor]!);
 
   return value;
 }
