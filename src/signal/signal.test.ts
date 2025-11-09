@@ -1131,7 +1131,7 @@ describe('signal', () => {
     expect(spy).toHaveBeenLastCalledWith(2, 0);
   });
 
-  it('do not get stale writable signal value in subscribers', () => {
+  it('does not get stale writable signal value in subscribers', () => {
     const counter = signal(0);
     const event = signal();
 
@@ -1147,7 +1147,7 @@ describe('signal', () => {
     expect(value).toBe(1);
   });
 
-  it('do not get stale computed signal value in subscribers', () => {
+  it('does not get stale computed signal value in subscribers', () => {
     const counter = signal(0);
     const x2Counter = signal((get) => get(counter) * 2);
     const event = signal();
@@ -1166,7 +1166,7 @@ describe('signal', () => {
     expect(value).toBe(2);
   });
 
-  it('do not get stale signal value in subscribers after multiple updates', () => {
+  it('does not get stale signal value in subscribers after multiple updates', () => {
     const counter = signal(0);
     const x2Counter = signal((get) => get(counter) * 2);
     const x4Counter = signal((get) => get(x2Counter) * 2);
@@ -1202,10 +1202,10 @@ describe('signal', () => {
 
     event.emit();
 
-    expect(logs).toEqual([200, 8, 12, 15, 400, 600]);
+    expect(logs).toEqual([200, 8, 12, 15, 600]);
   });
 
-  it('do not miss subscriber if the value was updated in another subscriber', () => {
+  it('does not miss subscriber if the value was updated in another subscriber', () => {
     const a = signal(0);
     const b = signal(0);
     const bComputed = signal((get) => get(b));
@@ -1224,6 +1224,50 @@ describe('signal', () => {
 
     expect(spy).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenLastCalledWith(2, 0);
+  });
+
+  it('does not make redundant subscriber run if the value was updated in another subscriber', () => {
+    const a = signal(0);
+    const b = signal(0);
+    const c = signal(0);
+    const d = signal(0);
+
+    const logs: string[] = [];
+
+    a.subscribe((v) => {
+      b.set(v);
+      logs.push('a ' + v);
+    });
+
+    b.subscribe((v) => {
+      logs.push('b ' + v);
+    });
+
+    c.subscribe((v) => {
+      logs.push('c ' + v);
+    });
+
+    d.subscribe((v) => {
+      logs.push('d ' + v);
+    });
+
+    batch(() => {
+      a.set(1);
+      d.set(1);
+      c.set(1);
+      b.set(1000);
+    });
+
+    expect(logs).toEqual([
+      'a 0',
+      'b 0',
+      'c 0',
+      'd 0',
+      'a 1',
+      'd 1',
+      'c 1',
+      'b 1',
+    ]);
   });
 
   it('catches and logs exceptions in subscribers', () => {
@@ -1990,7 +2034,7 @@ describe('signal', () => {
       expect(onUpdate).toHaveBeenLastCalledWith(1, 2);
     });
 
-    it('do not cause redundant computations', () => {
+    it('does not cause redundant computations', () => {
       const store = { value: 1 };
       const spy = jest.fn();
 
@@ -2023,7 +2067,7 @@ describe('signal', () => {
       expect(spy).toHaveBeenCalledTimes(2);
     });
 
-    it('do not react on set while inactve', () => {
+    it('does not react on set while inactve', () => {
       const store = { value: 1 };
 
       const a = signal(0, {
@@ -2038,7 +2082,7 @@ describe('signal', () => {
       expect(a.value).toBe(1);
     });
 
-    it('do not initialize and use set value while active', () => {
+    it('does not initialize and use set value while active', () => {
       const store = { value: 1 };
 
       const spy = jest.fn();
@@ -2077,7 +2121,7 @@ describe('signal', () => {
       expect(spy).toHaveBeenCalledTimes(5);
     });
 
-    it('do not initialize and use set value while active (сase 2)', () => {
+    it('does not initialize and use set value while active (сase 2)', () => {
       const store = { value: 1 };
 
       const spy = jest.fn();
@@ -2118,7 +2162,7 @@ describe('signal', () => {
       expect(spy).toHaveBeenCalledTimes(5);
     });
 
-    it('do not initialize and use set value while active (сase 3)', () => {
+    it('does not initialize and use set value while active (сase 3)', () => {
       const store = { value: 1 };
 
       const spy = jest.fn();
@@ -2164,7 +2208,7 @@ describe('signal', () => {
       expect(spy).toHaveBeenCalledTimes(2);
     });
 
-    it('do not break change notification', () => {
+    it('does not break change notification', () => {
       const spy = jest.fn();
 
       const store = { value: 1 };

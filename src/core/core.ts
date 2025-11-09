@@ -511,11 +511,6 @@ Signal.prototype.get = function (this: Signal<any>) {
     throw new CircularDependencyError();
   }
 
-  if (triggeredWritables.length > lastTriggeredWritablesLength) {
-    ++globalVersion;
-    lastTriggeredWritablesLength = triggeredWritables.length;
-  }
-
   if (computing === null) shouldInvalidate = false;
 
   if (
@@ -719,7 +714,31 @@ WritableSignal.prototype.emit = function <T>(
   this.set(arguments.length ? value : (this._nextValue as any));
 };
 
-function notify(stack: Signal<any>[]) {
+function sync() {
+  if (triggeredWritables.length > lastTriggeredWritablesLength) {
+    ++globalVersion;
+    lastTriggeredWritablesLength = triggeredWritables.length;
+  }
+
+  if (batchLevel || computing || triggeredWritables.length === 0) return;
+
+  const writables = triggeredWritables;
+  const stack: Signal<any>[] = [];
+
+  shouldInvalidate = false;
+  triggeredWritables = [];
+  ++batchLevel;
+  lastTriggeredWritablesLength = 0;
+
+  for (let i = writables.length - 1; i >= 0; i--) {
+    const signal = writables[i];
+
+    signal.get();
+    if (signal._updated > notificationVersion) stack.push(signal);
+  }
+
+  notificationVersion = globalVersion;
+
   for (let signal = stack.pop(); signal !== undefined; signal = stack.pop()) {
     if (signal._notified === globalVersion) continue;
     signal._notified = globalVersion;
@@ -742,55 +761,29 @@ function notify(stack: Signal<any>[]) {
       }
     }
   }
-}
-
-function sync() {
-  if (batchLevel || computing || triggeredWritables.length === 0) return;
-
-  const writables = triggeredWritables;
-  const notifyStack = [];
-
-  shouldInvalidate = false;
-  triggeredWritables = [];
-  ++batchLevel;
-
-  if (lastTriggeredWritablesLength === 0) ++globalVersion;
-  lastTriggeredWritablesLength = 0;
-
-  for (let i = writables.length - 1; i >= 0; i--) {
-    const signal = writables[i];
-
-    signal.get();
-    if (signal._updated > notificationVersion) notifyStack.push(signal);
-  }
-
-  notificationVersion = globalVersion;
-
-  notify(notifyStack);
 
   for (let link of linksToSubscribers) {
     const signal = link.source;
 
     if (signal) signal.get();
-  }
+    else continue;
 
-  for (let signal of signalsToDeactivate) deactivate(signal);
+    const updated = signal._updated;
+    const lastUpdated = (link.ns as any as number) || 0;
 
-  for (let link of linksToSubscribers) {
-    const signal = link.source;
-
-    if (!signal) continue;
-
-    if (signal._updated === globalVersion) {
+    if (updated >= notificationVersion && updated > lastUpdated) {
       try {
         (link.target as any)(signal._value, link.cache);
       } catch (e) {
         config.logException?.(e);
       } finally {
         link.cache = signal._value;
+        (link.ns as any) = signal._updated;
       }
     }
   }
+
+  for (let signal of signalsToDeactivate) deactivate(signal);
 
   --batchLevel;
 
