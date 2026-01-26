@@ -6,7 +6,6 @@ export {
   collect,
   Subscriber,
   SignalOptions,
-  WritableSignalOptions,
   Computation,
   TrackingGetter,
   NONE,

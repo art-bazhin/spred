@@ -3,7 +3,6 @@ import { CircularDependencyError } from '../common/errors';
 
 const IS_COMPUTING = -1;
 const HAS_EXCEPTION = -2;
-const WAS_SET = -3;
 
 let computing: Signal<any> | null = null;
 let scope: any = null;
@@ -14,8 +13,6 @@ let batchLevel = 0;
 let checkLevel = 0;
 let deactivateLevel = 0;
 let lastTriggeredWritablesLength = 0;
-
-let shouldInvalidate = false;
 
 let triggeredWritables: WritableSignal<any>[] = [];
 let linksToSubscribers: Link[] = [];
@@ -40,7 +37,6 @@ const OPTIONS: any = {
   onUpdate: 1,
   onCleanup: 1,
   onException: 1,
-  getInitialValue: 1,
 };
 
 /**
@@ -135,25 +131,6 @@ export interface SignalOptions<T> {
    * @param prevValue The previous value of the signal.
    */
   onException?: (e: unknown, prevValue: T) => void;
-}
-
-/**
- * An object that stores the options of the writable signal to be created.
- */
-export interface WritableSignalOptions<T> extends SignalOptions<T> {
-  /**
-   * @experimental
-   * Lazily provides a value for an **inactive** writable signal when it is read.
-   *
-   * Semantics:
-   * - Called on every read while the signal has no subscribers or active dependents.
-   * - Called again after the signal becomes inactive (e.g., last subscriber unsubscribed).
-   * - Ignored while the signal is active.
-   * - If `set/emit` is called while the signal is inactive, that update is applied
-   *   immediately (including `onUpdate`), but the **next cold read** will override
-   *   the stored value with `getInitialValue()` until activation.
-   */
-  getInitialValue?: () => T;
 }
 
 /**
@@ -320,8 +297,6 @@ declare class Signal<T> {
   onUpdate: SignalOptions<T>['onUpdate'];
   /** @internal */
   onException: SignalOptions<T>['onException'];
-  /** @internal */
-  getInitialValue: WritableSignalOptions<T>['getInitialValue'];
 }
 
 /** @internal */
@@ -444,7 +419,6 @@ function removeTarget(
 
 function deactivate(signal: Signal<any>) {
   if (signal._lastTarget) return;
-  if (deactivateLevel === 0) shouldInvalidate = false;
 
   ++deactivateLevel;
 
@@ -463,15 +437,6 @@ function deactivate(signal: Signal<any>) {
     signal.onDeactivate?.(signal._value);
   } catch (e) {
     config.logException?.(e);
-  }
-
-  if (!signal._compute && signal.getInitialValue) {
-    signal._updated = globalVersion + 1;
-    shouldInvalidate = true;
-  }
-
-  if (shouldInvalidate && deactivateLevel === 0 && batchLevel === 0) {
-    ++globalVersion;
   }
 }
 
@@ -510,8 +475,6 @@ Signal.prototype.get = function (this: Signal<any>) {
   if (this._version === IS_COMPUTING) {
     throw new CircularDependencyError();
   }
-
-  if (computing === null) shouldInvalidate = false;
 
   if (
     this._version < globalVersion &&
@@ -569,14 +532,6 @@ Signal.prototype.get = function (this: Signal<any>) {
       }
 
       try {
-        const shouldInit =
-          !this._lastTarget && this.getInitialValue && !this._compute;
-
-        if (shouldInit) {
-          if (version !== WAS_SET) this._nextValue = this.getInitialValue!();
-          shouldInvalidate = true;
-        }
-
         const nextValue = this._compute ? this._compute(get) : this._nextValue;
 
         if (
@@ -585,7 +540,7 @@ Signal.prototype.get = function (this: Signal<any>) {
             !(this.equal && this.equal(nextValue, currentValue)))
         ) {
           this._value = nextValue;
-          this._updated = shouldInit ? globalVersion + 1 : globalVersion;
+          this._updated = globalVersion;
           this.onUpdate?.(nextValue, currentValue);
         }
       } catch (e) {
@@ -632,10 +587,7 @@ Signal.prototype.get = function (this: Signal<any>) {
     this.onException?.(this._exception, this._value);
   }
 
-  if (computing === null) {
-    if (shouldInvalidate && !this._lastTarget) ++globalVersion;
-    if (triggeredWritables.length) sync();
-  }
+  if (computing === null && triggeredWritables.length) sync();
 
   return this._value;
 };
@@ -679,7 +631,7 @@ declare class WritableSignal<T> extends Signal<T> {
 function WritableSignal<T>(
   this: WritableSignal<T>,
   value: T,
-  options?: WritableSignalOptions<T>
+  options?: SignalOptions<T>
 ) {
   Signal.call(this as any, undefined, options as any);
 
@@ -693,7 +645,6 @@ WritableSignal.prototype.constructor = WritableSignal;
 
 WritableSignal.prototype.set = function <T>(value: T) {
   if (value === NONE) return;
-  this._version = WAS_SET;
   this._nextValue = value;
   triggeredWritables.push(this);
   sync();
@@ -725,7 +676,6 @@ function sync() {
   const writables = triggeredWritables;
   const stack: Signal<any>[] = [];
 
-  shouldInvalidate = false;
   triggeredWritables = [];
   ++batchLevel;
   lastTriggeredWritablesLength = 0;
@@ -786,11 +736,6 @@ function sync() {
   for (let signal of signalsToDeactivate) deactivate(signal);
 
   --batchLevel;
-
-  if (shouldInvalidate) {
-    ++globalVersion;
-    shouldInvalidate = false;
-  }
 
   linksToSubscribers = [];
   signalsToDeactivate = [];
