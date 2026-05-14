@@ -14,7 +14,7 @@ let checkLevel = 0;
 let deactivateLevel = 0;
 let lastTriggeredWritablesLength = 0;
 
-let triggeredWritables: WritableSignal<any>[] = [];
+let triggeredWritables: StatefulSignal<any>[] = [];
 let linksToSubscribers: Link[] = [];
 let signalsToDeactivate: Signal<any>[] = [];
 
@@ -595,7 +595,59 @@ Signal.prototype.get = function (this: Signal<any>) {
 /**
  * A {@link Signal} whose value can be set.
  */
-declare class WritableSignal<T> extends Signal<T> {
+declare class WritableSignal<T, S> extends Signal<T> {
+  /**
+   * @param compute A function that calculates the signal value and returns it.
+   * @param set Value setter
+   * @param options Signal options.
+   * @returns A computed signal.
+   */
+  constructor(
+    compute: Computation<T>,
+    set: (value: S) => void,
+    options?: SignalOptions<T>
+  );
+
+  /**
+   * Sets the signal value and notify dependents if it was changed.
+   * @param value The new value of the signal.
+   */
+  set(value: S): void;
+
+  /** @internal */
+  _set?: (value: S) => void;
+}
+
+/** @internal */
+function WritableSignal<T, S>(
+  this: WritableSignal<T, S>,
+  compute?: Computation<T>,
+  set?: (value: S) => void,
+  options?: SignalOptions<T>
+) {
+  Signal.call(this as any, compute, options as any);
+
+  if (set) this._set = set;
+}
+
+WritableSignal.prototype = new (Signal as any)();
+WritableSignal.prototype.constructor = WritableSignal;
+
+WritableSignal.prototype.set = function <T>(value: T) {
+  ++batchLevel;
+
+  try {
+    this._set!(value);
+  } finally {
+    --batchLevel;
+    sync();
+  }
+};
+
+/**
+ * A {@link Signal} whose value can be set.
+ */
+declare class StatefulSignal<T> extends WritableSignal<T, T> {
   /**
    * @param value An initial value of the signal.
    * @param options Signal options.
@@ -628,37 +680,36 @@ declare class WritableSignal<T> extends Signal<T> {
 }
 
 /** @internal */
-function WritableSignal<T>(
-  this: WritableSignal<T>,
+function StatefulSignal<T>(
+  this: StatefulSignal<T>,
   value: T,
   options?: SignalOptions<T>
 ) {
-  Signal.call(this as any, undefined, options as any);
+  WritableSignal.call(this as any, undefined, undefined, options as any);
 
   this._value = value;
   this._nextValue = value;
   this.onCreate?.(this._value);
 }
 
-WritableSignal.prototype = new (Signal as any)();
-WritableSignal.prototype.constructor = WritableSignal;
+StatefulSignal.prototype = new (WritableSignal as any)();
+StatefulSignal.prototype.constructor = StatefulSignal;
 
-WritableSignal.prototype.set = function <T>(value: T) {
+StatefulSignal.prototype.set = function <T>(value: T) {
   if (value === NONE) return;
   this._nextValue = value;
   triggeredWritables.push(this);
   sync();
 };
-
-WritableSignal.prototype.update = function <T>(
-  this: WritableSignal<T> & Signal<T>,
+StatefulSignal.prototype.update = function <T>(
+  this: StatefulSignal<T> & Signal<T>,
   updateFn: (value: T) => T
 ) {
   this.emit(updateFn(this._nextValue));
 };
 
-WritableSignal.prototype.emit = function <T>(
-  this: WritableSignal<T> & Signal<T>,
+StatefulSignal.prototype.emit = function <T>(
+  this: StatefulSignal<T> & Signal<T>,
   value?: T
 ) {
   this._updated = globalVersion + 1;
@@ -856,4 +907,4 @@ export function collect(fn: () => void) {
   }
 }
 
-export { Signal, WritableSignal };
+export { Signal, WritableSignal, StatefulSignal };

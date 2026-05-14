@@ -1,4 +1,4 @@
-export { Signal, WritableSignal, Operator } from './core/core';
+export { Signal, StatefulSignal, Operator } from './core/core';
 export { configure, Config } from './config/config';
 export {
   batch,

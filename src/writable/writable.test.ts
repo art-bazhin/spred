@@ -1,4 +1,4 @@
-import { signal, batch, WritableSignal, NONE } from '..';
+import { signal, batch, StatefulSignal, NONE } from '..';
 
 describe('writable', () => {
   const counter = signal(0);
@@ -253,7 +253,7 @@ describe('writable', () => {
   it('can have fn value', () => {
     const a = () => {};
     const b = () => {};
-    const fn = new WritableSignal(a);
+    const fn = new StatefulSignal(a);
 
     expect(fn.value).toBe(a);
 
