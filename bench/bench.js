@@ -158,7 +158,7 @@ function benchIteration({
           }),
         };
 
-        if (false) {
+        if (!i) {
           subscribe(s.prop1, subscriber);
           subscribe(s.prop2, subscriber);
           subscribe(s.prop3, subscriber);

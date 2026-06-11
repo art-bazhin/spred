@@ -1,5 +1,7 @@
 export { atom, computed } from './nanostores/core/core';
-export const v3 = {};
+
+import { batch } from './nanostores/core/core';
+export const v3 = { batch };
 
 export { Signal, WritableSignal, Operator } from './core/core';
 export { configure, Config } from './config/config';
