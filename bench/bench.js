@@ -19,7 +19,7 @@ import {
   endBatch,
 } from '../node_modules/alien-signals/esm/index.mjs';
 
-import { batch, signal, v3 } from '/dist/index.mjs';
+import { batch, signal, atom, computed, v3 } from '/dist/index.mjs';
 
 const alienBatch = (cb) => {
   startBatch();
@@ -37,6 +37,17 @@ const LIB_CONFIGS = {
     writable: signal,
     computed: signal,
     batch,
+  },
+
+  nanostores: {
+    lib: 'nanostores',
+    track: (s, g) => g(s),
+    get: (s) => s.get(),
+    set: (s, v) => s.set(v),
+    subscribe: (s, cb) => s.subscribe(cb),
+    writable: atom,
+    computed: computed,
+    batch: v3.batch || ((cb) => cb()),
   },
 
   preact: {
@@ -74,7 +85,7 @@ const LIB_CONFIGS = {
   },
 };
 
-const subscriber = function () { };
+const subscriber = function () {};
 const resultDiv = document.getElementById('result');
 const hashParams = getHashParams();
 
@@ -112,19 +123,19 @@ function benchIteration({
 
   const start = mapWritableToComputed
     ? {
-      prop1: mapWritableToComputed(source.prop1),
-      prop2: mapWritableToComputed(source.prop2),
-      prop3: mapWritableToComputed(source.prop3),
-      prop4: mapWritableToComputed(source.prop4),
-    }
+        prop1: mapWritableToComputed(source.prop1),
+        prop2: mapWritableToComputed(source.prop2),
+        prop3: mapWritableToComputed(source.prop3),
+        prop4: mapWritableToComputed(source.prop4),
+      }
     : source;
 
   let layer;
 
-  for (let j = width; j--;) {
+  for (let j = width; j--; ) {
     layer = start;
 
-    for (let i = depth; i--;) {
+    for (let i = depth; i--; ) {
       const shouldRelink = (depth - i) % relinkRate === 0;
 
       layer = (function (m) {
@@ -147,7 +158,7 @@ function benchIteration({
           }),
         };
 
-        if (!i) {
+        if (false) {
           subscribe(s.prop1, subscriber);
           subscribe(s.prop2, subscriber);
           subscribe(s.prop3, subscriber);
@@ -400,22 +411,17 @@ function init() {
   }
 }
 
-const a = v3.atom(1)
+let runs = 0;
 
-let bCalls = 0
-const b = v3.computed(get => {
-  bCalls++
-  return get(a) % 2
-})
+const a = atom(1);
 
-let cCalls = 0
-const c = v3.computed(get => {
-  cCalls++
-  return get(b)
-})
+const c = computed((track) => {
+  runs++;
+  return track(a) * 2;
+});
 
-c.get()
-a.set(3)
-c.get()
+console.log(c.get(), runs);
 
-console.log({ bCalls, cCalls })
+a.set(2);
+
+console.log(c.get(), runs);
